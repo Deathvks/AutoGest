@@ -1,2 +1,52 @@
+# --- Dependencias ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+
+# --- Entorno ---
 .env
-node_modules
+.env.*        # .env.local, .env.production, etc
+.envrc
+.DS_Store
+
+# --- Logs ---
+logs
+*.log
+logs/*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.seed
+*.gz
+pids
+*.pid.lock
+
+# --- Compilados / temporales ---
+dist/
+build/
+.cache/
+coverage/
+tmp/
+temp/
+
+# --- IDEs / editores ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Docker ---
+.docker/
+docker-compose.override.yml
+
+# --- Sequelize migrations y seeds ---
+migrations/*.tmp
+seeders/*.tmp
+
+# --- Otros ---
+*.bak
+*.backup
