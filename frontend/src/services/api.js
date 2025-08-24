@@ -1,0 +1,87 @@
+// La URL base de tu backend.
+const BASE_URL = 'http://localhost:3001/api';
+
+// --- Funciones de Ayuda para Autenticación ---
+
+const getToken = () => localStorage.getItem('authToken');
+
+// Cabeceras para peticiones JSON
+const getAuthHeaders = () => {
+    const token = getToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+};
+
+// Cabeceras para peticiones con FormData
+const getAuthHeadersForFormData = () => {
+    const token = getToken();
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+};
+
+
+// --- Funciones Genéricas para Respuestas ---
+
+// Para rutas PÚBLICAS (Login/Registro)
+const handlePublicResponse = async (response) => {
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error en la petición');
+    }
+    return response.json();
+};
+
+// Para rutas PROTEGIDAS
+const handleProtectedResponse = async (response) => {
+    if (!response.ok) {
+        if (response.status === 401) {
+            localStorage.removeItem('authToken');
+            window.location.href = '/login';
+        }
+        const error = await response.json();
+        throw new Error(error.error || 'Algo salió mal en el servidor');
+    }
+    if (response.status === 204) return null;
+    return response.json();
+};
+
+const api = {
+    // --- Autenticación (Auth) ---
+    login: (credentials) => fetch(`${BASE_URL}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) }).then(handlePublicResponse),
+    register: (userData) => fetch(`${BASE_URL}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(userData) }).then(handlePublicResponse),
+    getMe: () => fetch(`${BASE_URL}/auth/me`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
+    updateProfile: (formData) => fetch(`${BASE_URL}/auth/profile`, { method: 'PUT', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
+    deleteAvatar: () => fetch(`${BASE_URL}/auth/avatar`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+    updatePassword: (passwordData) => fetch(`${BASE_URL}/auth/update-password`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(passwordData) }).then(handleProtectedResponse),
+
+    // --- Coches (Cars) ---
+    getCars: () => fetch(`${BASE_URL}/cars`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
+    createCar: (formData) => fetch(`${BASE_URL}/cars`, { method: 'POST', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
+    updateCar: (carId, data) => {
+        const isFormData = data instanceof FormData;
+        return fetch(`${BASE_URL}/cars/${carId}`, {
+            method: 'PUT',
+            headers: isFormData ? getAuthHeadersForFormData() : getAuthHeaders(),
+            body: isFormData ? data : JSON.stringify(data),
+        }).then(handleProtectedResponse);
+    },
+    deleteCar: (carId) => fetch(`${BASE_URL}/cars/${carId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+
+    // --- Gastos (Expenses) ---
+    getExpenses: () => fetch(`${BASE_URL}/expenses`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
+    createExpense: (expenseData) => fetch(`${BASE_URL}/expenses`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(expenseData) }).then(handleProtectedResponse),
+    deleteExpense: (expenseId) => fetch(`${BASE_URL}/expenses/${expenseId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+
+    // --- Incidencias (Incidents) ---
+    getIncidents: () => fetch(`${BASE_URL}/incidents`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
+    createIncident: (incidentData) => fetch(`${BASE_URL}/incidents`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(incidentData) }).then(handleProtectedResponse),
+    updateIncident: (incidentId, data) => fetch(`${BASE_URL}/incidents/${incidentId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data) }).then(handleProtectedResponse),
+    deleteIncident: (incidentId) => fetch(`${BASE_URL}/incidents/${incidentId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+
+    // --- Ubicaciones (Locations) ---
+    getLocations: () => fetch(`${BASE_URL}/locations`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
+};
+
+export default api;
