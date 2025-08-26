@@ -1,4 +1,6 @@
-const { Expense, Car } = require('../models');
+// autogest-app/backend/controllers/expenseController.js
+const { Expense, Car, sequelize } = require('../models'); // Importamos sequelize
+const { Op } = require('sequelize'); // Importamos los operadores
 
 // Obtener todos los gastos de los coches del usuario
 exports.getAllExpenses = async (req, res) => {
@@ -23,17 +25,32 @@ exports.createExpense = async (req, res) => {
     try {
         const { carLicensePlate, ...expenseData } = req.body;
 
-        // Ahora es obligatorio que se asocie a un coche
         if (!carLicensePlate) {
             return res.status(400).json({ error: 'La matrícula del coche es obligatoria.' });
         }
+        
+        const normalizedLicensePlate = carLicensePlate.replace(/\s/g, '').toUpperCase();
 
-        const car = await Car.findOne({ where: { licensePlate: carLicensePlate, userId: req.user.id } });
+        // --- CONSULTA MODIFICADA ---
+        // Buscamos el coche comparando las matrículas sin espacios
+        const car = await Car.findOne({
+            where: {
+                [Op.and]: [
+                    sequelize.where(
+                        sequelize.fn('REPLACE', sequelize.col('licensePlate'), ' ', ''),
+                        normalizedLicensePlate
+                    ),
+                    { userId: req.user.id }
+                ]
+            }
+        });
+        
         if (!car) {
             return res.status(403).json({ error: 'Permiso denegado. El coche no existe o no pertenece a este usuario.' });
         }
-
-        const newExpense = await Expense.create({ carLicensePlate, ...expenseData });
+        
+        // Guardamos el gasto usando la matrícula original del coche encontrado para mantener consistencia
+        const newExpense = await Expense.create({ carLicensePlate: car.licensePlate, ...expenseData });
         res.status(201).json(newExpense);
     } catch (error) {
         console.error(error);
@@ -67,14 +84,27 @@ exports.deleteExpense = async (req, res) => {
 exports.getExpensesByCarLicensePlate = async (req, res) => {
     try {
         const { licensePlate } = req.params;
+        const normalizedLicensePlate = licensePlate.replace(/\s/g, '').toUpperCase();
 
-        const car = await Car.findOne({ where: { licensePlate, userId: req.user.id } });
+        // --- CONSULTA MODIFICADA ---
+        const car = await Car.findOne({
+            where: {
+                [Op.and]: [
+                    sequelize.where(
+                        sequelize.fn('REPLACE', sequelize.col('licensePlate'), ' ', ''),
+                        normalizedLicensePlate
+                    ),
+                    { userId: req.user.id }
+                ]
+            }
+        });
+        
         if (!car) {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para ver sus gastos.' });
         }
 
         const expenses = await Expense.findAll({
-            where: { carLicensePlate: licensePlate },
+            where: { carLicensePlate: car.licensePlate },
             order: [['date', 'DESC']]
         });
         res.status(200).json(expenses);

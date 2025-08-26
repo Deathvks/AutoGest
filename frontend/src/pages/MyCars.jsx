@@ -12,6 +12,7 @@ import {
     faHandHoldingDollar,
     faBan
 } from '@fortawesome/free-solid-svg-icons';
+import Select from '../components/Select';
 
 // --- Sub-componentes ---
 
@@ -108,6 +109,14 @@ const MyCars = ({ cars, incidents, onSellClick, onAddClick, onViewDetailsClick, 
     const [sortOrder, setSortOrder] = useState('default');
     const [searchTerm, setSearchTerm] = useState('');
 
+    const sortOptions = [
+        { id: 'default', name: 'Ordenar por...' },
+        { id: 'price-desc', name: 'Precio: Mayor a menor' },
+        { id: 'price-asc', name: 'Precio: Menor a mayor' },
+        { id: 'km-desc', name: 'KM: Mayor a menor' },
+        { id: 'km-asc', name: 'KM: Menor a mayor' },
+    ];
+
     const filteredCars = useMemo(() => {
         let filtered = cars;
         if (activeFilter !== 'Todos') {
@@ -143,15 +152,15 @@ const MyCars = ({ cars, incidents, onSellClick, onAddClick, onViewDetailsClick, 
                     <FilterButton label="En Venta" filter="En venta" currentFilter={activeFilter} setFilter={setActiveFilter} />
                     <FilterButton label="Reservado" filter="Reservado" currentFilter={activeFilter} setFilter={setActiveFilter} />
                     <FilterButton label="Vendido" filter="Vendido" currentFilter={activeFilter} setFilter={setActiveFilter} />
-                    <select onChange={(e) => setSortOrder(e.target.value)} value={sortOrder} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-medium border-none focus:ring-2 focus:ring-blue-500">
-                        <option value="default">Ordenar por...</option>
-                        <option value="price-desc">Precio: Mayor a menor</option>
-                        <option value="price-asc">Precio: Menor a mayor</option>
-                        <option value="km-desc">KM: Mayor a menor</option>
-                        <option value="km-asc">KM: Menor a mayor</option>
-                    </select>
+                    <div className="w-48">
+                        <Select
+                            value={sortOrder}
+                            onChange={setSortOrder}
+                            options={sortOptions}
+                        />
+                    </div>
                     <div className="relative">
-                        <input type="text" placeholder="Buscar por matrícula..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-medium border-none focus:ring-2 focus:ring-blue-500 pl-10" />
+                        <input type="text" placeholder="Buscar por matrícula..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-medium border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 pl-10" />
                         <FontAwesomeIcon icon={faSearch} className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     </div>
                 </div>
@@ -161,21 +170,25 @@ const MyCars = ({ cars, incidents, onSellClick, onAddClick, onViewDetailsClick, 
                 </button>
             </div>
             {cars.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {filteredCars.map(car => (
-                        <CarCard 
-                            key={car.id} 
-                            car={car} 
-                            onSellClick={onSellClick} 
-                            onReserveClick={onReserveClick} 
-                            onCancelReservationClick={onCancelReservationClick} 
-                            onViewDetailsClick={onViewDetailsClick} 
-                            onAddIncidentClick={onAddIncidentClick} 
-                            // --- LÍNEA MODIFICADA ---
-                            hasIncident={incidents.some(inc => inc.licensePlate === car.licensePlate && inc.status === 'abierta')} 
-                        />
-                    ))}
-                </div>
+                <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {filteredCars.map(car => (
+                            <CarCard 
+                                key={car.id} 
+                                car={car} 
+                                onSellClick={onSellClick} 
+                                onReserveClick={onReserveClick} 
+                                onCancelReservationClick={onCancelReservationClick} 
+                                onViewDetailsClick={onViewDetailsClick} 
+                                onAddIncidentClick={onAddIncidentClick} 
+                                hasIncident={incidents.some(inc => inc.licensePlate === car.licensePlate && inc.status === 'abierta')} 
+                            />
+                        ))}
+                    </div>
+                    {/* --- ESTE ES EL CAMBIO --- */}
+                    {/* Añadimos un espacio al final, que solo es visible en pantallas con el menú inferior */}
+                    <div className="h-24 lg:hidden"></div>
+                </>
             ) : (
                 <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
                     <FontAwesomeIcon icon={faCar} className="text-5xl text-slate-300 dark:text-slate-600 mb-4" />

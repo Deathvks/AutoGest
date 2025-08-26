@@ -1,23 +1,17 @@
+// autogest-app/frontend/src/components/modals/AddCarModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faCar, faStar, faIdCard, faFingerprint, faCalendarDay, faRoad, faEuroSign,
     faMapMarkerAlt, faXmark, faUpload, faPaperclip, faBolt
 } from '@fortawesome/free-solid-svg-icons';
-import Select from '../Select'; // Importamos el nuevo componente
+import Select from '../Select';
 
 // --- Iconos (para botones especiales) ---
-const SparklesIcon = (props) => (
-  <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9.94 14.32c.32-.32.44-.78.34-1.22-.1-.44-.4-.74-.84-.84-.44-.1-.9.02-1.22.34l-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/>
-    <path d="m21.66 3.34-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/>
-    <path d="M14.32 9.94c.32.32.78.44 1.22.34.44-.1.74-.4.84-.84.1-.44-.02-.9-.34-1.22l-3.5-3.5c-.98-.98-2.56-.98-3.54 0-.98.98-.98 2.56 0 3.54l1.68 1.68"/>
-    <path d="M3.34 21.66l3.5-3.5c.98-.98-.98-2.56 0-3.54-.98-.98-2.56-.98-3.54 0l-1.68 1.68"/>
-  </svg>
-);
+const SparklesIcon = (props) => ( <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.94 14.32c.32-.32.44-.78.34-1.22-.1-.44-.4-.74-.84-.84-.44-.1-.9.02-1.22.34l-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="m21.66 3.34-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="M14.32 9.94c.32.32.78.44 1.22.34.44-.1.74-.4.84-.84.1-.44-.02-.9-.34-1.22l-3.5-3.5c-.98-.98-2.56-.98-3.54 0-.98.98-.98 2.56 0 3.54l1.68 1.68"/><path d="M3.34 21.66l3.5-3.5c.98-.98-.98-2.56 0-3.54-.98-.98-2.56-.98-3.54 0l-1.68 1.68"/></svg> );
 
 // --- Componentes de Formulario ---
-const InputField = ({ label, name, value, onChange, type = 'text', icon }) => (
+const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode }) => (
     <div>
         <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{label}</label>
         <div className="relative">
@@ -26,12 +20,13 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon }) => (
                     <FontAwesomeIcon icon={icon} className="h-4 w-4 text-slate-400" />
                 </div>
             )}
-            <input
-                type={type}
-                name={name}
-                value={value}
-                onChange={onChange}
-                className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 ${icon ? 'pl-9' : ''}`}
+            <input 
+                type={type} 
+                name={name} 
+                value={value} 
+                onChange={onChange} 
+                inputMode={inputMode}
+                className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500`} 
             />
         </div>
     </div>
@@ -53,7 +48,7 @@ const AutocompleteField = ({ label, name, value, onChange, options, icon }) => {
                     value={value}
                     onChange={onChange}
                     list="location-options"
-                    className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 ${icon ? 'pl-9' : ''}`}
+                    className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500`}
                 />
                 <datalist id="location-options">
                     {options && options.map((option) => (
@@ -76,14 +71,14 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
     return (
         <div>
             <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{label}</label>
-            <textarea
-                ref={textareaRef}
-                name={name}
-                value={value}
-                onChange={onChange}
+            <textarea 
+                ref={textareaRef} 
+                name={name} 
+                value={value} 
+                onChange={onChange} 
                 placeholder={placeholder}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
-                rows="3"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden" 
+                rows="3" 
             />
         </div>
     );
@@ -91,11 +86,7 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
 
 // --- Componente Principal del Modal ---
 const AddCarModal = ({ onClose, onAdd, locations }) => {
-    const [newCar, setNewCar] = useState({
-        make: '', model: '', licensePlate: '', vin: '', km: '', horsepower: '',
-        registrationDate: '', fuel: 'Gasolina', transmission: 'Manual',
-        purchasePrice: '', location: '', status: 'En venta', tags: [], notes: ''
-    });
+    const [newCar, setNewCar] = useState({ make: '', model: '', licensePlate: '', vin: '', km: '', horsepower: '', registrationDate: '', fuel: 'Gasolina', transmission: 'Manual', purchasePrice: '', location: '', status: 'En venta', tags: [], notes: '' });
     const [tagInput, setTagInput] = useState('');
     const [error, setError] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -106,14 +97,14 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
     const fileInputRef = useRef(null);
     const imageInputRef = useRef(null);
     const documentInputRef = useRef(null);
-
+    
     const fuelOptions = [
         { id: 'Gasolina', name: 'Gasolina' },
         { id: 'Diesel', name: 'Diesel' },
         { id: 'Híbrido', name: 'Híbrido' },
         { id: 'Eléctrico', name: 'Eléctrico' },
     ];
-
+    
     const transmissionOptions = [
         { id: 'Manual', name: 'Manual' },
         { id: 'Automático', name: 'Automático' },
@@ -127,7 +118,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
     const handleSelectChange = (name, value) => {
         setNewCar(prev => ({ ...prev, [name]: value }));
     };
-
+    
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -146,24 +137,29 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
     const handleTagKeyDown = (e) => {
         if (e.key === 'Enter' && tagInput) {
             e.preventDefault();
-            const value = tagInput.trim();
-            if (!newCar.tags.includes(value) && value !== '') {
-                setNewCar(prev => ({ ...prev, tags: [...prev.tags, value] }));
+            if (!newCar.tags.includes(tagInput.trim()) && tagInput.trim() !== '') {
+                setNewCar(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
             }
             setTagInput('');
         }
     };
-
+    
     const removeTag = (tagToRemove) => {
-        setNewCar(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== tagToRemove) }));
+        setNewCar(prev => ({...prev, tags: prev.tags.filter(tag => tag !== tagToRemove)}));
+    };
+
+    const parseNumber = (str) => {
+        if (typeof str !== 'string' || !str) return '';
+        return str.replace(/\./g, '').replace(',', '.');
     };
 
     const validateForm = () => {
+        const price = parseFloat(parseNumber(newCar.purchasePrice));
         if (!newCar.make || !newCar.model || !newCar.licensePlate || !newCar.purchasePrice) {
             setError('Los campos Marca, Modelo, Matrícula y Precio de Compra son obligatorios.');
             return false;
         }
-        if (isNaN(parseFloat(newCar.purchasePrice)) || parseFloat(newCar.purchasePrice) <= 0) {
+        if (isNaN(price) || price <= 0) {
             setError('El precio de compra debe ser un número válido y mayor que cero.');
             return false;
         }
@@ -173,7 +169,15 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
 
     const handleAdd = () => {
         if (!validateForm()) return;
-        const finalCarData = { ...newCar, price: newCar.purchasePrice };
+        
+        const finalCarData = { 
+            ...newCar, 
+            price: parseNumber(newCar.purchasePrice),
+            purchasePrice: parseNumber(newCar.purchasePrice),
+            km: parseNumber(newCar.km),
+            horsepower: parseNumber(newCar.horsepower),
+        };
+
         const formData = new FormData();
         Object.keys(finalCarData).forEach(key => {
             const value = finalCarData[key];
@@ -257,7 +261,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Analizar Ficha Técnica</label>
                                 <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageAnalysis} className="hidden" />
-                                <button onClick={() => fileInputRef.current.click()} disabled={isAnalyzing} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 disabled:opacity-50">
+                                <button onClick={() => fileInputRef.current.click()} disabled={isAnalyzing} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700 disabled:opacity-50">
                                     {isAnalyzing ? 'Analizando...' : <> <SparklesIcon className="w-5 h-5 text-blue-500" /> Rellenar con IA </>}
                                 </button>
                             </div>
@@ -273,15 +277,15 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <InputField label="Fecha de Matriculación" name="registrationDate" type="date" value={newCar.registrationDate} onChange={handleChange} />
-                            <InputField label="Precio de Compra (€)" name="purchasePrice" type="number" value={newCar.purchasePrice} onChange={handleChange} icon={faEuroSign} />
+                            <InputField label="Precio de Compra (€)" name="purchasePrice" type="text" inputMode="decimal" value={newCar.purchasePrice} onChange={handleChange} icon={faEuroSign} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <InputField label="Kilómetros" name="km" type="number" value={newCar.km} onChange={handleChange} icon={faRoad} />
-                             <InputField label="Caballos (CV)" name="horsepower" type="number" value={newCar.horsepower} onChange={handleChange} icon={faBolt} />
+                             <InputField label="Kilómetros" name="km" type="text" inputMode="decimal" value={newCar.km} onChange={handleChange} icon={faRoad} />
+                             <InputField label="Caballos (CV)" name="horsepower" type="text" inputMode="decimal" value={newCar.horsepower} onChange={handleChange} icon={faBolt} />
                         </div>
-
+                        
                         <AutocompleteField label="Ubicación" name="location" value={newCar.location} onChange={handleChange} options={locations} icon={faMapMarkerAlt}/>
-
+                        
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Select
                                 label="Combustible"
@@ -296,47 +300,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                                 options={transmissionOptions}
                             />
                         </div>
-
-                        {/* === Etiquetas (input con el MISMO estilo que el resto) === */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Etiquetas</label>
-
-                            {/* Campo de texto con el mismo estilo que InputField */}
-                            <input
-                                type="text"
-                                value={tagInput}
-                                onChange={(e) => setTagInput(e.target.value)}
-                                onKeyDown={handleTagKeyDown}
-                                placeholder="Escribe una etiqueta y pulsa Enter"
-                                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            />
-
-                            {/* Chips debajo, separados del input */}
-                            {newCar.tags.length > 0 && (
-                                <div className="flex flex-wrap items-center gap-2 mt-2">
-                                    {newCar.tags.map(tag => (
-                                        <span
-                                          key={tag}
-                                          className="flex items-center gap-1 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 text-sm px-2 py-1 rounded"
-                                        >
-                                            {tag}
-                                            <button
-                                              type="button"
-                                              onClick={() => removeTag(tag)}
-                                              className="ml-1"
-                                              aria-label={`Quitar etiqueta ${tag}`}
-                                            >
-                                                <FontAwesomeIcon
-                                                  icon={faXmark}
-                                                  className="w-3 h-3 text-blue-600 dark:text-blue-200 hover:text-blue-800 dark:hover:text-blue-100"
-                                                />
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
+                        
                         <div>
                             <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Permiso de Circulación</label>
                             <div className="flex items-center gap-2 mt-2">
@@ -350,7 +314,19 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                                 <p className="text-xs text-slate-500 mt-2">Archivo seleccionado: {registrationDocumentFile.name}</p>
                             )}
                         </div>
-
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Etiquetas</label>
+                            <div className="flex flex-wrap items-center gap-2 w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500">
+                                {newCar.tags.map(tag => (
+                                    <span key={tag} className="flex items-center gap-1 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 text-sm px-2 py-1 rounded">
+                                        {tag}
+                                        <button onClick={() => removeTag(tag)}><FontAwesomeIcon icon={faXmark} className="w-3 h-3 text-blue-600 dark:text-blue-200 hover:text-blue-800 dark:hover:text-blue-100" /></button>
+                                    </span>
+                                ))}
+                                <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="Añadir etiqueta y pulsar Enter" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-sm min-w-[150px]" />
+                            </div>
+                        </div>
                         <TextareaField label="Anotaciones" name="notes" value={newCar.notes} onChange={handleChange} placeholder="Añade cualquier anotación relevante sobre el coche..." />
                     </div>
                 </form>

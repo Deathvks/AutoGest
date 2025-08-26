@@ -1,3 +1,4 @@
+// autogest-app/backend/routes/expenseRoutes.js
 const express = require('express');
 const router = express.Router();
 const expenseController = require('../controllers/expenseController');
@@ -10,7 +11,7 @@ router.get('/', protect, expenseController.getAllExpenses);
 router.post('/', protect, expenseController.createExpense);
 
 // DELETE /api/expenses/:id -> Eliminar un gasto por su ID
-router.delete('/:id', protect, authorize('admin'), expenseController.deleteExpense);
+router.delete('/:id', protect, expenseController.deleteExpense);
 
 // GET /api/expenses/car/:licensePlate -> Obtener gastos de un coche por matrícula
 router.get('/car/:licensePlate', protect, expenseController.getExpensesByCarLicensePlate);

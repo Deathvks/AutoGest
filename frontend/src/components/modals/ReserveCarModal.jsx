@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faEuroSign } from '@fortawesome/free-solid-svg-icons';
 
 // --- Componentes de Formulario ---
-const InputField = ({ label, name, value, onChange, type = 'text', icon }) => (
+const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode }) => (
     <div>
         <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{label}</label>
         <div className="relative">
@@ -12,12 +12,13 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon }) => (
                     <FontAwesomeIcon icon={icon} className="h-4 w-4 text-slate-400" />
                 </div>
             )}
-            <input 
-                type={type} 
-                name={name} 
-                value={value} 
-                onChange={onChange} 
-                className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-amber-500 focus:border-amber-500 ${icon ? 'pl-9' : ''}`} 
+            <input
+                type={type}
+                name={name}
+                value={value}
+                onChange={onChange}
+                inputMode={inputMode}
+                className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-amber-500 focus:border-amber-500 ${icon ? 'pl-9' : ''}`}
             />
         </div>
     </div>
@@ -45,15 +46,20 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
     const [deposit, setDeposit] = useState('');
     const [error, setError] = useState('');
 
+    const parseNumber = (str) => {
+        if (typeof str !== 'string' || !str) return '';
+        return str.replace(/\./g, '').replace(',', '.');
+    };
+
     const handleConfirm = () => {
         setError('');
-        const depositAmount = parseFloat(deposit);
+        const depositAmount = parseFloat(parseNumber(deposit));
 
         if (deposit && (isNaN(depositAmount) || depositAmount <= 0)) {
             setError("El importe de la reserva debe ser un número válido y mayor que cero.");
             return;
         }
-        
+
         onConfirm(car, notes, depositAmount || null);
     };
 
@@ -76,7 +82,8 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                         <InputField
                             label="Importe de Reserva (€) (Opcional)"
                             name="deposit"
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             value={deposit}
                             onChange={(e) => setDeposit(e.target.value)}
                             icon={faEuroSign}

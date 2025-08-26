@@ -1,9 +1,10 @@
+// autogest-app/frontend/src/pages/Expenses.jsx
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faPlusCircle, faCar } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faPlusCircle, faCar, faTrash } from '@fortawesome/free-solid-svg-icons';
 
-const Expenses = ({ expenses, cars, onAddExpense }) => {
+const Expenses = ({ expenses, cars, onAddExpense, onDeleteExpense }) => {
     useEffect(() => {
         const jspdfScript = document.createElement('script');
         jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
@@ -86,6 +87,7 @@ const Expenses = ({ expenses, cars, onAddExpense }) => {
                                     <th scope="col" className="px-6 py-4">Importe</th>
                                     <th scope="col" className="px-6 py-4">Coche Asociado</th>
                                     <th scope="col" className="px-6 py-4">Descripción</th>
+                                    <th scope="col" className="px-6 py-4"><span className="sr-only">Acciones</span></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -96,6 +98,11 @@ const Expenses = ({ expenses, cars, onAddExpense }) => {
                                         <td className="px-6 py-4 font-bold text-slate-800 dark:text-slate-200">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</td>
                                         <td className="px-6 py-4">{getCarName(expense.carLicensePlate)}</td>
                                         <td className="px-6 py-4">{expense.description}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button onClick={() => onDeleteExpense(expense)} className="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300">
+                                                <FontAwesomeIcon icon={faTrash} />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

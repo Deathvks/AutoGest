@@ -1,6 +1,16 @@
+// autogest-app/backend/controllers/carController.js
+
 const fs = require('fs');
 const path = require('path');
 const { Car, Location } = require('../models');
+
+// Función auxiliar para convertir valores vacíos a null
+const emptyToNull = (value) => {
+    if (value === '' || value === null || value === undefined) {
+        return null;
+    }
+    return value;
+};
 
 // Obtener todos los coches DEL USUARIO LOGUEADO
 exports.getAllCars = async (req, res) => {
@@ -44,7 +54,12 @@ exports.createCar = async (req, res) => {
             userId: req.user.id
         };
 
-        // Si se proporciona una ubicación, la busca o la crea.
+        // --- LÍNEA MODIFICADA ---
+        // Normalizamos la matrícula: quitamos espacios y a mayúsculas
+        if (carData.licensePlate) {
+            carData.licensePlate = carData.licensePlate.replace(/\s/g, '').toUpperCase();
+        }
+
         if (carData.location && carData.location.trim() !== '') {
             await Location.findOrCreate({
                 where: { 
@@ -54,7 +69,6 @@ exports.createCar = async (req, res) => {
             });
         }
 
-        // req.files es un objeto con los archivos subidos, ej: { image: [file], registrationDocument: [file] }
         if (req.files) {
             if (req.files.image) {
                 const imageUrl = `${process.env.BACKEND_URL}/uploads/${req.files.image[0].filename}`;
@@ -82,7 +96,28 @@ exports.updateCar = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para editarlo' });
         }
         
-        const updateData = { ...req.body };
+        const {
+            make, model, price, purchasePrice, salePrice, reservationDeposit, status,
+            location, km, fuel, horsepower, registrationDate, licensePlate, vin,
+            transmission, notes, tags
+        } = req.body;
+
+        const updateData = {
+            make, model, transmission, notes, tags, fuel, status, location,
+            registrationDate, licensePlate, vin,
+            price: emptyToNull(price),
+            purchasePrice: emptyToNull(purchasePrice),
+            salePrice: emptyToNull(salePrice),
+            reservationDeposit: emptyToNull(reservationDeposit),
+            km: emptyToNull(km),
+            horsepower: emptyToNull(horsepower),
+        };
+
+        // --- LÍNEA MODIFICADA ---
+        // Normalizamos la matrícula también al actualizar
+        if (updateData.licensePlate) {
+            updateData.licensePlate = updateData.licensePlate.replace(/\s/g, '').toUpperCase();
+        }
         
         if (updateData.location && updateData.location.trim() !== '') {
             await Location.findOrCreate({
@@ -90,7 +125,6 @@ exports.updateCar = async (req, res) => {
             });
         }
         
-        // Función auxiliar para borrar archivos
         const deleteFile = (fileUrl) => {
             if (fileUrl) {
                 const filename = path.basename(fileUrl);
@@ -102,11 +136,11 @@ exports.updateCar = async (req, res) => {
 
         if (req.files) {
             if (req.files.image) {
-                deleteFile(car.imageUrl); // Borra la imagen antigua
+                deleteFile(car.imageUrl);
                 updateData.imageUrl = `${process.env.BACKEND_URL}/uploads/${req.files.image[0].filename}`;
             }
             if (req.files.registrationDocument) {
-                deleteFile(car.registrationDocumentUrl); // Borra el documento antiguo
+                deleteFile(car.registrationDocumentUrl);
                 updateData.registrationDocumentUrl = `${process.env.BACKEND_URL}/documents/${req.files.registrationDocument[0].filename}`;
             }
         }
@@ -128,7 +162,6 @@ exports.deleteCar = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para eliminarlo' });
         }
         
-        // Borra la imagen y el documento asociados antes de eliminar el coche
         if (car.imageUrl) {
              const imageFilename = path.basename(car.imageUrl);
              const imageFilePath = path.join(__dirname, '..', 'public', 'uploads', imageFilename);

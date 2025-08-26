@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// autogest-app/frontend/src/layouts/MainLayout.jsx
+import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import api from '../services/api';
 
@@ -20,19 +21,16 @@ import DeleteCarConfirmationModal from '../components/modals/DeleteCarConfirmati
 import AddExpenseModal from '../components/modals/AddExpenseModal';
 import ReserveCarModal from '../components/modals/ReserveCarModal';
 import CancelReservationModal from '../components/modals/CancelReservationModal';
+import Toast from '../components/Toast';
+import DeleteExpenseConfirmationModal from '../components/modals/DeleteExpenseConfirmationModal';
 
 const MainLayout = () => {
-    // Estados de la UI
     const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
     const [isDataLoading, setIsDataLoading] = useState(true);
-
-    // Estados de Datos
     const [cars, setCars] = useState([]);
     const [expenses, setExpenses] = useState([]);
     const [incidents, setIncidents] = useState([]);
     const [locations, setLocations] = useState([]);
-
-    // Estados para los Modales
     const [carToSell, setCarToSell] = useState(null);
     const [carToView, setCarToView] = useState(null);
     const [isAddCarModalOpen, setAddCarModalOpen] = useState(false);
@@ -40,10 +38,13 @@ const MainLayout = () => {
     const [carToEdit, setCarToEdit] = useState(null);
     const [carToDelete, setCarToDelete] = useState(null);
     const [isAddExpenseModalOpen, setAddExpenseModalOpen] = useState(false);
+    const [expenseToDelete, setExpenseToDelete] = useState(null);
     const [carToReserve, setCarToReserve] = useState(null);
     const [carToCancelReservation, setCarToCancelReservation] = useState(null);
+    const [toast, setToast] = useState(null);
+    const [carPendingDeletion, setCarPendingDeletion] = useState(null);
+    const deleteTimeoutRef = useRef(null);
 
-    // --- FUNCIONES DE CARGA DE DATOS ---
     const fetchLocations = async () => {
         try {
             const locationsData = await api.getLocations();
@@ -52,7 +53,6 @@ const MainLayout = () => {
             console.error("Error al cargar ubicaciones:", error);
         }
     };
-
     useEffect(() => {
         const fetchData = async () => {
             setIsDataLoading(true);
@@ -75,7 +75,6 @@ const MainLayout = () => {
         };
         fetchData();
     }, []);
-
     useEffect(() => {
         if (isDarkMode) {
             document.documentElement.classList.add('dark');
@@ -85,17 +84,14 @@ const MainLayout = () => {
             localStorage.setItem('theme', 'light');
         }
     }, [isDarkMode]);
-
-    // --- MANEJADORES DE EVENTOS (HANDLERS) ---
     const handleAddCar = async (formData) => {
         try {
             const createdCar = await api.createCar(formData);
             setCars(prev => [createdCar, ...prev]);
             fetchLocations();
             setAddCarModalOpen(false);
-        } catch (error) { console.error("Error al añadir coche:", error); }
+        } catch (error) { console.error("Error al añadir coche:", error); throw error; }
     };
-
     const handleUpdateCar = async (formData) => {
         try {
             const carId = carToEdit.id;
@@ -103,18 +99,56 @@ const MainLayout = () => {
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
             fetchLocations();
             setCarToEdit(null);
-        } catch (error) { console.error("Error al actualizar coche:", error); }
+        } catch (error) { console.error("Error al actualizar coche:", error); throw error; }
     };
-
-    const handleDeleteCar = async (carId) => {
+    const confirmDelete = async (carId) => {
         try {
             await api.deleteCar(carId);
-            setCars(prev => prev.filter(c => c.id !== carId));
-            setCarToDelete(null);
-            setCarToView(null);
-        } catch (error) { console.error("Error al eliminar coche:", error); }
+            setCarPendingDeletion(null);
+        } catch (error) {
+            console.error("Error al eliminar coche:", error);
+            if (carPendingDeletion) {
+                setCars(prev => [carPendingDeletion, ...prev].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+            }
+        }
     };
+    const handleDeleteCar = (carId) => {
+        const car = cars.find(c => c.id === carId);
+        if (!car) return;
 
+        if (deleteTimeoutRef.current) {
+            clearTimeout(deleteTimeoutRef.current);
+        }
+        if (carPendingDeletion) {
+            confirmDelete(carPendingDeletion.id);
+        }
+
+        setCars(prev => prev.filter(c => c.id !== carId));
+        setCarPendingDeletion(car);
+        setCarToDelete(null);
+        setCarToView(null);
+        
+        setToast({ message: 'Coche eliminado.' });
+
+        deleteTimeoutRef.current = setTimeout(() => {
+            confirmDelete(carId);
+            setToast(null);
+            deleteTimeoutRef.current = null;
+        }, 5000);
+    };
+    
+    const handleUndoDelete = () => {
+        if (deleteTimeoutRef.current) {
+            clearTimeout(deleteTimeoutRef.current);
+            deleteTimeoutRef.current = null;
+        }
+        if (carPendingDeletion) {
+            setCars(prev => [carPendingDeletion, ...prev].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+            setCarPendingDeletion(null);
+        }
+        setToast(null);
+    };
+    
     const handleSellConfirm = async (carId, salePrice) => {
         try {
             const carToUpdate = cars.find(c => c.id === carId);
@@ -125,10 +159,10 @@ const MainLayout = () => {
             setCarToSell(null);
         } catch (error) { console.error("Error al vender el coche:", error); }
     };
-    
     const handleReserveConfirm = async (carToUpdate, reservationNotes, depositAmount) => {
         try {
             const updatedData = { 
+                ...carToUpdate,
                 status: 'Reservado', 
                 notes: reservationNotes, 
                 reservationDeposit: depositAmount 
@@ -140,10 +174,10 @@ const MainLayout = () => {
             console.error("Error al reservar el coche:", error);
         }
     };
-
     const handleConfirmCancelReservation = async (carToUpdate) => {
         try {
             const updatedData = {
+                ...carToUpdate,
                 status: 'En venta',
                 reservationDeposit: null,
                 notes: `Reserva cancelada. Nota anterior: ${carToUpdate.notes || ''}`.trim()
@@ -155,7 +189,6 @@ const MainLayout = () => {
             console.error("Error al cancelar la reserva:", error);
         }
     };
-
     const handleAddIncident = async (car, description) => {
         const incidentData = { date: new Date().toISOString().split('T')[0], description, licensePlate: car.licensePlate, carId: car.id };
         try {
@@ -164,14 +197,12 @@ const MainLayout = () => {
             setCarForIncident(null);
         } catch (error) { console.error("Error al añadir incidencia:", error); }
     };
-
     const handleDeleteIncident = async (incidentId) => {
         try {
             await api.deleteIncident(incidentId);
             setIncidents(prev => prev.filter(inc => inc.id !== incidentId));
         } catch (error) { console.error("Error al eliminar incidencia:", error); }
     };
-
     const handleResolveIncident = async (incidentId) => {
         try {
             const updatedIncident = await api.updateIncident(incidentId, { status: 'resuelta' });
@@ -182,13 +213,26 @@ const MainLayout = () => {
             console.error("Error al resolver la incidencia:", error);
         }
     };
-
     const handleAddExpense = async (expenseData) => {
         try {
             const newExpense = await api.createExpense(expenseData);
             setExpenses(prev => [newExpense, ...prev]);
             setAddExpenseModalOpen(false);
-        } catch (error) { console.error("Error al añadir gasto:", error); }
+        } catch (error) {
+            console.error("Error al añadir gasto:", error);
+            throw error;
+        }
+    };
+    
+    const confirmDeleteExpense = async (expenseId) => {
+        try {
+            await api.deleteExpense(expenseId);
+            setExpenses(prev => prev.filter(exp => exp.id !== expenseId));
+        } catch (error) {
+            console.error("Error al eliminar el gasto:", error);
+        } finally {
+            setExpenseToDelete(null);
+        }
     };
 
     if (isDataLoading) {
@@ -203,7 +247,7 @@ const MainLayout = () => {
                     <Route path="/" element={<Dashboard cars={cars} expenses={expenses} isDarkMode={isDarkMode} />} />
                     <Route path="/cars" element={<MyCars cars={cars} incidents={incidents} onSellClick={setCarToSell} onAddClick={() => setAddCarModalOpen(true)} onViewDetailsClick={setCarToView} onAddIncidentClick={setCarForIncident} onReserveClick={setCarToReserve} onCancelReservationClick={setCarToCancelReservation} />} />
                     <Route path="/sales" element={<SalesSummary cars={cars} onViewDetailsClick={setCarToView} />} />
-                    <Route path="/expenses" element={<Expenses expenses={expenses} cars={cars} onAddExpense={() => setAddExpenseModalOpen(true)} />} />
+                    <Route path="/expenses" element={<Expenses expenses={expenses} cars={cars} onAddExpense={() => setAddExpenseModalOpen(true)} onDeleteExpense={setExpenseToDelete} />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} cars={cars} expenses={expenses} incidents={incidents} />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
@@ -211,7 +255,14 @@ const MainLayout = () => {
             </main>
             <BottomNav />
 
-            {/* Modales */}
+            {toast && (
+                <Toast 
+                    message={toast.message} 
+                    onUndo={handleUndoDelete}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
             {carToView && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setCarToView(null)}>
                     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -236,6 +287,7 @@ const MainLayout = () => {
             {carForIncident && <AddIncidentModal car={carForIncident} onClose={() => setCarForIncident(null)} onConfirm={handleAddIncident} />}
             {carToDelete && <DeleteCarConfirmationModal car={carToDelete} onClose={() => setCarToDelete(null)} onConfirm={handleDeleteCar} />}
             {isAddExpenseModalOpen && <AddExpenseModal cars={cars} onClose={() => setAddExpenseModalOpen(false)} onAdd={handleAddExpense} />}
+            {expenseToDelete && <DeleteExpenseConfirmationModal expense={expenseToDelete} onClose={() => setExpenseToDelete(null)} onConfirm={confirmDeleteExpense} />}
             {carToReserve && <ReserveCarModal car={carToReserve} onClose={() => setCarToReserve(null)} onConfirm={handleReserveConfirm} />}
             {carToCancelReservation && <CancelReservationModal car={carToCancelReservation} onClose={() => setCarToCancelReservation(null)} onConfirm={handleConfirmCancelReservation} />}
         </div>

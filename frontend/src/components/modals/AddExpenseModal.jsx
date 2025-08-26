@@ -1,10 +1,11 @@
+// autogest-app/frontend/src/components/modals/AddExpenseModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faEuroSign, faCalendarDays, faTag, faCar } from '@fortawesome/free-solid-svg-icons';
-import Select from '../Select'; // Importamos el nuevo componente
+import Select from '../Select';
 
 // --- Componentes de Formulario ---
-const InputField = ({ label, name, value, onChange, type = 'text', icon }) => (
+const InputField = ({ label, name, value, onChange, type = 'text', icon, placeholder }) => (
     <div>
         <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{label}</label>
         <div className="relative">
@@ -14,7 +15,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon }) => (
                 </div>
             )}
             <input 
-                type={type} name={name} value={value} onChange={onChange} 
+                type={type} name={name} value={value} onChange={onChange} placeholder={placeholder}
                 className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 ${icon ? 'pl-9' : ''}`} 
             />
         </div>
@@ -45,7 +46,7 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
         category: 'Mecánica',
         amount: '',
         description: '',
-        carLicensePlate: cars[0]?.licensePlate || ''
+        carLicensePlate: ''
     });
     const [error, setError] = useState('');
 
@@ -56,11 +57,6 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
         { id: 'Combustible', name: 'Combustible' },
         { id: 'Otros', name: 'Otros' },
     ];
-
-    const carOptions = cars.map(car => ({
-        id: car.licensePlate,
-        name: `${car.make} ${car.model} (${car.licensePlate})`
-    }));
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -73,7 +69,7 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
 
     const validateForm = () => {
         if (!newExpense.date || !newExpense.category || !newExpense.amount || !newExpense.carLicensePlate) {
-            setError("Todos los campos, incluido el coche, son obligatorios.");
+            setError("Todos los campos, incluida la matrícula, son obligatorios.");
             return false;
         }
         if (isNaN(parseFloat(newExpense.amount)) || parseFloat(newExpense.amount) <= 0) {
@@ -84,11 +80,15 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
         return true;
     };
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         if (!validateForm()) {
             return;
         }
-        onAdd(newExpense);
+        try {
+            await onAdd(newExpense);
+        } catch (err) {
+            setError(err.message || 'Ha ocurrido un error inesperado.');
+        }
     };
 
     return (
@@ -111,12 +111,13 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
                             icon={faTag}
                         />
                         <InputField label="Importe (€)" name="amount" type="number" value={newExpense.amount} onChange={handleChange} icon={faEuroSign} />
-                        <Select
-                            label="Asociar a Coche"
-                            value={newExpense.carLicensePlate}
-                            onChange={(value) => handleSelectChange('carLicensePlate', value)}
-                            options={carOptions}
+                        <InputField 
+                            label="Asociar a Coche (Matrícula)" 
+                            name="carLicensePlate" 
+                            value={newExpense.carLicensePlate} 
+                            onChange={handleChange} 
                             icon={faCar}
+                            placeholder="Escribe la matrícula"
                         />
                         <TextareaField label="Descripción" name="description" value={newExpense.description} onChange={handleChange} placeholder="Detalles del gasto..." />
                     </div>
