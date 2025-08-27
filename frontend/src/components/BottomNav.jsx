@@ -1,3 +1,4 @@
+// autogest-app/frontend/src/components/BottomNav.jsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -19,13 +20,16 @@ const navItems = [
 
 const BottomNav = () => {
     return (
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800/50 flex justify-around p-2 z-50">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-component-bg border-t border-border-color flex justify-around p-2 z-50">
             {navItems.map(item => (
                 <NavLink
                     key={item.to}
                     to={item.to}
                     className={({ isActive }) =>
-                        `flex flex-col items-center justify-center w-full p-2 rounded-lg transition-colors ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400'
+                        `flex flex-col items-center justify-center w-full p-2 rounded-lg transition-colors ${
+                            isActive 
+                            ? 'text-blue-accent' 
+                            : 'text-text-secondary'
                         }`
                     }
                 >

@@ -1,3 +1,4 @@
+// autogest-app/frontend/src/pages/RegisterPage.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -51,50 +52,50 @@ const RegisterPage = () => {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-100 dark:bg-slate-900">
-            <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-10 shadow-lg dark:bg-slate-800">
+        <div className="flex min-h-screen items-center justify-center bg-background">
+            <div className="w-[90%] sm:w-full max-w-md space-y-8 rounded-xl bg-component-bg p-8 sm:p-10 shadow-lg border border-border-color">
                 <div>
-                    <div className="mx-auto flex h-12 w-auto items-center justify-center text-blue-600 dark:text-blue-400">
+                    <div className="mx-auto flex h-12 w-auto items-center justify-center text-blue-accent">
                         <CarIcon className="h-10 w-10" />
                     </div>
-                    <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-text-primary">
                         Crear una Cuenta
                     </h2>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
-                    <div className="space-y-4 rounded-md shadow-sm">
+                    <div className="space-y-4 rounded-md">
                         <div>
                             <label htmlFor="name" className="sr-only">Nombre</label>
                             <input id="name" name="name" type="text" value={name} onChange={(e) => setName(e.target.value)}
-                                className="relative block w-full appearance-none rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                className="relative block w-full appearance-none rounded-md border border-border-color px-3 py-2 bg-background text-text-primary placeholder-text-secondary focus:z-10 focus:border-blue-accent focus:outline-none focus:ring-blue-accent"
                                 placeholder="Nombre completo" />
                         </div>
                         <div>
                             <label htmlFor="email-address" className="sr-only">Email</label>
                             <input id="email-address" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                                className="relative block w-full appearance-none rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                className="relative block w-full appearance-none rounded-md border border-border-color px-3 py-2 bg-background text-text-primary placeholder-text-secondary focus:z-10 focus:border-blue-accent focus:outline-none focus:ring-blue-accent"
                                 placeholder="Email" />
                         </div>
                         <div>
                             <label htmlFor="password"className="sr-only">Contraseña</label>
                             <input id="password" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                                className="relative block w-full appearance-none rounded-md border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                className="relative block w-full appearance-none rounded-md border border-border-color px-3 py-2 bg-background text-text-primary placeholder-text-secondary focus:z-10 focus:border-blue-accent focus:outline-none focus:ring-blue-accent"
                                 placeholder="Contraseña" />
                         </div>
                     </div>
 
-                    {error && <p className="text-sm text-rose-600">{error}</p>}
-                    {success && <p className="text-sm text-emerald-600">{success}</p>}
+                    {error && <p className="text-sm text-red-accent">{error}</p>}
+                    {success && <p className="text-sm text-green-accent">{success}</p>}
 
                     <div>
                         <button type="submit"
-                            className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-blue-accent focus:ring-offset-2">
                             Registrarse
                         </button>
                     </div>
                 </form>
                 <div className="text-sm text-center">
-                    <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
+                    <Link to="/login" className="font-medium text-blue-accent hover:opacity-80">
                         ¿Ya tienes una cuenta? Inicia sesión
                     </Link>
                 </div>
