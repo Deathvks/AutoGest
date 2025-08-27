@@ -1,10 +1,7 @@
 // autogest-app/frontend/src/services/api.js
 
-// --- LÍNEA CLAVE ---
 // Elige la URL base dependiendo del entorno
 const BASE_URL = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
-
-// El resto del archivo se queda exactamente igual...
 
 // --- Funciones de Ayuda para Autenticación ---
 
@@ -65,7 +62,7 @@ const api = {
 
     // --- Coches (Cars) ---
     getCars: () => fetch(`${BASE_URL}/cars`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
-    createCar: (formData) => fetch(`${BASE_-URL}/cars`, { method: 'POST', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
+    createCar: (formData) => fetch(`${BASE_URL}/cars`, { method: 'POST', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
     updateCar: (carId, data) => {
         const isFormData = data instanceof FormData;
         return fetch(`${BASE_URL}/cars/${carId}`, {
@@ -94,6 +91,14 @@ const api = {
 
     // --- Ubicaciones (Locations) ---
     getLocations: () => fetch(`${BASE_URL}/locations`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
+
+    // --- Administración (Admin) ---
+    admin: {
+        getAllUsers: () => fetch(`${BASE_URL}/admin/users`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
+        createUser: (userData) => fetch(`${BASE_URL}/admin/users`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(userData) }).then(handleProtectedResponse),
+        updateUser: (userId, userData) => fetch(`${BASE_URL}/admin/users/${userId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(userData) }).then(handleProtectedResponse),
+        deleteUser: (userId) => fetch(`${BASE_URL}/admin/users/${userId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+    },
 };
 
 export default api;

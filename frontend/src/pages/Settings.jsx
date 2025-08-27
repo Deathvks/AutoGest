@@ -1,7 +1,8 @@
 // autogest-app/frontend/src/pages/Settings.jsx
 import React, { useState, useContext } from 'react';
+import { Link } from 'react-router-dom'; // 1. Importar Link
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield } from '@fortawesome/free-solid-svg-icons'; // 2. Importar nuevo icono
 import Papa from 'papaparse';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
@@ -21,7 +22,7 @@ const ToggleSwitch = ({ label, enabled, onChange }) => (
 
 // --- Componente Principal de la Página ---
 const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDeleteAccountClick }) => {
-    const { logout } = useContext(AuthContext);
+    const { user, logout } = useContext(AuthContext); // 3. Obtener 'user' del contexto
     const [notifications, setNotifications] = useState({
         emailOnSale: true,
         emailOnIncident: false,
@@ -161,6 +162,20 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                             {exportMessage && <p className="text-sm text-yellow-accent mt-3">{exportMessage}</p>}
                         </div>
 
+                        {/* 4. SECCIÓN DE ADMINISTRACIÓN (SOLO VISIBLE PARA ADMINS) */}
+                        {user && user.role === 'admin' && (
+                            <>
+                                <hr className="border-border-color" />
+                                <div>
+                                    <h4 className="font-semibold text-text-primary mb-2">Administración</h4>
+                                    <Link to="/admin" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
+                                        <FontAwesomeIcon icon={faUserShield} className="mr-2" />
+                                        Gestionar Usuarios
+                                    </Link>
+                                </div>
+                            </>
+                        )}
+                        
                         <hr className="border-border-color" />
                         
                         <div>

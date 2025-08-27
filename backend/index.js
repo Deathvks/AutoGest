@@ -23,6 +23,9 @@ app.use('/api/expenses', require('./routes/expenseRoutes'));
 app.use('/api/incidents', require('./routes/incidentRoutes'));
 app.use('/api/locations', require('./routes/locationRoutes'));
 
+// --- NUEVA RUTA PARA LA ADMINISTRACIÓN ---
+app.use('/api/admin', require('./routes/adminRoutes'));
+
 // Ruta raíz
 app.get('/', (req, res) => {
   res.send('Servidor de AutoGest funcionando correctamente.');

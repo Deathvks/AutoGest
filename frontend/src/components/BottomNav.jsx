@@ -7,12 +7,15 @@ import {
     faCar,
     faWallet,
     faUser,
-    faCog
+    faCog,
+    faTags // <-- Icono añadido
 } from '@fortawesome/free-solid-svg-icons';
 
+// Array de items de navegación actualizado
 const navItems = [
     { to: '/', label: 'Dashboard', icon: faChartLine },
     { to: '/cars', label: 'Coches', icon: faCar },
+    { to: '/sales', label: 'Ventas', icon: faTags }, // <-- Enlace de Ventas añadido
     { to: '/expenses', label: 'Gastos', icon: faWallet },
     { to: '/profile', label: 'Perfil', icon: faUser },
     { to: '/settings', label: 'Ajustes', icon: faCog },

@@ -1,7 +1,8 @@
 // autogest-app/frontend/src/layouts/MainLayout.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import api from '../services/api';
+import { AuthContext } from '../context/AuthContext';
 
 // Componentes y Páginas
 import Sidebar from '../components/Sidebar';
@@ -12,6 +13,7 @@ import SalesSummary from '../pages/SalesSummary';
 import Expenses from '../pages/Expenses';
 import Profile from '../pages/Profile';
 import Settings from '../pages/Settings';
+import ManageUsersPage from '../pages/ManageUsersPage';
 import CarDetailsModalContent from '../components/modals/CarDetailsModalContent';
 import SellCarModal from '../components/modals/SellCarModal';
 import AddCarModal from '../components/modals/AddCarModal';
@@ -24,15 +26,25 @@ import CancelReservationModal from '../components/modals/CancelReservationModal'
 import Toast from '../components/Toast';
 import DeleteExpenseConfirmationModal from '../components/modals/DeleteExpenseConfirmationModal';
 import DeleteAccountConfirmationModal from '../components/modals/DeleteAccountConfirmationModal';
+import AddUserModal from '../components/modals/AddUserModal';
+import EditUserModal from '../components/modals/EditUserModal';
+import DeleteUserConfirmationModal from '../components/modals/DeleteUserConfirmationModal';
+
 
 const MainLayout = () => {
-    // ... (otros estados se mantienen igual)
+    const { user } = useContext(AuthContext);
     const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
     const [isDataLoading, setIsDataLoading] = useState(true);
     const [cars, setCars] = useState([]);
     const [expenses, setExpenses] = useState([]);
     const [incidents, setIncidents] = useState([]);
     const [locations, setLocations] = useState([]);
+    
+    const [users, setUsers] = useState([]);
+    const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
+    const [userToEdit, setUserToEdit] = useState(null);
+    const [userToDelete, setUserToDelete] = useState(null);
+
     const [carToSell, setCarToSell] = useState(null);
     const [carToView, setCarToView] = useState(null);
     const [isAddCarModalOpen, setAddCarModalOpen] = useState(false);
@@ -60,16 +72,25 @@ const MainLayout = () => {
         const fetchData = async () => {
             setIsDataLoading(true);
             try {
-                const [carsData, expensesData, incidentsData, locationsData] = await Promise.all([
+                const dataPromises = [
                     api.getCars(),
                     api.getExpenses(),
                     api.getIncidents(),
                     api.getLocations(),
-                ]);
+                ];
+
+                if (user && user.role === 'admin') {
+                    dataPromises.push(api.admin.getAllUsers());
+                }
+
+                const [carsData, expensesData, incidentsData, locationsData, usersData] = await Promise.all(dataPromises);
+                
                 setCars(carsData);
                 setExpenses(expensesData);
                 setIncidents(incidentsData);
                 setLocations(locationsData);
+                if (usersData) setUsers(usersData);
+
             } catch (error) {
                 console.error("Error al cargar datos:", error);
             } finally {
@@ -77,7 +98,8 @@ const MainLayout = () => {
             }
         };
         fetchData();
-    }, []);
+    }, [user]);
+    
     useEffect(() => {
         if (isDarkMode) {
             document.documentElement.classList.add('dark');
@@ -87,6 +109,27 @@ const MainLayout = () => {
             localStorage.setItem('theme', 'light');
         }
     }, [isDarkMode]);
+
+    const handleUserAdded = (newUser) => {
+        setUsers(prev => [newUser, ...prev]);
+        setAddUserModalOpen(false);
+    };
+
+    const handleUserUpdated = (updatedUser) => {
+        setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+        setUserToEdit(null);
+    };
+
+    const handleUserDeleted = async (userId) => {
+        try {
+            await api.admin.deleteUser(userId);
+            setUsers(prev => prev.filter(u => u.id !== userId));
+            setUserToDelete(null);
+        } catch (error) {
+            console.error("Error al eliminar usuario:", error);
+        }
+    };
+
     const handleAddCar = async (formData) => {
         try {
             const createdCar = await api.createCar(formData);
@@ -245,7 +288,7 @@ const MainLayout = () => {
     return (
         <div className="flex h-screen bg-background font-sans text-text-secondary">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+            <main className="flex-1 overflow-y-auto min-w-0 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
                 <Routes>
                     <Route path="/" element={<Dashboard cars={cars} expenses={expenses} isDarkMode={isDarkMode} />} />
                     <Route path="/cars" element={<MyCars cars={cars} incidents={incidents} onSellClick={setCarToSell} onAddClick={() => setAddCarModalOpen(true)} onViewDetailsClick={setCarToView} onAddIncidentClick={setCarForIncident} onReserveClick={setCarToReserve} onCancelReservationClick={setCarToCancelReservation} />} />
@@ -253,6 +296,18 @@ const MainLayout = () => {
                     <Route path="/expenses" element={<Expenses expenses={expenses} cars={cars} onAddExpense={() => setAddExpenseModalOpen(true)} onDeleteExpense={setExpenseToDelete} />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} cars={cars} expenses={expenses} incidents={incidents} onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)} />} />
+                    
+                    <Route path="/admin" element={
+                        user && user.role === 'admin' 
+                        ? <ManageUsersPage 
+                            users={users} 
+                            onAddUser={() => setAddUserModalOpen(true)}
+                            onEditUser={setUserToEdit}
+                            onDeleteUser={setUserToDelete}
+                          /> 
+                        : <Navigate to="/" replace />
+                    } />
+
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </main>
@@ -294,6 +349,10 @@ const MainLayout = () => {
             {isDeleteAccountModalOpen && <DeleteAccountConfirmationModal onClose={() => setIsDeleteAccountModalOpen(false)} />}
             {carToReserve && <ReserveCarModal car={carToReserve} onClose={() => setCarToReserve(null)} onConfirm={handleReserveConfirm} />}
             {carToCancelReservation && <CancelReservationModal car={carToCancelReservation} onClose={() => setCarToCancelReservation(null)} onConfirm={handleConfirmCancelReservation} />}
+            
+            {isAddUserModalOpen && <AddUserModal onClose={() => setAddUserModalOpen(false)} onUserAdded={handleUserAdded} />}
+            {userToEdit && <EditUserModal user={userToEdit} onClose={() => setUserToEdit(null)} onUserUpdated={handleUserUpdated} />}
+            {userToDelete && <DeleteUserConfirmationModal user={userToDelete} onClose={() => setUserToDelete(null)} onConfirmDelete={handleUserDeleted} />}
         </div>
     );
 };

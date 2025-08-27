@@ -1,5 +1,5 @@
 // autogest-app/frontend/src/components/Sidebar.jsx
-import React from 'react';
+import React, { useContext } from 'react'; // 1. Importar useContext
 import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -8,8 +8,10 @@ import {
     faTags,
     faWallet,
     faUser,
-    faCog
+    faCog,
+    faUserShield // 2. Nuevo icono para el panel de admin
 } from '@fortawesome/free-solid-svg-icons';
+import { AuthContext } from '../context/AuthContext'; // 3. Importar el contexto de autenticación
 
 // --- Datos de Navegación ---
 const navItems = [
@@ -22,6 +24,9 @@ const navItems = [
 ];
 
 const Sidebar = () => {
+    // 4. Obtener el usuario del contexto
+    const { user } = useContext(AuthContext);
+
     return (
         <aside className="w-64 flex-shrink-0 bg-component-bg border-r border-border-color p-4 flex-col justify-between hidden lg:flex">
             <div>
@@ -46,6 +51,26 @@ const Sidebar = () => {
                             <span className="ml-4 font-medium">{item.label}</span>
                         </NavLink>
                     ))}
+
+                    {/* 5. Enlace condicional para administradores */}
+                    {user && user.role === 'admin' && (
+                        <>
+                            <hr className="my-4 border-border-color" />
+                            <NavLink
+                                to="/admin"
+                                className={({ isActive }) =>
+                                    `flex items-center w-full text-left px-3 py-2.5 rounded-lg transition-colors duration-200 ${
+                                        isActive
+                                        ? 'bg-red-accent text-white shadow-sm'
+                                        : 'text-text-secondary hover:bg-component-bg-hover hover:text-text-primary'
+                                    }`
+                                }
+                            >
+                                <FontAwesomeIcon icon={faUserShield} className="w-5 h-5" />
+                                <span className="ml-4 font-medium">Administración</span>
+                            </NavLink>
+                        </>
+                    )}
                 </nav>
             </div>
         </aside>
