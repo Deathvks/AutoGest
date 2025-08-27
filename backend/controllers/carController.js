@@ -75,11 +75,13 @@ exports.createCar = async (req, res) => {
 
         if (req.files) {
             if (req.files.image) {
-                const imageUrl = `${process.env.BACKEND_URL}/uploads/${req.files.image[0].filename}`;
+                // --- CAMBIO A RUTA RELATIVA ---
+                const imageUrl = `/uploads/${req.files.image[0].filename}`;
                 carData.imageUrl = imageUrl;
             }
             if (req.files.registrationDocument) {
-                const docUrl = `${process.env.BACKEND_URL}/documents/${req.files.registrationDocument[0].filename}`;
+                // --- CAMBIO A RUTA RELATIVA ---
+                const docUrl = `/documents/${req.files.registrationDocument[0].filename}`;
                 carData.registrationDocumentUrl = docUrl;
             }
         }
@@ -139,11 +141,13 @@ exports.updateCar = async (req, res) => {
         if (req.files) {
             if (req.files.image) {
                 deleteFile(car.imageUrl);
-                updateData.imageUrl = `${process.env.BACKEND_URL}/uploads/${req.files.image[0].filename}`;
+                // --- CAMBIO A RUTA RELATIVA ---
+                updateData.imageUrl = `/uploads/${req.files.image[0].filename}`;
             }
             if (req.files.registrationDocument) {
                 deleteFile(car.registrationDocumentUrl);
-                updateData.registrationDocumentUrl = `${process.env.BACKEND_URL}/documents/${req.files.registrationDocument[0].filename}`;
+                // --- CAMBIO A RUTA RELATIVA ---
+                updateData.registrationDocumentUrl = `/documents/${req.files.registrationDocument[0].filename}`;
             }
         }
         
@@ -194,7 +198,7 @@ exports.analyzeDocument = async (req, res) => {
         }
 
         const response = await openai.chat.completions.create({
-            model: "gpt-5-mini",
+            model: "gpt-4-vision-preview",
             messages: [
                 {
                     role: "user",
@@ -212,13 +216,13 @@ exports.analyzeDocument = async (req, res) => {
                     ],
                 },
             ],
+            max_tokens: 300
         });
 
         const result = response.choices[0].message.content;
         const cleanedJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsedData = JSON.parse(cleanedJson);
 
-        // --- NUEVA LÓGICA DE CÁLCULO ---
         if (parsedData.potenciaFiscal) {
             const cvf = parseFloat(String(parsedData.potenciaFiscal).replace(',', '.'));
             if (!isNaN(cvf)) {

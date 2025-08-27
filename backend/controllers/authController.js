@@ -93,7 +93,8 @@ exports.updateProfile = async (req, res) => {
         user.email = email || user.email;
 
         if (req.file) {
-            const newAvatarUrl = `${process.env.BACKEND_URL}/avatars/${req.file.filename}`;
+            // --- CAMBIO A RUTA RELATIVA ---
+            const newAvatarUrl = `/avatars/${req.file.filename}`;
             user.avatarUrl = newAvatarUrl;
 
             if (oldAvatarUrl && oldAvatarUrl !== newAvatarUrl) {
@@ -188,7 +189,6 @@ exports.updatePassword = async (req, res) => {
     }
 };
 
-// --- FUNCIÓN NUEVA ---
 // Eliminar la cuenta del usuario y todos sus datos asociados
 exports.deleteAccount = async (req, res) => {
     const transaction = await sequelize.transaction();
