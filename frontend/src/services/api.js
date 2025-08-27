@@ -1,6 +1,10 @@
 // autogest-app/frontend/src/services/api.js
-// La URL base de tu backend.
-const BASE_URL = 'http://localhost:3001/api';
+
+// --- LÍNEA CLAVE ---
+// Elige la URL base dependiendo del entorno
+const BASE_URL = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
+
+// El resto del archivo se queda exactamente igual...
 
 // --- Funciones de Ayuda para Autenticación ---
 
@@ -61,7 +65,7 @@ const api = {
 
     // --- Coches (Cars) ---
     getCars: () => fetch(`${BASE_URL}/cars`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
-    createCar: (formData) => fetch(`${BASE_URL}/cars`, { method: 'POST', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
+    createCar: (formData) => fetch(`${BASE_-URL}/cars`, { method: 'POST', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
     updateCar: (carId, data) => {
         const isFormData = data instanceof FormData;
         return fetch(`${BASE_URL}/cars/${carId}`, {
