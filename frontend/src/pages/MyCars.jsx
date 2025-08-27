@@ -1,3 +1,4 @@
+// autogest-app/frontend/src/pages/MyCars.jsx
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -30,7 +31,7 @@ const CarCard = ({ car, onSellClick, onViewDetailsClick, onAddIncidentClick, onR
     const placeholderImage = `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`;
     
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
+        <div className="bg-white dark:bg-black rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
             <div className="flex-shrink-0">
                 <img 
                     className="h-48 w-full object-cover" 
@@ -185,8 +186,6 @@ const MyCars = ({ cars, incidents, onSellClick, onAddClick, onViewDetailsClick, 
                             />
                         ))}
                     </div>
-                    {/* --- ESTE ES EL CAMBIO --- */}
-                    {/* Añadimos un espacio al final, que solo es visible en pantallas con el menú inferior */}
                     <div className="h-24 lg:hidden"></div>
                 </>
             ) : (

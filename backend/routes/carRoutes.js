@@ -1,3 +1,4 @@
+// autogest-app/backend/routes/carRoutes.js
 const express = require('express');
 const router = express.Router();
 const carController = require('../controllers/carController');
@@ -10,9 +11,9 @@ router.get('/', protect, carController.getAllCars);
 router.get('/:id', protect, carController.getCarById);
 router.post('/', protect, fileUploads, carController.createCar);
 router.put('/:id', protect, fileUploads, carController.updateCar); 
-
-// --- LÍNEA MODIFICADA ---
-// Quitamos authorize('admin') para que cualquier usuario pueda borrar sus propios coches
 router.delete('/:id', protect, carController.deleteCar);
+
+// --- NUEVA RUTA PARA ANÁLISIS CON IA ---
+router.post('/analyze-document', protect, carController.analyzeDocument);
 
 module.exports = router;

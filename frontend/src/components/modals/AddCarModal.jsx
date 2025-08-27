@@ -6,18 +6,17 @@ import {
     faMapMarkerAlt, faXmark, faUpload, faPaperclip, faBolt
 } from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select';
+import api from '../../services/api';
 
-// --- Iconos (para botones especiales) ---
 const SparklesIcon = (props) => ( <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.94 14.32c.32-.32.44-.78.34-1.22-.1-.44-.4-.74-.84-.84-.44-.1-.9.02-1.22.34l-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="m21.66 3.34-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="M14.32 9.94c.32.32.78.44 1.22.34.44-.1.74-.4.84-.84.1-.44-.02-.9-.34-1.22l-3.5-3.5c-.98-.98-2.56-.98-3.54 0-.98.98-.98 2.56 0 3.54l1.68 1.68"/><path d="M3.34 21.66l3.5-3.5c.98-.98-.98-2.56 0-3.54-.98-.98-2.56-.98-3.54 0l-1.68 1.68"/></svg> );
 
-// --- Componentes de Formulario ---
 const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode }) => (
     <div>
-        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{label}</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
         <div className="relative">
             {icon && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-slate-400" />
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
                 </div>
             )}
             <input 
@@ -26,7 +25,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMo
                 value={value} 
                 onChange={onChange} 
                 inputMode={inputMode}
-                className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500`} 
+                className={`w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${icon ? 'pl-9' : ''}`} 
             />
         </div>
     </div>
@@ -35,11 +34,11 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMo
 const AutocompleteField = ({ label, name, value, onChange, options, icon }) => {
     return (
         <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{label}</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
             <div className="relative">
                 {icon && (
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <FontAwesomeIcon icon={icon} className="h-4 w-4 text-slate-400" />
+                        <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
                     </div>
                 )}
                 <input
@@ -48,7 +47,7 @@ const AutocompleteField = ({ label, name, value, onChange, options, icon }) => {
                     value={value}
                     onChange={onChange}
                     list="location-options"
-                    className={`w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500`}
+                    className={`w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${icon ? 'pl-9' : ''}`}
                 />
                 <datalist id="location-options">
                     {options && options.map((option) => (
@@ -70,21 +69,20 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
     }, [value]);
     return (
         <div>
-            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{label}</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
             <textarea 
                 ref={textareaRef} 
                 name={name} 
                 value={value} 
                 onChange={onChange} 
                 placeholder={placeholder}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden" 
+                className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary resize-none overflow-hidden" 
                 rows="3" 
             />
         </div>
     );
 };
 
-// --- Componente Principal del Modal ---
 const AddCarModal = ({ onClose, onAdd, locations }) => {
     const [newCar, setNewCar] = useState({ make: '', model: '', licensePlate: '', vin: '', km: '', horsepower: '', registrationDate: '', fuel: 'Gasolina', transmission: 'Manual', purchasePrice: '', location: '', status: 'En venta', tags: [], notes: '' });
     const [tagInput, setTagInput] = useState('');
@@ -167,80 +165,82 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         return true;
     };
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         if (!validateForm()) return;
         
-        const finalCarData = { 
-            ...newCar, 
-            price: parseNumber(newCar.purchasePrice),
-            purchasePrice: parseNumber(newCar.purchasePrice),
-            km: parseNumber(newCar.km),
-            horsepower: parseNumber(newCar.horsepower),
-        };
-
-        const formData = new FormData();
-        Object.keys(finalCarData).forEach(key => {
-            const value = finalCarData[key];
-            if (key === 'tags') {
-                formData.append(key, JSON.stringify(value));
-            } else if (value !== null && value !== undefined) {
-                formData.append(key, value);
-            }
-        });
-        if (imageFile) formData.append('image', imageFile);
-        if (registrationDocumentFile) formData.append('registrationDocument', registrationDocumentFile);
-        onAdd(formData);
+        try {
+            const finalCarData = { 
+                ...newCar, 
+                price: parseNumber(newCar.purchasePrice),
+                purchasePrice: parseNumber(newCar.purchasePrice),
+                km: parseNumber(newCar.km),
+                horsepower: parseNumber(newCar.horsepower),
+            };
+    
+            const formData = new FormData();
+            Object.keys(finalCarData).forEach(key => {
+                const value = finalCarData[key];
+                if (key === 'tags') {
+                    formData.append(key, JSON.stringify(value));
+                } else if (value !== null && value !== undefined) {
+                    formData.append(key, value);
+                }
+            });
+            if (imageFile) formData.append('image', imageFile);
+            if (registrationDocumentFile) formData.append('registrationDocument', registrationDocumentFile);
+            await onAdd(formData);
+        } catch (error) {
+            setError(error.message || 'Error al añadir el coche.');
+        }
     };
-
+    
     const handleImageAnalysis = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
+
         setIsAnalyzing(true);
+        setError('');
+
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = async () => {
-            const base64ImageData = reader.result.split(',')[1];
-            const prompt = `Extrae los detalles del vehículo de esta imagen. Responde SÓLO con un objeto JSON válido con las claves: "make", "model", "licensePlate", "vin", "registrationDate" (formato YYYY-MM-DD), "fuel". Si un valor no se encuentra, usa null.`;
             try {
-                const payload = { contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: file.type, data: base64ImageData } }] }] };
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision-latest:generateContent?key=${apiKey}`;
-                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                if (!response.ok) throw new Error(`Error de la API: ${response.statusText}`);
-                const result = await response.json();
-                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text) {
-                    const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-                    const parsedData = JSON.parse(cleanedText);
-                    setNewCar(prev => ({
-                        ...prev,
-                        make: parsedData.make || prev.make,
-                        model: parsedData.model || prev.model,
-                        licensePlate: parsedData.licensePlate || prev.licensePlate,
-                        vin: parsedData.vin || prev.vin,
-                        registrationDate: parsedData.registrationDate || prev.registrationDate,
-                        fuel: parsedData.fuel || prev.fuel,
-                    }));
-                }
+                const base64ImageData = reader.result;
+                const extractedData = await api.analyzeDocument(base64ImageData);
+
+                setNewCar(prev => ({
+                    ...prev,
+                    make: extractedData.make || prev.make,
+                    model: extractedData.model || prev.model,
+                    licensePlate: extractedData.licensePlate || prev.licensePlate,
+                    vin: extractedData.vin || prev.vin,
+                    registrationDate: extractedData.registrationDate || prev.registrationDate,
+                    horsepower: extractedData.horsepower || prev.horsepower,
+                }));
+
             } catch (error) {
                 console.error("Error al analizar la imagen:", error);
-                alert("No se pudieron extraer los datos de la imagen. Verifica tu API Key o introduce los datos manualmente.");
+                setError(error.message || "No se pudieron extraer los datos de la imagen.");
             } finally {
                 setIsAnalyzing(false);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
             }
         };
-        reader.onerror = error => {
+        reader.onerror = (error) => {
             console.error("Error al leer el archivo:", error);
+            setError("No se pudo leer el archivo de imagen.");
             setIsAnalyzing(false);
         };
     };
 
     return (
        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-2xl p-6 border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+            <div className="bg-component-bg rounded-xl shadow-lg w-full max-w-2xl p-6 border border-border-color max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Añadir Nuevo Coche</h2>
-                    <button onClick={onClose} className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-300">
+                    <h2 className="text-xl font-bold text-text-primary">Añadir Nuevo Coche</h2>
+                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
@@ -248,21 +248,21 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
                             <div className="flex flex-col">
-                                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Imagen Principal</label>
-                                <div className="w-40 h-28 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
-                                    {imagePreview ? ( <img src={imagePreview} alt="Vista previa" className="h-full w-full object-cover" /> ) : ( <span className="text-xs text-slate-400">Sin imagen</span> )}
+                                <label className="block text-sm font-medium text-text-secondary mb-2">Imagen Principal</label>
+                                <div className="w-40 h-28 rounded-lg bg-background flex items-center justify-center overflow-hidden border border-border-color">
+                                    {imagePreview ? ( <img src={imagePreview} alt="Vista previa" className="h-full w-full object-cover" /> ) : ( <span className="text-xs text-text-secondary">Sin imagen</span> )}
                                 </div>
                                 <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} className="hidden" />
-                                <button type="button" onClick={() => imageInputRef.current.click()} className="mt-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm font-medium w-40 flex items-center justify-center gap-2">
+                                <button type="button" onClick={() => imageInputRef.current.click()} className="mt-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium w-40 flex items-center justify-center gap-2">
                                     <FontAwesomeIcon icon={faUpload} />
                                     Seleccionar
                                 </button>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Analizar Ficha Técnica</label>
+                                <label className="block text-sm font-medium text-text-secondary mb-2">Analizar Ficha Técnica</label>
                                 <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageAnalysis} className="hidden" />
-                                <button onClick={() => fileInputRef.current.click()} disabled={isAnalyzing} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700 disabled:opacity-50">
-                                    {isAnalyzing ? 'Analizando...' : <> <SparklesIcon className="w-5 h-5 text-blue-500" /> Rellenar con IA </>}
+                                <button onClick={() => fileInputRef.current.click()} disabled={isAnalyzing} className="w-full bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 border border-border-color disabled:opacity-50">
+                                    {isAnalyzing ? 'Analizando...' : <> <SparklesIcon className="w-5 h-5 text-blue-accent" /> Rellenar con IA </>}
                                 </button>
                             </div>
                         </div>
@@ -302,38 +302,38 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Permiso de Circulación</label>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">Permiso de Circulación</label>
                             <div className="flex items-center gap-2 mt-2">
-                                <button type="button" onClick={() => documentInputRef.current.click()} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm font-medium flex-grow flex items-center justify-center gap-2">
+                                <button type="button" onClick={() => documentInputRef.current.click()} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex-grow flex items-center justify-center gap-2">
                                     <FontAwesomeIcon icon={faPaperclip} />
                                     <span>{registrationDocumentFile ? 'Cambiar archivo' : 'Subir archivo (PDF o Imagen)'}</span>
                                 </button>
                                 <input type="file" accept="image/*,application/pdf" ref={documentInputRef} onChange={handleDocumentChange} className="hidden" />
                             </div>
                             {registrationDocumentFile && (
-                                <p className="text-xs text-slate-500 mt-2">Archivo seleccionado: {registrationDocumentFile.name}</p>
+                                <p className="text-xs text-text-secondary mt-2">Archivo seleccionado: {registrationDocumentFile.name}</p>
                             )}
                         </div>
                         
                         <div>
-                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Etiquetas</label>
-                            <div className="flex flex-wrap items-center gap-2 w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500">
+                            <label className="block text-sm font-medium text-text-secondary mb-1">Etiquetas</label>
+                            <div className="flex flex-wrap items-center gap-2 w-full px-3 py-2 bg-background border border-border-color rounded-lg focus-within:ring-1 focus-within:ring-blue-accent focus-within:border-blue-accent">
                                 {newCar.tags.map(tag => (
-                                    <span key={tag} className="flex items-center gap-1 bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 text-sm px-2 py-1 rounded">
+                                    <span key={tag} className="flex items-center gap-1 bg-blue-accent/10 text-blue-accent text-sm px-2 py-1 rounded">
                                         {tag}
-                                        <button onClick={() => removeTag(tag)}><FontAwesomeIcon icon={faXmark} className="w-3 h-3 text-blue-600 dark:text-blue-200 hover:text-blue-800 dark:hover:text-blue-100" /></button>
+                                        <button onClick={() => removeTag(tag)} className="hover:opacity-75"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
                                     </span>
                                 ))}
-                                <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="Añadir etiqueta y pulsar Enter" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-sm min-w-[150px]" />
+                                <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="Añadir etiqueta y pulsar Enter" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px]" />
                             </div>
                         </div>
                         <TextareaField label="Anotaciones" name="notes" value={newCar.notes} onChange={handleChange} placeholder="Añade cualquier anotación relevante sobre el coche..." />
                     </div>
                 </form>
-                {error && <p className="mt-4 text-sm text-rose-600 text-center">{error}</p>}
+                {error && <p className="mt-4 text-sm text-red-accent text-center">{error}</p>}
                 <div className="mt-6 flex justify-end gap-4">
-                    <button onClick={onClose} className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
-                    <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-blue-700 transition-colors">Añadir Coche</button>
+                    <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">Cancelar</button>
+                    <button onClick={handleAdd} className="bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">Añadir Coche</button>
                 </div>
             </div>
         </div>

@@ -53,12 +53,12 @@ const Expenses = ({ expenses, cars, onAddExpense, onDeleteExpense }) => {
     return (
         <div>
             <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Gastos</h1>
+                <h1 className="text-3xl font-bold text-text-primary tracking-tight">Gastos</h1>
                 <div className="flex gap-4">
                     <button 
                         onClick={onAddExpense}
                         disabled={noCarsRegistered}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:bg-slate-400 disabled:cursor-not-allowed"
+                        className="bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2 disabled:bg-slate-400 disabled:cursor-not-allowed"
                         title={noCarsRegistered ? "Debes registrar al menos un coche para añadir un gasto" : "Añadir nuevo gasto"}
                     >
                         <FontAwesomeIcon icon={faPlusCircle} className="w-5 h-5" />
@@ -67,7 +67,7 @@ const Expenses = ({ expenses, cars, onAddExpense, onDeleteExpense }) => {
                     <button 
                         onClick={generatePDF}
                         disabled={noExpenses}
-                        className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center gap-2 border border-slate-200 dark:border-slate-600 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+                        className="bg-component-bg text-text-secondary px-4 py-2 rounded-lg hover:bg-component-bg-hover transition-colors flex items-center gap-2 border border-border-color disabled:opacity-50 disabled:cursor-not-allowed"
                         title={noExpenses ? "No hay gastos para exportar" : "Generar PDF"}
                     >
                         <FontAwesomeIcon icon={faDownload} className="w-5 h-5" />
@@ -77,10 +77,10 @@ const Expenses = ({ expenses, cars, onAddExpense, onDeleteExpense }) => {
             </div>
 
             {expenses.length > 0 ? (
-                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="bg-component-bg rounded-xl border border-border-color overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
-                            <thead className="text-xs text-slate-700 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-800/50">
+                        <table className="w-full text-sm text-left text-text-secondary">
+                            <thead className="text-xs uppercase bg-component-bg-hover">
                                 <tr>
                                     <th scope="col" className="px-6 py-4">Fecha</th>
                                     <th scope="col" className="px-6 py-4">Categoría</th>
@@ -90,16 +90,16 @@ const Expenses = ({ expenses, cars, onAddExpense, onDeleteExpense }) => {
                                     <th scope="col" className="px-6 py-4"><span className="sr-only">Acciones</span></th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                            <tbody className="divide-y divide-border-color">
                                 {expenses.map(expense => (
-                                    <tr key={expense.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                    <tr key={expense.id} className="hover:bg-component-bg-hover">
                                         <td className="px-6 py-4">{new Date(expense.date).toLocaleDateString('es-ES')}</td>
-                                        <td className="px-6 py-4"><span className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium mr-2 px-2.5 py-1 rounded-full">{expense.category}</span></td>
-                                        <td className="px-6 py-4 font-bold text-slate-800 dark:text-slate-200">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</td>
+                                        <td className="px-6 py-4"><span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-medium mr-2 px-2.5 py-1 rounded-full">{expense.category}</span></td>
+                                        <td className="px-6 py-4 font-bold text-text-primary">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</td>
                                         <td className="px-6 py-4">{getCarName(expense.carLicensePlate)}</td>
                                         <td className="px-6 py-4">{expense.description}</td>
                                         <td className="px-6 py-4 text-right">
-                                            <button onClick={() => onDeleteExpense(expense)} className="text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300">
+                                            <button onClick={() => onDeleteExpense(expense)} className="text-red-accent hover:opacity-80 transition-opacity">
                                                 <FontAwesomeIcon icon={faTrash} />
                                             </button>
                                         </td>
@@ -110,19 +110,19 @@ const Expenses = ({ expenses, cars, onAddExpense, onDeleteExpense }) => {
                     </div>
                 </div>
             ) : (
-                <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                    <FontAwesomeIcon icon={faCar} className="text-5xl text-slate-300 dark:text-slate-600 mb-4" />
-                    <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200">Aún no hay gastos</h3>
+                <div className="text-center py-16 px-4 bg-component-bg rounded-xl border border-border-color">
+                    <FontAwesomeIcon icon={faCar} className="text-5xl text-zinc-500 dark:text-zinc-700 mb-4" />
+                    <h3 className="text-xl font-semibold text-text-primary">Aún no hay gastos</h3>
                     {noCarsRegistered ? (
                         <>
-                            <p className="text-slate-500 dark:text-slate-400 mt-2">Para poder registrar un gasto, primero necesitas añadir un coche.</p>
-                            <Link to="/cars" className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-blue-700 transition-colors">
+                            <p className="text-text-secondary mt-2">Para poder registrar un gasto, primero necesitas añadir un coche.</p>
+                            <Link to="/cars" className="mt-4 inline-flex items-center gap-2 bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
                                 <FontAwesomeIcon icon={faPlusCircle} />
                                 Añadir mi primer coche
                             </Link>
                         </>
                     ) : (
-                        <p className="text-slate-500 dark:text-slate-400 mt-2">Cuando añadas tu primer gasto, aparecerá aquí.</p>
+                        <p className="text-text-secondary mt-2">Cuando añadas tu primer gasto, aparecerá aquí.</p>
                     )}
                 </div>
             )}

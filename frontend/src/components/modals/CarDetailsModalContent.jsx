@@ -1,3 +1,4 @@
+// autogest-app/frontend/src/components/modals/CarDetailsModalContent.jsx
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrash, faTag, faExclamationTriangle, faBolt, faXmark, faHandshake, faPaperclip, faBan, faCheck } from '@fortawesome/free-solid-svg-icons';
@@ -35,7 +36,7 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
     if (!Array.isArray(carTags)) { carTags = []; }
 
     return (
-        <div className="relative bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-2xl max-w-3xl w-full">
+        <div className="relative bg-white dark:bg-black rounded-xl overflow-hidden shadow-2xl max-w-3xl w-full border border-slate-200 dark:border-slate-800">
             <button 
                 onClick={onClose}
                 className="absolute top-4 right-4 z-10 bg-black/40 text-white rounded-full p-1 hover:bg-black/60 transition-colors"

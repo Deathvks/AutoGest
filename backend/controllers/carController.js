@@ -2,7 +2,13 @@
 
 const fs = require('fs');
 const path = require('path');
-const { Car, Location } = require('../models');
+const { Car, Location, sequelize } = require('../models');
+const { Op } = require('sequelize');
+const OpenAI = require('openai');
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
 
 // Función auxiliar para convertir valores vacíos a null
 const emptyToNull = (value) => {
@@ -54,8 +60,6 @@ exports.createCar = async (req, res) => {
             userId: req.user.id
         };
 
-        // --- LÍNEA MODIFICADA ---
-        // Normalizamos la matrícula: quitamos espacios y a mayúsculas
         if (carData.licensePlate) {
             carData.licensePlate = carData.licensePlate.replace(/\s/g, '').toUpperCase();
         }
@@ -113,8 +117,6 @@ exports.updateCar = async (req, res) => {
             horsepower: emptyToNull(horsepower),
         };
 
-        // --- LÍNEA MODIFICADA ---
-        // Normalizamos la matrícula también al actualizar
         if (updateData.licensePlate) {
             updateData.licensePlate = updateData.licensePlate.replace(/\s/g, '').toUpperCase();
         }
@@ -179,5 +181,55 @@ exports.deleteCar = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al eliminar el coche' });
+    }
+};
+
+// Analizar un documento con IA
+exports.analyzeDocument = async (req, res) => {
+    try {
+        const { image } = req.body; 
+
+        if (!image) {
+            return res.status(400).json({ error: 'No se ha proporcionado ninguna imagen.' });
+        }
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-5-mini",
+            messages: [
+                {
+                    role: "user",
+                    content: [
+                        { 
+                            type: "text", 
+                            text: `Analiza la imagen de esta ficha técnica de vehículo y extrae los siguientes datos en un objeto JSON: "make" (marca), "model" (modelo), "licensePlate" (matrícula), "vin" (número de bastidor), "potenciaFiscal" (potencia fiscal o CVF, como un número con decimales si los tiene), y "registrationDate" (fecha de matriculación en formato YYYY-MM-DD). Si un campo no se encuentra, su valor debe ser null. Responde únicamente con el objeto JSON, sin texto adicional.`
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                "url": image,
+                            },
+                        },
+                    ],
+                },
+            ],
+        });
+
+        const result = response.choices[0].message.content;
+        const cleanedJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsedData = JSON.parse(cleanedJson);
+
+        // --- NUEVA LÓGICA DE CÁLCULO ---
+        if (parsedData.potenciaFiscal) {
+            const cvf = parseFloat(String(parsedData.potenciaFiscal).replace(',', '.'));
+            if (!isNaN(cvf)) {
+                parsedData.horsepower = Math.round(cvf * 1.36);
+            }
+        }
+
+        res.status(200).json(parsedData);
+
+    } catch (error) {
+        console.error('Error en el análisis de OpenAI:', error);
+        res.status(500).json({ error: 'Error al procesar la imagen con la IA.' });
     }
 };

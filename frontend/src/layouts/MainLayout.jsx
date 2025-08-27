@@ -23,8 +23,10 @@ import ReserveCarModal from '../components/modals/ReserveCarModal';
 import CancelReservationModal from '../components/modals/CancelReservationModal';
 import Toast from '../components/Toast';
 import DeleteExpenseConfirmationModal from '../components/modals/DeleteExpenseConfirmationModal';
+import DeleteAccountConfirmationModal from '../components/modals/DeleteAccountConfirmationModal';
 
 const MainLayout = () => {
+    // ... (otros estados se mantienen igual)
     const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
     const [isDataLoading, setIsDataLoading] = useState(true);
     const [cars, setCars] = useState([]);
@@ -39,6 +41,7 @@ const MainLayout = () => {
     const [carToDelete, setCarToDelete] = useState(null);
     const [isAddExpenseModalOpen, setAddExpenseModalOpen] = useState(false);
     const [expenseToDelete, setExpenseToDelete] = useState(null);
+    const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
     const [carToReserve, setCarToReserve] = useState(null);
     const [carToCancelReservation, setCarToCancelReservation] = useState(null);
     const [toast, setToast] = useState(null);
@@ -236,11 +239,11 @@ const MainLayout = () => {
     };
 
     if (isDataLoading) {
-        return <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950">Cargando datos...</div>;
+        return <div className="flex h-screen w-full items-center justify-center bg-background text-text-primary">Cargando datos...</div>;
     }
 
     return (
-        <div className="flex h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-600 dark:text-slate-300">
+        <div className="flex h-screen bg-background font-sans text-text-secondary">
             <Sidebar />
             <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
                 <Routes>
@@ -249,7 +252,7 @@ const MainLayout = () => {
                     <Route path="/sales" element={<SalesSummary cars={cars} onViewDetailsClick={setCarToView} />} />
                     <Route path="/expenses" element={<Expenses expenses={expenses} cars={cars} onAddExpense={() => setAddExpenseModalOpen(true)} onDeleteExpense={setExpenseToDelete} />} />
                     <Route path="/profile" element={<Profile />} />
-                    <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} cars={cars} expenses={expenses} incidents={incidents} />} />
+                    <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} cars={cars} expenses={expenses} incidents={incidents} onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)} />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </main>
@@ -265,7 +268,7 @@ const MainLayout = () => {
 
             {carToView && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setCarToView(null)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                    <div className="bg-component-bg rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <CarDetailsModalContent 
                             car={carToView} 
                             incidents={incidents} 
@@ -288,6 +291,7 @@ const MainLayout = () => {
             {carToDelete && <DeleteCarConfirmationModal car={carToDelete} onClose={() => setCarToDelete(null)} onConfirm={handleDeleteCar} />}
             {isAddExpenseModalOpen && <AddExpenseModal cars={cars} onClose={() => setAddExpenseModalOpen(false)} onAdd={handleAddExpense} />}
             {expenseToDelete && <DeleteExpenseConfirmationModal expense={expenseToDelete} onClose={() => setExpenseToDelete(null)} onConfirm={confirmDeleteExpense} />}
+            {isDeleteAccountModalOpen && <DeleteAccountConfirmationModal onClose={() => setIsDeleteAccountModalOpen(false)} />}
             {carToReserve && <ReserveCarModal car={carToReserve} onClose={() => setCarToReserve(null)} onConfirm={handleReserveConfirm} />}
             {carToCancelReservation && <CancelReservationModal car={carToCancelReservation} onClose={() => setCarToCancelReservation(null)} onConfirm={handleConfirmCancelReservation} />}
         </div>

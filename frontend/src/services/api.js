@@ -1,3 +1,4 @@
+// autogest-app/frontend/src/services/api.js
 // La URL base de tu backend.
 const BASE_URL = 'http://localhost:3001/api';
 
@@ -55,6 +56,8 @@ const api = {
     updateProfile: (formData) => fetch(`${BASE_URL}/auth/profile`, { method: 'PUT', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
     deleteAvatar: () => fetch(`${BASE_URL}/auth/avatar`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
     updatePassword: (passwordData) => fetch(`${BASE_URL}/auth/update-password`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(passwordData) }).then(handleProtectedResponse),
+    deleteAccount: () => fetch(`${BASE_URL}/auth/me`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+
 
     // --- Coches (Cars) ---
     getCars: () => fetch(`${BASE_URL}/cars`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
@@ -68,6 +71,11 @@ const api = {
         }).then(handleProtectedResponse);
     },
     deleteCar: (carId) => fetch(`${BASE_URL}/cars/${carId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+    analyzeDocument: (base64Image) => fetch(`${BASE_URL}/cars/analyze-document`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ image: base64Image })
+    }).then(handleProtectedResponse),
 
     // --- Gastos (Expenses) ---
     getExpenses: () => fetch(`${BASE_URL}/expenses`, { headers: getAuthHeaders() }).then(handleProtectedResponse),

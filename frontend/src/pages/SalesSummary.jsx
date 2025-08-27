@@ -1,3 +1,4 @@
+// autogest-app/frontend/src/pages/SalesSummary.jsx
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -49,11 +50,11 @@ const SalesSummary = ({ cars, onViewDetailsClick }) => {
     return (
         <div>
             <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Resumen de Ventas</h1>
+                <h1 className="text-3xl font-bold text-text-primary tracking-tight">Resumen de Ventas</h1>
                 <button 
                     onClick={generatePDF} 
                     disabled={noSoldCars}
-                    className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center gap-2 border border-slate-200 dark:border-slate-600 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+                    className="bg-component-bg text-text-secondary px-4 py-2 rounded-lg hover:bg-component-bg-hover transition-colors flex items-center gap-2 border border-border-color disabled:opacity-50 disabled:cursor-not-allowed"
                     title={noSoldCars ? "No hay ventas para exportar" : "Generar PDF"}
                 >
                     <FontAwesomeIcon icon={faDownload} className="w-5 h-5" />
@@ -62,10 +63,10 @@ const SalesSummary = ({ cars, onViewDetailsClick }) => {
             </div>
 
             {soldCars.length > 0 ? (
-                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="bg-component-bg rounded-xl border border-border-color overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
-                            <thead className="text-xs text-slate-700 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-800/50">
+                        <table className="w-full text-sm text-left text-text-secondary">
+                            <thead className="text-xs text-text-secondary uppercase bg-component-bg-hover">
                                 <tr>
                                     <th scope="col" className="px-6 py-4">Coche</th>
                                     <th scope="col" className="px-6 py-4">Matrícula</th>
@@ -74,26 +75,26 @@ const SalesSummary = ({ cars, onViewDetailsClick }) => {
                                     <th scope="col" className="px-6 py-4">Margen</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                            <tbody className="divide-y divide-border-color">
                                 {soldCars.map(car => (
                                     <tr 
                                         key={car.id} 
-                                        className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                                        className="cursor-pointer hover:bg-component-bg-hover"
                                         onClick={() => onViewDetailsClick(car)}
                                     >
-                                        <th scope="row" className="px-6 py-4 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                                        <th scope="row" className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">
                                             <div className="flex items-center gap-4">
                                                 <img src={car.imageUrl || `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`} className="w-16 h-10 object-cover rounded-md" alt={`${car.make} ${car.model}`} />
                                                 <div>
                                                     <p>{car.make} {car.model}</p>
-                                                    <p className="text-xs text-slate-500">{new Date(car.registrationDate).getFullYear()}</p>
+                                                    <p className="text-xs text-text-secondary">{new Date(car.registrationDate).getFullYear()}</p>
                                                 </div>
                                             </div>
                                         </th>
                                         <td className="px-6 py-4">{car.licensePlate}</td>
                                         <td className="px-6 py-4">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</td>
                                         <td className="px-6 py-4">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}</td>
-                                        <td className="px-6 py-4 font-bold text-emerald-600 dark:text-emerald-400">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice - car.purchasePrice)}</td>
+                                        <td className="px-6 py-4 font-bold text-green-accent">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice - car.purchasePrice)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -101,11 +102,11 @@ const SalesSummary = ({ cars, onViewDetailsClick }) => {
                     </div>
                 </div>
             ) : (
-                <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                    <FontAwesomeIcon icon={faTags} className="text-5xl text-slate-300 dark:text-slate-600 mb-4" />
-                    <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200">Aún no hay ventas registradas</h3>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2">Cuando vendas tu primer coche, aparecerá aquí el resumen.</p>
-                    <Link to="/cars" className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-blue-700 transition-colors">
+                <div className="text-center py-16 px-4 bg-component-bg rounded-xl border border-border-color">
+                    <FontAwesomeIcon icon={faTags} className="text-5xl text-zinc-500 dark:text-zinc-600 mb-4" />
+                    <h3 className="text-xl font-semibold text-text-primary">Aún no hay ventas registradas</h3>
+                    <p className="text-text-secondary mt-2">Cuando vendas tu primer coche, aparecerá aquí el resumen.</p>
+                    <Link to="/cars" className="mt-4 inline-flex items-center gap-2 bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
                         <FontAwesomeIcon icon={faCar} />
                         Ver mis coches
                     </Link>

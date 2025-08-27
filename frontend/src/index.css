@@ -4,6 +4,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Definición de las variables de color del tema */
+@layer base {
+  :root {
+    /* Tema Claro (Default) */
+    --color-background: #f1f5f9; /* slate-100 */
+    --color-component-bg: #ffffff; /* white */
+    --color-component-bg-hover: #f8fafc; /* slate-50 */
+    --color-border: #e2e8f0; /* slate-200 */
+    --color-text-primary: #1e293b; /* slate-800 */
+    --color-text-secondary: #475569; /* slate-600 */
+    --color-blue-accent: #2563eb; /* blue-600 */
+    --color-red-accent: #dc2626; /* red-600 */
+    --color-green-accent: #16a34a; /* green-600 */
+    --color-yellow-accent: #d97706; /* amber-600 */
+  }
+
+  .dark {
+    /* Nuevo Tema Oscuro Profesional */
+    --color-background: #000000; /* Negro puro */
+    --color-component-bg: #0A0A10; /* Un azul muy oscuro, casi negro */
+    --color-component-bg-hover: #1A1A22; /* Un poco más claro para hover */
+    --color-border: #2A2A35; /* Borde sutil, gris azulado oscuro */
+    --color-text-primary: #f4f4f5; /* zinc-100 */
+    --color-text-secondary: #a1a1aa; /* zinc-400 */
+    --color-blue-accent: #2563eb; /* blue-600 */
+    --color-red-accent: #dc2626; /* red-600 */
+    --color-green-accent: #4ade80; /* green-400 */
+    --color-yellow-accent: #fcd34d; /* yellow-300 - Ajustado a un tono más pastel */
+  }
+}
+
+/* Animación de entrada para modales/notificaciones */
 @keyframes fade-in-up {
     from {
         opacity: 0;
@@ -17,4 +49,9 @@
 
 .animate-fade-in-up {
     animation: fade-in-up 0.3s ease-out forwards;
+}
+
+/* Transición suave de colores al cambiar de tema */
+body, .bg-background, .bg-component-bg {
+    transition: background-color 0.3s ease, color 0.3s ease;
 }

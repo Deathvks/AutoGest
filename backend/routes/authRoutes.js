@@ -1,3 +1,4 @@
+// autogest-app/backend/routes/authRoutes.js
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
@@ -20,6 +21,9 @@ router.put('/profile', protect, avatarUpload, authController.updateProfile);
 router.delete('/avatar', protect, authController.deleteAvatar);
 
 // PUT /api/auth/update-password -> Cambiar la contraseña del usuario
-router.put('/update-password', protect, authController.updatePassword); // <-- AÑADE ESTA RUTA
+router.put('/update-password', protect, authController.updatePassword);
+
+// DELETE /api/auth/me -> Eliminar la cuenta del usuario actual
+router.delete('/me', protect, authController.deleteAccount);
 
 module.exports = router;

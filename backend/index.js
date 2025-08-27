@@ -9,7 +9,11 @@ const db = require('./models');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+
+// --- LÍNEA MODIFICADA ---
+// Aumentamos el límite de tamaño para las peticiones JSON a 10MB
+app.use(express.json({ limit: '10mb' }));
+
 app.use(express.static('public'));
 
 // --- Rutas de la API ---
@@ -17,7 +21,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/cars', require('./routes/carRoutes'));
 app.use('/api/expenses', require('./routes/expenseRoutes'));
 app.use('/api/incidents', require('./routes/incidentRoutes'));
-app.use('/api/locations', require('./routes/locationRoutes')); // <-- AÑADE ESTA LÍNEA
+app.use('/api/locations', require('./routes/locationRoutes'));
 
 // Ruta raíz
 app.get('/', (req, res) => {
@@ -25,18 +29,6 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-
-// La sincronización automática se ha comentado para evitar problemas de índices duplicados.
-// Se recomienda usar migraciones para gestionar cambios en la base de datos en el futuro.
-/*
-db.sequelize.sync({ alter: true }).then(() => {
-    app.listen(PORT, () => {
-        console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
-    });
-}).catch(error => {
-    console.error('❌ Error al sincronizar con la base de datos:', error);
-});
-*/
 
 // Se inicia el servidor directamente
 app.listen(PORT, () => {

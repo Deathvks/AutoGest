@@ -1,3 +1,4 @@
+// autogest-app/frontend/src/components/Sidebar.jsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,9 +23,9 @@ const navItems = [
 
 const Sidebar = () => {
     return (
-        <aside className="w-64 flex-shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800/50 p-4 flex-col justify-between hidden lg:flex">
+        <aside className="w-64 flex-shrink-0 bg-component-bg border-r border-border-color p-4 flex-col justify-between hidden lg:flex">
             <div>
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 p-4 flex items-center gap-3">
+                <div className="text-2xl font-bold text-blue-accent p-4 flex items-center gap-3">
                     <FontAwesomeIcon icon={faCar} className="w-7 h-7" />
                     <span>AutoGest</span>
                 </div>
@@ -34,9 +35,10 @@ const Sidebar = () => {
                             key={item.to}
                             to={item.to}
                             className={({ isActive }) =>
-                                `flex items-center w-full text-left px-3 py-2.5 rounded-lg transition-colors duration-200 ${isActive
-                                    ? 'bg-blue-600 text-white shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200'
+                                `flex items-center w-full text-left px-3 py-2.5 rounded-lg transition-colors duration-200 ${
+                                    isActive
+                                    ? 'bg-blue-accent text-white shadow-sm'
+                                    : 'text-text-secondary hover:bg-component-bg-hover hover:text-text-primary'
                                 }`
                             }
                         >
