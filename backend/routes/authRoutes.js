@@ -5,6 +5,27 @@ const authController = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const avatarUpload = require('../middleware/avatarUpload');
 
+// Middleware para manejar errores de Multer
+const handleMulterError = (err, req, res, next) => {
+    if (err) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ 
+                error: 'El archivo es demasiado grande. El tamaño máximo permitido es 10MB.' 
+            });
+        }
+        if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+            return res.status(400).json({ 
+                error: 'Tipo de archivo no permitido. Solo se aceptan imágenes.' 
+            });
+        }
+        if (err.message) {
+            return res.status(400).json({ error: err.message });
+        }
+        return res.status(400).json({ error: 'Error al procesar el archivo.' });
+    }
+    next();
+};
+
 // POST /api/auth/register -> Registrar un nuevo usuario
 router.post('/register', authController.register);
 
@@ -15,7 +36,7 @@ router.post('/login', authController.login);
 router.get('/me', protect, authController.getMe);
 
 // PUT /api/auth/profile -> Actualizar el perfil del usuario (nombre, email y avatar)
-router.put('/profile', protect, avatarUpload, authController.updateProfile);
+router.put('/profile', protect, avatarUpload, handleMulterError, authController.updateProfile);
 
 // DELETE /api/auth/avatar -> Eliminar la foto de perfil del usuario
 router.delete('/avatar', protect, authController.deleteAvatar);

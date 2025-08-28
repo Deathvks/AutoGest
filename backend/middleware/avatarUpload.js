@@ -24,13 +24,13 @@ const fileFilter = (req, file, cb) => {
     if (allowedTypes.test(file.mimetype)) {
         return cb(null, true);
     }
-    cb('Error: ¡Solo se permiten archivos de imagen!');
+    cb(new Error('Solo se permiten archivos de imagen (JPEG, JPG, PNG, WEBP)'));
 };
 
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
-    limits: { fileSize: 2 * 1024 * 1024 } // Límite de 2MB
+    limits: { fileSize: 10 * 1024 * 1024 } // Aumentar límite a 10MB
 });
 
 module.exports = upload.single('avatar');

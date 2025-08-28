@@ -42,8 +42,18 @@ const handleProtectedResponse = async (response) => {
             localStorage.removeItem('authToken');
             window.location.href = '/login';
         }
-        const error = await response.json();
-        throw new Error(error.error || 'Algo salió mal en el servidor');
+        
+        // Intentar parsear como JSON, si falla usar texto plano
+        let errorMessage = 'Algo salió mal en el servidor';
+        try {
+            const error = await response.json();
+            errorMessage = error.error || errorMessage;
+        } catch (parseError) {
+            // Si no es JSON válido, usar el status y statusText
+            errorMessage = `Error ${response.status}: ${response.statusText || 'Error del servidor'}`;
+        }
+        
+        throw new Error(errorMessage);
     }
     if (response.status === 204) return null;
     return response.json();

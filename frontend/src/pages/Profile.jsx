@@ -4,9 +4,6 @@ import { AuthContext } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faTrash, faUserCircle } from '@fortawesome/free-solid-svg-icons';
 
-// --- NUEVA FUNCIÓN AUXILIAR ---
-// Define la URL base del backend para que las imágenes se carguen correctamente
-// tanto en desarrollo como en producción.
 const API_BASE_URL = import.meta.env.PROD ? 'https://auto-gest.es' : 'http://localhost:3001';
 
 const Profile = () => {
@@ -17,38 +14,17 @@ const Profile = () => {
     const [avatarPreview, setAvatarPreview] = useState('');
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
-    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef(null);
-    const messageTimeoutRef = useRef(null);
 
+    // Inicializar solo una vez cuando el usuario esté disponible
     useEffect(() => {
-        if (user) {
+        if (user && user.name && user.email && !isInitialized && !isSubmitting) {
             setFormData({ name: user.name, email: user.email });
-            if (avatarPreview && !user.avatarUrl) {
-                setAvatarPreview('');
-            }
+            setIsInitialized(true);
         }
-    }, [user]);
-    
-    // Efecto para manejar el mensaje de éxito
-    useEffect(() => {
-        if (showSuccessMessage) {
-            setMessage('Aplicado con éxito');
-            if (messageTimeoutRef.current) {
-                clearTimeout(messageTimeoutRef.current);
-            }
-            messageTimeoutRef.current = setTimeout(() => {
-                setMessage('');
-                setShowSuccessMessage(false);
-            }, 4000);
-        }
-        
-        return () => {
-            if (messageTimeoutRef.current) {
-                clearTimeout(messageTimeoutRef.current);
-            }
-        };
-    }, [showSuccessMessage]);
+    }, [user, isInitialized, isSubmitting]);
     
     if (!user) {
         return <div>Cargando perfil...</div>;
@@ -62,28 +38,55 @@ const Profile = () => {
     const handleAvatarChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Validar tamaño del archivo en el frontend también
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                setError('El archivo es demasiado grande. El tamaño máximo permitido es 10MB.');
+                setTimeout(() => setError(''), 5000);
+                return;
+            }
+            
+            // Validar tipo de archivo
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                setError('Tipo de archivo no permitido. Solo se aceptan imágenes JPEG, JPG, PNG o WEBP.');
+                setTimeout(() => setError(''), 5000);
+                return;
+            }
+            
             setAvatarFile(file);
             setAvatarPreview(URL.createObjectURL(file));
-            // Mostrar mensaje de confirmación al seleccionar una foto
-            setMessage('Foto de perfil seleccionada. Haz clic en "Guardar Cambios" para confirmar.');
-            setError('');
-            // Limpiar el mensaje después de 5 segundos
-            setTimeout(() => setMessage(''), 5000);
+            
+            // Mensaje de confirmación al subir
+            setMessage('Imagen seleccionada. Haz clic en "Guardar Cambios" para confirmar.');
+            setError(''); // Limpiar errores previos
+            
+            // Limpiar el mensaje después de 3 segundos
+            setTimeout(() => {
+                setMessage('');
+            }, 3000);
         }
     };
 
     const handleDeleteAvatar = async () => {
         setMessage('');
         setError('');
+        setIsSubmitting(true);
         try {
             await deleteUserAvatar();
             setAvatarFile(null);
-            setAvatarPreview(''); // Aseguramos que la vista previa se limpie
+            setAvatarPreview('');
             setMessage('Foto de perfil eliminada.');
-            setTimeout(() => setMessage(''), 3000);
-        } catch (error) {
+            setTimeout(() => {
+                setMessage('');
+                setIsSubmitting(false);
+            }, 3000);
+        } catch (err) {
             setError('Error al eliminar la foto.');
-            setTimeout(() => setError(''), 3000);
+            setTimeout(() => {
+                setError('');
+                setIsSubmitting(false);
+            }, 3000);
         }
     };
     
@@ -91,36 +94,71 @@ const Profile = () => {
         e.preventDefault();
         setMessage('');
         setError('');
-        setShowSuccessMessage(false);
-
+        setIsSubmitting(true);
+    
         const data = new FormData();
         data.append('name', formData.name);
         data.append('email', formData.email);
         if (avatarFile) {
             data.append('avatar', avatarFile);
         }
-
+    
         try {
-            await updateUserProfile(data);
+            console.log('Enviando datos del perfil...');
+            
+            // Guardar referencia ANTES de la llamada
+            const hadAvatar = !!avatarFile;
+            
+            const updatedUser = await updateUserProfile(data);
+            console.log('Perfil actualizado:', updatedUser);
+            
+            // Limpiar archivos después de la respuesta exitosa
             setAvatarFile(null);
-            setShowSuccessMessage(true); // Activar el mensaje de éxito
-        } catch (error) {
-            setError('Error al actualizar el perfil.');
-            console.error(error);
-            setTimeout(() => setError(''), 3000);
+            setAvatarPreview('');
+            
+            // Mostrar mensaje de éxito
+            const successMessage = hadAvatar ? '¡Perfil y foto guardados con éxito!' : '¡Perfil actualizado con éxito!';
+            setMessage(successMessage);
+            
+            // Limpiar mensaje después de 5 segundos
+            setTimeout(() => {
+                setMessage('');
+                setIsSubmitting(false);
+            }, 5000);
+            
+        } catch (err) {
+            console.error('Error completo:', err);
+            
+            // Extraer mensaje de error más específico
+            let errorMessage = 'Error desconocido';
+            if (err.message) {
+                if (err.message.includes('demasiado grande')) {
+                    errorMessage = 'El archivo es demasiado grande. Máximo 10MB permitido.';
+                } else if (err.message.includes('Tipo de archivo')) {
+                    errorMessage = 'Solo se permiten imágenes (JPEG, JPG, PNG, WEBP).';
+                } else if (err.message.includes('500')) {
+                    errorMessage = 'Error del servidor. Inténtalo de nuevo más tarde.';
+                } else {
+                    errorMessage = err.message.replace('Error 500: Internal Server Error', 'Error del servidor');
+                }
+            }
+            
+            setError(`Error al actualizar el perfil: ${errorMessage}`);
+            setTimeout(() => {
+                setError('');
+                setIsSubmitting(false);
+            }, 5000);
         }
     };
 
-    // --- LÓGICA MEJORADA PARA MOSTRAR LA IMAGEN ---
-    // Construye la URL completa si es una ruta relativa del backend.
-    // Si es una vista previa local (blob:...), la usa directamente.
     const getDisplayAvatarUrl = () => {
         if (avatarPreview) {
             return avatarPreview;
         }
-        if (user && user.avatarUrl) {
-            // Si la URL ya es completa, la usa. Si no, le añade la base.
-            return user.avatarUrl.startsWith('http') ? user.avatarUrl : `${API_BASE_URL}${user.avatarUrl}`;
+        if (user?.avatarUrl) {
+            const baseUrl = user.avatarUrl.startsWith('http') ? user.avatarUrl : `${API_BASE_URL}${user.avatarUrl}`;
+            // Agregar timestamp para evitar caché del navegador
+            return `${baseUrl}?t=${Date.now()}`;
         }
         return null;
     };
@@ -185,12 +223,12 @@ const Profile = () => {
                         <input id="email" type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary" />
                     </div>
                     
-                    <div className="flex flex-col items-center gap-4 mt-6">
-                        <button type="submit" className="bg-blue-accent text-white px-6 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">Guardar Cambios</button>
-                        <div className="min-h-[20px] flex justify-center">
-                            {message && <p className="text-sm text-green-accent text-center">{message}</p>}
-                            {error && <p className="text-sm text-red-accent text-center">{error}</p>}
-                        </div>
+                    <div className="flex justify-end items-center gap-4 min-h-[2rem]"> {/* Altura mínima para evitar saltos */}
+                        {message && <p className="text-sm text-green-accent font-medium">{message}</p>}
+                        {error && <p className="text-sm text-red-accent font-medium">{error}</p>}
+                        <button type="submit" className="bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
+                            Guardar Cambios
+                        </button>
                     </div>
                 </form>
             </div>

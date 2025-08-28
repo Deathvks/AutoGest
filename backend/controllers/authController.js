@@ -82,18 +82,18 @@ exports.updateProfile = async (req, res) => {
     try {
         const { name, email } = req.body;
         const user = await User.findByPk(req.user.id);
-
+        
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
 
-        const oldAvatarUrl = user.avatarUrl;
+        // Actualizar nombre y email si se proporcionan
+        if (name) user.name = name;
+        if (email) user.email = email;
 
-        user.name = name || user.name;
-        user.email = email || user.email;
-
+        // Manejar la subida del avatar si se proporciona
         if (req.file) {
-            // --- CAMBIO A RUTA RELATIVA ---
+            const oldAvatarUrl = user.avatarUrl;
             const newAvatarUrl = `/avatars/${req.file.filename}`;
             user.avatarUrl = newAvatarUrl;
 
@@ -118,8 +118,29 @@ exports.updateProfile = async (req, res) => {
 
         res.status(200).json(userResponse);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error al actualizar el perfil.' });
+        console.error('Error en updateProfile:', error);
+        
+        // Manejar errores específicos de Multer
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ 
+                error: 'El archivo es demasiado grande. El tamaño máximo permitido es 10MB.' 
+            });
+        }
+        
+        if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+            return res.status(400).json({ 
+                error: 'Tipo de archivo no permitido. Solo se aceptan imágenes.' 
+            });
+        }
+        
+        if (error.message && error.message.includes('Solo se permiten')) {
+            return res.status(400).json({ 
+                error: error.message 
+            });
+        }
+        
+        // Error genérico
+        res.status(500).json({ error: 'Error interno del servidor al actualizar el perfil.' });
     }
 };
 

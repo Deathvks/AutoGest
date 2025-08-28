@@ -47,10 +47,13 @@ const AuthProvider = ({ children }) => {
 
     const updateUserProfile = async (formData) => {
         try {
+            console.log('AuthContext: Enviando actualización de perfil...'); // Debug
             const updatedUser = await api.updateProfile(formData);
+            console.log('AuthContext: Usuario actualizado recibido:', updatedUser); // Debug
             setUser(updatedUser);
+            return updatedUser;
         } catch (error) {
-            console.error("Error al actualizar el perfil:", error);
+            console.error("AuthContext: Error al actualizar el perfil:", error); // Debug mejorado
             throw error;
         }
     };
@@ -59,6 +62,7 @@ const AuthProvider = ({ children }) => {
         try {
             const updatedUser = await api.deleteAvatar();
             setUser(updatedUser);
+            return updatedUser; // --- CAMBIO CLAVE: Devolver el usuario actualizado ---
         } catch (error) {
             console.error("Error al eliminar el avatar:", error);
             throw error;
