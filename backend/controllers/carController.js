@@ -89,20 +89,18 @@ exports.createCar = async (req, res) => {
         const newCar = await Car.create(carData);
         res.status(201).json(newCar);
     } catch (error) {
-        console.error(error);
+        console.error('Error al crear coche:', error);
         
-        // Manejo específico de errores de restricción única
+        // Manejar error de matrícula duplicada
         if (error.name === 'SequelizeUniqueConstraintError') {
-            const field = error.errors[0]?.path;
-            const value = error.errors[0]?.value;
-            
-            if (field === 'licensePlate') {
+            if (error.fields && error.fields.cars_license_plate) {
                 return res.status(400).json({ 
-                    error: `Ya existe un coche con la matrícula ${value}. Por favor, verifica la matrícula e inténtalo de nuevo.` 
+                    error: `Ya existe un coche con la matrícula ${error.fields.cars_license_plate}` 
                 });
-            } else if (field === 'vin') {
+            }
+            if (error.fields && error.fields.cars_vin) {
                 return res.status(400).json({ 
-                    error: `Ya existe un coche con el número de bastidor ${value}. Por favor, verifica el VIN e inténtalo de nuevo.` 
+                    error: `Ya existe un coche con el VIN ${error.fields.cars_vin}` 
                 });
             }
         }
