@@ -10,13 +10,16 @@ import api from '../../services/api';
 
 const SparklesIcon = (props) => ( <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.94 14.32c.32-.32.44-.78.34-1.22-.1-.44-.4-.74-.84-.84-.44-.1-.9.02-1.22.34l-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="m21.66 3.34-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="M14.32 9.94c.32.32.78.44 1.22.34.44-.1.74-.4.84-.84.1-.44-.02-.9-.34-1.22l-3.5-3.5c-.98-.98-2.56-.98-3.54 0-.98.98-.98 2.56 0 3.54l1.68 1.68"/><path d="M3.34 21.66l3.5-3.5c.98-.98-.98-2.56 0-3.54-.98-.98-2.56-.98-3.54 0l-1.68 1.68"/></svg> );
 
-const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode }) => (
+const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, error, required = false }) => (
     <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1">
+            {label}
+            {required && <span className="text-red-accent ml-1">*</span>}
+        </label>
         <div className="relative">
             {icon && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-slate-500 dark:text-white" />
                 </div>
             )}
             <input 
@@ -25,9 +28,12 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMo
                 value={value} 
                 onChange={onChange} 
                 inputMode={inputMode}
-                className={`w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${icon ? 'pl-9' : ''}`} 
+                className={`w-full px-3 py-2 bg-background border rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${
+                    error ? 'border-red-accent' : 'border-border-color'
+                } ${icon ? 'pl-9' : ''}`} 
             />
         </div>
+        {error && <p className="mt-1 text-xs text-red-accent">{error}</p>}
     </div>
 );
 
@@ -83,19 +89,23 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
     );
 };
 
-const AddCarModal = ({ onClose, onAdd, locations }) => {
-    const [newCar, setNewCar] = useState({ make: '', model: '', licensePlate: '', vin: '', km: '', horsepower: '', registrationDate: '', fuel: 'Gasolina', transmission: 'Manual', purchasePrice: '', location: '', status: 'En venta', tags: [], notes: '' });
-    const [tagInput, setTagInput] = useState('');
+const AddCarModal = ({ isOpen, onClose, onAdd }) => {
+    const [newCar, setNewCar] = useState({
+        make: '', model: '', licensePlate: '', vin: '', registrationDate: '',
+        purchasePrice: '', km: '', horsepower: '', location: '', notes: '', tags: []
+    });
     const [error, setError] = useState('');
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({});
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [registrationDocumentFile, setRegistrationDocumentFile] = useState(null);
-
-    const fileInputRef = useRef(null);
+    const [tagInput, setTagInput] = useState('');
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [locations, setLocations] = useState([]);
     const imageInputRef = useRef(null);
+    const fileInputRef = useRef(null);
     const documentInputRef = useRef(null);
-    
+
     const fuelOptions = [
         { id: 'Gasolina', name: 'Gasolina' },
         { id: 'Diesel', name: 'Diesel' },
@@ -152,16 +162,88 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
     };
 
     const validateForm = () => {
-        const price = parseFloat(parseNumber(newCar.purchasePrice));
-        if (!newCar.make || !newCar.model || !newCar.licensePlate || !newCar.purchasePrice) {
-            setError('Los campos Marca, Modelo, Matrícula y Precio de Compra son obligatorios.');
+        const errors = {};
+        let hasErrors = false;
+
+        // Validar campos obligatorios
+        if (!newCar.make.trim()) {
+            errors.make = 'La marca es obligatoria';
+            hasErrors = true;
+        }
+        
+        if (!newCar.model.trim()) {
+            errors.model = 'El modelo es obligatorio';
+            hasErrors = true;
+        }
+        
+        if (!newCar.licensePlate.trim()) {
+            errors.licensePlate = 'La matrícula es obligatoria';
+            hasErrors = true;
+        }
+        
+        if (!newCar.purchasePrice.trim()) {
+            errors.purchasePrice = 'El precio de compra es obligatorio';
+            hasErrors = true;
+        } else {
+            const price = parseFloat(parseNumber(newCar.purchasePrice));
+            if (isNaN(price) || price <= 0) {
+                errors.purchasePrice = 'El precio debe ser un número válido mayor que cero';
+                hasErrors = true;
+            }
+        }
+
+        // Validar formato de matrícula española (opcional pero recomendado)
+        if (newCar.licensePlate.trim()) {
+            const plateRegex = /^[0-9]{4}[A-Z]{3}$|^[A-Z]{1,2}[0-9]{4}[A-Z]{2}$/;
+            if (!plateRegex.test(newCar.licensePlate.replace(/[\s-]/g, '').toUpperCase())) {
+                errors.licensePlate = 'Formato de matrícula no válido (ej: 1234ABC o M1234BC)';
+                hasErrors = true;
+            }
+        }
+
+        // Validar VIN si se proporciona
+        if (newCar.vin.trim() && newCar.vin.length !== 17) {
+            errors.vin = 'El VIN debe tener exactamente 17 caracteres';
+            hasErrors = true;
+        }
+
+        // Validar kilómetros si se proporcionan
+        if (newCar.km.trim()) {
+            const km = parseFloat(parseNumber(newCar.km));
+            if (isNaN(km) || km < 0) {
+                errors.km = 'Los kilómetros deben ser un número válido';
+                hasErrors = true;
+            }
+        }
+
+        // Validar potencia si se proporciona
+        if (newCar.horsepower.trim()) {
+            const hp = parseFloat(parseNumber(newCar.horsepower));
+            if (isNaN(hp) || hp <= 0) {
+                errors.horsepower = 'La potencia debe ser un número válido mayor que cero';
+                hasErrors = true;
+            }
+        }
+
+        // Validar fecha de matriculación si se proporciona
+        if (newCar.registrationDate) {
+            const regDate = new Date(newCar.registrationDate);
+            const today = new Date();
+            if (regDate > today) {
+                errors.registrationDate = 'La fecha de matriculación no puede ser futura';
+                hasErrors = true;
+            }
+        }
+
+        setFieldErrors(errors);
+        
+        if (hasErrors) {
+            setError('Por favor, corrige los errores marcados en rojo.');
             return false;
         }
-        if (isNaN(price) || price <= 0) {
-            setError('El precio de compra debe ser un número válido y mayor que cero.');
-            return false;
-        }
+        
         setError('');
+        setFieldErrors({});
         return true;
     };
 
@@ -169,6 +251,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         if (!validateForm()) return;
         
         try {
+            setError('');
             const finalCarData = { 
                 ...newCar, 
                 price: parseNumber(newCar.purchasePrice),
@@ -182,15 +265,40 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                 const value = finalCarData[key];
                 if (key === 'tags') {
                     formData.append(key, JSON.stringify(value));
-                } else if (value !== null && value !== undefined) {
+                } else if (value !== null && value !== undefined && value !== '') {
                     formData.append(key, value);
                 }
             });
             if (imageFile) formData.append('image', imageFile);
             if (registrationDocumentFile) formData.append('registrationDocument', registrationDocumentFile);
+            
             await onAdd(formData);
         } catch (error) {
-            setError(error.message || 'Error al añadir el coche.');
+            console.error('Error al añadir coche:', error);
+            if (error.response?.data?.error) {
+                const errorMessage = error.response.data.error;
+                if (errorMessage.toLowerCase().includes('matrícula') || errorMessage.toLowerCase().includes('matricula')) {
+                    setFieldErrors({ licensePlate: 'Esta matrícula ya está registrada' });
+                    setError('No se pueden repetir valores de matrícula. ' + errorMessage);
+                } else if (errorMessage.toLowerCase().includes('bastidor') || errorMessage.toLowerCase().includes('vin')) {
+                    setFieldErrors({ vin: 'Este VIN ya está registrado' });
+                    setError('No se pueden repetir valores de VIN. ' + errorMessage);
+                } else {
+                    setError(errorMessage);
+                }
+            } else if (error.response?.data?.message) {
+                if (error.response.data.message.includes('licensePlate')) {
+                    setFieldErrors({ licensePlate: 'Esta matrícula ya está registrada' });
+                    setError('No se pueden repetir valores de matrícula. Ya existe un coche con esta matrícula.');
+                } else if (error.response.data.message.includes('vin')) {
+                    setFieldErrors({ vin: 'Este VIN ya está registrado' });
+                    setError('No se pueden repetir valores de VIN. Ya existe un coche con este número de bastidor.');
+                } else {
+                    setError(error.response.data.message);
+                }
+            } else {
+                setError('Error al añadir el coche. Por favor, inténtalo de nuevo.');
+            }
         }
     };
     
@@ -268,20 +376,87 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField label="Marca" name="make" value={newCar.make} onChange={handleChange} icon={faCar} />
-                            <InputField label="Modelo" name="model" value={newCar.model} onChange={handleChange} icon={faStar} />
+                            <InputField 
+                                label="Marca" 
+                                name="make" 
+                                value={newCar.make} 
+                                onChange={handleChange} 
+                                icon={faCar} 
+                                error={fieldErrors.make}
+                                required={true}
+                            />
+                            <InputField 
+                                label="Modelo" 
+                                name="model" 
+                                value={newCar.model} 
+                                onChange={handleChange} 
+                                icon={faStar} 
+                                error={fieldErrors.model}
+                                required={true}
+                            />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField label="Matrícula" name="licensePlate" value={newCar.licensePlate} onChange={handleChange} icon={faIdCard} />
-                            <InputField label="Nº de Bastidor" name="vin" value={newCar.vin} onChange={handleChange} icon={faFingerprint} />
+                            <InputField 
+                                label="Matrícula" 
+                                name="licensePlate" 
+                                value={newCar.licensePlate} 
+                                onChange={handleChange} 
+                                icon={faIdCard} 
+                                error={fieldErrors.licensePlate}
+                                required={true}
+                            />
+                            <InputField 
+                                label="Nº de Bastidor" 
+                                name="vin" 
+                                value={newCar.vin} 
+                                onChange={handleChange} 
+                                icon={faFingerprint} 
+                                error={fieldErrors.vin}
+                            />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField label="Fecha de Matriculación" name="registrationDate" type="date" value={newCar.registrationDate} onChange={handleChange} />
-                            <InputField label="Precio de Compra (€)" name="purchasePrice" type="text" inputMode="decimal" value={newCar.purchasePrice} onChange={handleChange} icon={faEuroSign} />
+                            <InputField 
+                                label="Fecha de Matriculación" 
+                                name="registrationDate" 
+                                type="date" 
+                                value={newCar.registrationDate} 
+                                onChange={handleChange} 
+                                icon={faCalendarDay} 
+                                error={fieldErrors.registrationDate}
+                            />
+                            <InputField 
+                                label="Precio de Compra (€)" 
+                                name="purchasePrice" 
+                                type="text" 
+                                inputMode="decimal" 
+                                value={newCar.purchasePrice} 
+                                onChange={handleChange} 
+                                icon={faEuroSign} 
+                                error={fieldErrors.purchasePrice}
+                                required={true}
+                            />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <InputField label="Kilómetros" name="km" type="text" inputMode="decimal" value={newCar.km} onChange={handleChange} icon={faRoad} />
-                             <InputField label="Caballos (CV)" name="horsepower" type="text" inputMode="decimal" value={newCar.horsepower} onChange={handleChange} icon={faBolt} />
+                            <InputField 
+                                label="Kilómetros" 
+                                name="km" 
+                                type="text" 
+                                inputMode="numeric" 
+                                value={newCar.km} 
+                                onChange={handleChange} 
+                                icon={faRoad} 
+                                error={fieldErrors.km}
+                            />
+                            <InputField 
+                                label="Potencia (CV)" 
+                                name="horsepower" 
+                                type="text" 
+                                inputMode="numeric" 
+                                value={newCar.horsepower} 
+                                onChange={handleChange} 
+                                icon={faBolt} 
+                                error={fieldErrors.horsepower}
+                            />
                         </div>
                         
                         <AutocompleteField label="Ubicación" name="location" value={newCar.location} onChange={handleChange} options={locations} icon={faMapMarkerAlt}/>

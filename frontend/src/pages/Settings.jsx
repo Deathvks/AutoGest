@@ -6,6 +6,8 @@ import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt
 import Papa from 'papaparse';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
+import VersionIndicator from '../components/VersionIndicator';
+import { APP_NAME } from '../config/version';
 
 // --- Sub-componente para un interruptor (Toggle) ---
 const ToggleSwitch = ({ label, enabled, onChange }) => (
@@ -195,6 +197,15 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                                 <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2" />
                                 Eliminar mi cuenta
                             </button>
+                        </div>
+                        
+                        {/* Información de la aplicación */}
+                        <div className="lg:hidden">
+                            <h4 className="font-semibold text-text-primary mb-2">Información de la aplicación</h4>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-text-secondary">{APP_NAME}</span>
+                                <VersionIndicator />
+                            </div>
                         </div>
                     </div>
                 </div>

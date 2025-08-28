@@ -10,10 +10,6 @@ const app = express();
 
 app.use(cors());
 
-// --- LÍNEA MODIFICADA ---
-// Aumentamos el límite de tamaño para las peticiones JSON a 10MB
-app.use(express.json({ limit: '10mb' }));
-
 app.use(express.static('public'));
 
 // --- Rutas de la API ---

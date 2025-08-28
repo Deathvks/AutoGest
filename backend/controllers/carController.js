@@ -90,6 +90,23 @@ exports.createCar = async (req, res) => {
         res.status(201).json(newCar);
     } catch (error) {
         console.error(error);
+        
+        // Manejo específico de errores de restricción única
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            const field = error.errors[0]?.path;
+            const value = error.errors[0]?.value;
+            
+            if (field === 'licensePlate') {
+                return res.status(400).json({ 
+                    error: `Ya existe un coche con la matrícula ${value}. Por favor, verifica la matrícula e inténtalo de nuevo.` 
+                });
+            } else if (field === 'vin') {
+                return res.status(400).json({ 
+                    error: `Ya existe un coche con el número de bastidor ${value}. Por favor, verifica el VIN e inténtalo de nuevo.` 
+                });
+            }
+        }
+        
         res.status(500).json({ error: 'Error al crear el coche' });
     }
 };
@@ -153,9 +170,25 @@ exports.updateCar = async (req, res) => {
         
         await car.update(updateData);
         res.status(200).json(car);
-
     } catch (error) {
         console.error(error);
+        
+        // Manejo específico de errores de restricción única
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            const field = error.errors[0]?.path;
+            const value = error.errors[0]?.value;
+            
+            if (field === 'licensePlate') {
+                return res.status(400).json({ 
+                    error: `Ya existe un coche con la matrícula ${value}. Por favor, verifica la matrícula e inténtalo de nuevo.` 
+                });
+            } else if (field === 'vin') {
+                return res.status(400).json({ 
+                    error: `Ya existe un coche con el número de bastidor ${value}. Por favor, verifica el VIN e inténtalo de nuevo.` 
+                });
+            }
+        }
+        
         res.status(500).json({ error: 'Error al actualizar el coche' });
     }
 };

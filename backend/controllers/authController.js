@@ -45,12 +45,12 @@ exports.login = async (req, res) => {
 
         const user = await User.findOne({ where: { email } });
         if (!user) {
-            return res.status(401).json({ error: 'Credenciales inválidas.' });
+            return res.status(401).json({ error: 'No existe una cuenta con este email.' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({ error: 'Credenciales inválidas.' });
+            return res.status(401).json({ error: 'La contraseña es incorrecta.' });
         }
 
         const payload = {

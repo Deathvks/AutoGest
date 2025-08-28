@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
+import VersionIndicator from '../components/VersionIndicator';
 
 // Componentes y Páginas
 import Sidebar from '../components/Sidebar';
@@ -312,7 +313,9 @@ const MainLayout = () => {
                 </Routes>
             </main>
             <BottomNav />
-
+            
+            {/* Indicador de versión para PC - esquina inferior derecha */}
+            <VersionIndicator className="hidden lg:block fixed bottom-6 right-6 bg-component-bg px-2 py-1 rounded border border-border-color" />
             {toast && (
                 <Toast 
                     message={toast.message} 
