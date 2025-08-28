@@ -9,7 +9,7 @@ const db = require('./models');
 const app = express();
 
 app.use(cors());
-
+app.use(express.json()); // <-- AÑADE ESTA LÍNEA
 app.use(express.static('public'));
 
 // --- Rutas de la API ---
