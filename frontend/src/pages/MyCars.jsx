@@ -141,7 +141,7 @@ const MyCars = ({ cars, incidents, onSellClick, onAddClick, onViewDetailsClick, 
 
     const FilterButton = ({ label, filter, currentFilter, setFilter }) => {
         const isActive = currentFilter === filter;
-        return ( <button onClick={() => setFilter(filter)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ isActive ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700' }`}>{label}</button> );
+        return ( <button onClick={() => setFilter(filter)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ isActive ? 'bg-blue-600 text-white' : 'bg-component-bg text-text-secondary hover:bg-component-bg-hover border border-border-color' }`}>{label}</button> );
     };
 
     return (
@@ -161,8 +161,8 @@ const MyCars = ({ cars, incidents, onSellClick, onAddClick, onViewDetailsClick, 
                         />
                     </div>
                     <div className="relative">
-                        <input type="text" placeholder="Buscar por matrícula..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-medium border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 pl-10" />
-                        <FontAwesomeIcon icon={faSearch} className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input type="text" placeholder="Buscar por matrícula..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-component-bg text-text-primary px-4 py-2 rounded-lg text-sm font-medium border border-border-color focus:ring-2 focus:ring-blue-500 pl-10 hover:bg-component-bg-hover" />
+                        <FontAwesomeIcon icon={faSearch} className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
                     </div>
                 </div>
                 <button onClick={onAddClick} className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-2">
@@ -189,11 +189,11 @@ const MyCars = ({ cars, incidents, onSellClick, onAddClick, onViewDetailsClick, 
                     <div className="h-24 lg:hidden"></div>
                 </>
             ) : (
-                <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                    <FontAwesomeIcon icon={faCar} className="text-5xl text-slate-300 dark:text-slate-600 mb-4" />
-                    <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200">Aún no tienes coches registrados</h3>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2">Empieza por añadir tu primer vehículo a la lista.</p>
-                    <button onClick={onAddClick} className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-blue-700 transition-colors">
+                <div className="text-center py-16 px-4 bg-component-bg rounded-xl border border-border-color">
+                    <FontAwesomeIcon icon={faCar} className="text-5xl text-text-secondary mb-4" />
+                    <h3 className="text-xl font-semibold text-text-primary">Aún no tienes coches registrados</h3>
+                    <p className="text-text-secondary mt-2">Empieza por añadir tu primer vehículo a la lista.</p>
+                    <button onClick={onAddClick} className="mt-4 inline-flex items-center gap-2 bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
                         <FontAwesomeIcon icon={faPlusCircle} />
                         Añadir mi primer coche
                     </button>
