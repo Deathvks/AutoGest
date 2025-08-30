@@ -8,18 +8,27 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
-      // Definimos nuestros colores personalizados para el tema
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
+      // Paleta de colores profesional
       colors: {
         background: 'var(--color-background)',
         'component-bg': 'var(--color-component-bg)',
-        'component-bg-hover': 'var(--color-component-bg-hover)', // Nuevo color para el hover de componentes
+        'component-bg-hover': 'var(--color-component-bg-hover)',
         'border-color': 'var(--color-border)',
         'text-primary': 'var(--color-text-primary)',
         'text-secondary': 'var(--color-text-secondary)',
-        'blue-accent': 'var(--color-blue-accent)', // Azul vibrante para acentos
-        'red-accent': 'var(--color-red-accent)',   // Rojo para peligro
-        'green-accent': 'var(--color-green-accent)', // Verde para éxito/disponible
-        'yellow-accent': 'var(--color-yellow-accent)', // Amarillo para reservado/advertencia
+        
+        // Color de acento principal (dorado/cobre)
+        'accent': 'var(--color-accent)',
+        'accent-hover': 'var(--color-accent-hover)',
+
+        // Colores semánticos
+        'green-accent': 'var(--color-green-accent)',
+        'red-accent': 'var(--color-red-accent)',
+        'yellow-accent': 'var(--color-yellow-accent)',
+        'blue-accent': 'var(--color-blue-accent)', // Se renombra pero se mantiene por si se usa para elementos informativos
       }
     },
   },

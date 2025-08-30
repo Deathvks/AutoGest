@@ -104,40 +104,6 @@ const AutocompleteField = ({ label, name, value, onChange, options, icon, error 
     );
 };
 
-const TextareaField = ({ label, name, value, onChange, placeholder, error }) => {
-    const textareaRef = useRef(null);
-    useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-        }
-    }, [value]);
-    return (
-        <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
-            <textarea 
-                ref={textareaRef} 
-                name={name} 
-                value={value} 
-                onChange={onChange} 
-                placeholder={placeholder} 
-                className={`w-full px-3 py-2 bg-background border rounded-lg focus:ring-1 focus:border-blue-accent text-text-primary resize-none overflow-hidden transition-colors ${
-                    error 
-                        ? 'border-red-accent focus:ring-red-accent/20 focus:border-red-accent' 
-                        : 'border-border-color focus:ring-blue-accent'
-                }`} 
-                rows="3" 
-            />
-            {error && (
-                <p className="mt-1 text-xs text-red-accent flex items-center gap-1">
-                    <FontAwesomeIcon icon={faExclamationTriangle} className="h-3 w-3" />
-                    {error}
-                </p>
-            )}
-        </div>
-    );
-};
-
 const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     const sanitizeCarData = (carData) => {
         const sanitizedData = { ...carData };
@@ -188,12 +154,13 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     // Validaciones individuales
     const validateField = (name, value) => {
         const newErrors = { ...errors };
+        const stringValue = String(value || ''); // Convertir siempre a string para validaciones
         
         switch (name) {
             case 'make':
-                if (!value || value.trim() === '') {
+                if (stringValue.trim() === '') {
                     newErrors.make = 'La marca es obligatoria';
-                } else if (value.length < 2) {
+                } else if (stringValue.length < 2) {
                     newErrors.make = 'La marca debe tener al menos 2 caracteres';
                 } else {
                     delete newErrors.make;
@@ -201,22 +168,19 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                 break;
                 
             case 'model':
-                if (!value || value.trim() === '') {
+                if (stringValue.trim() === '') {
                     newErrors.model = 'El modelo es obligatorio';
-                } else if (value.length < 1) {
-                    newErrors.model = 'El modelo debe tener al menos 1 caracter';
                 } else {
                     delete newErrors.model;
                 }
                 break;
                 
             case 'licensePlate':
-                if (!value || value.trim() === '') {
+                if (stringValue.trim() === '') {
                     newErrors.licensePlate = 'La matrícula es obligatoria';
                 } else {
-                    // Validación básica de formato de matrícula española
                     const plateRegex = /^[0-9]{4}[A-Z]{3}$|^[A-Z]{1,2}[0-9]{4}[A-Z]{2}$|^[0-9]{1,4}[A-Z]{1,3}$/i;
-                    if (!plateRegex.test(value.replace(/[\s-]/g, ''))) {
+                    if (!plateRegex.test(stringValue.replace(/[\s-]/g, ''))) {
                         newErrors.licensePlate = 'Formato de matrícula no válido';
                     } else {
                         delete newErrors.licensePlate;
@@ -225,10 +189,10 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                 break;
                 
             case 'vin':
-                if (value && value.length > 0) {
-                    if (value.length !== 17) {
+                if (stringValue.trim()) {
+                    if (stringValue.length !== 17) {
                         newErrors.vin = 'El VIN debe tener exactamente 17 caracteres';
-                    } else if (!/^[A-HJ-NPR-Z0-9]{17}$/i.test(value)) {
+                    } else if (!/^[A-HJ-NPR-Z0-9]{17}$/i.test(stringValue)) {
                         newErrors.vin = 'El VIN contiene caracteres no válidos';
                     } else {
                         delete newErrors.vin;
@@ -239,8 +203,8 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                 break;
                 
             case 'registrationDate':
-                if (value) {
-                    const date = new Date(value);
+                if (stringValue) {
+                    const date = new Date(stringValue);
                     const today = new Date();
                     const minDate = new Date('1900-01-01');
                     
@@ -257,10 +221,10 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                 break;
                 
             case 'price':
-                if (!value || value.trim() === '') {
+                if (stringValue.trim() === '') {
                     newErrors.price = 'El precio de venta es obligatorio';
                 } else {
-                    const numericValue = parseFloat(parseNumber(String(value)));
+                    const numericValue = parseFloat(parseNumber(stringValue));
                     if (isNaN(numericValue)) {
                         newErrors.price = 'El precio debe ser un número válido';
                     } else if (numericValue <= 0) {
@@ -274,8 +238,8 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                 break;
                 
             case 'km':
-                if (value && value.trim() !== '') {
-                    const numericValue = parseFloat(parseNumber(String(value)));
+                if (stringValue.trim()) {
+                    const numericValue = parseFloat(parseNumber(stringValue));
                     if (isNaN(numericValue)) {
                         newErrors.km = 'Los kilómetros deben ser un número válido';
                     } else if (numericValue < 0) {
@@ -291,8 +255,8 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                 break;
                 
             case 'horsepower':
-                if (value && value.trim() !== '') {
-                    const numericValue = parseFloat(parseNumber(String(value)));
+                if (stringValue.trim()) {
+                    const numericValue = parseFloat(parseNumber(stringValue));
                     if (isNaN(numericValue)) {
                         newErrors.horsepower = 'Los caballos deben ser un número válido';
                     } else if (numericValue <= 0) {
@@ -319,10 +283,8 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
         const { name, value } = e.target;
         setEditedCar(prev => ({ ...prev, [name]: value }));
         
-        // Validar el campo en tiempo real
         validateField(name, value);
         
-        // Limpiar error del servidor si existe
         if (serverError) {
             setServerError('');
         }
@@ -336,13 +298,11 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Validar tamaño del archivo (máximo 5MB)
             if (file.size > 5 * 1024 * 1024) {
                 setErrors(prev => ({ ...prev, image: 'La imagen no puede superar los 5MB' }));
                 return;
             }
             
-            // Validar tipo de archivo
             if (!file.type.startsWith('image/')) {
                 setErrors(prev => ({ ...prev, image: 'Solo se permiten archivos de imagen' }));
                 return;
@@ -351,7 +311,6 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             setImageFile(file);
             setImagePreview(URL.createObjectURL(file));
             
-            // Limpiar error de imagen si existe
             const newErrors = { ...errors };
             delete newErrors.image;
             setErrors(newErrors);
@@ -387,7 +346,6 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             }
         });
         
-        // Validar campos opcionales si tienen valor
         ['vin', 'registrationDate', 'km', 'horsepower'].forEach(field => {
             if (editedCar[field]) {
                 validateField(field, editedCar[field]);
@@ -405,7 +363,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
         
         try {
             const formData = new FormData();
-            const ignoredFields = ['id', 'createdAt', 'updatedAt', 'userId'];
+            const ignoredFields = ['id', 'createdAt', 'updatedAt', 'userId', 'notes']; // Ignorar notes
 
             const finalCarData = { 
                 ...editedCar, 
@@ -434,7 +392,6 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             
             await onUpdate(formData);
         } catch (error) {
-            // Manejar errores específicos del servidor
             if (error.response?.data?.message) {
                 const message = error.response.data.message.toLowerCase();
                 if (message.includes('matrícula') && message.includes('existe')) {
@@ -617,14 +574,6 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                                 <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="Añadir etiqueta y pulsar Enter" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px]" />
                             </div>
                         </div>
-                        <TextareaField 
-                            label="Anotaciones" 
-                            name="notes" 
-                            value={editedCar.notes} 
-                            onChange={handleChange} 
-                            placeholder="Añade cualquier anotación relevante sobre el coche..." 
-                            error={errors.notes}
-                        />
                     </div>
                 </form>
                 

@@ -34,7 +34,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                 </div>
                 <form onSubmit={(e) => e.preventDefault()} noValidate>
                     <div className="text-center">
-                        <p className="text-text-secondary">Vas a marcar como vendido el <span className="font-bold text-text-primary">{car.make} {car.model}</span>.</p>
+                        <p className="text-text-secondary">Vas a marcar como vendido el <span className="font-bold text-text-primary">{car.make} {car.model} ({car.licensePlate})</span>.</p>
                         <p className="text-sm text-text-secondary">Precio de compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</p>
                     </div>
                     <div className="mt-6">

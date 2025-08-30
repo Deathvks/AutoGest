@@ -1,156 +1,217 @@
-// autogest-app/frontend/src/components/modals/CarDetailsModalContent.jsx
+// frontend/src/components/modals/CarDetailsModalContent.jsx
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrash, faTag, faExclamationTriangle, faBolt, faXmark, faHandshake, faPaperclip, faBan, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { 
+    faTimes, faEuroSign, faTachometerAlt, faGasPump, faCogs, faCalendarAlt, 
+    faMapMarkerAlt, faStickyNote, faFingerprint, faIdCard, faExclamationTriangle, 
+    faCheckCircle, faPencilAlt, faTrashAlt, faFileInvoiceDollar, faBan, faHandHoldingUsd,
+    faBell, faTags, faBolt
+} from '@fortawesome/free-solid-svg-icons';
 
-// --- Sub-componentes ---
-const StatusChip = ({ status }) => {
-    const statusStyles = {
-        'En venta': 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300',
-        'Vendido': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300',
-        'Reservado': 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-        'Taller': 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300',
-    };
-    return ( <span className={`px-3 py-1 text-xs font-medium rounded-full ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}> {status} </span> );
-};
+const DetailItem = ({ icon, label, value }) => (
+    <div className="flex flex-col">
+        <div className="flex items-center text-sm text-text-secondary mb-1">
+            <FontAwesomeIcon icon={icon} className="w-4 h-4 mr-2" />
+            <span>{label}</span>
+        </div>
+        <p className="font-semibold text-text-primary break-words">{value || 'No especificado'}</p>
+    </div>
+);
 
-const DetailItem = ({ label, value, icon, iconClassName }) => (
-    <div>
-        <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
-        <div className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-            {icon && <FontAwesomeIcon icon={icon} className={`w-3 h-3 ${iconClassName || 'text-slate-400'}`} />}
-            <span>{value || '-'}</span>
+const IncidentItem = ({ incident, onResolve, onDelete }) => (
+    <div className="bg-background p-3 rounded-lg flex items-start justify-between">
+        <div>
+            <p className="text-sm text-text-primary">{incident.description}</p>
+            <p className="text-xs text-text-secondary mt-1">
+                {new Date(incident.date).toLocaleDateString()} - 
+                <span className={`font-semibold ${incident.status === 'resuelta' ? 'text-green-accent' : 'text-yellow-accent'}`}>
+                    {incident.status === 'resuelta' ? ' Resuelta' : ' Pendiente'}
+                </span>
+            </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+            {incident.status !== 'resuelta' && (
+                <button onClick={() => onResolve(incident.id)} className="text-green-accent hover:opacity-75 transition-opacity" title="Marcar como resuelta">
+                    <FontAwesomeIcon icon={faCheckCircle} />
+                </button>
+            )}
+            <button onClick={() => onDelete(incident.id)} className="text-red-accent hover:opacity-75 transition-opacity" title="Eliminar incidencia">
+                <FontAwesomeIcon icon={faTrashAlt} />
+            </button>
         </div>
     </div>
 );
 
-// --- Componente Principal ---
-const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onResolveIncident }) => {
-    const carIncidents = incidents.filter(inc => inc.licensePlate === car.licensePlate);
-    const placeholderImage = `https://placehold.co/800x500/e2e8f0/1e293b?text=${car.make}+${car.model}`;
+const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onResolveIncident, onDeleteIncident, onDeleteNote }) => {
+    const getStatusChipClass = (status) => {
+        switch (status) {
+            case 'En venta': return 'bg-accent/10 text-accent';
+            case 'Vendido': return 'bg-green-accent/10 text-green-accent';
+            case 'Reservado': return 'bg-yellow-accent/10 text-yellow-accent';
+            default: return 'bg-component-bg-hover text-text-secondary';
+        }
+    };
 
-    let carTags = car.tags;
-    if (typeof carTags === 'string') {
-        try { carTags = JSON.parse(carTags); } catch (e) { carTags = []; }
+    const carIncidents = incidents.filter(i => i.carId === car.id);
+
+    let parsedNotes = [];
+    if (car.notes) {
+        try {
+            const parsed = JSON.parse(car.notes);
+            if (Array.isArray(parsed)) {
+                parsedNotes = parsed;
+            }
+        } catch (e) {
+            // Si no es JSON, lo tratamos como una nota antigua
+            parsedNotes = [{
+                id: new Date(car.updatedAt).getTime(),
+                content: car.notes,
+                type: 'General',
+                date: new Date(car.updatedAt).toISOString().split('T')[0]
+            }];
+        }
     }
-    if (!Array.isArray(carTags)) { carTags = []; }
+    
+    let tagsToShow = [];
+    if (typeof car.tags === 'string') {
+        try {
+            tagsToShow = JSON.parse(car.tags);
+        } catch (e) {
+            tagsToShow = []; 
+        }
+    } else if (Array.isArray(car.tags)) {
+        tagsToShow = car.tags;
+    }
 
     return (
-        <div className="relative bg-white dark:bg-black rounded-xl overflow-hidden shadow-2xl max-w-3xl w-full border border-slate-200 dark:border-slate-800">
-            <button 
-                onClick={onClose}
-                className="absolute top-4 right-4 z-10 bg-black/40 text-white rounded-full p-1 hover:bg-black/60 transition-colors"
-                aria-label="Cerrar modal"
-            >
-                <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
-            </button>
-
-            <div className="flex-shrink-0 bg-slate-100 dark:bg-slate-800">
-                <img 
-                    className="w-full h-64 object-cover"
-                    src={car.imageUrl || placeholderImage} 
-                    alt={`Coche ${car.make} ${car.model}`}
-                    onError={(e) => { e.target.onerror = null; e.target.src = placeholderImage; }}
-                />
+        <div className="bg-component-bg rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
+                <div>
+                    <h2 className="text-2xl font-bold text-text-primary">{car.make} {car.model}</h2>
+                    <p className="text-sm text-text-secondary">{car.licensePlate}</p>
+                </div>
+                <button onClick={onClose} className="text-text-secondary hover:text-text-primary transition-colors">
+                    <FontAwesomeIcon icon={faTimes} className="w-6 h-6" />
+                </button>
             </div>
 
-            <div className="p-6">
-                <div className="flex justify-between items-start mb-1">
-                    <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{car.make}</p>
-                    <StatusChip status={car.status} />
+            <div className="flex-grow overflow-y-auto p-6 space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                        <img 
+                            src={car.imageUrl || `https://placehold.co/600x400/f1f3f5/6c757d?text=${car.make}+${car.model}`}
+                            alt={`${car.make} ${car.model}`}
+                            className="w-full h-auto object-cover rounded-lg border border-border-color"
+                        />
+                        <div className="bg-background p-4 rounded-lg text-center">
+                            <p className="text-lg text-text-secondary">Precio de Venta</p>
+                            <div className="flex flex-col items-center">
+                                <p className="text-4xl font-extrabold text-accent">
+                                    {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
+                                </p>
+                                {car.status === 'Reservado' && car.reservationDeposit > 0 && (
+                                    <p className="text-sm font-semibold text-yellow-accent mt-1">
+                                        Reserva: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}
+                                    </p>
+                                )}
+                            </div>
+                            <span className={`mt-2 inline-block text-sm font-bold px-3 py-1 rounded-full ${getStatusChipClass(car.status)}`}>
+                                {car.status}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="space-y-6">
+                        <section>
+                            <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2">Detalles Principales</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <DetailItem icon={faCalendarAlt} label="Fecha de Matriculación" value={car.registrationDate ? new Date(car.registrationDate).toLocaleDateString('es-ES') : 'N/A'} />
+                                <DetailItem icon={faTachometerAlt} label="Kilometraje" value={car.km ? `${new Intl.NumberFormat('es-ES').format(car.km)} km` : 'N/A'} />
+                                <DetailItem icon={faGasPump} label="Combustible" value={car.fuel} />
+                                <DetailItem icon={faCogs} label="Transmisión" value={car.transmission} />
+                                <DetailItem icon={faBolt} label="Potencia" value={car.horsepower ? `${car.horsepower} CV` : 'N/A'} />
+                                <DetailItem icon={faEuroSign} label="Precio Compra" value={new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)} />
+                            </div>
+                        </section>
+
+                        <section>
+                            <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2">Identificación y Ubicación</h3>
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <DetailItem icon={faIdCard} label="Matrícula" value={car.licensePlate} />
+                                <DetailItem icon={faFingerprint} label="Nº de Bastidor" value={car.vin} />
+                                <DetailItem icon={faMapMarkerAlt} label="Ubicación" value={car.location} />
+                            </div>
+                        </section>
+                        
+                        <section>
+                            <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2">Etiquetas</h3>
+                             <div className="flex flex-wrap gap-2">
+                                {tagsToShow.length > 0 ? tagsToShow.map(tag => (
+                                    <span key={tag} className="bg-accent/10 text-accent text-xs font-semibold px-2.5 py-1 rounded-full">{tag}</span>
+                                )) : <p className="text-text-primary text-sm font-semibold">Sin etiquetas</p>}
+                            </div>
+                        </section>
+                    </div>
                 </div>
-                <h3 className="text-2xl leading-7 font-bold text-slate-800 dark:text-slate-100">{car.model}</h3>
-                <p className="mt-3 text-3xl font-light text-blue-600 dark:text-blue-400">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}</p>
-                
-                {car.status === 'Reservado' && car.reservationDeposit > 0 && (
-                    <div className="mt-3 text-sm font-semibold text-amber-600 dark:text-amber-400">
-                        <span>Depósito de reserva: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}</span>
-                    </div>
-                )}
 
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-4 text-sm border-t border-slate-200 dark:border-slate-800 pt-4">
-                    <DetailItem label="Matrícula" value={car.licensePlate} />
-                    <DetailItem label="Bastidor" value={car.vin} />
-                    <DetailItem label="KM" value={new Intl.NumberFormat('es-ES').format(car.km)} />
-                    <DetailItem label="Matriculación" value={car.registrationDate ? new Date(car.registrationDate).toLocaleDateString('es-ES') : '-'} />
-                    <DetailItem label="Combustible" value={car.fuel} />
-                    <DetailItem label="Cambio" value={car.transmission} />
-                    {car.horsepower && <DetailItem label="Caballos (CV)" value={car.horsepower} icon={faBolt} iconClassName="text-amber-500" />}
-                </div>
+                <section>
+                    <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2">Anotaciones</h3>
+                    <div className="space-y-3">
+                        {parsedNotes.length > 0 ? (
+                            parsedNotes.map(note => (
+                                <div key={note.id} className="bg-background p-3 rounded-lg flex items-start justify-between gap-4">
+                                    <div>
+                                        <p className="text-sm text-text-primary">{note.content}</p>
+                                        <p className="text-xs text-text-secondary mt-1">
+                                            {note.type} - {new Date(note.date).toLocaleDateString('es-ES')}
+                                        </p>
+                                    </div>
+                                    <button onClick={() => onDeleteNote(car, note.id)} className="text-red-accent hover:opacity-75 transition-opacity flex-shrink-0" title="Eliminar nota">
+                                        <FontAwesomeIcon icon={faTrashAlt} />
+                                    </button>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-text-secondary text-center py-4">No hay anotaciones.</p>
+                        )}
+                    </div>
+                </section>
 
-                {carTags && carTags.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {carTags.map(tag => (
-                            <span key={tag} className="px-2 py-1 text-xs bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 rounded-md">{tag}</span>
-                        ))}
+                <section>
+                    <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2">Incidencias</h3>
+                    <div className="space-y-3">
+                        {carIncidents.length > 0 ? (
+                            carIncidents.map(incident => (
+                                <IncidentItem key={incident.id} incident={incident} onResolve={onResolveIncident} onDelete={onDeleteIncident} />
+                            ))
+                        ) : (
+                            <p className="text-sm text-text-secondary text-center py-4">No hay incidencias registradas para este vehículo.</p>
+                        )}
                     </div>
-                )}
-
-                {car.registrationDocumentUrl && (
-                    <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
-                        <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">Documentación</h4>
-                        <a href={car.registrationDocumentUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline">
-                            <FontAwesomeIcon icon={faPaperclip} />
-                            Ver Permiso de Circulación
-                        </a>
-                    </div>
-                )}
-                
-                {car.notes && (
-                    <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
-                        <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Anotaciones</h4>
-                        <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{car.notes}</p>
-                    </div>
-                )}
-                 {carIncidents.length > 0 && (
-                    <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
-                        <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">Historial de Incidencias</h4>
-                        <ul className="space-y-2">
-                            {carIncidents.map(incident => (
-                                <li key={incident.id} className={`flex justify-between items-center group transition-colors ${incident.status === 'resuelta' ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-600 dark:text-slate-300'}`}>
-                                    <span><span className="font-semibold">{new Date(incident.date).toLocaleDateString('es-ES')}:</span> {incident.description}</span>
-                                    {incident.status === 'abierta' && (
-                                        <button onClick={() => onResolveIncident(incident.id)} title="Marcar como resuelta" className="text-emerald-500 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-full p-1.5 transition-colors opacity-0 group-hover:opacity-100">
-                                            <FontAwesomeIcon icon={faCheck} className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-                
-                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <button onClick={() => onEditClick(car)} className="inline-flex items-center gap-2 p-2 text-sm font-medium text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                            <FontAwesomeIcon icon={faEdit} className="w-4 h-4" />
+                </section>
+            </div>
+            
+            <div className="flex-shrink-0 p-4 border-t border-border-color flex flex-wrap justify-end gap-3">
+                 {car.status === 'En venta' && (
+                    <>
+                        <button onClick={() => onSellClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-green-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
+                            <FontAwesomeIcon icon={faHandHoldingUsd} /> Vender
                         </button>
-                        <button onClick={() => onDeleteClick(car)} className="inline-flex items-center gap-2 p-2 text-sm font-medium text-rose-600 bg-rose-100 dark:bg-rose-900/50 dark:text-rose-300 rounded-lg hover:bg-rose-200 dark:hover:bg-rose-900 transition-colors">
-                            <FontAwesomeIcon icon={faTrash} className="w-4 h-4" />
+                        <button onClick={() => onReserveClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-yellow-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
+                           <FontAwesomeIcon icon={faBell} /> Reservar
                         </button>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                         {car.status === 'En venta' && (
-                            <button onClick={() => onReserveClick(car)} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-600 bg-amber-100 dark:bg-amber-900/50 dark:text-amber-300 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
-                                <FontAwesomeIcon icon={faHandshake} className="w-4 h-4" />
-                                Reservar
-                            </button>
-                        )}
-                        {car.status === 'Reservado' && (
-                             <button onClick={() => onCancelReservationClick(car)} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-200 dark:bg-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
-                                <FontAwesomeIcon icon={faBan} className="w-4 h-4" />
-                                Cancelar Reserva
-                            </button>
-                        )}
-                        {(car.status === 'En venta' || car.status === 'Taller' || car.status === 'Reservado') && (
-                            <button onClick={() => onSellClick(car)} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-100 dark:bg-blue-900/50 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors">
-                                <FontAwesomeIcon icon={faTag} className="w-4 h-4" />
-                                Vender
-                            </button>
-                        )}
-                    </div>
-                </div>
+                    </>
+                )}
+                {car.status === 'Reservado' && (
+                     <button onClick={() => onCancelReservationClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-red-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
+                        <FontAwesomeIcon icon={faBan} /> Cancelar Reserva
+                    </button>
+                )}
+                <button onClick={() => onEditClick(car)} className="px-4 py-2 text-sm font-semibold text-text-primary bg-component-bg-hover rounded-lg border border-border-color hover:bg-border-color flex items-center gap-2">
+                   <FontAwesomeIcon icon={faPencilAlt} /> Editar
+                </button>
+                <button onClick={() => onDeleteClick(car)} className="px-4 py-2 text-sm font-semibold text-red-accent bg-red-accent/10 rounded-lg hover:bg-red-accent/20 flex items-center gap-2">
+                    <FontAwesomeIcon icon={faTrashAlt} /> Eliminar
+                </button>
             </div>
         </div>
     );

@@ -2,44 +2,39 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faChartLine,
-    faCar,
-    faWallet,
-    faUser,
-    faCog,
-    faTags // <-- Icono añadido
+import { 
+    faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, faCog 
 } from '@fortawesome/free-solid-svg-icons';
 
-// Array de items de navegación actualizado
-const navItems = [
-    { to: '/', label: 'Dashboard', icon: faChartLine },
-    { to: '/cars', label: 'Coches', icon: faCar },
-    { to: '/sales', label: 'Ventas', icon: faTags }, // <-- Enlace de Ventas añadido
-    { to: '/expenses', label: 'Gastos', icon: faWallet },
-    { to: '/profile', label: 'Perfil', icon: faUser },
-    { to: '/settings', label: 'Ajustes', icon: faCog },
-];
-
 const BottomNav = () => {
+    const navItems = [
+        { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
+        { icon: faCar, text: 'Coches', path: '/cars' },
+        { icon: faChartLine, text: 'Ventas', path: '/sales' },
+        { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
+        { icon: faCog, text: 'Ajustes', path: '/settings' },
+    ];
+
+    const NavItem = ({ icon, text, path }) => (
+        <NavLink 
+            to={path} 
+            end
+            className={({ isActive }) =>
+                `flex flex-col items-center justify-center w-full pt-2 pb-1 text-xs font-medium transition-colors duration-200 ${
+                isActive
+                    ? 'text-accent'
+                    : 'text-text-secondary hover:text-accent'
+                }`
+            }
+        >
+            <FontAwesomeIcon icon={icon} className="w-5 h-5 mb-1" />
+            <span>{text}</span>
+        </NavLink>
+    );
+
     return (
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-component-bg border-t border-border-color flex justify-around p-2 z-50">
-            {navItems.map(item => (
-                <NavLink
-                    key={item.to}
-                    to={item.to}
-                    className={({ isActive }) =>
-                        `flex flex-col items-center justify-center w-full p-2 rounded-lg transition-colors ${
-                            isActive 
-                            ? 'text-blue-accent' 
-                            : 'text-text-secondary'
-                        }`
-                    }
-                >
-                    <FontAwesomeIcon icon={item.icon} className="w-6 h-6" />
-                    <span className="text-xs mt-1">{item.label}</span>
-                </NavLink>
-            ))}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-component-bg border-t border-border-color flex justify-around shadow-t-md">
+            {navItems.map(item => <NavItem key={item.text} {...item} />)}
         </nav>
     );
 };

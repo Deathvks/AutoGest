@@ -7,6 +7,7 @@ import VersionIndicator from '../components/VersionIndicator';
 
 // Componentes y Páginas
 import Sidebar from '../components/Sidebar';
+import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import Dashboard from '../pages/Dashboard';
 import MyCars from '../pages/MyCars';
@@ -30,7 +31,8 @@ import DeleteAccountConfirmationModal from '../components/modals/DeleteAccountCo
 import AddUserModal from '../components/modals/AddUserModal';
 import EditUserModal from '../components/modals/EditUserModal';
 import DeleteUserConfirmationModal from '../components/modals/DeleteUserConfirmationModal';
-
+import InvestmentDetailsModal from '../components/modals/InvestmentDetailsModal';
+import RevenueDetailsModal from '../components/modals/RevenueDetailsModal';
 
 const MainLayout = () => {
     const { user } = useContext(AuthContext);
@@ -60,6 +62,8 @@ const MainLayout = () => {
     const [toast, setToast] = useState(null);
     const [carPendingDeletion, setCarPendingDeletion] = useState(null);
     const deleteTimeoutRef = useRef(null);
+    const [isInvestmentModalOpen, setInvestmentModalOpen] = useState(false);
+    const [isRevenueModalOpen, setRevenueModalOpen] = useState(false);
 
     const fetchLocations = async () => {
         try {
@@ -206,15 +210,41 @@ const MainLayout = () => {
             setCarToSell(null);
         } catch (error) { console.error("Error al vender el coche:", error); }
     };
-    const handleReserveConfirm = async (carToUpdate, reservationNotes, depositAmount) => {
+    const handleReserveConfirm = async (carToUpdate, newNoteContent, depositAmount) => {
         try {
-            const updatedData = { 
-                ...carToUpdate,
-                status: 'Reservado', 
-                notes: reservationNotes, 
-                reservationDeposit: depositAmount 
+            let existingNotes = [];
+            if (carToUpdate.notes) {
+                try {
+                    const parsed = JSON.parse(carToUpdate.notes);
+                    if (Array.isArray(parsed)) {
+                        existingNotes = parsed;
+                    }
+                } catch (e) {
+                    existingNotes = [{
+                        id: new Date(carToUpdate.updatedAt).getTime(),
+                        content: carToUpdate.notes,
+                        type: 'General',
+                        date: new Date(carToUpdate.updatedAt).toISOString().split('T')[0]
+                    }];
+                }
+            }
+
+            if (newNoteContent && newNoteContent.trim() !== '') {
+                existingNotes.push({
+                    id: Date.now(),
+                    content: newNoteContent,
+                    type: 'Reserva',
+                    date: new Date().toISOString().split('T')[0]
+                });
+            }
+            
+            const dataToSend = {
+                status: 'Reservado',
+                notes: JSON.stringify(existingNotes),
+                reservationDeposit: depositAmount
             };
-            const updatedCar = await api.updateCar(carToUpdate.id, updatedData);
+
+            const updatedCar = await api.updateCar(carToUpdate.id, dataToSend);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
             setCarToReserve(null);
         } catch (error) {
@@ -224,10 +254,8 @@ const MainLayout = () => {
     const handleConfirmCancelReservation = async (carToUpdate) => {
         try {
             const updatedData = {
-                ...carToUpdate,
                 status: 'En venta',
-                reservationDeposit: null,
-                notes: `Reserva cancelada. Nota anterior: ${carToUpdate.notes || ''}`.trim()
+                reservationDeposit: null
             };
             const updatedCar = await api.updateCar(carToUpdate.id, updatedData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
@@ -236,6 +264,27 @@ const MainLayout = () => {
             console.error("Error al cancelar la reserva:", error);
         }
     };
+
+    const handleDeleteNote = async (car, noteIdToDelete) => {
+        try {
+            let notes = [];
+            if (car.notes) {
+                try {
+                    const parsed = JSON.parse(car.notes);
+                    if (Array.isArray(parsed)) notes = parsed;
+                } catch (e) { /* No es un JSON válido, se ignora */ }
+            }
+    
+            const updatedNotes = notes.filter(note => note.id !== noteIdToDelete);
+            const updatedCar = await api.updateCar(car.id, { notes: JSON.stringify(updatedNotes) });
+    
+            setCars(prev => prev.map(c => (c.id === updatedCar.id ? updatedCar : c)));
+            setCarToView(updatedCar);
+        } catch (error) {
+            console.error("Error al eliminar la nota:", error);
+        }
+    };
+
     const handleAddIncident = async (car, description) => {
         const incidentData = { date: new Date().toISOString().split('T')[0], description, licensePlate: car.licensePlate, carId: car.id };
         try {
@@ -289,29 +338,38 @@ const MainLayout = () => {
     return (
         <div className="flex h-screen bg-background font-sans text-text-secondary">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto min-w-0 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
-                <Routes>
-                    <Route path="/" element={<Dashboard cars={cars} expenses={expenses} isDarkMode={isDarkMode} />} />
-                    <Route path="/cars" element={<MyCars cars={cars} incidents={incidents} onSellClick={setCarToSell} onAddClick={() => setAddCarModalOpen(true)} onViewDetailsClick={setCarToView} onAddIncidentClick={setCarForIncident} onReserveClick={setCarToReserve} onCancelReservationClick={setCarToCancelReservation} />} />
-                    <Route path="/sales" element={<SalesSummary cars={cars} onViewDetailsClick={setCarToView} />} />
-                    <Route path="/expenses" element={<Expenses expenses={expenses} cars={cars} onAddExpense={() => setAddExpenseModalOpen(true)} onDeleteExpense={setExpenseToDelete} />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} cars={cars} expenses={expenses} incidents={incidents} onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)} />} />
-                    
-                    <Route path="/admin" element={
-                        user && user.role === 'admin' 
-                        ? <ManageUsersPage 
-                            users={users} 
-                            onAddUser={() => setAddUserModalOpen(true)}
-                            onEditUser={setUserToEdit}
-                            onDeleteUser={setUserToDelete}
-                          /> 
-                        : <Navigate to="/" replace />
-                    } />
+            <div className="flex flex-col flex-1 min-w-0">
+                <Header />
+                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+                    <Routes>
+                        <Route path="/" element={<Dashboard 
+                            cars={cars} 
+                            expenses={expenses} 
+                            isDarkMode={isDarkMode} 
+                            onTotalInvestmentClick={() => setInvestmentModalOpen(true)}
+                            onRevenueClick={() => setRevenueModalOpen(true)} 
+                        />} />
+                        <Route path="/cars" element={<MyCars cars={cars} incidents={incidents} onSellClick={setCarToSell} onAddClick={() => setAddCarModalOpen(true)} onViewDetailsClick={setCarToView} onAddIncidentClick={setCarForIncident} onReserveClick={setCarToReserve} onCancelReservationClick={setCarToCancelReservation} />} />
+                        <Route path="/sales" element={<SalesSummary cars={cars} onViewDetailsClick={setCarToView} />} />
+                        <Route path="/expenses" element={<Expenses expenses={expenses} cars={cars} onAddExpense={() => setAddExpenseModalOpen(true)} onDeleteExpense={setExpenseToDelete} />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} cars={cars} expenses={expenses} incidents={incidents} onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)} />} />
+                        
+                        <Route path="/admin" element={
+                            user && user.role === 'admin' 
+                            ? <ManageUsersPage 
+                                users={users} 
+                                onAddUser={() => setAddUserModalOpen(true)}
+                                onEditUser={setUserToEdit}
+                                onDeleteUser={setUserToDelete}
+                            /> 
+                            : <Navigate to="/" replace />
+                        } />
 
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </main>
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </main>
+            </div>
             <BottomNav />
             
             {/* Indicador de versión para PC - esquina inferior derecha */}
@@ -338,6 +396,7 @@ const MainLayout = () => {
                             onCancelReservationClick={setCarToCancelReservation} 
                             onResolveIncident={handleResolveIncident}
                             onDeleteIncident={handleDeleteIncident}
+                            onDeleteNote={handleDeleteNote}
                         />
                     </div>
                 </div>
@@ -356,6 +415,19 @@ const MainLayout = () => {
             {isAddUserModalOpen && <AddUserModal onClose={() => setAddUserModalOpen(false)} onUserAdded={handleUserAdded} />}
             {userToEdit && <EditUserModal user={userToEdit} onClose={() => setUserToEdit(null)} onUserUpdated={handleUserUpdated} />}
             {userToDelete && <DeleteUserConfirmationModal user={userToDelete} onClose={() => setUserToDelete(null)} onConfirmDelete={handleUserDeleted} />}
+            
+            <InvestmentDetailsModal 
+                isOpen={isInvestmentModalOpen}
+                onClose={() => setInvestmentModalOpen(false)}
+                cars={cars}
+                expenses={expenses}
+            />
+            
+            <RevenueDetailsModal 
+                isOpen={isRevenueModalOpen}
+                onClose={() => setRevenueModalOpen(false)}
+                cars={cars}
+            />
         </div>
     );
 };

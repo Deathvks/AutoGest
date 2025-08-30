@@ -1,101 +1,122 @@
 // autogest-app/frontend/src/pages/MyCars.jsx
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-    faPlusCircle, 
-    faSearch, 
-    faExclamationTriangle, 
-    faTag, 
-    faCar,
-    faBolt,
-    faHandshake,
-    faHandHoldingDollar,
-    faBan
-} from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSearch, faTimes, faFilter, faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags } from '@fortawesome/free-solid-svg-icons';
 import Select from '../components/Select';
+import FilterModal from '../components/modals/FilterModal';
 
-// --- Sub-componentes ---
-
-const StatusChip = ({ status }) => {
-    const statusStyles = {
-        'En venta': 'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300',
-        'Vendido': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300',
-        'Reservado': 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-        'Taller': 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300',
+// Componente de Tarjeta de Coche
+const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick }) => {
+    const getStatusChipClass = (status) => {
+        switch (status) {
+            case 'Vendido': return 'bg-green-accent/10 text-green-accent';
+            case 'En venta': return 'bg-blue-accent/10 text-blue-accent';
+            case 'Reservado': return 'bg-yellow-accent/10 text-yellow-accent';
+            default: return 'bg-component-bg-hover text-text-secondary';
+        }
     };
-    return ( <span className={`px-3 py-1 text-xs font-medium rounded-full ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}> {status} </span> );
-};
 
-const CarCard = ({ car, onSellClick, onViewDetailsClick, onAddIncidentClick, onReserveClick, onCancelReservationClick, hasIncident }) => {
-    const placeholderImage = `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`;
-    
+    let tagsToShow = [];
+    if (typeof car.tags === 'string') {
+        try {
+            tagsToShow = JSON.parse(car.tags);
+        } catch (e) {
+            tagsToShow = []; 
+        }
+    } else if (Array.isArray(car.tags)) {
+        tagsToShow = car.tags;
+    }
+
+    const visibleTags = tagsToShow.slice(0, 3);
+    const hiddenTagsCount = tagsToShow.length - visibleTags.length;
+
     return (
-        <div className="bg-white dark:bg-black rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
-            <div className="flex-shrink-0">
-                <img 
-                    className="h-48 w-full object-cover" 
-                    src={car.imageUrl || placeholderImage} 
-                    alt={`Coche ${car.make} ${car.model}`}
-                    onError={(e) => { e.target.onerror = null; e.target.src = placeholderImage; }}
+        <div className="bg-component-bg rounded-lg shadow-sm border border-border-color overflow-hidden flex flex-col sm:flex-row transition-shadow duration-300 hover:shadow-lg">
+            <div className="sm:w-1/3 lg:w-1/4 flex-shrink-0">
+                <img
+                    src={car.imageUrl || `https://placehold.co/400x300/f1f3f5/6c757d?text=${car.make}+${car.model}`}
+                    alt={`${car.make} ${car.model}`}
+                    className="w-full h-48 sm:h-full object-cover cursor-pointer"
+                    onClick={() => onViewDetailsClick(car)}
                 />
             </div>
-            <div className="p-6 flex flex-col justify-between w-full flex-1">
-                <div>
-                    <div className="flex justify-between items-start mb-1">
-                        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{car.make}</p>
-                        <StatusChip status={car.status} />
+            <div className="p-4 flex-grow flex flex-col sm:w-2/3 lg:w-3/4">
+                <div className="flex items-start justify-between mb-1">
+                    <div>
+                        <h3 className="text-xl font-bold text-text-primary truncate">{car.make} {car.model}</h3>
+                        <p className="text-sm text-text-secondary">{car.licensePlate}</p>
                     </div>
-                    <h3 className="text-xl leading-7 font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                        {car.model}
-                        {hasIncident && <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4 text-amber-500" title="Este coche tiene incidencias abiertas" />}
-                    </h3>
-                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400"><span className="font-semibold text-slate-600 dark:text-slate-300">Matrícula:</span> {car.licensePlate}</p>
-                    <p className="mt-2 text-2xl font-light text-blue-600 dark:text-blue-400">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}</p>
-                    
-                    <div className="mt-1 flex justify-between text-sm text-slate-500 dark:text-slate-400">
-                        <span>{new Intl.NumberFormat('es-ES').format(car.km)} km</span>
-                        {car.horsepower && (
-                            <span className="flex items-center gap-1 font-medium">
-                                <FontAwesomeIcon icon={faBolt} className="w-3 h-3 text-amber-500" />
-                                {car.horsepower} CV
-                            </span>
-                        )}
-                    </div>
-                    {car.status === 'Reservado' && car.reservationDeposit > 0 && (
-                        <div className="mt-2 text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/50 p-2 rounded-md flex items-center gap-2">
-                            <FontAwesomeIcon icon={faHandHoldingDollar} />
-                            <span>Reserva: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}</span>
-                        </div>
-                    )}
+                    <span className={`flex-shrink-0 text-xs font-bold px-3 py-1 rounded-full ${getStatusChipClass(car.status)} ml-2`}>
+                        {car.status}
+                    </span>
                 </div>
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
-                    <button onClick={() => onViewDetailsClick(car)} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                        Ver más
-                    </button>
-                    <div className="flex items-center gap-2">
-                        {car.status === 'Vendido' && (
-                            <button onClick={() => onAddIncidentClick(car)} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-amber-600 bg-amber-100 dark:bg-amber-900/50 dark:text-amber-300 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
-                                <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
-                                Incidencia
-                            </button>
+                
+                {/* Grid de información alineado a la izquierda */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-text-secondary my-4">
+                    <div className="flex items-center gap-2 truncate" title={`${new Intl.NumberFormat('es-ES').format(car.km)} km`}>
+                        <FontAwesomeIcon icon={faRoad} className="w-4 h-4" />
+                        <span>{car.km ? `${new Intl.NumberFormat('es-ES').format(car.km)} km` : 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 truncate" title={car.registrationDate ? new Date(car.registrationDate).toLocaleDateString('es-ES') : 'N/A'}>
+                        <FontAwesomeIcon icon={faCalendarAlt} className="w-4 h-4" />
+                        <span>{car.registrationDate ? new Date(car.registrationDate).toLocaleDateString('es-ES') : 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 truncate" title={car.fuel || 'N/A'}>
+                        <FontAwesomeIcon icon={faGasPump} className="w-4 h-4" />
+                        <span>{car.fuel || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 truncate" title={car.transmission || 'N/A'}>
+                        <FontAwesomeIcon icon={faCogs} className="w-4 h-4" />
+                        <span>{car.transmission || 'N/A'}</span>
+                    </div>
+                </div>
+
+                {/* Sección de etiquetas */}
+                {tagsToShow.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
+                        <FontAwesomeIcon icon={faTags} className="w-4 h-4 text-text-secondary" />
+                        {visibleTags.map(tag => (
+                            <span key={tag} className="bg-accent/10 text-accent text-xs font-semibold px-2 py-1 rounded-full">{tag}</span>
+                        ))}
+                        {hiddenTagsCount > 0 && (
+                            <span className="text-xs font-semibold text-text-secondary px-2 py-1 rounded-full bg-component-bg-hover">+{hiddenTagsCount} más</span>
                         )}
-                        {car.status === 'En venta' && (
-                            <button onClick={() => onReserveClick(car)} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-amber-600 bg-amber-100 dark:bg-amber-900/50 dark:text-amber-300 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
-                                <FontAwesomeIcon icon={faHandshake} className="w-4 h-4" />
-                                Reservar
-                            </button>
+                    </div>
+                )}
+
+
+                <div className="mt-auto flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-border-color">
+                    <div className="text-center sm:text-left w-full sm:w-auto">
+                        <p className="text-3xl font-extrabold text-accent">
+                            {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
+                        </p>
+                        {car.status === 'Reservado' && car.reservationDeposit > 0 && (
+                            <p className="text-sm font-semibold text-yellow-accent mt-1">
+                                Reserva: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}
+                            </p>
+                        )}
+                    </div>
+                    <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
+                        <button 
+                            onClick={() => onViewDetailsClick(car)}
+                            className="flex-1 sm:flex-initial bg-component-bg-hover text-accent font-semibold py-2 px-4 rounded-lg border border-border-color hover:bg-border-color transition-colors"
+                        >
+                            Detalles
+                        </button>
+                         {car.status === 'En venta' && (
+                            <>
+                                <button onClick={() => onSellClick(car)} className="p-2 aspect-square text-green-accent bg-green-accent/10 rounded-lg hover:bg-green-accent/20 flex items-center justify-center transition-colors" title="Vender">
+                                    <FontAwesomeIcon icon={faHandHoldingUsd} />
+                                </button>
+                                <button onClick={() => onReserveClick(car)} className="p-2 aspect-square text-yellow-accent bg-yellow-accent/10 rounded-lg hover:bg-yellow-accent/20 flex items-center justify-center transition-colors" title="Reservar">
+                                   <FontAwesomeIcon icon={faBell} />
+                                </button>
+                            </>
                         )}
                         {car.status === 'Reservado' && (
-                             <button onClick={() => onCancelReservationClick(car)} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-200 dark:bg-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
-                                <FontAwesomeIcon icon={faBan} className="w-4 h-4" />
-                                Cancelar
-                            </button>
-                        )}
-                        {(car.status === 'En venta' || car.status === 'Taller' || car.status === 'Reservado') && (
-                            <button onClick={() => onSellClick(car)} className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-100 dark:bg-blue-900/50 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors">
-                                <FontAwesomeIcon icon={faTag} className="w-4 h-4" />
-                                Vender
+                             <button onClick={() => onCancelReservationClick(car)} className="p-2 aspect-square text-red-accent bg-red-accent/10 rounded-lg hover:bg-red-accent/20 flex items-center justify-center transition-colors" title="Cancelar Reserva">
+                                <FontAwesomeIcon icon={faBan} />
                             </button>
                         )}
                     </div>
@@ -105,101 +126,189 @@ const CarCard = ({ car, onSellClick, onViewDetailsClick, onAddIncidentClick, onR
     );
 };
 
-const MyCars = ({ cars, incidents, onSellClick, onAddClick, onViewDetailsClick, onAddIncidentClick, onReserveClick, onCancelReservationClick }) => {
-    const [activeFilter, setActiveFilter] = useState('Todos');
-    const [sortOrder, setSortOrder] = useState('default');
-    const [searchTerm, setSearchTerm] = useState('');
+// Componente para los Filtros en Sidebar (para escritorio)
+const FilterSidebar = ({ cars, filters, setFilters, resetFilters }) => {
+    const makeOptions = useMemo(() => 
+        [...new Set(cars.map(car => car.make))].map(make => ({ id: make, name: make })), 
+    [cars]);
 
-    const sortOptions = [
-        { id: 'default', name: 'Ordenar por...' },
-        { id: 'price-desc', name: 'Precio: Mayor a menor' },
-        { id: 'price-asc', name: 'Precio: Menor a mayor' },
-        { id: 'km-desc', name: 'KM: Mayor a menor' },
-        { id: 'km-asc', name: 'KM: Menor a mayor' },
-    ];
+    const statusOptions = useMemo(() => 
+        [...new Set(cars.map(car => car.status))].map(status => ({ id: status, name: status })), 
+    [cars]);
 
-    const filteredCars = useMemo(() => {
-        let filtered = cars;
-        if (activeFilter !== 'Todos') {
-            filtered = cars.filter(car => car.status === activeFilter);
-        }
-        if (searchTerm) {
-            filtered = filtered.filter(car => 
-                car.licensePlate.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-        return [...filtered].sort((a, b) => {
-            switch (sortOrder) {
-                case 'price-desc': return b.price - a.price;
-                case 'price-asc': return a.price - b.price;
-                case 'km-desc': return b.km - a.km;
-                case 'km-asc': return a.km - b.km;
-                default: return 0;
-            }
-        });
-    }, [cars, activeFilter, sortOrder, searchTerm]);
-
-    const FilterButton = ({ label, filter, currentFilter, setFilter }) => {
-        const isActive = currentFilter === filter;
-        return ( <button onClick={() => setFilter(filter)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ isActive ? 'bg-blue-600 text-white' : 'bg-component-bg text-text-secondary hover:bg-component-bg-hover border border-border-color' }`}>{label}</button> );
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+    
+    const handleSelectChange = (name, value) => {
+        setFilters(prev => ({ ...prev, [name]: value }));
     };
 
     return (
-        <div>
-            <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 flex-wrap">
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Mis Coches</h1>
-                <div className="flex items-center gap-2 flex-wrap">
-                    <FilterButton label="Todos" filter="Todos" currentFilter={activeFilter} setFilter={setActiveFilter} />
-                    <FilterButton label="En Venta" filter="En venta" currentFilter={activeFilter} setFilter={setActiveFilter} />
-                    <FilterButton label="Reservado" filter="Reservado" currentFilter={activeFilter} setFilter={setActiveFilter} />
-                    <FilterButton label="Vendido" filter="Vendido" currentFilter={activeFilter} setFilter={setActiveFilter} />
-                    <div className="w-48">
-                        <Select
-                            value={sortOrder}
-                            onChange={setSortOrder}
-                            options={sortOptions}
-                        />
+        <div className="bg-component-bg p-6 rounded-lg shadow-sm border border-border-color">
+            <h3 className="font-bold text-text-primary mb-4 flex items-center gap-2">
+                <FontAwesomeIcon icon={faFilter} />
+                Filtros
+            </h3>
+            <div className="space-y-4">
+                <Select
+                    label="Marca"
+                    value={filters.make}
+                    onChange={(value) => handleSelectChange('make', value)}
+                    options={[{ id: '', name: 'Todas' }, ...makeOptions]}
+                />
+                <Select
+                    label="Estado"
+                    value={filters.status}
+                    onChange={(value) => handleSelectChange('status', value)}
+                    options={[{ id: '', name: 'Todos' }, ...statusOptions]}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                    <div>
+                       <label htmlFor="minPriceDesktop" className="block text-sm font-medium text-text-secondary mb-1">Precio Mín.</label>
+                       <input type="number" name="minPrice" id="minPriceDesktop" value={filters.minPrice} onChange={handleInputChange} placeholder="€" className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
                     </div>
-                    <div className="relative">
-                        <input type="text" placeholder="Buscar por matrícula..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-component-bg text-text-primary px-4 py-2 rounded-lg text-sm font-medium border border-border-color focus:ring-2 focus:ring-blue-500 pl-10 hover:bg-component-bg-hover" />
-                        <FontAwesomeIcon icon={faSearch} className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                    <div>
+                       <label htmlFor="maxPriceDesktop" className="block text-sm font-medium text-text-secondary mb-1">Precio Máx.</label>
+                       <input type="number" name="maxPrice" id="maxPriceDesktop" value={filters.maxPrice} onChange={handleInputChange} placeholder="€" className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
                     </div>
                 </div>
-                <button onClick={onAddClick} className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-2">
-                    <FontAwesomeIcon icon={faPlusCircle} className="w-5 h-5" />
-                    <span className="hidden sm:inline">Añadir Coche</span>
+                 <div className="grid grid-cols-2 gap-2">
+                    <div>
+                       <label htmlFor="minKmDesktop" className="block text-sm font-medium text-text-secondary mb-1">KM Mín.</label>
+                       <input type="number" name="minKm" id="minKmDesktop" value={filters.minKm} onChange={handleInputChange} placeholder="km" className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
+                    </div>
+                    <div>
+                       <label htmlFor="maxKmDesktop" className="block text-sm font-medium text-text-secondary mb-1">KM Máx.</label>
+                       <input type="number" name="maxKm" id="maxKmDesktop" value={filters.maxKm} onChange={handleInputChange} placeholder="km" className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
+                    </div>
+                </div>
+                <button onClick={resetFilters} className="w-full text-sm text-accent hover:underline pt-2">
+                    Limpiar filtros
                 </button>
             </div>
-            {cars.length > 0 ? (
-                <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        </div>
+    );
+};
+
+// Componente Principal
+const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isFilterModalOpen, setFilterModalOpen] = useState(false);
+    const [filters, setFilters] = useState({
+        make: '', status: '', minPrice: '', maxPrice: '', minKm: '', maxKm: ''
+    });
+
+    const location = useLocation();
+
+    useEffect(() => {
+        const carIdToOpen = location.state?.carIdToOpen;
+        if (carIdToOpen) {
+            const carToOpen = cars.find(c => c.id === carIdToOpen);
+            if (carToOpen) {
+                onViewDetailsClick(carToOpen);
+                // Limpiamos el estado para que no se vuelva a abrir el modal si el usuario navega
+                // a otra página y vuelve a esta sin un clic explícito.
+                window.history.replaceState({}, document.title)
+            }
+        }
+    }, [location.state, cars, onViewDetailsClick]);
+
+
+    const resetFilters = () => {
+        setFilters({ make: '', status: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
+        setSearchTerm('');
+    };
+
+    const filteredCars = useMemo(() => {
+        return cars.filter(car => {
+            const searchMatch = `${car.make} ${car.model} ${car.licensePlate}`.toLowerCase().includes(searchTerm.toLowerCase());
+            const makeMatch = filters.make ? car.make === filters.make : true;
+            const statusMatch = filters.status ? car.status === filters.status : true;
+            const minPriceMatch = filters.minPrice ? car.price >= parseFloat(filters.minPrice) : true;
+            const maxPriceMatch = filters.maxPrice ? car.price <= parseFloat(filters.maxPrice) : true;
+            const minKmMatch = filters.minKm ? car.km >= parseFloat(filters.minKm) : true;
+            const maxKmMatch = filters.maxKm ? car.km <= parseFloat(filters.maxKm) : true;
+            
+            return searchMatch && makeMatch && statusMatch && minPriceMatch && maxPriceMatch && minKmMatch && maxKmMatch;
+        });
+    }, [cars, searchTerm, filters]);
+
+    return (
+        <>
+            <div className="flex flex-col lg:flex-row gap-8">
+                {/* Sidebar para escritorio */}
+                <aside className="hidden lg:block lg:w-72 xl:w-80 flex-shrink-0">
+                    <FilterSidebar cars={cars} filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
+                </aside>
+                
+                <main className="flex-1 space-y-6 min-w-0">
+                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div className="relative w-full sm:flex-grow">
+                            <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                            <input
+                                type="text"
+                                placeholder="Buscar por marca, modelo, matrícula..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-10 py-2 bg-component-bg border border-border-color rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent transition"
+                            />
+                            {searchTerm && (
+                                <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+                                    <FontAwesomeIcon icon={faTimes} />
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            {/* Botón de filtros para móvil */}
+                            <button
+                                onClick={() => setFilterModalOpen(true)}
+                                className="w-1/2 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg border border-border-color hover:bg-border-color transition-colors lg:hidden"
+                            >
+                                <FontAwesomeIcon icon={faFilter} />
+                                <span>Filtros</span>
+                            </button>
+                            <button
+                                onClick={onAddClick}
+                                className="w-1/2 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors"
+                            >
+                                <FontAwesomeIcon icon={faPlus} />
+                                <span>Añadir</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-6">
                         {filteredCars.map(car => (
                             <CarCard 
                                 key={car.id} 
-                                car={car} 
-                                onSellClick={onSellClick} 
-                                onReserveClick={onReserveClick} 
-                                onCancelReservationClick={onCancelReservationClick} 
-                                onViewDetailsClick={onViewDetailsClick} 
-                                onAddIncidentClick={onAddIncidentClick} 
-                                hasIncident={incidents.some(inc => inc.licensePlate === car.licensePlate && inc.status === 'abierta')} 
+                                car={car}
+                                onViewDetailsClick={onViewDetailsClick}
+                                onSellClick={onSellClick}
+                                onReserveClick={onReserveClick}
+                                onCancelReservationClick={onCancelReservationClick}
                             />
                         ))}
                     </div>
-                    <div className="h-24 lg:hidden"></div>
-                </>
-            ) : (
-                <div className="text-center py-16 px-4 bg-component-bg rounded-xl border border-border-color">
-                    <FontAwesomeIcon icon={faCar} className="text-5xl text-text-secondary mb-4" />
-                    <h3 className="text-xl font-semibold text-text-primary">Aún no tienes coches registrados</h3>
-                    <p className="text-text-secondary mt-2">Empieza por añadir tu primer vehículo a la lista.</p>
-                    <button onClick={onAddClick} className="mt-4 inline-flex items-center gap-2 bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
-                        <FontAwesomeIcon icon={faPlusCircle} />
-                        Añadir mi primer coche
-                    </button>
-                </div>
-            )}
-        </div>
+        
+                    {filteredCars.length === 0 && (
+                        <div className="text-center py-12 bg-component-bg rounded-lg border border-border-color">
+                            <p className="text-text-secondary">No se han encontrado coches con los filtros actuales.</p>
+                        </div>
+                    )}
+                </main>
+            </div>
+            
+            <FilterModal 
+                isOpen={isFilterModalOpen}
+                onClose={() => setFilterModalOpen(false)}
+                cars={cars}
+                filters={filters}
+                setFilters={setFilters}
+                resetFilters={resetFilters}
+            />
+        </>
     );
 };
 

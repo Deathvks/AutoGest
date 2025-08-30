@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { Car, Location, sequelize } = require('../models');
+const { Car, Location, Expense, Incident, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const OpenAI = require('openai');
 
@@ -75,12 +75,10 @@ exports.createCar = async (req, res) => {
 
         if (req.files) {
             if (req.files.image) {
-                // --- CAMBIO A RUTA RELATIVA ---
                 const imageUrl = `/uploads/${req.files.image[0].filename}`;
                 carData.imageUrl = imageUrl;
             }
             if (req.files.registrationDocument) {
-                // --- CAMBIO A RUTA RELATIVA ---
                 const docUrl = `/documents/${req.files.registrationDocument[0].filename}`;
                 carData.registrationDocumentUrl = docUrl;
             }
@@ -91,7 +89,6 @@ exports.createCar = async (req, res) => {
     } catch (error) {
         console.error('Error al crear coche:', error);
         
-        // Manejar error de matrícula duplicada
         if (error.name === 'SequelizeUniqueConstraintError') {
             if (error.fields && error.fields.cars_license_plate) {
                 return res.status(400).json({ 
@@ -117,30 +114,27 @@ exports.updateCar = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para editarlo' });
         }
         
-        const {
-            make, model, price, purchasePrice, salePrice, reservationDeposit, status,
-            location, km, fuel, horsepower, registrationDate, licensePlate, vin,
-            transmission, notes, tags
-        } = req.body;
+        const updateData = {};
+        const allowedFields = [
+            'make', 'model', 'price', 'purchasePrice', 'salePrice', 'reservationDeposit', 'status',
+            'location', 'km', 'fuel', 'horsepower', 'registrationDate', 'licensePlate', 'vin',
+            'transmission', 'notes', 'tags'
+        ];
 
-        const updateData = {
-            make, model, transmission, notes, tags, fuel, status, location,
-            registrationDate, licensePlate, vin,
-            price: emptyToNull(price),
-            purchasePrice: emptyToNull(purchasePrice),
-            salePrice: emptyToNull(salePrice),
-            reservationDeposit: emptyToNull(reservationDeposit),
-            km: emptyToNull(km),
-            horsepower: emptyToNull(horsepower),
-        };
-
+        // Construir dinámicamente el objeto de actualización solo con los campos proporcionados
+        allowedFields.forEach(field => {
+            if (req.body[field] !== undefined) {
+                updateData[field] = emptyToNull(req.body[field]);
+            }
+        });
+        
         if (updateData.licensePlate) {
-            updateData.licensePlate = updateData.licensePlate.replace(/\s/g, '').toUpperCase();
+            updateData.licensePlate = String(updateData.licensePlate).replace(/\s/g, '').toUpperCase();
         }
         
-        if (updateData.location && updateData.location.trim() !== '') {
+        if (updateData.location && String(updateData.location).trim() !== '') {
             await Location.findOrCreate({
-                where: { name: updateData.location.trim(), userId: req.user.id }
+                where: { name: String(updateData.location).trim(), userId: req.user.id }
             });
         }
         
@@ -156,12 +150,10 @@ exports.updateCar = async (req, res) => {
         if (req.files) {
             if (req.files.image) {
                 deleteFile(car.imageUrl);
-                // --- CAMBIO A RUTA RELATIVA ---
                 updateData.imageUrl = `/uploads/${req.files.image[0].filename}`;
             }
             if (req.files.registrationDocument) {
                 deleteFile(car.registrationDocumentUrl);
-                // --- CAMBIO A RUTA RELATIVA ---
                 updateData.registrationDocumentUrl = `/documents/${req.files.registrationDocument[0].filename}`;
             }
         }
@@ -171,18 +163,17 @@ exports.updateCar = async (req, res) => {
     } catch (error) {
         console.error(error);
         
-        // Manejo específico de errores de restricción única
         if (error.name === 'SequelizeUniqueConstraintError') {
             const field = error.errors[0]?.path;
             const value = error.errors[0]?.value;
             
             if (field === 'licensePlate') {
                 return res.status(400).json({ 
-                    error: `Ya existe un coche con la matrícula ${value}. Por favor, verifica la matrícula e inténtalo de nuevo.` 
+                    error: `Ya existe un coche con la matrícula ${value}.` 
                 });
             } else if (field === 'vin') {
                 return res.status(400).json({ 
-                    error: `Ya existe un coche con el número de bastidor ${value}. Por favor, verifica el VIN e inténtalo de nuevo.` 
+                    error: `Ya existe un coche con el número de bastidor ${value}.` 
                 });
             }
         }
@@ -191,14 +182,21 @@ exports.updateCar = async (req, res) => {
     }
 };
 
-// Eliminar un coche
+// Eliminar un coche (LÓGICA CORREGIDA)
 exports.deleteCar = async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {
-        const car = await Car.findOne({ where: { id: req.params.id, userId: req.user.id } });
+        const car = await Car.findOne({ 
+            where: { id: req.params.id, userId: req.user.id },
+            transaction 
+        });
+
         if (!car) {
+            await transaction.rollback();
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para eliminarlo' });
         }
         
+        // Eliminar archivos asociados
         if (car.imageUrl) {
              const imageFilename = path.basename(car.imageUrl);
              const imageFilePath = path.join(__dirname, '..', 'public', 'uploads', imageFilename);
@@ -210,11 +208,20 @@ exports.deleteCar = async (req, res) => {
              if (fs.existsSync(docFilePath)) fs.unlinkSync(docFilePath);
         }
 
-        await car.destroy();
+        // Eliminar incidencias y gastos asociados
+        await Incident.destroy({ where: { carId: car.id }, transaction });
+        await Expense.destroy({ where: { carLicensePlate: car.licensePlate }, transaction });
+
+        // Finalmente, eliminar el coche
+        await car.destroy({ transaction });
+        
+        await transaction.commit();
+        
         res.status(200).json({ message: 'Coche eliminado correctamente' });
 
     } catch (error) {
-        console.error(error);
+        await transaction.rollback();
+        console.error("Error al eliminar coche y sus dependencias:", error);
         res.status(500).json({ error: 'Error al eliminar el coche' });
     }
 };

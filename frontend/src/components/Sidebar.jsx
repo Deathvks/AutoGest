@@ -1,77 +1,72 @@
-// autogest-app/frontend/src/components/Sidebar.jsx
-import React, { useContext } from 'react'; // 1. Importar useContext
-import { NavLink } from 'react-router-dom';
+// frontend/src/components/Sidebar.jsx
+import React, { useContext } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faChartLine,
-    faCar,
-    faTags,
-    faWallet,
-    faUser,
-    faCog,
-    faUserShield // 2. Nuevo icono para el panel de admin
+import { 
+    faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
+    faUser, faCog, faSignOutAlt, faUsersCog
 } from '@fortawesome/free-solid-svg-icons';
-import { AuthContext } from '../context/AuthContext'; // 3. Importar el contexto de autenticación
-
-// --- Datos de Navegación ---
-const navItems = [
-    { to: '/', label: 'Dashboard', icon: faChartLine },
-    { to: '/cars', label: 'Mis Coches', icon: faCar },
-    { to: '/sales', label: 'Ventas', icon: faTags },
-    { to: '/expenses', label: 'Gastos', icon: faWallet },
-    { to: '/profile', label: 'Perfil', icon: faUser },
-    { to: '/settings', label: 'Ajustes', icon: faCog },
-];
+import { AuthContext } from '../context/AuthContext';
 
 const Sidebar = () => {
-    // 4. Obtener el usuario del contexto
-    const { user } = useContext(AuthContext);
+    const { logout, user } = useContext(AuthContext);
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+
+    const navItems = [
+        { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
+        { icon: faCar, text: 'Mis Coches', path: '/cars' },
+        { icon: faChartLine, text: 'Ventas', path: '/sales' },
+        { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
+        { icon: faUser, text: 'Perfil', path: '/profile' },
+    ];
+
+    const adminNav = user && user.role === 'admin' ? 
+        { icon: faUsersCog, text: 'Gestión', path: '/admin' } : null;
+
+    const bottomItems = [
+        { icon: faCog, text: 'Configuración', path: '/settings' },
+    ];
+
+    const NavItem = ({ icon, text, path }) => (
+        <NavLink 
+            to={path} 
+            end
+            className={({ isActive }) =>
+                `flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                isActive
+                    ? 'bg-accent text-white shadow-sm'
+                    : 'text-text-secondary hover:bg-component-bg-hover hover:text-text-primary'
+                }`
+            }
+        >
+            <FontAwesomeIcon icon={icon} className="w-5 h-5 mr-3" />
+            <span>{text}</span>
+        </NavLink>
+    );
 
     return (
-        <aside className="w-64 flex-shrink-0 bg-component-bg border-r border-border-color p-4 flex-col justify-between hidden lg:flex">
-            <div>
-                <div className="text-2xl font-bold text-blue-accent p-4 flex items-center gap-3">
-                    <FontAwesomeIcon icon={faCar} className="w-7 h-7" />
-                    <span>AutoGest</span>
-                </div>
-                <nav className="mt-8 space-y-2">
-                    {navItems.map((item) => (
-                        <NavLink
-                            key={item.to}
-                            to={item.to}
-                            className={({ isActive }) =>
-                                `flex items-center w-full text-left px-3 py-2.5 rounded-lg transition-colors duration-200 ${
-                                    isActive
-                                    ? 'bg-blue-accent text-white shadow-sm'
-                                    : 'text-text-secondary hover:bg-component-bg-hover hover:text-text-primary'
-                                }`
-                            }
-                        >
-                            <FontAwesomeIcon icon={item.icon} className="w-5 h-5" />
-                            <span className="ml-4 font-medium">{item.label}</span>
-                        </NavLink>
-                    ))}
-
-                    {/* 5. Enlace condicional para administradores */}
-                    {user && user.role === 'admin' && (
-                        <>
-                            <hr className="my-4 border-border-color" />
-                            <NavLink
-                                to="/admin"
-                                className={({ isActive }) =>
-                                    `flex items-center w-full text-left px-3 py-2.5 rounded-lg transition-colors duration-200 ${
-                                        isActive
-                                        ? 'bg-red-accent text-white shadow-sm'
-                                        : 'text-text-secondary hover:bg-component-bg-hover hover:text-text-primary'
-                                    }`
-                                }
-                            >
-                                <FontAwesomeIcon icon={faUserShield} className="w-5 h-5" />
-                                <span className="ml-4 font-medium">Administración</span>
-                            </NavLink>
-                        </>
-                    )}
-                </nav>
+        <aside className="hidden lg:flex lg:flex-col w-64 bg-component-bg p-4 border-r border-border-color">
+            <div className="flex items-center mb-8 px-4">
+                <h1 className="text-2xl font-bold text-text-primary">AutoGest</h1>
+            </div>
+            <nav className="flex-1 space-y-2">
+                {navItems.map(item => <NavItem key={item.text} {...item} />)}
+                {adminNav && <NavItem {...adminNav} />}
+            </nav>
+            <div className="space-y-2">
+                {bottomItems.map(item => <NavItem key={item.text} {...item} />)}
+                <button 
+                    onClick={handleLogout} 
+                    className="flex items-center w-full px-4 py-3 text-sm font-medium text-text-secondary rounded-lg hover:bg-red-accent/10 hover:text-red-accent transition-colors duration-200"
+                >
+                    <FontAwesomeIcon icon={faSignOutAlt} className="w-5 h-5 mr-3" />
+                    <span>Cerrar Sesión</span>
+                </button>
             </div>
         </aside>
     );

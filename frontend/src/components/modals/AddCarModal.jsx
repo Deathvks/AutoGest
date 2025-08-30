@@ -1,4 +1,4 @@
-// autogest-app/frontend/src/components/modals/AddCarModal.jsx
+// frontend/src/components/modals/AddCarModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -19,7 +19,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMo
         <div className="relative">
             {icon && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-slate-500 dark:text-white" />
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
                 </div>
             )}
             <input 
@@ -28,7 +28,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMo
                 value={value} 
                 onChange={onChange} 
                 inputMode={inputMode}
-                className={`w-full px-3 py-2 bg-background border rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${
+                className={`w-full px-3 py-2 bg-background border rounded-md focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${
                     error ? 'border-red-accent' : 'border-border-color'
                 } ${icon ? 'pl-9' : ''}`} 
             />
@@ -53,7 +53,7 @@ const AutocompleteField = ({ label, name, value, onChange, options, icon }) => {
                     value={value}
                     onChange={onChange}
                     list="location-options"
-                    className={`w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${icon ? 'pl-9' : ''}`}
+                    className={`w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${icon ? 'pl-9' : ''}`}
                 />
                 <datalist id="location-options">
                     {options && options.map((option) => (
@@ -82,14 +82,14 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
                 value={value} 
                 onChange={onChange} 
                 placeholder={placeholder}
-                className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary resize-none overflow-hidden" 
+                className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary resize-none overflow-hidden" 
                 rows="3" 
             />
         </div>
     );
 };
 
-const AddCarModal = ({ isOpen, onClose, onAdd }) => {
+const AddCarModal = ({ onClose, onAdd, locations }) => {
     const [newCar, setNewCar] = useState({
         make: '', model: '', licensePlate: '', vin: '', registrationDate: '',
         purchasePrice: '', km: '', horsepower: '', location: '', notes: '', tags: []
@@ -101,7 +101,6 @@ const AddCarModal = ({ isOpen, onClose, onAdd }) => {
     const [registrationDocumentFile, setRegistrationDocumentFile] = useState(null);
     const [tagInput, setTagInput] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [locations, setLocations] = useState([]);
     const imageInputRef = useRef(null);
     const fileInputRef = useRef(null);
     const documentInputRef = useRef(null);
@@ -163,87 +162,18 @@ const AddCarModal = ({ isOpen, onClose, onAdd }) => {
 
     const validateForm = () => {
         const errors = {};
-        let hasErrors = false;
-
-        // Validar campos obligatorios
-        if (!newCar.make.trim()) {
-            errors.make = 'La marca es obligatoria';
-            hasErrors = true;
-        }
+        if (!newCar.make.trim()) errors.make = 'La marca es obligatoria';
+        if (!newCar.model.trim()) errors.model = 'El modelo es obligatorio';
+        if (!newCar.licensePlate.trim()) errors.licensePlate = 'La matrícula es obligatoria';
+        if (!newCar.purchasePrice.trim()) errors.purchasePrice = 'El precio de compra es obligatorio';
         
-        if (!newCar.model.trim()) {
-            errors.model = 'El modelo es obligatorio';
-            hasErrors = true;
-        }
-        
-        if (!newCar.licensePlate.trim()) {
-            errors.licensePlate = 'La matrícula es obligatoria';
-            hasErrors = true;
-        }
-        
-        if (!newCar.purchasePrice.trim()) {
-            errors.purchasePrice = 'El precio de compra es obligatorio';
-            hasErrors = true;
-        } else {
-            const price = parseFloat(parseNumber(newCar.purchasePrice));
-            if (isNaN(price) || price <= 0) {
-                errors.purchasePrice = 'El precio debe ser un número válido mayor que cero';
-                hasErrors = true;
-            }
-        }
-
-        // Validar formato de matrícula española (opcional pero recomendado)
-        if (newCar.licensePlate.trim()) {
-            const plateRegex = /^[0-9]{4}[A-Z]{3}$|^[A-Z]{1,2}[0-9]{4}[A-Z]{2}$/;
-            if (!plateRegex.test(newCar.licensePlate.replace(/[\s-]/g, '').toUpperCase())) {
-                errors.licensePlate = 'Formato de matrícula no válido (ej: 1234ABC o M1234BC)';
-                hasErrors = true;
-            }
-        }
-
-        // Validar VIN si se proporciona
-        if (newCar.vin.trim() && newCar.vin.length !== 17) {
-            errors.vin = 'El VIN debe tener exactamente 17 caracteres';
-            hasErrors = true;
-        }
-
-        // Validar kilómetros si se proporcionan
-        if (newCar.km.trim()) {
-            const km = parseFloat(parseNumber(newCar.km));
-            if (isNaN(km) || km < 0) {
-                errors.km = 'Los kilómetros deben ser un número válido';
-                hasErrors = true;
-            }
-        }
-
-        // Validar potencia si se proporciona
-        if (newCar.horsepower.trim()) {
-            const hp = parseFloat(parseNumber(newCar.horsepower));
-            if (isNaN(hp) || hp <= 0) {
-                errors.horsepower = 'La potencia debe ser un número válido mayor que cero';
-                hasErrors = true;
-            }
-        }
-
-        // Validar fecha de matriculación si se proporciona
-        if (newCar.registrationDate) {
-            const regDate = new Date(newCar.registrationDate);
-            const today = new Date();
-            if (regDate > today) {
-                errors.registrationDate = 'La fecha de matriculación no puede ser futura';
-                hasErrors = true;
-            }
-        }
-
         setFieldErrors(errors);
-        
-        if (hasErrors) {
-            setError('Por favor, corrige los errores marcados en rojo.');
+        if (Object.keys(errors).length > 0) {
+            setError('Por favor, corrige los errores marcados.');
             return false;
         }
         
         setError('');
-        setFieldErrors({});
         return true;
     };
 
@@ -252,8 +182,21 @@ const AddCarModal = ({ isOpen, onClose, onAdd }) => {
         
         try {
             setError('');
+
+            let notesPayload = '';
+            if (newCar.notes && newCar.notes.trim() !== '') {
+                const initialNote = {
+                    id: Date.now(),
+                    content: newCar.notes,
+                    type: 'General',
+                    date: new Date().toISOString().split('T')[0]
+                };
+                notesPayload = JSON.stringify([initialNote]);
+            }
+
             const finalCarData = { 
-                ...newCar, 
+                ...newCar,
+                notes: notesPayload,
                 price: parseNumber(newCar.purchasePrice),
                 purchasePrice: parseNumber(newCar.purchasePrice),
                 km: parseNumber(newCar.km),
@@ -275,30 +218,7 @@ const AddCarModal = ({ isOpen, onClose, onAdd }) => {
             await onAdd(formData);
         } catch (error) {
             console.error('Error al añadir coche:', error);
-            if (error.response?.data?.error) {
-                const errorMessage = error.response.data.error;
-                if (errorMessage.toLowerCase().includes('matrícula') || errorMessage.toLowerCase().includes('matricula')) {
-                    setFieldErrors({ licensePlate: 'Esta matrícula ya está registrada' });
-                    setError('No se pueden repetir valores de matrícula. ' + errorMessage);
-                } else if (errorMessage.toLowerCase().includes('bastidor') || errorMessage.toLowerCase().includes('vin')) {
-                    setFieldErrors({ vin: 'Este VIN ya está registrado' });
-                    setError('No se pueden repetir valores de VIN. ' + errorMessage);
-                } else {
-                    setError(errorMessage);
-                }
-            } else if (error.response?.data?.message) {
-                if (error.response.data.message.includes('licensePlate')) {
-                    setFieldErrors({ licensePlate: 'Esta matrícula ya está registrada' });
-                    setError('No se pueden repetir valores de matrícula. Ya existe un coche con esta matrícula.');
-                } else if (error.response.data.message.includes('vin')) {
-                    setFieldErrors({ vin: 'Este VIN ya está registrado' });
-                    setError('No se pueden repetir valores de VIN. Ya existe un coche con este número de bastidor.');
-                } else {
-                    setError(error.response.data.message);
-                }
-            } else {
-                setError('Error al añadir el coche. Por favor, inténtalo de nuevo.');
-            }
+            setError(error.message || 'Error al añadir el coche. Por favor, inténtalo de nuevo.');
         }
     };
     
@@ -344,171 +264,95 @@ const AddCarModal = ({ isOpen, onClose, onAdd }) => {
     };
 
     return (
-       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-component-bg rounded-xl shadow-lg w-full max-w-2xl p-6 border border-border-color max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
+       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
+            <div className="bg-component-bg rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
                     <h2 className="text-xl font-bold text-text-primary">Añadir Nuevo Coche</h2>
                     <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
-                <form onSubmit={(e) => e.preventDefault()} noValidate>
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
-                            <div className="flex flex-col">
-                                <label className="block text-sm font-medium text-text-secondary mb-2">Imagen Principal</label>
-                                <div className="w-40 h-28 rounded-lg bg-background flex items-center justify-center overflow-hidden border border-border-color">
-                                    {imagePreview ? ( <img src={imagePreview} alt="Vista previa" className="h-full w-full object-cover" /> ) : ( <span className="text-xs text-text-secondary">Sin imagen</span> )}
-                                </div>
-                                <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} className="hidden" />
-                                <button type="button" onClick={() => imageInputRef.current.click()} className="mt-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium w-40 flex items-center justify-center gap-2">
-                                    <FontAwesomeIcon icon={faUpload} />
-                                    Seleccionar
-                                </button>
+                
+                <form onSubmit={(e) => e.preventDefault()} noValidate className="flex-grow overflow-y-auto p-6 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
+                        <div className="flex flex-col">
+                            <label className="block text-sm font-medium text-text-secondary mb-2">Imagen Principal</label>
+                            <div className="w-40 h-28 rounded-lg bg-background flex items-center justify-center overflow-hidden border border-border-color">
+                                {imagePreview ? ( <img src={imagePreview} alt="Vista previa" className="h-full w-full object-cover" /> ) : ( <span className="text-xs text-text-secondary">Sin imagen</span> )}
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-2">Analizar Ficha Técnica</label>
-                                <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageAnalysis} className="hidden" />
-                                <button onClick={() => fileInputRef.current.click()} disabled={isAnalyzing} className="w-full bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 border border-border-color disabled:opacity-50">
-                                    {isAnalyzing ? 'Analizando...' : <> <SparklesIcon className="w-5 h-5 text-blue-accent" /> Rellenar con IA </>}
-                                </button>
-                            </div>
+                            <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} className="hidden" />
+                            <button type="button" onClick={() => imageInputRef.current.click()} className="mt-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium w-40 flex items-center justify-center gap-2">
+                                <FontAwesomeIcon icon={faUpload} />
+                                Seleccionar
+                            </button>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField 
-                                label="Marca" 
-                                name="make" 
-                                value={newCar.make} 
-                                onChange={handleChange} 
-                                icon={faCar} 
-                                error={fieldErrors.make}
-                                required={true}
-                            />
-                            <InputField 
-                                label="Modelo" 
-                                name="model" 
-                                value={newCar.model} 
-                                onChange={handleChange} 
-                                icon={faStar} 
-                                error={fieldErrors.model}
-                                required={true}
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField 
-                                label="Matrícula" 
-                                name="licensePlate" 
-                                value={newCar.licensePlate} 
-                                onChange={handleChange} 
-                                icon={faIdCard} 
-                                error={fieldErrors.licensePlate}
-                                required={true}
-                            />
-                            <InputField 
-                                label="Nº de Bastidor" 
-                                name="vin" 
-                                value={newCar.vin} 
-                                onChange={handleChange} 
-                                icon={faFingerprint} 
-                                error={fieldErrors.vin}
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField 
-                                label="Fecha de Matriculación" 
-                                name="registrationDate" 
-                                type="date" 
-                                value={newCar.registrationDate} 
-                                onChange={handleChange} 
-                                icon={faCalendarDay} 
-                                error={fieldErrors.registrationDate}
-                            />
-                            <InputField 
-                                label="Precio de Compra (€)" 
-                                name="purchasePrice" 
-                                type="text" 
-                                inputMode="decimal" 
-                                value={newCar.purchasePrice} 
-                                onChange={handleChange} 
-                                icon={faEuroSign} 
-                                error={fieldErrors.purchasePrice}
-                                required={true}
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField 
-                                label="Kilómetros" 
-                                name="km" 
-                                type="text" 
-                                inputMode="numeric" 
-                                value={newCar.km} 
-                                onChange={handleChange} 
-                                icon={faRoad} 
-                                error={fieldErrors.km}
-                            />
-                            <InputField 
-                                label="Potencia (CV)" 
-                                name="horsepower" 
-                                type="text" 
-                                inputMode="numeric" 
-                                value={newCar.horsepower} 
-                                onChange={handleChange} 
-                                icon={faBolt} 
-                                error={fieldErrors.horsepower}
-                            />
-                        </div>
-                        
-                        <AutocompleteField label="Ubicación" name="location" value={newCar.location} onChange={handleChange} options={locations} icon={faMapMarkerAlt}/>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Select
-                                label="Combustible"
-                                value={newCar.fuel}
-                                onChange={(value) => handleSelectChange('fuel', value)}
-                                options={fuelOptions}
-                            />
-                            <Select
-                                label="Tipo de Cambio"
-                                value={newCar.transmission}
-                                onChange={(value) => handleSelectChange('transmission', value)}
-                                options={transmissionOptions}
-                            />
-                        </div>
-                        
                         <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">Permiso de Circulación</label>
-                            <div className="flex items-center gap-2 mt-2">
-                                <button type="button" onClick={() => documentInputRef.current.click()} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex-grow flex items-center justify-center gap-2">
-                                    <FontAwesomeIcon icon={faPaperclip} />
-                                    <span>{registrationDocumentFile ? 'Cambiar archivo' : 'Subir archivo (PDF o Imagen)'}</span>
-                                </button>
-                                <input type="file" accept="image/*,application/pdf" ref={documentInputRef} onChange={handleDocumentChange} className="hidden" />
-                            </div>
-                            {registrationDocumentFile && (
-                                <p className="text-xs text-text-secondary mt-2">Archivo seleccionado: {registrationDocumentFile.name}</p>
-                            )}
+                            <label className="block text-sm font-medium text-text-secondary mb-2">Analizar Ficha Técnica</label>
+                            <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageAnalysis} className="hidden" />
+                            <button onClick={() => fileInputRef.current.click()} disabled={isAnalyzing} className="w-full bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 border border-border-color disabled:opacity-50">
+                                {isAnalyzing ? 'Analizando...' : <> <SparklesIcon className="w-5 h-5 text-blue-accent" /> Rellenar con IA </>}
+                            </button>
                         </div>
-                        
-                        <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">Etiquetas</label>
-                            <div className="flex flex-wrap items-center gap-2 w-full px-3 py-2 bg-background border border-border-color rounded-lg focus-within:ring-1 focus-within:ring-blue-accent focus-within:border-blue-accent">
-                                {newCar.tags.map(tag => (
-                                    <span key={tag} className="flex items-center gap-1 bg-blue-accent/10 text-blue-accent text-sm px-2 py-1 rounded">
-                                        {tag}
-                                        <button onClick={() => removeTag(tag)} className="hover:opacity-75"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
-                                    </span>
-                                ))}
-                                <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="Añadir etiqueta y pulsar Enter" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px]" />
-                            </div>
-                        </div>
-                        <TextareaField label="Anotaciones" name="notes" value={newCar.notes} onChange={handleChange} placeholder="Añade cualquier anotación relevante sobre el coche..." />
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InputField label="Marca" name="make" value={newCar.make} onChange={handleChange} icon={faCar} error={fieldErrors.make} required={true} />
+                        <InputField label="Modelo" name="model" value={newCar.model} onChange={handleChange} icon={faStar} error={fieldErrors.model} required={true} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InputField label="Matrícula" name="licensePlate" value={newCar.licensePlate} onChange={handleChange} icon={faIdCard} error={fieldErrors.licensePlate} required={true} />
+                        <InputField label="Nº de Bastidor" name="vin" value={newCar.vin} onChange={handleChange} icon={faFingerprint} error={fieldErrors.vin} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InputField label="Fecha de Matriculación" name="registrationDate" type="date" value={newCar.registrationDate} onChange={handleChange} icon={faCalendarDay} />
+                        <InputField label="Precio de Compra (€)" name="purchasePrice" type="text" inputMode="decimal" value={newCar.purchasePrice} onChange={handleChange} icon={faEuroSign} error={fieldErrors.purchasePrice} required={true} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InputField label="Kilómetros" name="km" type="text" inputMode="numeric" value={newCar.km} onChange={handleChange} icon={faRoad} />
+                        <InputField label="Potencia (CV)" name="horsepower" type="text" inputMode="numeric" value={newCar.horsepower} onChange={handleChange} icon={faBolt} />
+                    </div>
+                    
+                    <AutocompleteField label="Ubicación" name="location" value={newCar.location} onChange={handleChange} options={locations} icon={faMapMarkerAlt}/>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Select label="Combustible" value={newCar.fuel} onChange={(value) => handleSelectChange('fuel', value)} options={fuelOptions} />
+                        <Select label="Tipo de Cambio" value={newCar.transmission} onChange={(value) => handleSelectChange('transmission', value)} options={transmissionOptions} />
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Permiso de Circulación</label>
+                        <div className="flex items-center gap-2 mt-2">
+                            <button type="button" onClick={() => documentInputRef.current.click()} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex-grow flex items-center justify-center gap-2">
+                                <FontAwesomeIcon icon={faPaperclip} />
+                                <span>{registrationDocumentFile ? 'Cambiar archivo' : 'Subir archivo (PDF o Imagen)'}</span>
+                            </button>
+                            <input type="file" accept="image/*,application/pdf" ref={documentInputRef} onChange={handleDocumentChange} className="hidden" />
+                        </div>
+                        {registrationDocumentFile && (
+                            <p className="text-xs text-text-secondary mt-2">Archivo seleccionado: {registrationDocumentFile.name}</p>
+                        )}
+                    </div>
+                    
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Etiquetas</label>
+                        <div className="flex flex-wrap items-center gap-2 w-full px-3 py-2 bg-background border border-border-color rounded-lg focus-within:ring-1 focus-within:ring-blue-accent focus-within:border-blue-accent">
+                            {newCar.tags.map(tag => (
+                                <span key={tag} className="flex items-center gap-1 bg-blue-accent/10 text-blue-accent text-sm px-2 py-1 rounded">
+                                    {tag}
+                                    <button onClick={() => removeTag(tag)} className="hover:opacity-75"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
+                                </span>
+                            ))}
+                            <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="Añadir etiqueta y pulsar Enter" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px]" />
+                        </div>
+                    </div>
+                    <TextareaField label="Anotaciones" name="notes" value={newCar.notes} onChange={handleChange} placeholder="Añade cualquier anotación relevante sobre el coche..." />
                 </form>
-                {error && <p className="mt-4 text-sm text-red-accent text-center">{error}</p>}
-                <div className="mt-6 flex justify-end gap-4">
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">Cancelar</button>
-                    <button onClick={handleAdd} className="bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">Añadir Coche</button>
+
+                {error && <p className="flex-shrink-0 px-6 pb-4 text-sm text-red-accent text-center">{error}</p>}
+
+                <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-border-color">
+                    <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold">Cancelar</button>
+                    <button onClick={handleAdd} className="bg-blue-accent text-white px-6 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity font-semibold">Añadir Coche</button>
                 </div>
             </div>
         </div>
