@@ -34,9 +34,8 @@ import DeleteUserConfirmationModal from '../components/modals/DeleteUserConfirma
 import InvestmentDetailsModal from '../components/modals/InvestmentDetailsModal';
 import RevenueDetailsModal from '../components/modals/RevenueDetailsModal';
 
-const MainLayout = () => {
+const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     const { user } = useContext(AuthContext);
-    const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
     const [isDataLoading, setIsDataLoading] = useState(true);
     const [cars, setCars] = useState([]);
     const [expenses, setExpenses] = useState([]);
@@ -129,16 +128,6 @@ const MainLayout = () => {
         fetchData();
     }, [user]);
     
-    useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
-    }, [isDarkMode]);
-
     const handleUserAdded = (newUser) => {
         setUsers(prev => [newUser, ...prev]);
         setAddUserModalOpen(false);
@@ -163,7 +152,7 @@ const MainLayout = () => {
         try {
             const createdCar = await api.createCar(formData);
             setCars(prev => [createdCar, ...prev]);
-            fetchLocations();
+            await fetchLocations(); // <-- CAMBIO: Añadido 'await'
             setAddCarModalOpen(false);
         } catch (error) { console.error("Error al añadir coche:", error); throw error; }
     };
@@ -172,7 +161,7 @@ const MainLayout = () => {
             const carId = carToEdit.id;
             const updatedCar = await api.updateCar(carId, formData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
-            fetchLocations();
+            await fetchLocations(); // <-- CAMBIO: Añadido 'await'
             setCarToEdit(null);
         } catch (error) { console.error("Error al actualizar coche:", error); throw error; }
     };
@@ -283,7 +272,6 @@ const MainLayout = () => {
             };
             const updatedCar = await api.updateCar(carToUpdate.id, updatedData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
-            setCarToView(updatedCar);
             setCarToCancelReservation(null);
         } catch (error) {
             console.error("Error al cancelar la reserva:", error);

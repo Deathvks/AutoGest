@@ -6,7 +6,8 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "seed": "node seed.js",
-    "clear": "node clear.js"
+    "clear": "node clear.js",
+    "clear-locations": "node clear-locations.js"
   },
   "keywords": [],
   "author": "",

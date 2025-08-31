@@ -113,7 +113,7 @@ exports.updateProfile = async (req, res) => {
             name: user.name,
             email: user.email,
             role: user.role,
-            avatarUrl: user.avatarUrl
+            avatarUrl: user.avatarUrl,
         };
 
         res.status(200).json(userResponse);

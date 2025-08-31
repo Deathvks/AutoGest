@@ -1,4 +1,4 @@
-// frontend/src/components/modals/CarDetailsModalContent.jsx
+// autogest-app/frontend/src/components/modals/CarDetailsModalContent.jsx
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -193,7 +193,7 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
                 </section>
             </div>
             
-            <div className="flex-shrink-0 p-4 border-t border-border-color flex flex-wrap justify-end gap-3">
+            <div className="flex-shrink-0 p-4 border-t border-border-color flex flex-wrap justify-center sm:justify-end gap-3">
                  {(car.status === 'En venta' || car.status === 'Reservado') && (
                     <button onClick={() => onSellClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2">
                         <FontAwesomeIcon icon={faHandHoldingUsd} /> Vender

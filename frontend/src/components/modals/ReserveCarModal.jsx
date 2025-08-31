@@ -4,9 +4,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faEuroSign } from '@fortawesome/free-solid-svg-icons';
 
 // --- Componentes de Formulario ---
-const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode }) => (
+const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, required = false }) => (
     <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1">
+            {label}
+            {required && <span className="text-red-accent ml-1">*</span>}
+        </label>
         <div className="relative">
             {icon && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -99,6 +102,7 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                             value={deposit}
                             onChange={(e) => setDeposit(e.target.value)}
                             icon={faEuroSign}
+                            required={true}
                         />
                         <TextareaField
                             label="Anotaciones de la reserva (Opcional)"

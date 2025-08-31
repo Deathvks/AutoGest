@@ -43,6 +43,10 @@ const AuthProvider = ({ children }) => {
         setToken(null);
         setUser(null);
         localStorage.removeItem('authToken');
+        // Ya no eliminamos el tema al cerrar sesión
+        // El tema se mantendrá para el próximo login
+        // Forzamos la recarga para asegurar que el estado visual se reinicie
+        window.location.reload();
     };
 
     const updateUserProfile = async (formData) => {
@@ -62,7 +66,7 @@ const AuthProvider = ({ children }) => {
         try {
             const updatedUser = await api.deleteAvatar();
             setUser(updatedUser);
-            return updatedUser; // --- CAMBIO CLAVE: Devolver el usuario actualizado ---
+            return updatedUser;
         } catch (error) {
             console.error("Error al eliminar el avatar:", error);
             throw error;
@@ -75,6 +79,21 @@ const AuthProvider = ({ children }) => {
             logout(); // Si la eliminación es exitosa, cerramos la sesión
         } catch (error) {
             console.error("Error al eliminar la cuenta:", error);
+            throw error;
+        }
+    };
+
+    const register = async (userData) => {
+        try {
+            const response = await api.register(userData);
+            setToken(response.token);
+            setUser(response.user);
+            localStorage.setItem('authToken', response.token);
+            // Al registrarse, establecemos el tema por defecto (claro)
+            localStorage.setItem('theme', 'light');
+            return response;
+        } catch (error) {
+            console.error('Error en el registro:', error);
             throw error;
         }
     };

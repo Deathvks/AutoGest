@@ -1,5 +1,5 @@
 // frontend/src/components/modals/AddCarModal.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faCar, faStar, faIdCard, faFingerprint, faCalendarDay, faRoad, faEuroSign,
@@ -8,9 +8,9 @@ import {
 import Select from '../Select';
 import api from '../../services/api';
 
-const SparklesIcon = (props) => ( <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.94 14.32c.32-.32.44-.78.34-1.22-.1-.44-.4-.74-.84-.84-.44-.1-.9.02-1.22.34l-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="m21.66 3.34-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="M14.32 9.94c.32.32.78.44 1.22.34.44-.1.74-.4.84-.84.1-.44-.02-.9-.34-1.22l-3.5-3.5c-.98-.98-2.56-.98-3.54 0-.98.98-.98 2.56 0 3.54l1.68 1.68"/><path d="M3.34 21.66l3.5-3.5c.98-.98-.98-2.56 0-3.54-.98-.98-2.56-.98-3.54 0l-1.68 1.68"/></svg> );
+const SparklesIcon = (props) => ( <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.94 14.32c.32-.32.44-.78.34-1.22-.1-.44-.4-.74-.84-.84-.44-.1-.9.02-1.22.34l-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="m21.66 3.34-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="M14.32 9.94c.32.32.78.44 1.22.34.44-.1.74-.4.84-.84.1-.44-.02-.9-.34-1.22l-3.5-3.5c-.98-.98-2.56-.98-3.54 0-.98.98-.98 2.56 0 3.54l1.68 1.68"/><path d="M3.34 21.66l3.5-3.5c.98-.98-.98-2.56 0-3.54-.98-.98-2.56-.98-3.54 0l-1.68 1.68"/></svg> );
 
-const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, error, required = false }) => (
+const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, error, required = false, placeholder = '' }) => (
     <div>
         <label className="block text-sm font-medium text-text-secondary mb-1">
             {label}
@@ -28,6 +28,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMo
                 value={value} 
                 onChange={onChange} 
                 inputMode={inputMode}
+                placeholder={placeholder}
                 className={`w-full px-3 py-2 bg-background border rounded-md focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${
                     error ? 'border-red-accent' : 'border-border-color'
                 } ${icon ? 'pl-9' : ''}`} 
@@ -36,34 +37,6 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMo
         {error && <p className="mt-1 text-xs text-red-accent">{error}</p>}
     </div>
 );
-
-const AutocompleteField = ({ label, name, value, onChange, options, icon }) => {
-    return (
-        <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
-            <div className="relative">
-                {icon && (
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
-                    </div>
-                )}
-                <input
-                    type="text"
-                    name={name}
-                    value={value}
-                    onChange={onChange}
-                    list="location-options"
-                    className={`w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${icon ? 'pl-9' : ''}`}
-                />
-                <datalist id="location-options">
-                    {options && options.map((option) => (
-                        <option key={option.id} value={option.name} />
-                    ))}
-                </datalist>
-            </div>
-        </div>
-    );
-};
 
 const TextareaField = ({ label, name, value, onChange, placeholder }) => {
     const textareaRef = useRef(null);
@@ -113,6 +86,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
     const [newCar, setNewCar] = useState({
         make: '', model: '', licensePlate: '', vin: '', registrationDate: '',
         purchasePrice: '', price: '', km: '', horsepower: '', location: '', 
+        newLocation: '',
         notes: '', tags: [], hasInsurance: false
     });
     const [error, setError] = useState('');
@@ -142,9 +116,14 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         const { name, value } = e.target;
         setNewCar(prev => ({ ...prev, [name]: value }));
     };
+    
+    const handleLocationSelect = (value) => {
+        setNewCar(prev => ({ ...prev, location: value, newLocation: '' }));
+    };
 
-    const handleSelectChange = (name, value) => {
-        setNewCar(prev => ({ ...prev, [name]: value }));
+    const handleNewLocationInput = (e) => {
+        const { value } = e.target;
+        setNewCar(prev => ({ ...prev, newLocation: value, location: '' }));
     };
     
     const handleImageChange = (e) => {
@@ -216,14 +195,21 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                 notesPayload = JSON.stringify([initialNote]);
             }
 
+            // --- INICIO DE LA CORRECCIÓN ---
+            const selectedLocationObject = locations.find(loc => loc.id === newCar.location);
+            const finalLocation = newCar.newLocation.trim() || (selectedLocationObject ? selectedLocationObject.name : '');
+            // --- FIN DE LA CORRECCIÓN ---
+
             const finalCarData = { 
                 ...newCar,
+                location: finalLocation,
                 notes: notesPayload,
                 price: parseNumber(newCar.price),
                 purchasePrice: parseNumber(newCar.purchasePrice),
                 km: parseNumber(newCar.km),
                 horsepower: parseNumber(newCar.horsepower),
             };
+            delete finalCarData.newLocation;
     
             const formData = new FormData();
             Object.keys(finalCarData).forEach(key => {
@@ -285,6 +271,11 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         };
     };
 
+    const locationOptions = useMemo(() => {
+        const sortedLocations = [...locations].sort((a, b) => a.name.localeCompare(b.name));
+        return [{ id: '', name: 'Seleccionar existente...' }, ...sortedLocations];
+    }, [locations]);
+
     return (
        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
             <div className="bg-component-bg rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
@@ -343,7 +334,23 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                         />
                     </div>
                     
-                    <AutocompleteField label="Ubicación" name="location" value={newCar.location} onChange={handleChange} options={locations} icon={faMapMarkerAlt}/>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Select
+                            label="Ubicación Existente"
+                            value={newCar.location}
+                            onChange={handleLocationSelect}
+                            options={locationOptions}
+                            icon={faMapMarkerAlt}
+                        />
+                         <InputField
+                            label="O Nueva Ubicación"
+                            name="newLocation"
+                            value={newCar.newLocation}
+                            onChange={handleNewLocationInput}
+                            icon={faMapMarkerAlt}
+                            placeholder="Escribe para crear una nueva"
+                        />
+                    </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Select label="Combustible" value={newCar.fuel} onChange={(value) => handleSelectChange('fuel', value)} options={fuelOptions} />

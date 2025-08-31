@@ -1,3 +1,4 @@
+// autogest-app/backend/models/User.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -23,10 +24,9 @@ const User = sequelize.define('User', {
         allowNull: false,
         defaultValue: 'user',
     },
-    // --- CAMPO AÑADIDO ---
     avatarUrl: {
         type: DataTypes.STRING,
-        allowNull: true, // Permitimos que sea nulo si el usuario no tiene foto
+        allowNull: true,
     },
 }, {
     timestamps: true,

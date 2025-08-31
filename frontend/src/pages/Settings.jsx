@@ -9,33 +9,12 @@ import { AuthContext } from '../context/AuthContext';
 import VersionIndicator from '../components/VersionIndicator';
 import { APP_NAME } from '../config/version';
 
-// --- Sub-componente para un interruptor (Toggle) ---
-const ToggleSwitch = ({ label, enabled, onChange }) => (
-    <div className="flex justify-between items-center">
-        <span className="font-medium text-text-primary">{label}</span>
-        <button
-            onClick={onChange}
-            className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${enabled ? 'bg-blue-accent' : 'bg-zinc-200 dark:bg-zinc-700'}`}
-        >
-            <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-        </button>
-    </div>
-);
-
 // --- Componente Principal de la Página ---
 const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDeleteAccountClick }) => {
     const { user, logout } = useContext(AuthContext);
-    const [notifications, setNotifications] = useState({
-        emailOnSale: true,
-        emailOnIncident: false,
-    });
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
     const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
     const [exportMessage, setExportMessage] = useState('');
-
-    const handleNotificationChange = (key) => {
-        setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
-    };
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
@@ -98,23 +77,6 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                         >
                             <FontAwesomeIcon icon={isDarkMode ? faSun : faMoon} />
                         </button>
-                    </div>
-                </div>
-
-                {/* --- Sección de Notificaciones --- */}
-                <div className="p-6 bg-component-bg rounded-xl border border-border-color">
-                    <h3 className="text-lg font-bold text-text-primary mb-4">Notificaciones</h3>
-                    <div className="space-y-4">
-                        <ToggleSwitch
-                            label="Email al vender un coche"
-                            enabled={notifications.emailOnSale}
-                            onChange={() => handleNotificationChange('emailOnSale')}
-                        />
-                        <ToggleSwitch
-                            label="Email al registrar incidencia"
-                            enabled={notifications.emailOnIncident}
-                            onChange={() => handleNotificationChange('emailOnIncident')}
-                        />
                     </div>
                 </div>
 
@@ -198,18 +160,10 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                             </button>
                         </div>
                         
-                        <hr className="border-border-color lg:hidden" />
-
-                        {/* Información de la aplicación */}
-                        <div className="lg:hidden">
-                            <h4 className="font-semibold text-text-primary mb-2">Información de la aplicación</h4>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-text-secondary">{APP_NAME}</span>
-                                <VersionIndicator />
-                            </div>
-                        </div>
                     </div>
                 </div>
+
+                <VersionIndicator appName={APP_NAME} />
             </div>
         </div>
     );

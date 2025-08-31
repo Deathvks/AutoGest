@@ -29,7 +29,15 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
-// Se inicia el servidor directamente
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
-});
+// Sincronizar la base de datos antes de iniciar el servidor
+db.sequelize.sync({ alter: true })
+  .then(() => {
+    console.log('✅ Conexión a la base de datos establecida correctamente.');
+    // Se inicia el servidor después de la sincronización
+    app.listen(PORT, () => {
+        console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('❌ Error al conectar con la base de datos:', err);
+  });

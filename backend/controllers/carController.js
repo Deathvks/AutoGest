@@ -114,18 +114,28 @@ exports.updateCar = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para editarlo' });
         }
         
-        const updateData = {};
-        const allowedFields = [
-            'make', 'model', 'price', 'purchasePrice', 'salePrice', 'reservationDeposit', 'status',
-            'location', 'km', 'fuel', 'horsepower', 'registrationDate', 'licensePlate', 'vin',
-            'transmission', 'notes', 'tags'
-        ];
+        const updateData = req.body;
 
-        allowedFields.forEach(field => {
-            if (req.body[field] !== undefined) {
-                updateData[field] = emptyToNull(req.body[field]);
+        // Sanitizar campos numéricos para evitar errores de base de datos
+        const numericFields = ['price', 'purchasePrice', 'salePrice', 'reservationDeposit', 'km', 'horsepower'];
+        numericFields.forEach(field => {
+            if (updateData[field] !== undefined) {
+                const value = updateData[field];
+                const numericValue = parseFloat(String(value).replace(',', '.'));
+                updateData[field] = (isNaN(numericValue) || value === null || String(value).trim() === '') ? null : numericValue;
             }
         });
+
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Sanitizar específicamente el campo de fecha
+        if (updateData.registrationDate !== undefined) {
+            const dateValue = updateData.registrationDate;
+            // Si la fecha es una cadena vacía, inválida o nula, la establecemos a null
+            if (!dateValue || isNaN(new Date(dateValue).getTime())) {
+                updateData.registrationDate = null;
+            }
+        }
+        // --- FIN DE LA CORRECCIÓN ---
         
         if (updateData.licensePlate) {
             updateData.licensePlate = String(updateData.licensePlate).replace(/\s/g, '').toUpperCase();
