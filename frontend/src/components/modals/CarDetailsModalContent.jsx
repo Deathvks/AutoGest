@@ -5,7 +5,7 @@ import {
     faTimes, faEuroSign, faTachometerAlt, faGasPump, faCogs, faCalendarAlt, 
     faMapMarkerAlt, faStickyNote, faFingerprint, faIdCard, faExclamationTriangle, 
     faCheckCircle, faPencilAlt, faTrashAlt, faFileInvoiceDollar, faBan, faHandHoldingUsd,
-    faBell, faTags, faBolt
+    faBell, faTags, faBolt, faShieldAlt
 } from '@fortawesome/free-solid-svg-icons';
 
 const DetailItem = ({ icon, label, value }) => (
@@ -104,10 +104,13 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
                             className="w-full h-auto object-cover rounded-lg border border-border-color"
                         />
                         <div className="bg-background p-4 rounded-lg text-center">
-                            <p className="text-lg text-text-secondary">Precio de Venta</p>
                             <div className="flex flex-col items-center">
+                                <p className="text-lg text-text-secondary">Precio de Venta</p>
                                 <p className="text-4xl font-extrabold text-accent">
                                     {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
+                                </p>
+                                <p className="text-sm text-text-secondary mt-1">
+                                    Compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
                                 </p>
                                 {car.status === 'Reservado' && car.reservationDeposit > 0 && (
                                     <p className="text-sm font-semibold text-yellow-accent mt-1">
@@ -129,7 +132,7 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
                                 <DetailItem icon={faGasPump} label="Combustible" value={car.fuel} />
                                 <DetailItem icon={faCogs} label="Transmisión" value={car.transmission} />
                                 <DetailItem icon={faBolt} label="Potencia" value={car.horsepower ? `${car.horsepower} CV` : 'N/A'} />
-                                <DetailItem icon={faEuroSign} label="Precio Compra" value={new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)} />
+                                <DetailItem icon={faShieldAlt} label="Seguro" value={car.hasInsurance ? 'Sí' : 'No'} />
                             </div>
                         </section>
 
@@ -191,15 +194,15 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
             </div>
             
             <div className="flex-shrink-0 p-4 border-t border-border-color flex flex-wrap justify-end gap-3">
-                 {car.status === 'En venta' && (
-                    <>
-                        <button onClick={() => onSellClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-green-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
-                            <FontAwesomeIcon icon={faHandHoldingUsd} /> Vender
-                        </button>
-                        <button onClick={() => onReserveClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-yellow-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
-                           <FontAwesomeIcon icon={faBell} /> Reservar
-                        </button>
-                    </>
+                 {(car.status === 'En venta' || car.status === 'Reservado') && (
+                    <button onClick={() => onSellClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2">
+                        <FontAwesomeIcon icon={faHandHoldingUsd} /> Vender
+                    </button>
+                )}
+                {car.status === 'En venta' && (
+                    <button onClick={() => onReserveClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2">
+                       <FontAwesomeIcon icon={faBell} /> Reservar
+                    </button>
                 )}
                 {car.status === 'Reservado' && (
                      <button onClick={() => onCancelReservationClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-red-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">

@@ -1,8 +1,8 @@
 // autogest-app/frontend/src/pages/Settings.jsx
 import React, { useState, useContext } from 'react';
-import { Link } from 'react-router-dom'; // 1. Importar Link
+import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield } from '@fortawesome/free-solid-svg-icons'; // 2. Importar nuevo icono
+import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield } from '@fortawesome/free-solid-svg-icons';
 import Papa from 'papaparse';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
@@ -24,7 +24,7 @@ const ToggleSwitch = ({ label, enabled, onChange }) => (
 
 // --- Componente Principal de la Página ---
 const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDeleteAccountClick }) => {
-    const { user, logout } = useContext(AuthContext); // 3. Obtener 'user' del contexto
+    const { user, logout } = useContext(AuthContext);
     const [notifications, setNotifications] = useState({
         emailOnSale: true,
         emailOnIncident: false,
@@ -164,7 +164,6 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                             {exportMessage && <p className="text-sm text-yellow-accent mt-3">{exportMessage}</p>}
                         </div>
 
-                        {/* 4. SECCIÓN DE ADMINISTRACIÓN (SOLO VISIBLE PARA ADMINS) */}
                         {user && user.role === 'admin' && (
                             <>
                                 <hr className="border-border-color" />
@@ -199,6 +198,8 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                             </button>
                         </div>
                         
+                        <hr className="border-border-color lg:hidden" />
+
                         {/* Información de la aplicación */}
                         <div className="lg:hidden">
                             <h4 className="font-semibold text-text-primary mb-2">Información de la aplicación</h4>

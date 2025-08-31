@@ -30,23 +30,22 @@ Object.keys(db).forEach(modelName => {
 });
 
 // --- Definición de Relaciones ---
-const { User, Car, Expense, Incident, Location } = db; // <-- Añade Location
+const { User, Car, Expense, Incident, Location } = db;
 
 // Un usuario tiene muchos coches
-User.hasMany(Car, { foreignKey: 'userId' });
+User.hasMany(Car, { foreignKey: 'userId', onDelete: 'CASCADE' });
 Car.belongsTo(User, { foreignKey: 'userId' });
 
-// --- AÑADE ESTA NUEVA RELACIÓN ---
 // Un usuario tiene muchas ubicaciones
-User.hasMany(Location, { foreignKey: 'userId' });
+User.hasMany(Location, { foreignKey: 'userId', onDelete: 'CASCADE' });
 Location.belongsTo(User, { foreignKey: 'userId' });
 
 // Un coche tiene muchos gastos (relacionados por matrícula)
-Car.hasMany(Expense, { foreignKey: 'carLicensePlate', sourceKey: 'licensePlate' });
+Car.hasMany(Expense, { foreignKey: 'carLicensePlate', sourceKey: 'licensePlate', onDelete: 'CASCADE' });
 Expense.belongsTo(Car, { foreignKey: 'carLicensePlate', targetKey: 'licensePlate' });
 
 // Un coche tiene muchas incidencias (relacionadas por ID)
-Car.hasMany(Incident, { foreignKey: 'carId' });
+Car.hasMany(Incident, { foreignKey: 'carId', onDelete: 'CASCADE' });
 Incident.belongsTo(Car, { foreignKey: 'carId' });
 
 db.sequelize = sequelize;

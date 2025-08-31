@@ -65,6 +65,30 @@ const MainLayout = () => {
     const [isInvestmentModalOpen, setInvestmentModalOpen] = useState(false);
     const [isRevenueModalOpen, setRevenueModalOpen] = useState(false);
 
+    useEffect(() => {
+        const isAnyModalOpen =
+            isAddUserModalOpen || !!userToEdit || !!userToDelete || !!carToSell ||
+            !!carToView || isAddCarModalOpen || !!carForIncident || !!carToEdit ||
+            !!carToDelete || isAddExpenseModalOpen || !!expenseToDelete ||
+            isDeleteAccountModalOpen || !!carToReserve || !!carToCancelReservation ||
+            isInvestmentModalOpen || isRevenueModalOpen;
+
+        if (isAnyModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [
+        isAddUserModalOpen, userToEdit, userToDelete, carToSell, carToView,
+        isAddCarModalOpen, carForIncident, carToEdit, carToDelete,
+        isAddExpenseModalOpen, expenseToDelete, isDeleteAccountModalOpen,
+        carToReserve, carToCancelReservation, isInvestmentModalOpen, isRevenueModalOpen
+    ]);
+
     const fetchLocations = async () => {
         try {
             const locationsData = await api.getLocations();
@@ -259,9 +283,25 @@ const MainLayout = () => {
             };
             const updatedCar = await api.updateCar(carToUpdate.id, updatedData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
+            setCarToView(updatedCar);
             setCarToCancelReservation(null);
         } catch (error) {
             console.error("Error al cancelar la reserva:", error);
+        }
+    };
+
+    const handleUpdateCarInsurance = async (car, hasInsurance) => {
+        const originalCars = [...cars];
+        const updatedCars = cars.map(c => 
+            c.id === car.id ? { ...c, hasInsurance } : c
+        );
+        setCars(updatedCars);
+    
+        try {
+            await api.updateCar(car.id, { hasInsurance });
+        } catch (error) {
+            console.error("Error al actualizar el seguro del coche:", error);
+            setCars(originalCars);
         }
     };
 
@@ -349,8 +389,18 @@ const MainLayout = () => {
                             onTotalInvestmentClick={() => setInvestmentModalOpen(true)}
                             onRevenueClick={() => setRevenueModalOpen(true)} 
                         />} />
-                        <Route path="/cars" element={<MyCars cars={cars} incidents={incidents} onSellClick={setCarToSell} onAddClick={() => setAddCarModalOpen(true)} onViewDetailsClick={setCarToView} onAddIncidentClick={setCarForIncident} onReserveClick={setCarToReserve} onCancelReservationClick={setCarToCancelReservation} />} />
-                        <Route path="/sales" element={<SalesSummary cars={cars} onViewDetailsClick={setCarToView} />} />
+                        <Route path="/cars" element={<MyCars 
+                            cars={cars} 
+                            incidents={incidents} 
+                            onSellClick={setCarToSell} 
+                            onAddClick={() => setAddCarModalOpen(true)} 
+                            onViewDetailsClick={setCarToView} 
+                            onAddIncidentClick={setCarForIncident} 
+                            onReserveClick={setCarToReserve} 
+                            onCancelReservationClick={setCarToCancelReservation}
+                            onUpdateInsurance={handleUpdateCarInsurance}
+                        />} />
+                        <Route path="/sales" element={<SalesSummary cars={cars} expenses={expenses} onViewDetailsClick={setCarToView} />} />
                         <Route path="/expenses" element={<Expenses expenses={expenses} cars={cars} onAddExpense={() => setAddExpenseModalOpen(true)} onDeleteExpense={setExpenseToDelete} />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} cars={cars} expenses={expenses} incidents={incidents} onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)} />} />
@@ -372,7 +422,6 @@ const MainLayout = () => {
             </div>
             <BottomNav />
             
-            {/* Indicador de versión para PC - esquina inferior derecha */}
             <VersionIndicator className="hidden lg:block fixed bottom-6 right-6 bg-component-bg px-2 py-1 rounded border border-border-color" />
             {toast && (
                 <Toast 

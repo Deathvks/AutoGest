@@ -17,14 +17,14 @@ const Expense = sequelize.define('Expense', {
     description: {
         type: DataTypes.TEXT,
     },
-    // --- CAMBIO CLAVE: La clave foránea ahora es la matrícula ---
     carLicensePlate: {
         type: DataTypes.STRING,
-        allowNull: false, // Un gasto siempre debe estar asociado a un coche
+        allowNull: false,
         references: {
-            model: 'Cars', // Nombre de la tabla
-            key: 'licensePlate', // Columna a la que se hace referencia
+            model: 'Cars',
+            key: 'licensePlate',
         },
+        onDelete: 'CASCADE', // <-- AÑADIR ESTA LÍNEA
     },
 }, {
     timestamps: true,

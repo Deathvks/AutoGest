@@ -363,7 +363,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
         
         try {
             const formData = new FormData();
-            const ignoredFields = ['id', 'createdAt', 'updatedAt', 'userId', 'notes']; // Ignorar notes
+            const ignoredFields = ['id', 'createdAt', 'updatedAt', 'userId', 'notes'];
 
             const finalCarData = { 
                 ...editedCar, 
@@ -490,16 +490,18 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField 
-                                label="Fecha de Matriculación" 
-                                name="registrationDate" 
-                                type="date" 
-                                value={editedCar.registrationDate ? editedCar.registrationDate.split('T')[0] : ''} 
+                             <InputField 
+                                label="Precio de Compra (€)" 
+                                name="purchasePrice" 
+                                type="text" 
+                                inputMode="decimal" 
+                                value={editedCar.purchasePrice} 
                                 onChange={handleChange} 
-                                icon={faCalendarDay}
-                                error={errors.registrationDate}
+                                icon={faEuroSign} 
+                                error={errors.purchasePrice}
+                                required
                             />
-                            <InputField 
+                             <InputField 
                                 label="Precio de Venta (€)" 
                                 name="price" 
                                 type="text" 
@@ -512,7 +514,16 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <InputField 
+                            <InputField 
+                                label="Fecha de Matriculación" 
+                                name="registrationDate" 
+                                type="date" 
+                                value={editedCar.registrationDate ? editedCar.registrationDate.split('T')[0] : ''} 
+                                onChange={handleChange} 
+                                icon={faCalendarDay}
+                                error={errors.registrationDate}
+                            />
+                            <InputField 
                                 label="Kilómetros" 
                                 name="km" 
                                 type="text" 
@@ -522,6 +533,8 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                                 icon={faRoad} 
                                 error={errors.km}
                             />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <InputField 
                                 label="Caballos (CV)" 
                                 name="horsepower" 

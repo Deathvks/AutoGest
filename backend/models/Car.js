@@ -72,6 +72,10 @@ const Car = sequelize.define('Car', {
     tags: {
         type: DataTypes.JSON,
     },
+    hasInsurance: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
 }, {
     timestamps: true,
     // Añadimos este bloque para definir los índices explícitamente

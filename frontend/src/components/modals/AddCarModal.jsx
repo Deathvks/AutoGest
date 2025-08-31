@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faCar, faStar, faIdCard, faFingerprint, faCalendarDay, faRoad, faEuroSign,
-    faMapMarkerAlt, faXmark, faUpload, faPaperclip, faBolt
+    faMapMarkerAlt, faXmark, faUpload, faPaperclip, faBolt, faShieldAlt
 } from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select';
 import api from '../../services/api';
@@ -89,10 +89,31 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
     );
 };
 
+const ToggleSwitch = ({ label, icon, enabled, onChange }) => (
+    <div>
+        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+        <div className="flex items-center gap-4 mt-2">
+            <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+            <button
+                type="button"
+                onClick={onChange}
+                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent ${enabled ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}`}
+            >
+                <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+            <span className={`font-semibold ${enabled ? 'text-accent' : 'text-text-secondary'}`}>
+                {enabled ? 'Sí' : 'No'}
+            </span>
+        </div>
+    </div>
+);
+
+
 const AddCarModal = ({ onClose, onAdd, locations }) => {
     const [newCar, setNewCar] = useState({
         make: '', model: '', licensePlate: '', vin: '', registrationDate: '',
-        purchasePrice: '', km: '', horsepower: '', location: '', notes: '', tags: []
+        purchasePrice: '', price: '', km: '', horsepower: '', location: '', 
+        notes: '', tags: [], hasInsurance: false
     });
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
@@ -166,6 +187,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         if (!newCar.model.trim()) errors.model = 'El modelo es obligatorio';
         if (!newCar.licensePlate.trim()) errors.licensePlate = 'La matrícula es obligatoria';
         if (!newCar.purchasePrice.trim()) errors.purchasePrice = 'El precio de compra es obligatorio';
+        if (!newCar.price.trim()) errors.price = 'El precio de venta es obligatorio';
         
         setFieldErrors(errors);
         if (Object.keys(errors).length > 0) {
@@ -197,7 +219,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
             const finalCarData = { 
                 ...newCar,
                 notes: notesPayload,
-                price: parseNumber(newCar.purchasePrice),
+                price: parseNumber(newCar.price),
                 purchasePrice: parseNumber(newCar.purchasePrice),
                 km: parseNumber(newCar.km),
                 horsepower: parseNumber(newCar.horsepower),
@@ -308,8 +330,17 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                         <InputField label="Precio de Compra (€)" name="purchasePrice" type="text" inputMode="decimal" value={newCar.purchasePrice} onChange={handleChange} icon={faEuroSign} error={fieldErrors.purchasePrice} required={true} />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <InputField label="Precio de Venta (€)" name="price" type="text" inputMode="decimal" value={newCar.price} onChange={handleChange} icon={faEuroSign} error={fieldErrors.price} required={true} />
                         <InputField label="Kilómetros" name="km" type="text" inputMode="numeric" value={newCar.km} onChange={handleChange} icon={faRoad} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputField label="Potencia (CV)" name="horsepower" type="text" inputMode="numeric" value={newCar.horsepower} onChange={handleChange} icon={faBolt} />
+                        <ToggleSwitch 
+                            label="¿Tiene seguro en vigor?"
+                            icon={faShieldAlt}
+                            enabled={newCar.hasInsurance}
+                            onChange={() => setNewCar(prev => ({ ...prev, hasInsurance: !prev.hasInsurance }))}
+                        />
                     </div>
                     
                     <AutocompleteField label="Ubicación" name="location" value={newCar.location} onChange={handleChange} options={locations} icon={faMapMarkerAlt}/>

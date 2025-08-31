@@ -36,9 +36,10 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                     <div className="text-center">
                         <p className="text-text-secondary">Vas a marcar como vendido el <span className="font-bold text-text-primary">{car.make} {car.model} ({car.licensePlate})</span>.</p>
                         <p className="text-sm text-text-secondary">Precio de compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</p>
+                        <p className="text-sm text-text-secondary">Precio de venta: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}</p>
                     </div>
                     <div className="mt-6">
-                        <label className="block text-sm font-medium text-text-secondary mb-1">Precio de Venta (€)</label>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Precio de Venta Final (€)</label>
                         <input 
                             type="number" 
                             value={salePrice}

@@ -86,6 +86,9 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                         <p className="text-sm text-text-secondary mt-1">
                             Precio de compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
                         </p>
+                        <p className="text-sm text-text-secondary">
+                            Precio de venta: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
+                        </p>
                     </div>
                     <div className="space-y-4">
                         <InputField

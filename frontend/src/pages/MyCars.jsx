@@ -2,12 +2,27 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSearch, faTimes, faFilter, faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSearch, faTimes, faFilter, faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
 import Select from '../components/Select';
 import FilterModal from '../components/modals/FilterModal';
 
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+
+const ToggleSwitch = ({ enabled, onChange }) => (
+    <button
+        type="button"
+        onClick={(e) => {
+            e.stopPropagation(); // Evita que se abra el modal de detalles
+            onChange();
+        }}
+        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent ${enabled ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}`}
+    >
+        <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+    </button>
+);
+
 // Componente de Tarjeta de Coche
-const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick }) => {
+const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance }) => {
     const getStatusChipClass = (status) => {
         switch (status) {
             case 'Vendido': return 'bg-green-accent/10 text-green-accent';
@@ -30,12 +45,13 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
 
     const visibleTags = tagsToShow.slice(0, 3);
     const hiddenTagsCount = tagsToShow.length - visibleTags.length;
+    const imageUrl = car.imageUrl ? `${API_BASE_URL}${car.imageUrl}` : `https://placehold.co/400x300/f1f3f5/6c757d?text=${car.make}+${car.model}`;
 
     return (
         <div className="bg-component-bg rounded-lg shadow-sm border border-border-color overflow-hidden flex flex-col sm:flex-row transition-shadow duration-300 hover:shadow-lg">
             <div className="sm:w-1/3 lg:w-1/4 flex-shrink-0">
                 <img
-                    src={car.imageUrl || `https://placehold.co/400x300/f1f3f5/6c757d?text=${car.make}+${car.model}`}
+                    src={imageUrl}
                     alt={`${car.make} ${car.model}`}
                     className="w-full h-48 sm:h-full object-cover cursor-pointer"
                     onClick={() => onViewDetailsClick(car)}
@@ -52,8 +68,7 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
                     </span>
                 </div>
                 
-                {/* Grid de información alineado a la izquierda */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-text-secondary my-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-sm text-text-secondary my-4">
                     <div className="flex items-center gap-2 truncate" title={`${new Intl.NumberFormat('es-ES').format(car.km)} km`}>
                         <FontAwesomeIcon icon={faRoad} className="w-4 h-4" />
                         <span>{car.km ? `${new Intl.NumberFormat('es-ES').format(car.km)} km` : 'N/A'}</span>
@@ -70,9 +85,15 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
                         <FontAwesomeIcon icon={faCogs} className="w-4 h-4" />
                         <span>{car.transmission || 'N/A'}</span>
                     </div>
+                    <div className="flex items-center gap-2" title={`Seguro: ${car.hasInsurance ? 'Sí' : 'No'}`}>
+                        <FontAwesomeIcon icon={faShieldAlt} className="w-4 h-4 flex-shrink-0" />
+                        <ToggleSwitch 
+                            enabled={car.hasInsurance} 
+                            onChange={() => onUpdateInsurance(car, !car.hasInsurance)}
+                        />
+                    </div>
                 </div>
 
-                {/* Sección de etiquetas */}
                 {tagsToShow.length > 0 && (
                     <div className="flex flex-wrap items-center gap-2 mb-4">
                         <FontAwesomeIcon icon={faTags} className="w-4 h-4 text-text-secondary" />
@@ -88,9 +109,18 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
 
                 <div className="mt-auto flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-border-color">
                     <div className="text-center sm:text-left w-full sm:w-auto">
+                        <p className="text-xs text-text-secondary">Precio Venta</p>
                         <p className="text-3xl font-extrabold text-accent">
                             {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
                         </p>
+                        <p className="text-xs text-text-secondary mt-2">
+                            Compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
+                        </p>
+                        {car.status === 'Vendido' && car.salePrice > 0 && (
+                            <p className="text-sm font-semibold text-green-accent mt-1">
+                                Venta Final: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}
+                            </p>
+                        )}
                         {car.status === 'Reservado' && car.reservationDeposit > 0 && (
                             <p className="text-sm font-semibold text-yellow-accent mt-1">
                                 Reserva: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}
@@ -104,15 +134,15 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
                         >
                             Detalles
                         </button>
-                         {car.status === 'En venta' && (
-                            <>
-                                <button onClick={() => onSellClick(car)} className="p-2 aspect-square text-green-accent bg-green-accent/10 rounded-lg hover:bg-green-accent/20 flex items-center justify-center transition-colors" title="Vender">
-                                    <FontAwesomeIcon icon={faHandHoldingUsd} />
-                                </button>
-                                <button onClick={() => onReserveClick(car)} className="p-2 aspect-square text-yellow-accent bg-yellow-accent/10 rounded-lg hover:bg-yellow-accent/20 flex items-center justify-center transition-colors" title="Reservar">
-                                   <FontAwesomeIcon icon={faBell} />
-                                </button>
-                            </>
+                         {(car.status === 'En venta' || car.status === 'Reservado') && (
+                            <button onClick={() => onSellClick(car)} className="p-2 aspect-square text-green-accent bg-green-accent/10 rounded-lg hover:bg-green-accent/20 flex items-center justify-center transition-colors" title="Vender">
+                                <FontAwesomeIcon icon={faHandHoldingUsd} />
+                            </button>
+                        )}
+                        {car.status === 'En venta' && (
+                            <button onClick={() => onReserveClick(car)} className="p-2 aspect-square text-yellow-accent bg-yellow-accent/10 rounded-lg hover:bg-yellow-accent/20 flex items-center justify-center transition-colors" title="Reservar">
+                               <FontAwesomeIcon icon={faBell} />
+                            </button>
                         )}
                         {car.status === 'Reservado' && (
                              <button onClick={() => onCancelReservationClick(car)} className="p-2 aspect-square text-red-accent bg-red-accent/10 rounded-lg hover:bg-red-accent/20 flex items-center justify-center transition-colors" title="Cancelar Reserva">
@@ -193,7 +223,7 @@ const FilterSidebar = ({ cars, filters, setFilters, resetFilters }) => {
 };
 
 // Componente Principal
-const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick }) => {
+const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isFilterModalOpen, setFilterModalOpen] = useState(false);
     const [filters, setFilters] = useState({
@@ -208,8 +238,6 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
             const carToOpen = cars.find(c => c.id === carIdToOpen);
             if (carToOpen) {
                 onViewDetailsClick(carToOpen);
-                // Limpiamos el estado para que no se vuelva a abrir el modal si el usuario navega
-                // a otra página y vuelve a esta sin un clic explícito.
                 window.history.replaceState({}, document.title)
             }
         }
@@ -238,7 +266,6 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
     return (
         <>
             <div className="flex flex-col lg:flex-row gap-8">
-                {/* Sidebar para escritorio */}
                 <aside className="hidden lg:block lg:w-72 xl:w-80 flex-shrink-0">
                     <FilterSidebar cars={cars} filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
                 </aside>
@@ -261,7 +288,6 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
                             )}
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
-                            {/* Botón de filtros para móvil */}
                             <button
                                 onClick={() => setFilterModalOpen(true)}
                                 className="w-1/2 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg border border-border-color hover:bg-border-color transition-colors lg:hidden"
@@ -288,6 +314,7 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
                                 onSellClick={onSellClick}
                                 onReserveClick={onReserveClick}
                                 onCancelReservationClick={onCancelReservationClick}
+                                onUpdateInsurance={onUpdateInsurance}
                             />
                         ))}
                     </div>

@@ -14,7 +14,6 @@ const Incident = sequelize.define('Incident', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    // --- CAMPO NUEVO ---
     status: {
         type: DataTypes.ENUM('abierta', 'resuelta'),
         allowNull: false,
@@ -27,6 +26,7 @@ const Incident = sequelize.define('Incident', {
             key: 'id',
         },
         allowNull: false,
+        onDelete: 'CASCADE', // <-- AÑADIR ESTA LÍNEA
     },
 }, {
     timestamps: true,

@@ -1,10 +1,10 @@
 // autogest-app/frontend/src/pages/SalesSummary.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faTags, faCar, faCalendarDay, faEuroSign } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faTags, faCar, faCalendarDay, faEuroSign, faWrench } from '@fortawesome/free-solid-svg-icons';
 
-const SalesSummary = ({ cars, onViewDetailsClick }) => {
+const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
     useEffect(() => {
         const jspdfScript = document.createElement('script');
         jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
@@ -19,7 +19,21 @@ const SalesSummary = ({ cars, onViewDetailsClick }) => {
         document.head.appendChild(jspdfScript);
     }, []);
 
-    const soldCars = cars.filter(car => car.status === 'Vendido');
+    const soldCarsWithProfit = useMemo(() => {
+        return cars
+            .filter(car => car.status === 'Vendido')
+            .map(car => {
+                const associatedExpenses = expenses.filter(
+                    exp => exp.carLicensePlate === car.licensePlate
+                );
+                const totalExpenses = associatedExpenses.reduce(
+                    (sum, exp) => sum + (parseFloat(exp.amount) || 0),
+                    0
+                );
+                const profit = (parseFloat(car.salePrice) || 0) - (parseFloat(car.purchasePrice) || 0) - totalExpenses;
+                return { ...car, totalExpenses, profit };
+            });
+    }, [cars, expenses]);
 
     const generatePDF = () => {
         if (window.jspdf && window.jspdf.jsPDF) {
@@ -29,13 +43,14 @@ const SalesSummary = ({ cars, onViewDetailsClick }) => {
             doc.text("Resumen de Ventas", 14, 16);
             doc.autoTable({
                 startY: 20,
-                head: [['Modelo', 'Matrícula', 'Precio Compra', 'Precio Venta', 'Margen']],
-                body: soldCars.map(car => [
+                head: [['Modelo', 'Matrícula', 'Precio Compra', 'Gastos', 'Precio Venta', 'Beneficio/Pérdida']],
+                body: soldCarsWithProfit.map(car => [
                     `${car.make} ${car.model}`,
                     car.licensePlate,
                     new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice),
+                    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.totalExpenses),
                     new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice),
-                    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice - car.purchasePrice)
+                    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.profit)
                 ]),
             });
             doc.save('resumen_ventas.pdf');
@@ -45,11 +60,10 @@ const SalesSummary = ({ cars, onViewDetailsClick }) => {
         }
     };
     
-    const noSoldCars = soldCars.length === 0;
+    const noSoldCars = soldCarsWithProfit.length === 0;
 
     return (
         <div>
-            {/* --- HEADER COMO EN GASTOS --- */}
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold text-text-primary tracking-tight">Resumen de Ventas</h1>
                 <button 
@@ -62,11 +76,10 @@ const SalesSummary = ({ cars, onViewDetailsClick }) => {
                 </button>
             </div>
 
-            {soldCars.length > 0 ? (
+            {soldCarsWithProfit.length > 0 ? (
                 <>
-                    {/* --- VISTA DE TARJETAS PARA MÓVIL (COMO EN GASTOS) --- */}
                     <div className="space-y-4 md:hidden">
-                        {soldCars.map(car => (
+                        {soldCarsWithProfit.map(car => (
                             <div 
                                 key={car.id} 
                                 className="bg-component-bg rounded-xl border border-border-color p-4 cursor-pointer hover:bg-component-bg-hover transition-colors"
@@ -89,26 +102,31 @@ const SalesSummary = ({ cars, onViewDetailsClick }) => {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-bold text-green-accent text-lg">
-                                            +{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice - car.purchasePrice)}
+                                        <p className={`font-bold text-lg ${car.profit >= 0 ? 'text-green-accent' : 'text-red-accent'}`}>
+                                            {car.profit >= 0 ? '+' : ''}{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.profit)}
                                         </p>
-                                        <p className="text-xs text-text-secondary">Margen</p>
+                                        <p className="text-xs text-text-secondary">Beneficio/Pérdida</p>
                                     </div>
                                 </div>
                                 
-                                <div className="flex justify-between items-center pt-3 border-t border-border-color">
-                                    <div className="text-sm">
-                                        <p className="text-text-secondary">Compra: <span className="text-text-primary font-medium">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</span></p>
+                                <div className="grid grid-cols-3 items-center pt-3 border-t border-border-color text-sm">
+                                    <div className="text-left">
+                                        <p className="text-text-secondary">Compra:</p>
+                                        <p className="text-text-primary font-medium">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</p>
                                     </div>
-                                    <div className="text-sm text-right">
-                                        <p className="text-text-secondary">Venta: <span className="text-text-primary font-medium">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}</span></p>
+                                    <div className="text-center">
+                                        <p className="text-text-secondary">Gastos:</p>
+                                        <p className="text-text-primary font-medium">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.totalExpenses)}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-text-secondary">Venta:</p>
+                                        <p className="text-text-primary font-medium">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}</p>
                                     </div>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    {/* --- VISTA DE TABLA PARA ESCRITORIO --- */}
                     <div className="hidden md:block bg-component-bg rounded-xl border border-border-color overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left text-text-secondary">
@@ -117,12 +135,13 @@ const SalesSummary = ({ cars, onViewDetailsClick }) => {
                                         <th scope="col" className="px-6 py-4">Coche</th>
                                         <th scope="col" className="px-6 py-4 whitespace-nowrap">Matrícula</th>
                                         <th scope="col" className="px-6 py-4 whitespace-nowrap">Precio Compra</th>
+                                        <th scope="col" className="px-6 py-4 whitespace-nowrap">Gastos</th>
                                         <th scope="col" className="px-6 py-4 whitespace-nowrap">Precio Venta</th>
-                                        <th scope="col" className="px-6 py-4 whitespace-nowrap">Margen</th>
+                                        <th scope="col" className="px-6 py-4 whitespace-nowrap">Beneficio/Pérdida</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border-color">
-                                    {soldCars.map(car => (
+                                    {soldCarsWithProfit.map(car => (
                                         <tr 
                                             key={car.id} 
                                             className="cursor-pointer hover:bg-component-bg-hover transition-colors"
@@ -150,10 +169,13 @@ const SalesSummary = ({ cars, onViewDetailsClick }) => {
                                                 {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
                                             </td>
                                             <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">
+                                                {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.totalExpenses)}
+                                            </td>
+                                            <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">
                                                 {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}
                                             </td>
-                                            <td className="px-6 py-4 font-bold text-green-accent whitespace-nowrap">
-                                                +{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice - car.purchasePrice)}
+                                            <td className={`px-6 py-4 font-bold whitespace-nowrap ${car.profit >= 0 ? 'text-green-accent' : 'text-red-accent'}`}>
+                                                {car.profit >= 0 ? '+' : ''}{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.profit)}
                                             </td>
                                         </tr>
                                     ))}

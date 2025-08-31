@@ -121,7 +121,6 @@ exports.updateCar = async (req, res) => {
             'transmission', 'notes', 'tags'
         ];
 
-        // Construir dinámicamente el objeto de actualización solo con los campos proporcionados
         allowedFields.forEach(field => {
             if (req.body[field] !== undefined) {
                 updateData[field] = emptyToNull(req.body[field]);
@@ -182,17 +181,12 @@ exports.updateCar = async (req, res) => {
     }
 };
 
-// Eliminar un coche (LÓGICA CORREGIDA)
+// Eliminar un coche
 exports.deleteCar = async (req, res) => {
-    const transaction = await sequelize.transaction();
     try {
-        const car = await Car.findOne({ 
-            where: { id: req.params.id, userId: req.user.id },
-            transaction 
-        });
+        const car = await Car.findOne({ where: { id: req.params.id, userId: req.user.id } });
 
         if (!car) {
-            await transaction.rollback();
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para eliminarlo' });
         }
         
@@ -208,20 +202,13 @@ exports.deleteCar = async (req, res) => {
              if (fs.existsSync(docFilePath)) fs.unlinkSync(docFilePath);
         }
 
-        // Eliminar incidencias y gastos asociados
-        await Incident.destroy({ where: { carId: car.id }, transaction });
-        await Expense.destroy({ where: { carLicensePlate: car.licensePlate }, transaction });
-
-        // Finalmente, eliminar el coche
-        await car.destroy({ transaction });
-        
-        await transaction.commit();
+        // Finalmente, eliminar el coche (los datos asociados se borran en cascada)
+        await car.destroy();
         
         res.status(200).json({ message: 'Coche eliminado correctamente' });
 
     } catch (error) {
-        await transaction.rollback();
-        console.error("Error al eliminar coche y sus dependencias:", error);
+        console.error("Error al eliminar coche:", error);
         res.status(500).json({ error: 'Error al eliminar el coche' });
     }
 };
