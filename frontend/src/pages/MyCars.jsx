@@ -21,7 +21,7 @@ const ToggleSwitch = ({ enabled, onChange }) => (
   </button>
 );
 
-// Componente de Tarjeta de Coche
+// Tarjeta de Coche
 const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance }) => {
   const getStatusChipClass = (status) => {
     switch (status) {
@@ -34,11 +34,7 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
 
   let tagsToShow = [];
   if (typeof car.tags === 'string') {
-    try {
-      tagsToShow = JSON.parse(car.tags);
-    } catch (e) {
-      tagsToShow = [];
-    }
+    try { tagsToShow = JSON.parse(car.tags); } catch { tagsToShow = []; }
   } else if (Array.isArray(car.tags)) {
     tagsToShow = car.tags;
   }
@@ -49,8 +45,8 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
 
   return (
     <div className="bg-component-bg rounded-lg shadow-sm border border-border-color overflow-hidden flex flex-col sm:flex-row transition-shadow duration-300 hover:shadow-lg">
-      {/* Imagen: más ancha y un poquito de alto en escritorio (4:3). En móvil, cuadrada. */}
-      <div className="flex-shrink-0 w-full aspect-square overflow-hidden sm:w-44 sm:aspect-[4/3] lg:w-56 lg:aspect-[4/3]">
+      {/* Imagen: 4:3 en escritorio; cuadrada en móvil */}
+      <div className="flex-shrink-0 w-full aspect-square overflow-hidden sm:w-48 sm:aspect-[4/3] lg:w-60 lg:aspect-[4/3]">
         <img
           src={imageUrl}
           alt={`${car.make} ${car.model}`}
@@ -89,10 +85,7 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
           </div>
           <div className="flex items-center gap-2" title={`Seguro: ${car.hasInsurance ? 'Sí' : 'No'}`}>
             <FontAwesomeIcon icon={faShieldAlt} className="w-4 h-4 flex-shrink-0" />
-            <ToggleSwitch
-              enabled={car.hasInsurance}
-              onChange={() => onUpdateInsurance(car, !car.hasInsurance)}
-            />
+            <ToggleSwitch enabled={car.hasInsurance} onChange={() => onUpdateInsurance(car, !car.hasInsurance)} />
           </div>
         </div>
 
@@ -157,26 +150,16 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
   );
 };
 
-// Componente para los Filtros en Sidebar (para escritorio)
+// Sidebar de filtros
 const FilterSidebar = ({ cars, filters, setFilters, resetFilters }) => {
-  const makeOptions = useMemo(
-    () => [...new Set(cars.map(car => car.make))].map(make => ({ id: make, name: make })),
-    [cars]
-  );
-
-  const statusOptions = useMemo(
-    () => [...new Set(cars.map(car => car.status))].map(status => ({ id: status, name: status })),
-    [cars]
-  );
+  const makeOptions = useMemo(() => [...new Set(cars.map(car => car.make))].map(make => ({ id: make, name: make })), [cars]);
+  const statusOptions = useMemo(() => [...new Set(cars.map(car => car.status))].map(status => ({ id: status, name: status })), [cars]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleSelectChange = (name, value) => {
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
+  const handleSelectChange = (name, value) => setFilters(prev => ({ ...prev, [name]: value }));
 
   return (
     <div className="bg-component-bg p-6 rounded-lg shadow-sm border border-border-color">
@@ -185,18 +168,8 @@ const FilterSidebar = ({ cars, filters, setFilters, resetFilters }) => {
         Filtros
       </h3>
       <div className="space-y-4">
-        <Select
-          label="Marca"
-          value={filters.make}
-          onChange={(value) => handleSelectChange('make', value)}
-          options={[{ id: '', name: 'Todas' }, ...makeOptions]}
-        />
-        <Select
-          label="Estado"
-          value={filters.status}
-          onChange={(value) => handleSelectChange('status', value)}
-          options={[{ id: '', name: 'Todos' }, ...statusOptions]}
-        />
+        <Select label="Marca" value={filters.make} onChange={(value) => handleSelectChange('make', value)} options={[{ id: '', name: 'Todas' }, ...makeOptions]} />
+        <Select label="Estado" value={filters.status} onChange={(value) => handleSelectChange('status', value)} options={[{ id: '', name: 'Todos' }, ...statusOptions]} />
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label htmlFor="minPriceDesktop" className="block text-sm font-medium text-text-secondary mb-1">Precio Mín.</label>
@@ -217,22 +190,17 @@ const FilterSidebar = ({ cars, filters, setFilters, resetFilters }) => {
             <input type="number" name="maxKm" id="maxKmDesktop" value={filters.maxKm} onChange={handleInputChange} placeholder="km" className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent" />
           </div>
         </div>
-        <button onClick={resetFilters} className="w-full text-sm text-accent hover:underline pt-2">
-          Limpiar filtros
-        </button>
+        <button onClick={resetFilters} className="w-full text-sm text-accent hover:underline pt-2">Limpiar filtros</button>
       </div>
     </div>
   );
 };
 
-// Componente Principal
+// Principal
 const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setFilterModalOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    make: '', status: '', minPrice: '', maxPrice: '', minKm: '', maxKm: ''
-  });
-
+  const [filters, setFilters] = useState({ make: '', status: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
   const location = useLocation();
 
   useEffect(() => {
@@ -260,7 +228,6 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
       const maxPriceMatch = filters.maxPrice ? car.price <= parseFloat(filters.maxPrice) : true;
       const minKmMatch = filters.minKm ? car.km >= parseFloat(filters.minKm) : true;
       const maxKmMatch = filters.maxKm ? car.km <= parseFloat(filters.maxKm) : true;
-
       return searchMatch && makeMatch && statusMatch && minPriceMatch && maxPriceMatch && minKmMatch && maxKmMatch;
     });
   }, [cars, searchTerm, filters]);
@@ -272,7 +239,8 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
           <FilterSidebar cars={cars} filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
         </aside>
 
-        <main className="flex-1 space-y-6 min-w-0">
+        {/* Más ancho, pero con margen de seguridad a la derecha para no chocar con el badge */}
+        <main className="flex-1 space-y-6 min-w-0 max-w-5xl 2xl:max-w-6xl lg:pr-12 xl:pr-16">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="relative w-full sm:flex-grow">
               <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
