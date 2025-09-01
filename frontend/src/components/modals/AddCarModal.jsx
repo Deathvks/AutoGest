@@ -8,7 +8,7 @@ import {
 import Select from '../Select';
 import api from '../../services/api';
 
-const SparklesIcon = (props) => ( <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.94 14.32c.32-.32.44-.78.34-1.22-.1-.44-.4-.74-.84-.84-.44-.1-.9.02-1.22.34l-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="m21.66 3.34-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="M14.32 9.94c.32.32.78.44 1.22.34.44-.1.74-.4.84-.84.1-.44-.02-.9-.34-1.22l-3.5-3.5c-.98-.98-2.56-.98-3.54 0-.98.98-.98 2.56 0 3.54l1.68 1.68"/><path d="M3.34 21.66l3.5-3.5c.98-.98-.98-2.56 0-3.54-.98-.98-2.56-.98-3.54 0l-1.68 1.68"/></svg> );
+const SparklesIcon = (props) => ( <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.94 14.32c.32-.32.44-.78.34-1.22-.1-.44-.4-.74-.84-.84-.44-.1-.9.02-1.22.34l-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="m21.66 3.34-3.5 3.5c-.98.98-.98 2.56 0 3.54.98.98 2.56.98 3.54 0l1.68-1.68"/><path d="M14.32 9.94c.32.32.78.44 1.22.34.44-.1.74-.4.84-.84.1-.44-.02-.9-.34-1.22l-3.5-3.5c-.98-.98-2.56-.98-3.54 0-.98.98-.98 2.56 0 3.54l1.68 1.68"/><path d="M3.34 21.66l3.5-3.5c.98-.98-.98-2.56 0-3.54-.98-.98-2.56-.98-3.54 0l-1.68 1.68"/></svg> );
 
 const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, error, required = false, placeholder = '' }) => (
     <div>
@@ -117,6 +117,11 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         setNewCar(prev => ({ ...prev, [name]: value }));
     };
     
+    // --- FUNCIÓN AÑADIDA ---
+    const handleSelectChange = (name, value) => {
+        setNewCar(prev => ({ ...prev, [name]: value }));
+    };
+    
     const handleLocationSelect = (value) => {
         setNewCar(prev => ({ ...prev, location: value, newLocation: '' }));
     };
@@ -195,10 +200,8 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                 notesPayload = JSON.stringify([initialNote]);
             }
 
-            // --- INICIO DE LA CORRECCIÓN ---
             const selectedLocationObject = locations.find(loc => loc.id === newCar.location);
             const finalLocation = newCar.newLocation.trim() || (selectedLocationObject ? selectedLocationObject.name : '');
-            // --- FIN DE LA CORRECCIÓN ---
 
             const finalCarData = { 
                 ...newCar,
