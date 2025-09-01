@@ -163,7 +163,15 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                     </div>
                 </div>
 
-                <VersionIndicator appName={APP_NAME} />
+                {/* --- Sección de Información (Solo móvil) --- */}
+                <div className="p-6 bg-component-bg rounded-xl border border-border-color lg:hidden">
+                    <h3 className="text-lg font-bold text-text-primary mb-4">Acerca de</h3>
+                    <div className="flex justify-between items-center">
+                        <span className="font-medium text-text-primary">{APP_NAME}</span>
+                        <VersionIndicator />
+                    </div>
+                </div>
+
             </div>
         </div>
     );

@@ -73,9 +73,9 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
                         <FontAwesomeIcon icon={faRoad} className="w-4 h-4" />
                         <span>{car.km ? `${new Intl.NumberFormat('es-ES').format(car.km)} km` : 'N/A'}</span>
                     </div>
-                    <div className="flex items-center gap-2 truncate" title={car.registrationDate ? new Date(car.registrationDate).toLocaleDateString('es-ES') : 'N/A'}>
+                    <div className="flex items-center gap-2 truncate" title={car.registrationDate ? new Date(car.registrationDate).getFullYear() : 'N/A'}>
                         <FontAwesomeIcon icon={faCalendarAlt} className="w-4 h-4" />
-                        <span>{car.registrationDate ? new Date(car.registrationDate).toLocaleDateString('es-ES') : 'N/A'}</span>
+                        <span>{car.registrationDate ? new Date(car.registrationDate).getFullYear() : 'N/A'}</span>
                     </div>
                     <div className="flex items-center gap-2 truncate" title={car.fuel || 'N/A'}>
                         <FontAwesomeIcon icon={faGasPump} className="w-4 h-4" />
