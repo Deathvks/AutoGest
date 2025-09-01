@@ -8,8 +8,30 @@ const db = require('./models');
 
 const app = express();
 
-app.use(cors());
-app.use(express.json()); // <-- AÑADE ESTA LÍNEA
+// --- INICIO DE LA CORRECCIÓN ---
+// Lista de orígenes permitidos
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://auto-gest.es',
+  'https://www.auto-gest.es'
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permitir peticiones sin origen (como las de Postman o apps móviles) y las de la lista blanca
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
+};
+
+app.use(cors(corsOptions)); // Usamos la nueva configuración
+// --- FIN DE LA CORRECCIÓN ---
+
+app.use(express.json());
 app.use(express.static('public'));
 
 // --- Rutas de la API ---
