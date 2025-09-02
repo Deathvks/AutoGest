@@ -91,6 +91,7 @@ const api = {
     // --- Gastos (Expenses) ---
     getExpenses: () => fetch(`${BASE_URL}/expenses`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
     createExpense: (expenseData) => fetch(`${BASE_URL}/expenses`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(expenseData) }).then(handleProtectedResponse),
+    updateExpense: (expenseId, expenseData) => fetch(`${BASE_URL}/expenses/${expenseId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(expenseData) }).then(handleProtectedResponse),
     deleteExpense: (expenseId) => fetch(`${BASE_URL}/expenses/${expenseId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
 
     // --- Incidencias (Incidents) ---

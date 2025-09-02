@@ -31,7 +31,6 @@ exports.createExpense = async (req, res) => {
         
         const normalizedLicensePlate = carLicensePlate.replace(/\s/g, '').toUpperCase();
 
-        // --- CONSULTA MODIFICADA ---
         // Buscamos el coche comparando las matrículas sin espacios
         const car = await Car.findOne({
             where: {
@@ -55,6 +54,56 @@ exports.createExpense = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al crear el gasto' });
+    }
+};
+
+// --- FUNCIÓN NUEVA ---
+// Actualizar un gasto existente
+exports.updateExpense = async (req, res) => {
+    try {
+        const { carLicensePlate, ...updateData } = req.body;
+
+        // 1. Encontrar el gasto y asegurarse de que pertenece al usuario
+        const expense = await Expense.findByPk(req.params.id, {
+            include: [{
+                model: Car,
+                where: { userId: req.user.id }
+            }]
+        });
+
+        if (!expense) {
+            return res.status(404).json({ error: 'Gasto no encontrado o no tienes permiso para editarlo.' });
+        }
+
+        // 2. Si se cambia la matrícula, verificar que el nuevo coche también pertenece al usuario
+        if (carLicensePlate && carLicensePlate !== expense.carLicensePlate) {
+            const normalizedLicensePlate = carLicensePlate.replace(/\s/g, '').toUpperCase();
+            const newCar = await Car.findOne({
+                where: {
+                    [Op.and]: [
+                        sequelize.where(
+                            sequelize.fn('REPLACE', sequelize.col('licensePlate'), ' ', ''),
+                            normalizedLicensePlate
+                        ),
+                        { userId: req.user.id }
+                    ]
+                }
+            });
+
+            if (!newCar) {
+                return res.status(403).json({ error: 'Permiso denegado. El nuevo coche no existe o no pertenece a este usuario.' });
+            }
+            // Usar la matrícula original del nuevo coche
+            updateData.carLicensePlate = newCar.licensePlate;
+        }
+
+        // 3. Actualizar el gasto con los nuevos datos
+        await expense.update(updateData);
+        res.status(200).json(expense);
+
+    } catch (error) {
+        console.error('Error al actualizar el gasto:', error);
+        res.status(500).json({ error: 'Error interno del servidor al actualizar el gasto.' });
     }
 };
 
@@ -86,7 +135,6 @@ exports.getExpensesByCarLicensePlate = async (req, res) => {
         const { licensePlate } = req.params;
         const normalizedLicensePlate = licensePlate.replace(/\s/g, '').toUpperCase();
 
-        // --- CONSULTA MODIFICADA ---
         const car = await Car.findOne({
             where: {
                 [Op.and]: [

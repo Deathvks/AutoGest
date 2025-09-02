@@ -10,6 +10,10 @@ router.get('/', protect, expenseController.getAllExpenses);
 // POST /api/expenses -> Crear un nuevo gasto
 router.post('/', protect, expenseController.createExpense);
 
+// --- NUEVA RUTA ---
+// PUT /api/expenses/:id -> Actualizar un gasto por su ID
+router.put('/:id', protect, expenseController.updateExpense);
+
 // DELETE /api/expenses/:id -> Eliminar un gasto por su ID
 router.delete('/:id', protect, expenseController.deleteExpense);
 

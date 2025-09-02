@@ -2,9 +2,9 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faPlusCircle, faCar, faTrash, faCalendarDay, faTag, faEuroSign } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faPlusCircle, faCar, faTrash, faCalendarDay, faTag, faEuroSign, faEdit } from '@fortawesome/free-solid-svg-icons';
 
-const Expenses = ({ expenses, cars, onAddExpense, onDeleteExpense }) => {
+const Expenses = ({ expenses, cars, onAddExpense, onEditExpense, onDeleteExpense }) => {
     useEffect(() => {
         // Carga de scripts para PDF (se mantiene igual)
         const jspdfScript = document.createElement('script');
@@ -96,9 +96,15 @@ const Expenses = ({ expenses, cars, onAddExpense, onDeleteExpense }) => {
                                         <p className="font-medium flex items-center gap-2"><FontAwesomeIcon icon={faCar} />{getCarNameAndPlate(expense.carLicensePlate).split('\n')[0]}</p>
                                         <p className="text-text-secondary ml-6">{getCarNameAndPlate(expense.carLicensePlate).split('\n')[1]}</p>
                                     </div>
-                                    <button onClick={() => onDeleteExpense(expense)} className="text-red-accent hover:opacity-80 transition-opacity p-2">
-                                        <FontAwesomeIcon icon={faTrash} />
-                                    </button>
+                                    {/* --- BOTONES DE ACCIÓN MÓVIL --- */}
+                                    <div className="flex items-center">
+                                        <button onClick={() => onEditExpense(expense)} className="text-blue-accent hover:opacity-80 transition-opacity p-2">
+                                            <FontAwesomeIcon icon={faEdit} />
+                                        </button>
+                                        <button onClick={() => onDeleteExpense(expense)} className="text-red-accent hover:opacity-80 transition-opacity p-2">
+                                            <FontAwesomeIcon icon={faTrash} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -127,6 +133,10 @@ const Expenses = ({ expenses, cars, onAddExpense, onDeleteExpense }) => {
                                             <td className="px-6 py-4">{getCarNameAndPlate(expense.carLicensePlate).replace('\n', ' ')}</td>
                                             <td className="px-6 py-4">{expense.description}</td>
                                             <td className="px-6 py-4 text-right">
+                                                {/* --- BOTONES DE ACCIÓN ESCRITORIO --- */}
+                                                <button onClick={() => onEditExpense(expense)} className="text-blue-accent hover:opacity-80 transition-opacity mr-4">
+                                                    <FontAwesomeIcon icon={faEdit} />
+                                                </button>
                                                 <button onClick={() => onDeleteExpense(expense)} className="text-red-accent hover:opacity-80 transition-opacity">
                                                     <FontAwesomeIcon icon={faTrash} />
                                                 </button>

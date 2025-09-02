@@ -1,10 +1,10 @@
-// autogest-app/frontend/src/components/modals/AddExpenseModal.jsx
-import React, { useState, useRef, useEffect } from 'react';
+// autogest-app/frontend/src/components/modals/EditExpenseModal.jsx
+import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faEuroSign, faCalendarDays, faTag, faCar } from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select';
 
-// --- Componentes de Formulario ---
+// --- Componentes de Formulario (Reutilizados) ---
 const InputField = ({ label, name, value, onChange, type = 'text', icon, placeholder }) => (
     <div>
         <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
@@ -39,16 +39,15 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
 };
 
 // --- Componente Principal del Modal ---
-const AddExpenseModal = ({ cars, onClose, onAdd }) => {
-    const today = new Date().toISOString().split('T')[0];
-    const [newExpense, setNewExpense] = useState({
-        date: today,
-        category: 'Mecánica',
+const EditExpenseModal = ({ expense, cars, onClose, onUpdate }) => {
+    const [editedExpense, setEditedExpense] = useState({
+        date: '',
+        category: '',
         amount: '',
         description: '',
         carLicensePlate: ''
     });
-    const [otherCategory, setOtherCategory] = useState(''); // Estado para la categoría personalizada
+    const [otherCategory, setOtherCategory] = useState('');
     const [error, setError] = useState('');
 
     const categoryOptions = [
@@ -59,25 +58,45 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
         { id: 'Otros', name: 'Otros' },
     ];
 
+    useEffect(() => {
+        if (expense) {
+            const isCustomCategory = !categoryOptions.some(opt => opt.id === expense.category);
+            
+            setEditedExpense({
+                date: new Date(expense.date).toISOString().split('T')[0],
+                category: isCustomCategory ? 'Otros' : expense.category,
+                amount: expense.amount,
+                description: expense.description || '',
+                carLicensePlate: expense.carLicensePlate
+            });
+
+            if (isCustomCategory) {
+                setOtherCategory(expense.category);
+            } else {
+                setOtherCategory('');
+            }
+        }
+    }, [expense]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setNewExpense(prev => ({ ...prev, [name]: value }));
+        setEditedExpense(prev => ({ ...prev, [name]: value }));
     };
     
     const handleSelectChange = (name, value) => {
-        setNewExpense(prev => ({ ...prev, [name]: value }));
+        setEditedExpense(prev => ({ ...prev, [name]: value }));
     };
 
     const validateForm = () => {
-        if (!newExpense.date || !newExpense.category || !newExpense.amount || !newExpense.carLicensePlate) {
+        if (!editedExpense.date || !editedExpense.category || !editedExpense.amount || !editedExpense.carLicensePlate) {
             setError("Todos los campos, incluida la matrícula, son obligatorios.");
             return false;
         }
-        if (newExpense.category === 'Otros' && !otherCategory.trim()) {
+        if (editedExpense.category === 'Otros' && !otherCategory.trim()) {
             setError("Debes especificar la categoría si seleccionas 'Otros'.");
             return false;
         }
-        if (isNaN(parseFloat(newExpense.amount)) || parseFloat(newExpense.amount) <= 0) {
+        if (isNaN(parseFloat(editedExpense.amount)) || parseFloat(editedExpense.amount) <= 0) {
             setError("El importe debe ser un número válido y mayor que cero.");
             return false;
         }
@@ -85,42 +104,42 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
         return true;
     };
 
-    const handleAdd = async () => {
+    const handleUpdate = async () => {
         if (!validateForm()) {
             return;
         }
         try {
-            // Si la categoría es 'Otros', usamos el valor personalizado
             const finalExpenseData = {
-                ...newExpense,
-                category: newExpense.category === 'Otros' ? otherCategory.trim() : newExpense.category,
+                ...editedExpense,
+                category: editedExpense.category === 'Otros' ? otherCategory.trim() : editedExpense.category,
             };
-            await onAdd(finalExpenseData);
+            await onUpdate(expense.id, finalExpenseData);
         } catch (err) {
-            setError(err.message || 'Ha ocurrido un error inesperado.');
+            setError(err.message || 'Ha ocurrido un error inesperado al actualizar.');
         }
     };
+
+    if (!expense) return null;
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-component-bg rounded-xl shadow-lg w-full max-w-md p-6 border border-border-color">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-text-primary">Añadir Nuevo Gasto</h2>
+                    <h2 className="text-xl font-bold text-text-primary">Editar Gasto</h2>
                     <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
                 <form onSubmit={(e) => e.preventDefault()} noValidate>
                     <div className="space-y-4">
-                        <InputField label="Fecha" name="date" type="date" value={newExpense.date} onChange={handleChange} icon={faCalendarDays} />
+                        <InputField label="Fecha" name="date" type="date" value={editedExpense.date} onChange={handleChange} icon={faCalendarDays} />
                         <Select
                             label="Categoría"
-                            value={newExpense.category}
+                            value={editedExpense.category}
                             onChange={(value) => handleSelectChange('category', value)}
                             options={categoryOptions}
                         />
-                        {/* --- CAMPO CONDICIONAL --- */}
-                        {newExpense.category === 'Otros' && (
+                        {editedExpense.category === 'Otros' && (
                             <InputField 
                                 label="Especificar Categoría"
                                 name="otherCategory"
@@ -130,26 +149,26 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
                                 icon={faTag}
                             />
                         )}
-                        <InputField label="Importe (€)" name="amount" type="number" value={newExpense.amount} onChange={handleChange} icon={faEuroSign} />
+                        <InputField label="Importe (€)" name="amount" type="number" value={editedExpense.amount} onChange={handleChange} icon={faEuroSign} />
                         <InputField 
                             label="Asociar a Coche (Matrícula)" 
                             name="carLicensePlate" 
-                            value={newExpense.carLicensePlate} 
+                            value={editedExpense.carLicensePlate} 
                             onChange={handleChange} 
                             icon={faCar}
                             placeholder="Escribe la matrícula"
                         />
-                        <TextareaField label="Descripción" name="description" value={newExpense.description} onChange={handleChange} placeholder="Detalles del gasto..." />
+                        <TextareaField label="Descripción" name="description" value={editedExpense.description} onChange={handleChange} placeholder="Detalles del gasto..." />
                     </div>
                     {error && <p className="mt-4 text-sm text-red-accent text-center">{error}</p>}
                 </form>
                 <div className="mt-6 flex justify-end gap-4">
                     <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">Cancelar</button>
-                    <button onClick={handleAdd} className="bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">Añadir Gasto</button>
+                    <button onClick={handleUpdate} className="bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">Guardar Cambios</button>
                 </div>
             </div>
         </div>
     );
 };
 
-export default AddExpenseModal;
+export default EditExpenseModal;

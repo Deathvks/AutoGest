@@ -33,6 +33,7 @@ import EditUserModal from '../components/modals/EditUserModal';
 import DeleteUserConfirmationModal from '../components/modals/DeleteUserConfirmationModal';
 import InvestmentDetailsModal from '../components/modals/InvestmentDetailsModal';
 import RevenueDetailsModal from '../components/modals/RevenueDetailsModal';
+import EditExpenseModal from '../components/modals/EditExpenseModal'; // <-- 1. IMPORTAR
 
 const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     const { user } = useContext(AuthContext);
@@ -55,6 +56,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     const [carToDelete, setCarToDelete] = useState(null);
     const [isAddExpenseModalOpen, setAddExpenseModalOpen] = useState(false);
     const [expenseToDelete, setExpenseToDelete] = useState(null);
+    const [expenseToEdit, setExpenseToEdit] = useState(null); // <-- 2. AÑADIR ESTADO
     const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
     const [carToReserve, setCarToReserve] = useState(null);
     const [carToCancelReservation, setCarToCancelReservation] = useState(null);
@@ -68,7 +70,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
         const isAnyModalOpen =
             isAddUserModalOpen || !!userToEdit || !!userToDelete || !!carToSell ||
             !!carToView || isAddCarModalOpen || !!carForIncident || !!carToEdit ||
-            !!carToDelete || isAddExpenseModalOpen || !!expenseToDelete ||
+            !!carToDelete || isAddExpenseModalOpen || !!expenseToDelete || !!expenseToEdit ||
             isDeleteAccountModalOpen || !!carToReserve || !!carToCancelReservation ||
             isInvestmentModalOpen || isRevenueModalOpen;
 
@@ -84,7 +86,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     }, [
         isAddUserModalOpen, userToEdit, userToDelete, carToSell, carToView,
         isAddCarModalOpen, carForIncident, carToEdit, carToDelete,
-        isAddExpenseModalOpen, expenseToDelete, isDeleteAccountModalOpen,
+        isAddExpenseModalOpen, expenseToDelete, expenseToEdit, isDeleteAccountModalOpen,
         carToReserve, carToCancelReservation, isInvestmentModalOpen, isRevenueModalOpen
     ]);
 
@@ -152,7 +154,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
         try {
             const createdCar = await api.createCar(formData);
             setCars(prev => [createdCar, ...prev]);
-            await fetchLocations(); // <-- CAMBIO: Añadido 'await'
+            await fetchLocations();
             setAddCarModalOpen(false);
         } catch (error) { console.error("Error al añadir coche:", error); throw error; }
     };
@@ -161,7 +163,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
             const carId = carToEdit.id;
             const updatedCar = await api.updateCar(carId, formData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
-            await fetchLocations(); // <-- CAMBIO: Añadido 'await'
+            await fetchLocations();
             setCarToEdit(null);
         } catch (error) { console.error("Error al actualizar coche:", error); throw error; }
     };
@@ -347,6 +349,18 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
             throw error;
         }
     };
+
+    // --- 3. AÑADIR FUNCIÓN PARA ACTUALIZAR GASTO ---
+    const handleUpdateExpense = async (expenseId, expenseData) => {
+        try {
+            const updatedExpense = await api.updateExpense(expenseId, expenseData);
+            setExpenses(prev => prev.map(exp => (exp.id === expenseId ? updatedExpense : exp)));
+            setExpenseToEdit(null); // Cierra el modal
+        } catch (error) {
+            console.error("Error al actualizar el gasto:", error);
+            throw error; // Lanza el error para que el modal pueda mostrarlo
+        }
+    };
     
     const confirmDeleteExpense = async (expenseId) => {
         try {
@@ -389,7 +403,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
                             onUpdateInsurance={handleUpdateCarInsurance}
                         />} />
                         <Route path="/sales" element={<SalesSummary cars={cars} expenses={expenses} onViewDetailsClick={setCarToView} />} />
-                        <Route path="/expenses" element={<Expenses expenses={expenses} cars={cars} onAddExpense={() => setAddExpenseModalOpen(true)} onDeleteExpense={setExpenseToDelete} />} />
+                        <Route path="/expenses" element={<Expenses expenses={expenses} cars={cars} onAddExpense={() => setAddExpenseModalOpen(true)} onEditExpense={setExpenseToEdit} onDeleteExpense={setExpenseToDelete} />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} cars={cars} expenses={expenses} incidents={incidents} onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)} />} />
                         
@@ -445,6 +459,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
             {carToDelete && <DeleteCarConfirmationModal car={carToDelete} onClose={() => setCarToDelete(null)} onConfirm={handleDeleteCar} />}
             {isAddExpenseModalOpen && <AddExpenseModal cars={cars} onClose={() => setAddExpenseModalOpen(false)} onAdd={handleAddExpense} />}
             {expenseToDelete && <DeleteExpenseConfirmationModal expense={expenseToDelete} onClose={() => setExpenseToDelete(null)} onConfirm={confirmDeleteExpense} />}
+            {expenseToEdit && <EditExpenseModal expense={expenseToEdit} cars={cars} onClose={() => setExpenseToEdit(null)} onUpdate={handleUpdateExpense} />}
             {isDeleteAccountModalOpen && <DeleteAccountConfirmationModal onClose={() => setIsDeleteAccountModalOpen(false)} />}
             {carToReserve && <ReserveCarModal car={carToReserve} onClose={() => setCarToReserve(null)} onConfirm={handleReserveConfirm} />}
             {carToCancelReservation && <CancelReservationModal car={carToCancelReservation} onClose={() => setCarToCancelReservation(null)} onConfirm={handleConfirmCancelReservation} />}
