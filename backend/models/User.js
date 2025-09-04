@@ -10,7 +10,7 @@ const User = sequelize.define('User', {
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true, // Se mantiene por compatibilidad
+        // Removemos unique: true de aquí
         validate: {
             isEmail: true,
         },
@@ -40,12 +40,11 @@ const User = sequelize.define('User', {
     stripeCustomerId: {
         type: DataTypes.STRING,
         allowNull: true,
-        unique: true,
+        // Removemos unique: true de aquí también
     },
 }, {
     timestamps: true,
-    // --- NUEVO BLOQUE ---
-    // Definimos los índices explícitamente para evitar duplicados
+    // Mantenemos solo los índices explícitos
     indexes: [
         {
             unique: true,
