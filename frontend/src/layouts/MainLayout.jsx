@@ -43,6 +43,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     const [isDataLoading, setIsDataLoading] = useState(true);
     const [cars, setCars] = useState([]);
     const [expenses, setExpenses] = useState([]);
+    const [allExpenses, setAllExpenses] = useState([]);
     const [incidents, setIncidents] = useState([]);
     const [locations, setLocations] = useState([]);
 
@@ -109,7 +110,8 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
             try {
                 const dataPromises = [
                     api.getCars(),
-                    api.getExpenses(),
+                    api.getExpenses(), // Para la página de Gastos (solo generales)
+                    api.getAllUserExpenses(), // Para Dashboard y SalesSummary (todos los gastos)
                     api.getIncidents(),
                     api.getLocations(),
                 ];
@@ -118,10 +120,11 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
                     dataPromises.push(api.admin.getAllUsers());
                 }
 
-                const [carsData, expensesData, incidentsData, locationsData, usersData] = await Promise.all(dataPromises);
+                const [carsData, expensesData, allExpensesData, incidentsData, locationsData, usersData] = await Promise.all(dataPromises);
 
                 setCars(carsData);
-                setExpenses(expensesData);
+                setExpenses(expensesData); // Solo gastos generales
+                setAllExpenses(allExpensesData); // Todos los gastos
                 setIncidents(incidentsData);
                 setLocations(locationsData);
                 if (usersData) setUsers(usersData);
@@ -382,6 +385,8 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
             if (!expenseData.has('carLicensePlate')) {
                 setExpenses(prev => [newExpense, ...prev]);
             }
+            // Actualizar también allExpenses para Dashboard y SalesSummary
+            setAllExpenses(prev => [newExpense, ...prev]);
             setAddExpenseModalOpen(false);
             setCarForExpense(null);
             if (carToView) {
@@ -399,6 +404,8 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
             if (!updatedExpense.carLicensePlate) {
                 setExpenses(prev => prev.map(exp => (exp.id === expenseId ? updatedExpense : exp)));
             }
+            // Actualizar también allExpenses para Dashboard y SalesSummary
+            setAllExpenses(prev => prev.map(exp => (exp.id === expenseId ? updatedExpense : exp)));
             setExpenseToEdit(null);
             if (carToView) {
                 setCarToView(prev => ({ ...prev }));
@@ -413,6 +420,8 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
         try {
             await api.deleteExpense(expenseId);
             setExpenses(prev => prev.filter(exp => exp.id !== expenseId));
+            // Actualizar también allExpenses para Dashboard y SalesSummary
+            setAllExpenses(prev => prev.filter(exp => exp.id !== expenseId));
             if (carToView) {
                 setCarToView(prev => ({ ...prev }));
             }
@@ -434,9 +443,9 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
                 <Header />
                 <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
                     <Routes>
-                        <Route path="/" element={<Dashboard cars={cars} expenses={expenses} isDarkMode={isDarkMode} onTotalInvestmentClick={() => setInvestmentModalOpen(true)} onRevenueClick={() => setRevenueModalOpen(true)} />} />
+                        <Route path="/" element={<Dashboard cars={cars} expenses={allExpenses} isDarkMode={isDarkMode} onTotalInvestmentClick={() => setInvestmentModalOpen(true)} onRevenueClick={() => setRevenueModalOpen(true)} />} />
                         <Route path="/cars" element={<MyCars cars={cars} incidents={incidents} onSellClick={setCarToSell} onAddClick={() => setAddCarModalOpen(true)} onViewDetailsClick={setCarToView} onAddIncidentClick={setCarForIncident} onReserveClick={setCarToReserve} onCancelReservationClick={setCarToCancelReservation} onUpdateInsurance={handleUpdateCarInsurance} />} />
-                        <Route path="/sales" element={<SalesSummary cars={cars} expenses={expenses} onViewDetailsClick={setCarToView} />} />
+                        <Route path="/sales" element={<SalesSummary cars={cars} expenses={allExpenses} onViewDetailsClick={setCarToView} />} />
                         <Route path="/expenses" element={<Expenses expenses={expenses} onAddExpense={() => { setCarForExpense(null); setAddExpenseModalOpen(true); }} onEditExpense={setExpenseToEdit} onDeleteExpense={setExpenseToDelete} />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} cars={cars} expenses={expenses} incidents={incidents} onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)} />} />

@@ -3,9 +3,12 @@ import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 
-const InputField = ({ label, name, value, onChange, type = 'text', placeholder, helpText }) => (
+const InputField = ({ label, name, value, onChange, type = 'text', placeholder, helpText, required = false }) => (
     <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1">
+            {label}
+            {required && <span className="text-red-accent ml-1">*</span>}
+        </label>
         <input
             type={type}
             name={name}
@@ -39,13 +42,43 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
     const handleConfirm = () => {
         setError('');
         const price = parseFloat(saleData.salePrice);
-
+    
+        // Validaciones existentes
         if (!saleData.salePrice || !saleData.saleDate) {
             setError("El precio y la fecha de venta son obligatorios.");
             return;
         }
         if (isNaN(price) || price <= 0) {
             setError("Por favor, introduce un precio de venta válido.");
+            return;
+        }
+        
+        // Nuevas validaciones para datos del cliente
+        if (!saleData.buyerName.trim()) {
+            setError("El nombre del comprador es obligatorio.");
+            return;
+        }
+        if (!saleData.buyerLastName.trim()) {
+            setError("Los apellidos del comprador son obligatorios.");
+            return;
+        }
+        if (!saleData.buyerDni.trim()) {
+            setError("El DNI/NIE del comprador es obligatorio.");
+            return;
+        }
+        if (!saleData.buyerPhone.trim()) {
+            setError("El teléfono del comprador es obligatorio.");
+            return;
+        }
+        if (!saleData.buyerEmail.trim()) {
+            setError("El email del comprador es obligatorio.");
+            return;
+        }
+        
+        // Validación de formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(saleData.buyerEmail)) {
+            setError("Por favor, introduce un email válido.");
             return;
         }
         
@@ -57,7 +90,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             email: saleData.buyerEmail,
             address: saleData.buyerAddress,
         };
-
+    
         onConfirm(car.id, saleData.salePrice, saleData.saleDate, buyerDetails);
     };
 
@@ -102,16 +135,16 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                             />
                         </div>
                         
-                        <h3 className="text-lg font-semibold text-text-primary border-b border-border-color pb-2 pt-4">Datos del Comprador (Opcional)</h3>
+                        <h3 className="text-lg font-semibold text-text-primary border-b border-border-color pb-2 pt-4">Datos del Comprador</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <InputField label="Nombre" name="buyerName" value={saleData.buyerName} onChange={handleChange} />
-                            <InputField label="Apellidos" name="buyerLastName" value={saleData.buyerLastName} onChange={handleChange} />
+                            <InputField label="Nombre" name="buyerName" value={saleData.buyerName} onChange={handleChange} required={true} />
+                            <InputField label="Apellidos" name="buyerLastName" value={saleData.buyerLastName} onChange={handleChange} required={true} />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <InputField label="DNI/NIE" name="buyerDni" value={saleData.buyerDni} onChange={handleChange} />
-                            <InputField label="Teléfono" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} />
+                            <InputField label="DNI/NIE" name="buyerDni" value={saleData.buyerDni} onChange={handleChange} required={true} />
+                            <InputField label="Teléfono" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} required={true} />
                         </div>
-                        <InputField label="Correo Electrónico" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" />
+                        <InputField label="Correo Electrónico" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" required={true} />
                         <InputField label="Dirección" name="buyerAddress" value={saleData.buyerAddress} onChange={handleChange} />
 
                         {error && <p className="mt-4 text-sm text-red-accent text-center">{error}</p>}

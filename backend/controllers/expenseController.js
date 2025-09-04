@@ -21,6 +21,22 @@ exports.getAllExpenses = async (req, res) => {
     }
 };
 
+// Obtener TODOS los gastos del usuario (generales + específicos de coches)
+exports.getAllUserExpenses = async (req, res) => {
+    try {
+        const expenses = await Expense.findAll({
+            where: { 
+                userId: req.user.id
+            },
+            order: [['date', 'DESC']]
+        });
+        res.status(200).json(expenses);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener todos los gastos del usuario' });
+    }
+};
+
 // Crear un nuevo gasto
 exports.createExpense = async (req, res) => {
     try {

@@ -5,8 +5,11 @@ const expenseController = require('../controllers/expenseController');
 const { protect, authorize } = require('../middleware/auth');
 const expenseUpload = require('../middleware/expenseUpload');
 
-// GET /api/expenses -> Obtener todos los gastos
+// GET /api/expenses -> Obtener todos los gastos GENERALES
 router.get('/', protect, expenseController.getAllExpenses);
+
+// GET /api/expenses/all -> Obtener TODOS los gastos del usuario
+router.get('/all', protect, expenseController.getAllUserExpenses);
 
 // POST /api/expenses -> Crear un nuevo gasto con posibles archivos adjuntos
 router.post('/', protect, expenseUpload, expenseController.createExpense);

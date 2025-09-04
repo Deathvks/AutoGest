@@ -83,6 +83,7 @@ const api = {
 
     // --- Gastos (Expenses) ---
     getExpenses: () => fetch(`${BASE_URL}/expenses`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
+    getAllUserExpenses: () => fetch(`${BASE_URL}/expenses/all`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
     createExpense: (formData) => fetch(`${BASE_URL}/expenses`, { method: 'POST', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
     updateExpense: (expenseId, formData) => fetch(`${BASE_URL}/expenses/${expenseId}`, { method: 'PUT', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
     deleteExpense: (expenseId) => fetch(`${BASE_URL}/expenses/${expenseId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
