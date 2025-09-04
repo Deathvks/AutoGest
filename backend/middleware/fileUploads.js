@@ -1,3 +1,4 @@
+// autogest-app/backend/middleware/fileUploads.js
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -31,11 +32,11 @@ const fileFilter = (req, file, cb) => {
         } else {
             cb(new Error('¡El campo de imagen solo acepta archivos de imagen!'), false);
         }
-    } else if (file.fieldname === 'registrationDocument') {
+    } else if (file.fieldname === 'documents') { // <-- CAMBIO DE NOMBRE DEL CAMPO
         if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
             cb(null, true);
         } else {
-            cb(new Error('¡El permiso solo puede ser una imagen o un PDF!'), false);
+            cb(new Error('¡Los documentos solo pueden ser una imagen o un PDF!'), false);
         }
     } else {
         cb(null, false);
@@ -49,8 +50,8 @@ const upload = multer({
 });
 
 // Exportamos el middleware configurado para manejar múltiples campos
-// 'image' puede tener 1 archivo, 'registrationDocument' puede tener 1 archivo.
+// 'image' puede tener 1 archivo, 'documents' ahora puede tener hasta 10.
 module.exports = upload.fields([
     { name: 'image', maxCount: 1 },
-    { name: 'registrationDocument', maxCount: 1 }
+    { name: 'documents', maxCount: 10 } // <-- CAMPO MODIFICADO
 ]);

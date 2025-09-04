@@ -64,7 +64,7 @@ const AddIncidentModal = ({ car, onClose, onConfirm }) => {
                 </form>
                 <div className="mt-6 flex justify-end gap-4">
                     <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">Cancelar</button>
-                    <button onClick={handleConfirm} className="bg-yellow-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">Confirmar Incidencia</button>
+                    <button onClick={handleConfirm} className="bg-accent text-white px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors">Confirmar Incidencia</button>
                 </div>
             </div>
         </div>

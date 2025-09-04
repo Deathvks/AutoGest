@@ -51,11 +51,9 @@ const Car = sequelize.define('Car', {
     },
     licensePlate: {
         type: DataTypes.STRING,
-        // unique: true, // Lo quitamos de aquí
     },
     vin: {
         type: DataTypes.STRING,
-        // unique: true, // Lo quitamos de aquí
     },
     transmission: {
         type: DataTypes.STRING,
@@ -66,8 +64,10 @@ const Car = sequelize.define('Car', {
     imageUrl: {
         type: DataTypes.STRING,
     },
-    registrationDocumentUrl: {
-        type: DataTypes.STRING,
+    // --- CAMPO MODIFICADO ---
+    documentUrls: { // Anteriormente registrationDocumentUrl
+        type: DataTypes.JSON, // Ahora es JSON para guardar una lista
+        allowNull: true,
     },
     tags: {
         type: DataTypes.JSON,
@@ -76,9 +76,16 @@ const Car = sequelize.define('Car', {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     },
+    saleDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+    },
+    buyerDetails: {
+        type: DataTypes.JSON,
+        allowNull: true,
+    },
 }, {
     timestamps: true,
-    // Añadimos este bloque para definir los índices explícitamente
     indexes: [
         {
             unique: true,

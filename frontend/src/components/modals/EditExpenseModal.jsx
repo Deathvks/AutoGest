@@ -1,10 +1,10 @@
 // autogest-app/frontend/src/components/modals/EditExpenseModal.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faEuroSign, faCalendarDays, faTag, faCar } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faEuroSign, faCalendarDays, faTag, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select';
 
-// --- Componentes de Formulario (Reutilizados) ---
+// --- Componentes de Formulario (reutilizados) ---
 const InputField = ({ label, name, value, onChange, type = 'text', icon, placeholder }) => (
     <div>
         <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
@@ -39,16 +39,17 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
 };
 
 // --- Componente Principal del Modal ---
-const EditExpenseModal = ({ expense, cars, onClose, onUpdate }) => {
+const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
     const [editedExpense, setEditedExpense] = useState({
-        date: '',
-        category: '',
-        amount: '',
-        description: '',
-        carLicensePlate: ''
+        date: expense.date ? new Date(expense.date).toISOString().split('T')[0] : '',
+        category: expense.category,
+        customCategory: '',
+        amount: expense.amount || '',
+        description: expense.description || '',
     });
-    const [otherCategory, setOtherCategory] = useState('');
+    const [attachments, setAttachments] = useState([]);
     const [error, setError] = useState('');
+    const fileInputRef = useRef(null);
 
     const categoryOptions = [
         { id: 'Mecánica', name: 'Mecánica' },
@@ -57,26 +58,15 @@ const EditExpenseModal = ({ expense, cars, onClose, onUpdate }) => {
         { id: 'Combustible', name: 'Combustible' },
         { id: 'Otros', name: 'Otros' },
     ];
-
+    
+    // Rellenar customCategory si la categoría no es una de las predefinidas
     useEffect(() => {
-        if (expense) {
-            const isCustomCategory = !categoryOptions.some(opt => opt.id === expense.category);
-            
-            setEditedExpense({
-                date: new Date(expense.date).toISOString().split('T')[0],
-                category: isCustomCategory ? 'Otros' : expense.category,
-                amount: expense.amount,
-                description: expense.description || '',
-                carLicensePlate: expense.carLicensePlate
-            });
-
-            if (isCustomCategory) {
-                setOtherCategory(expense.category);
-            } else {
-                setOtherCategory('');
-            }
+        const isStandardCategory = categoryOptions.some(opt => opt.id === expense.category);
+        if (!isStandardCategory) {
+            setEditedExpense(prev => ({ ...prev, category: 'Otros', customCategory: expense.category }));
         }
     }, [expense]);
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -86,40 +76,30 @@ const EditExpenseModal = ({ expense, cars, onClose, onUpdate }) => {
     const handleSelectChange = (name, value) => {
         setEditedExpense(prev => ({ ...prev, [name]: value }));
     };
-
-    const validateForm = () => {
-        if (!editedExpense.date || !editedExpense.category || !editedExpense.amount || !editedExpense.carLicensePlate) {
-            setError("Todos los campos, incluida la matrícula, son obligatorios.");
-            return false;
-        }
-        if (editedExpense.category === 'Otros' && !otherCategory.trim()) {
-            setError("Debes especificar la categoría si seleccionas 'Otros'.");
-            return false;
-        }
-        if (isNaN(parseFloat(editedExpense.amount)) || parseFloat(editedExpense.amount) <= 0) {
-            setError("El importe debe ser un número válido y mayor que cero.");
-            return false;
-        }
-        setError('');
-        return true;
+    
+    const handleFileChange = (e) => {
+        setAttachments([...e.target.files]);
     };
 
     const handleUpdate = async () => {
-        if (!validateForm()) {
-            return;
-        }
         try {
-            const finalExpenseData = {
-                ...editedExpense,
-                category: editedExpense.category === 'Otros' ? otherCategory.trim() : editedExpense.category,
-            };
-            await onUpdate(expense.id, finalExpenseData);
+            const formData = new FormData();
+            const finalCategory = editedExpense.category === 'Otros' ? editedExpense.customCategory.trim() : editedExpense.category;
+
+            formData.append('date', editedExpense.date);
+            formData.append('category', finalCategory);
+            formData.append('amount', editedExpense.amount);
+            formData.append('description', editedExpense.description);
+            
+            attachments.forEach(file => {
+                formData.append('attachments', file);
+            });
+            
+            await onUpdate(expense.id, formData);
         } catch (err) {
-            setError(err.message || 'Ha ocurrido un error inesperado al actualizar.');
+            setError(err.message || 'Error al actualizar el gasto.');
         }
     };
-
-    if (!expense) return null;
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -139,26 +119,36 @@ const EditExpenseModal = ({ expense, cars, onClose, onUpdate }) => {
                             onChange={(value) => handleSelectChange('category', value)}
                             options={categoryOptions}
                         />
-                        {editedExpense.category === 'Otros' && (
+                         {editedExpense.category === 'Otros' && (
                             <InputField 
-                                label="Especificar Categoría"
-                                name="otherCategory"
-                                value={otherCategory}
-                                onChange={(e) => setOtherCategory(e.target.value)}
-                                placeholder="Ej: Impuestos"
-                                icon={faTag}
+                                label="Especificar Categoría" 
+                                name="customCategory" 
+                                value={editedExpense.customCategory} 
+                                onChange={handleChange}
+                                placeholder="Ej: Impuestos, material de oficina..." 
                             />
                         )}
                         <InputField label="Importe (€)" name="amount" type="number" value={editedExpense.amount} onChange={handleChange} icon={faEuroSign} />
-                        <InputField 
-                            label="Asociar a Coche (Matrícula)" 
-                            name="carLicensePlate" 
-                            value={editedExpense.carLicensePlate} 
-                            onChange={handleChange} 
-                            icon={faCar}
-                            placeholder="Escribe la matrícula"
-                        />
-                        <TextareaField label="Descripción" name="description" value={editedExpense.description} onChange={handleChange} placeholder="Detalles del gasto..." />
+                        <TextareaField label="Descripción (Opcional)" name="description" value={editedExpense.description} onChange={handleChange} placeholder="Detalles del gasto..." />
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">Adjuntar Nuevos Archivos</label>
+                            <input
+                                type="file"
+                                multiple
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
+                                accept="image/*,application/pdf"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current.click()}
+                                className="w-full bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 border border-border-color"
+                            >
+                                <FontAwesomeIcon icon={faPaperclip} />
+                                {attachments.length > 0 ? `${attachments.length} archivo(s) nuevo(s)` : 'Seleccionar archivos'}
+                            </button>
+                        </div>
                     </div>
                     {error && <p className="mt-4 text-sm text-red-accent text-center">{error}</p>}
                 </form>
