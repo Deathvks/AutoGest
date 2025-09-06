@@ -4,11 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const { Car, Location, Expense, Incident, sequelize } = require('../models');
 const { Op } = require('sequelize');
-const OpenAI = require('openai');
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
 // Función auxiliar para convertir valores vacíos a null
 const emptyToNull = (value) => {
@@ -78,9 +73,10 @@ exports.createCar = async (req, res) => {
                 const imageUrl = `/uploads/${req.files.image[0].filename}`;
                 carData.imageUrl = imageUrl;
             }
-            if (req.files.registrationDocument) {
-                const docUrl = `/documents/${req.files.registrationDocument[0].filename}`;
-                carData.registrationDocumentUrl = docUrl;
+            // --- LÓGICA MODIFICADA PARA MÚLTIPLES DOCUMENTOS ---
+            if (req.files.documents && req.files.documents.length > 0) {
+                const docUrls = req.files.documents.map(file => `/documents/${file.filename}`);
+                carData.documentUrls = docUrls;
             }
         }
 
@@ -116,7 +112,6 @@ exports.updateCar = async (req, res) => {
         
         const updateData = req.body;
 
-        // Sanitizar campos numéricos para evitar errores de base de datos
         const numericFields = ['price', 'purchasePrice', 'salePrice', 'reservationDeposit', 'km', 'horsepower'];
         numericFields.forEach(field => {
             if (updateData[field] !== undefined) {
@@ -125,17 +120,26 @@ exports.updateCar = async (req, res) => {
                 updateData[field] = (isNaN(numericValue) || value === null || String(value).trim() === '') ? null : numericValue;
             }
         });
+        
+        const dateFields = ['registrationDate', 'saleDate'];
+        dateFields.forEach(field => {
+            if (updateData[field] !== undefined) {
+                const dateValue = updateData[field];
+                if (!dateValue || isNaN(new Date(dateValue).getTime())) {
+                    updateData[field] = null;
+                }
+            }
+        });
 
-        // --- INICIO DE LA CORRECCIÓN ---
-        // Sanitizar específicamente el campo de fecha
-        if (updateData.registrationDate !== undefined) {
-            const dateValue = updateData.registrationDate;
-            // Si la fecha es una cadena vacía, inválida o nula, la establecemos a null
-            if (!dateValue || isNaN(new Date(dateValue).getTime())) {
-                updateData.registrationDate = null;
+        if (updateData.buyerDetails) {
+            try {
+                updateData.buyerDetails = typeof updateData.buyerDetails === 'string'
+                    ? JSON.parse(updateData.buyerDetails)
+                    : updateData.buyerDetails;
+            } catch (e) {
+                return res.status(400).json({ error: 'Los detalles del comprador no tienen un formato JSON válido.' });
             }
         }
-        // --- FIN DE LA CORRECCIÓN ---
         
         if (updateData.licensePlate) {
             updateData.licensePlate = String(updateData.licensePlate).replace(/\s/g, '').toUpperCase();
@@ -148,22 +152,42 @@ exports.updateCar = async (req, res) => {
         }
         
         const deleteFile = (fileUrl) => {
-            if (fileUrl) {
-                const filename = path.basename(fileUrl);
-                const dir = fileUrl.includes('/uploads/') ? 'uploads' : 'documents';
-                const filePath = path.join(__dirname, '..', 'public', dir, filename);
-                if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            }
+            if (!fileUrl) return;
+            const filename = path.basename(fileUrl);
+            const dir = fileUrl.includes('/uploads/') ? 'uploads' : 'documents';
+            const filePath = path.join(__dirname, '..', 'public', dir, filename);
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
         };
+
+        // Procesar archivos a eliminar
+        if (updateData.filesToRemove) {
+            try {
+                const filesToRemove = JSON.parse(updateData.filesToRemove);
+                if (Array.isArray(filesToRemove) && filesToRemove.length > 0) {
+                    // Eliminar archivos del sistema de archivos
+                    filesToRemove.forEach(deleteFile);
+                    
+                    // Actualizar la lista de documentUrls eliminando los archivos especificados
+                    if (car.documentUrls && car.documentUrls.length > 0) {
+                        updateData.documentUrls = car.documentUrls.filter(url => !filesToRemove.includes(url));
+                    }
+                }
+            } catch (e) {
+                console.error('Error parsing filesToRemove:', e);
+            }
+        }
 
         if (req.files) {
             if (req.files.image) {
                 deleteFile(car.imageUrl);
                 updateData.imageUrl = `/uploads/${req.files.image[0].filename}`;
             }
-            if (req.files.registrationDocument) {
-                deleteFile(car.registrationDocumentUrl);
-                updateData.registrationDocumentUrl = `/documents/${req.files.registrationDocument[0].filename}`;
+            // --- LÓGICA MODIFICADA PARA MÚLTIPLES DOCUMENTOS ---
+            if (req.files.documents && req.files.documents.length > 0) {
+                // Si hay documentos existentes y no se especificaron archivos a eliminar, mantenerlos
+                const existingDocs = updateData.documentUrls || car.documentUrls || [];
+                const newDocs = req.files.documents.map(file => `/documents/${file.filename}`);
+                updateData.documentUrls = [...existingDocs, ...newDocs];
             }
         }
         
@@ -200,19 +224,20 @@ exports.deleteCar = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para eliminarlo' });
         }
         
-        // Eliminar archivos asociados
-        if (car.imageUrl) {
-             const imageFilename = path.basename(car.imageUrl);
-             const imageFilePath = path.join(__dirname, '..', 'public', 'uploads', imageFilename);
-             if (fs.existsSync(imageFilePath)) fs.unlinkSync(imageFilePath);
-        }
-        if (car.registrationDocumentUrl) {
-             const docFilename = path.basename(car.registrationDocumentUrl);
-             const docFilePath = path.join(__dirname, '..', 'public', 'documents', docFilename);
-             if (fs.existsSync(docFilePath)) fs.unlinkSync(docFilePath);
+        const deleteFile = (fileUrl) => {
+            if (!fileUrl) return;
+            const filename = path.basename(fileUrl);
+            const dir = fileUrl.includes('/uploads/') ? 'uploads' : 'documents';
+            const filePath = path.join(__dirname, '..', 'public', dir, filename);
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        };
+
+        deleteFile(car.imageUrl);
+        // --- LÓGICA MODIFICADA PARA MÚLTIPLES DOCUMENTOS ---
+        if (car.documentUrls && car.documentUrls.length > 0) {
+            car.documentUrls.forEach(deleteFile);
         }
 
-        // Finalmente, eliminar el coche (los datos asociados se borran en cascada)
         await car.destroy();
         
         res.status(200).json({ message: 'Coche eliminado correctamente' });
@@ -220,55 +245,5 @@ exports.deleteCar = async (req, res) => {
     } catch (error) {
         console.error("Error al eliminar coche:", error);
         res.status(500).json({ error: 'Error al eliminar el coche' });
-    }
-};
-
-// Analizar un documento con IA
-exports.analyzeDocument = async (req, res) => {
-    try {
-        const { image } = req.body; 
-
-        if (!image) {
-            return res.status(400).json({ error: 'No se ha proporcionado ninguna imagen.' });
-        }
-
-        const response = await openai.chat.completions.create({
-            model: "gpt-4-vision-preview",
-            messages: [
-                {
-                    role: "user",
-                    content: [
-                        { 
-                            type: "text", 
-                            text: `Analiza la imagen de esta ficha técnica de vehículo y extrae los siguientes datos en un objeto JSON: "make" (marca), "model" (modelo), "licensePlate" (matrícula), "vin" (número de bastidor), "potenciaFiscal" (potencia fiscal o CVF, como un número con decimales si los tiene), y "registrationDate" (fecha de matriculación en formato YYYY-MM-DD). Si un campo no se encuentra, su valor debe ser null. Responde únicamente con el objeto JSON, sin texto adicional.`
-                        },
-                        {
-                            type: "image_url",
-                            image_url: {
-                                "url": image,
-                            },
-                        },
-                    ],
-                },
-            ],
-            max_tokens: 300
-        });
-
-        const result = response.choices[0].message.content;
-        const cleanedJson = result.replace(/```json/g, '').replace(/```/g, '').trim();
-        const parsedData = JSON.parse(cleanedJson);
-
-        if (parsedData.potenciaFiscal) {
-            const cvf = parseFloat(String(parsedData.potenciaFiscal).replace(',', '.'));
-            if (!isNaN(cvf)) {
-                parsedData.horsepower = Math.round(cvf * 1.36);
-            }
-        }
-
-        res.status(200).json(parsedData);
-
-    } catch (error) {
-        console.error('Error en el análisis de OpenAI:', error);
-        res.status(500).json({ error: 'Error al procesar la imagen con la IA.' });
     }
 };

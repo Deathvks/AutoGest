@@ -3,16 +3,19 @@ const express = require('express');
 const router = express.Router();
 const expenseController = require('../controllers/expenseController');
 const { protect, authorize } = require('../middleware/auth');
+const expenseUpload = require('../middleware/expenseUpload');
 
-// GET /api/expenses -> Obtener todos los gastos
+// GET /api/expenses -> Obtener todos los gastos GENERALES
 router.get('/', protect, expenseController.getAllExpenses);
 
-// POST /api/expenses -> Crear un nuevo gasto
-router.post('/', protect, expenseController.createExpense);
+// GET /api/expenses/all -> Obtener TODOS los gastos del usuario
+router.get('/all', protect, expenseController.getAllUserExpenses);
 
-// --- NUEVA RUTA ---
-// PUT /api/expenses/:id -> Actualizar un gasto por su ID
-router.put('/:id', protect, expenseController.updateExpense);
+// POST /api/expenses -> Crear un nuevo gasto con posibles archivos adjuntos
+router.post('/', protect, expenseUpload, expenseController.createExpense);
+
+// PUT /api/expenses/:id -> Actualizar un gasto
+router.put('/:id', protect, expenseUpload, expenseController.updateExpense);
 
 // DELETE /api/expenses/:id -> Eliminar un gasto por su ID
 router.delete('/:id', protect, expenseController.deleteExpense);

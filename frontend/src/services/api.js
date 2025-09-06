@@ -43,13 +43,11 @@ const handleProtectedResponse = async (response) => {
             window.location.href = '/login';
         }
         
-        // Intentar parsear como JSON, si falla usar texto plano
         let errorMessage = 'Algo salió mal en el servidor';
         try {
             const error = await response.json();
             errorMessage = error.error || errorMessage;
         } catch (parseError) {
-            // Si no es JSON válido, usar el status y statusText
             errorMessage = `Error ${response.status}: ${response.statusText || 'Error del servidor'}`;
         }
         
@@ -82,17 +80,14 @@ const api = {
         }).then(handleProtectedResponse);
     },
     deleteCar: (carId) => fetch(`${BASE_URL}/cars/${carId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
-    analyzeDocument: (base64Image) => fetch(`${BASE_URL}/cars/analyze-document`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ image: base64Image })
-    }).then(handleProtectedResponse),
 
     // --- Gastos (Expenses) ---
     getExpenses: () => fetch(`${BASE_URL}/expenses`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
-    createExpense: (expenseData) => fetch(`${BASE_URL}/expenses`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(expenseData) }).then(handleProtectedResponse),
-    updateExpense: (expenseId, expenseData) => fetch(`${BASE_URL}/expenses/${expenseId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(expenseData) }).then(handleProtectedResponse),
+    getAllUserExpenses: () => fetch(`${BASE_URL}/expenses/all`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
+    createExpense: (formData) => fetch(`${BASE_URL}/expenses`, { method: 'POST', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
+    updateExpense: (expenseId, formData) => fetch(`${BASE_URL}/expenses/${expenseId}`, { method: 'PUT', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
     deleteExpense: (expenseId) => fetch(`${BASE_URL}/expenses/${expenseId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+    getExpensesByCarLicensePlate: (licensePlate) => fetch(`${BASE_URL}/expenses/car/${licensePlate}`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
 
     // --- Incidencias (Incidents) ---
     getIncidents: () => fetch(`${BASE_URL}/incidents`, { headers: getAuthHeaders() }).then(handleProtectedResponse),

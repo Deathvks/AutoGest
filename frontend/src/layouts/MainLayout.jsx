@@ -23,26 +23,30 @@ import EditCarModal from '../components/modals/EditCarModal';
 import AddIncidentModal from '../components/modals/AddIncidentModal';
 import DeleteCarConfirmationModal from '../components/modals/DeleteCarConfirmationModal';
 import AddExpenseModal from '../components/modals/AddExpenseModal';
+import EditExpenseModal from '../components/modals/EditExpenseModal';
 import ReserveCarModal from '../components/modals/ReserveCarModal';
 import CancelReservationModal from '../components/modals/CancelReservationModal';
 import Toast from '../components/Toast';
 import DeleteExpenseConfirmationModal from '../components/modals/DeleteExpenseConfirmationModal';
 import DeleteAccountConfirmationModal from '../components/modals/DeleteAccountConfirmationModal';
+import DeleteIncidentConfirmationModal from '../components/modals/DeleteIncidentConfirmationModal';
 import AddUserModal from '../components/modals/AddUserModal';
 import EditUserModal from '../components/modals/EditUserModal';
 import DeleteUserConfirmationModal from '../components/modals/DeleteUserConfirmationModal';
 import InvestmentDetailsModal from '../components/modals/InvestmentDetailsModal';
 import RevenueDetailsModal from '../components/modals/RevenueDetailsModal';
-import EditExpenseModal from '../components/modals/EditExpenseModal'; // <-- 1. IMPORTAR
+import InsuranceConfirmationModal from '../components/modals/InsuranceConfirmationModal';
+
 
 const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     const { user } = useContext(AuthContext);
     const [isDataLoading, setIsDataLoading] = useState(true);
     const [cars, setCars] = useState([]);
     const [expenses, setExpenses] = useState([]);
+    const [allExpenses, setAllExpenses] = useState([]);
     const [incidents, setIncidents] = useState([]);
     const [locations, setLocations] = useState([]);
-    
+
     const [users, setUsers] = useState([]);
     const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
     const [userToEdit, setUserToEdit] = useState(null);
@@ -55,8 +59,10 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     const [carToEdit, setCarToEdit] = useState(null);
     const [carToDelete, setCarToDelete] = useState(null);
     const [isAddExpenseModalOpen, setAddExpenseModalOpen] = useState(false);
+    const [carForExpense, setCarForExpense] = useState(null);
+    const [expenseToEdit, setExpenseToEdit] = useState(null);
     const [expenseToDelete, setExpenseToDelete] = useState(null);
-    const [expenseToEdit, setExpenseToEdit] = useState(null); // <-- 2. AÑADIR ESTADO
+    const [incidentToDelete, setIncidentToDelete] = useState(null);
     const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
     const [carToReserve, setCarToReserve] = useState(null);
     const [carToCancelReservation, setCarToCancelReservation] = useState(null);
@@ -70,8 +76,8 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
         const isAnyModalOpen =
             isAddUserModalOpen || !!userToEdit || !!userToDelete || !!carToSell ||
             !!carToView || isAddCarModalOpen || !!carForIncident || !!carToEdit ||
-            !!carToDelete || isAddExpenseModalOpen || !!expenseToDelete || !!expenseToEdit ||
-            isDeleteAccountModalOpen || !!carToReserve || !!carToCancelReservation ||
+            !!carToDelete || isAddExpenseModalOpen || !!expenseToEdit || !!expenseToDelete ||
+            !!incidentToDelete || isDeleteAccountModalOpen || !!carToReserve || !!carToCancelReservation ||
             isInvestmentModalOpen || isRevenueModalOpen;
 
         if (isAnyModalOpen) {
@@ -86,7 +92,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     }, [
         isAddUserModalOpen, userToEdit, userToDelete, carToSell, carToView,
         isAddCarModalOpen, carForIncident, carToEdit, carToDelete,
-        isAddExpenseModalOpen, expenseToDelete, expenseToEdit, isDeleteAccountModalOpen,
+        isAddExpenseModalOpen, expenseToEdit, expenseToDelete, incidentToDelete, isDeleteAccountModalOpen,
         carToReserve, carToCancelReservation, isInvestmentModalOpen, isRevenueModalOpen
     ]);
 
@@ -104,7 +110,8 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
             try {
                 const dataPromises = [
                     api.getCars(),
-                    api.getExpenses(),
+                    api.getExpenses(), // Para la página de Gastos (solo generales)
+                    api.getAllUserExpenses(), // Para Dashboard y SalesSummary (todos los gastos)
                     api.getIncidents(),
                     api.getLocations(),
                 ];
@@ -113,10 +120,11 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
                     dataPromises.push(api.admin.getAllUsers());
                 }
 
-                const [carsData, expensesData, incidentsData, locationsData, usersData] = await Promise.all(dataPromises);
-                
+                const [carsData, expensesData, allExpensesData, incidentsData, locationsData, usersData] = await Promise.all(dataPromises);
+
                 setCars(carsData);
-                setExpenses(expensesData);
+                setExpenses(expensesData); // Solo gastos generales
+                setAllExpenses(allExpensesData); // Todos los gastos
                 setIncidents(incidentsData);
                 setLocations(locationsData);
                 if (usersData) setUsers(usersData);
@@ -129,7 +137,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
         };
         fetchData();
     }, [user]);
-    
+
     const handleUserAdded = (newUser) => {
         setUsers(prev => [newUser, ...prev]);
         setAddUserModalOpen(false);
@@ -193,7 +201,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
         setCarPendingDeletion(car);
         setCarToDelete(null);
         setCarToView(null);
-        
+
         setToast({ message: 'Coche eliminado.' });
 
         deleteTimeoutRef.current = setTimeout(() => {
@@ -202,7 +210,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
             deleteTimeoutRef.current = null;
         }, 5000);
     };
-    
+
     const handleUndoDelete = () => {
         if (deleteTimeoutRef.current) {
             clearTimeout(deleteTimeoutRef.current);
@@ -214,17 +222,23 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
         }
         setToast(null);
     };
-    
-    const handleSellConfirm = async (carId, salePrice) => {
+
+    const handleSellConfirm = async (carId, salePrice, saleDate, buyerDetails) => {
         try {
-            const carToUpdate = cars.find(c => c.id === carId);
-            if (!carToUpdate) return;
-            const updatedData = { ...carToUpdate, status: 'Vendido', salePrice, price: salePrice };
+            const updatedData = {
+                status: 'Vendido',
+                salePrice,
+                saleDate,
+                buyerDetails: JSON.stringify(buyerDetails)
+            };
             const updatedCar = await api.updateCar(carId, updatedData);
             setCars(prev => prev.map(c => c.id === carId ? updatedCar : c));
             setCarToSell(null);
-        } catch (error) { console.error("Error al vender el coche:", error); }
+        } catch (error) {
+            console.error("Error al vender el coche:", error);
+        }
     };
+
     const handleReserveConfirm = async (carToUpdate, newNoteContent, depositAmount) => {
         try {
             let existingNotes = [];
@@ -252,7 +266,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
                     date: new Date().toISOString().split('T')[0]
                 });
             }
-            
+
             const dataToSend = {
                 status: 'Reservado',
                 notes: JSON.stringify(existingNotes),
@@ -268,13 +282,26 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     };
     const handleConfirmCancelReservation = async (carToUpdate) => {
         try {
+            let notes = [];
+            if (carToUpdate.notes) {
+                try {
+                    const parsed = JSON.parse(carToUpdate.notes);
+                    if (Array.isArray(parsed)) notes = parsed;
+                } catch (e) { }
+            }
+            const updatedNotes = notes.filter(note => note.type !== 'Reserva');
+
             const updatedData = {
                 status: 'En venta',
-                reservationDeposit: null
+                reservationDeposit: null,
+                notes: JSON.stringify(updatedNotes)
             };
             const updatedCar = await api.updateCar(carToUpdate.id, updatedData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
             setCarToCancelReservation(null);
+            if (carToView && carToView.id === updatedCar.id) {
+                setCarToView(updatedCar);
+            }
         } catch (error) {
             console.error("Error al cancelar la reserva:", error);
         }
@@ -282,11 +309,11 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
 
     const handleUpdateCarInsurance = async (car, hasInsurance) => {
         const originalCars = [...cars];
-        const updatedCars = cars.map(c => 
+        const updatedCars = cars.map(c =>
             c.id === car.id ? { ...c, hasInsurance } : c
         );
         setCars(updatedCars);
-    
+
         try {
             await api.updateCar(car.id, { hasInsurance });
         } catch (error) {
@@ -304,12 +331,13 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
                     if (Array.isArray(parsed)) notes = parsed;
                 } catch (e) { /* No es un JSON válido, se ignora */ }
             }
-    
+
             const updatedNotes = notes.filter(note => note.id !== noteIdToDelete);
-            const updatedCar = await api.updateCar(car.id, { notes: JSON.stringify(updatedNotes) });
-    
-            setCars(prev => prev.map(c => (c.id === updatedCar.id ? updatedCar : c)));
-            setCarToView(updatedCar);
+            const updatedCarData = await api.updateCar(car.id, { notes: JSON.stringify(updatedNotes) });
+
+            const updatedCars = cars.map(c => (c.id === updatedCarData.id ? updatedCarData : c));
+            setCars(updatedCars);
+            setCarToView({ ...updatedCarData });
         } catch (error) {
             console.error("Error al eliminar la nota:", error);
         }
@@ -323,49 +351,80 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
             setCarForIncident(null);
         } catch (error) { console.error("Error al añadir incidencia:", error); }
     };
-    const handleDeleteIncident = async (incidentId) => {
+    const handleDeleteIncident = (incidentId) => {
+        const incident = incidents.find(inc => inc.id === incidentId);
+        if (incident) {
+            setIncidentToDelete(incident);
+        }
+    };
+
+    const confirmDeleteIncident = async (incidentId) => {
         try {
             await api.deleteIncident(incidentId);
             setIncidents(prev => prev.filter(inc => inc.id !== incidentId));
-        } catch (error) { console.error("Error al eliminar incidencia:", error); }
+        } catch (error) {
+            console.error("Error al eliminar incidencia:", error);
+        } finally {
+            setIncidentToDelete(null);
+        }
     };
-    const handleResolveIncident = async (incidentId) => {
+    const handleResolveIncident = async (incidentId, newStatus) => {
         try {
-            const updatedIncident = await api.updateIncident(incidentId, { status: 'resuelta' });
-            setIncidents(prev => prev.map(inc => 
+            const updatedIncident = await api.updateIncident(incidentId, { status: newStatus });
+            setIncidents(prev => prev.map(inc =>
                 inc.id === incidentId ? updatedIncident : inc
             ));
         } catch (error) {
-            console.error("Error al resolver la incidencia:", error);
+            console.error("Error al cambiar el estado de la incidencia:", error);
         }
     };
+
     const handleAddExpense = async (expenseData) => {
         try {
             const newExpense = await api.createExpense(expenseData);
-            setExpenses(prev => [newExpense, ...prev]);
+            if (!expenseData.has('carLicensePlate')) {
+                setExpenses(prev => [newExpense, ...prev]);
+            }
+            // Actualizar también allExpenses para Dashboard y SalesSummary
+            setAllExpenses(prev => [newExpense, ...prev]);
             setAddExpenseModalOpen(false);
+            setCarForExpense(null);
+            if (carToView) {
+                setCarToView(prev => ({ ...prev }));
+            }
         } catch (error) {
             console.error("Error al añadir gasto:", error);
             throw error;
         }
     };
 
-    // --- 3. AÑADIR FUNCIÓN PARA ACTUALIZAR GASTO ---
-    const handleUpdateExpense = async (expenseId, expenseData) => {
+    const handleUpdateExpense = async (expenseId, formData) => {
         try {
-            const updatedExpense = await api.updateExpense(expenseId, expenseData);
-            setExpenses(prev => prev.map(exp => (exp.id === expenseId ? updatedExpense : exp)));
-            setExpenseToEdit(null); // Cierra el modal
+            const updatedExpense = await api.updateExpense(expenseId, formData);
+            if (!updatedExpense.carLicensePlate) {
+                setExpenses(prev => prev.map(exp => (exp.id === expenseId ? updatedExpense : exp)));
+            }
+            // Actualizar también allExpenses para Dashboard y SalesSummary
+            setAllExpenses(prev => prev.map(exp => (exp.id === expenseId ? updatedExpense : exp)));
+            setExpenseToEdit(null);
+            if (carToView) {
+                setCarToView(prev => ({ ...prev }));
+            }
         } catch (error) {
-            console.error("Error al actualizar el gasto:", error);
-            throw error; // Lanza el error para que el modal pueda mostrarlo
+            console.error("Error al actualizar gasto:", error);
+            throw error;
         }
     };
-    
+
     const confirmDeleteExpense = async (expenseId) => {
         try {
             await api.deleteExpense(expenseId);
             setExpenses(prev => prev.filter(exp => exp.id !== expenseId));
+            // Actualizar también allExpenses para Dashboard y SalesSummary
+            setAllExpenses(prev => prev.filter(exp => exp.id !== expenseId));
+            if (carToView) {
+                setCarToView(prev => ({ ...prev }));
+            }
         } catch (error) {
             console.error("Error al eliminar el gasto:", error);
         } finally {
@@ -384,98 +443,71 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
                 <Header />
                 <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
                     <Routes>
-                        <Route path="/" element={<Dashboard 
-                            cars={cars} 
-                            expenses={expenses} 
-                            isDarkMode={isDarkMode} 
-                            onTotalInvestmentClick={() => setInvestmentModalOpen(true)}
-                            onRevenueClick={() => setRevenueModalOpen(true)} 
-                        />} />
-                        <Route path="/cars" element={<MyCars 
-                            cars={cars} 
-                            incidents={incidents} 
-                            onSellClick={setCarToSell} 
-                            onAddClick={() => setAddCarModalOpen(true)} 
-                            onViewDetailsClick={setCarToView} 
-                            onAddIncidentClick={setCarForIncident} 
-                            onReserveClick={setCarToReserve} 
-                            onCancelReservationClick={setCarToCancelReservation}
-                            onUpdateInsurance={handleUpdateCarInsurance}
-                        />} />
-                        <Route path="/sales" element={<SalesSummary cars={cars} expenses={expenses} onViewDetailsClick={setCarToView} />} />
-                        <Route path="/expenses" element={<Expenses expenses={expenses} cars={cars} onAddExpense={() => setAddExpenseModalOpen(true)} onEditExpense={setExpenseToEdit} onDeleteExpense={setExpenseToDelete} />} />
+                        <Route path="/" element={<Dashboard cars={cars} expenses={allExpenses} isDarkMode={isDarkMode} onTotalInvestmentClick={() => setInvestmentModalOpen(true)} onRevenueClick={() => setRevenueModalOpen(true)} />} />
+                        <Route path="/cars" element={<MyCars cars={cars} incidents={incidents} onSellClick={setCarToSell} onAddClick={() => setAddCarModalOpen(true)} onViewDetailsClick={setCarToView} onAddIncidentClick={setCarForIncident} onReserveClick={setCarToReserve} onCancelReservationClick={setCarToCancelReservation} onUpdateInsurance={handleUpdateCarInsurance} />} />
+                        <Route path="/sales" element={<SalesSummary cars={cars} expenses={allExpenses} onViewDetailsClick={setCarToView} />} />
+                        <Route path="/expenses" element={<Expenses expenses={expenses} onAddExpense={() => { setCarForExpense(null); setAddExpenseModalOpen(true); }} onEditExpense={setExpenseToEdit} onDeleteExpense={setExpenseToDelete} />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} cars={cars} expenses={expenses} incidents={incidents} onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)} />} />
-                        
-                        <Route path="/admin" element={
-                            user && user.role === 'admin' 
-                            ? <ManageUsersPage 
-                                users={users} 
-                                onAddUser={() => setAddUserModalOpen(true)}
-                                onEditUser={setUserToEdit}
-                                onDeleteUser={setUserToDelete}
-                            /> 
-                            : <Navigate to="/" replace />
-                        } />
-
+                        <Route path="/admin" element={user && user.role === 'admin' ? <ManageUsersPage users={users} onAddUser={() => setAddUserModalOpen(true)} onEditUser={setUserToEdit} onDeleteUser={setUserToDelete} /> : <Navigate to="/" replace />} />
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </main>
             </div>
             <BottomNav />
-            
+
             <VersionIndicator className="hidden lg:block fixed bottom-6 right-6 bg-component-bg px-2 py-1 rounded border border-border-color" />
-            {toast && (
-                <Toast 
-                    message={toast.message} 
-                    onUndo={handleUndoDelete}
-                    onClose={() => setToast(null)}
-                />
-            )}
+            {toast && (<Toast message={toast.message} onUndo={handleUndoDelete} onClose={() => setToast(null)} />)}
 
             {carToView && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setCarToView(null)}>
                     <div className="bg-component-bg rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                        <CarDetailsModalContent 
-                            car={carToView} 
-                            incidents={incidents} 
-                            onClose={() => setCarToView(null)} 
-                            onSellClick={car => { setCarToView(null); setCarToSell(car); }} 
-                            onEditClick={(car) => { setCarToView(null); setCarToEdit(car); }} 
+                        <CarDetailsModalContent
+                            car={carToView}
+                            incidents={incidents}
+                            onClose={() => setCarToView(null)}
+                            onSellClick={car => { setCarToView(null); setCarToSell(car); }}
+                            onEditClick={(car) => { setCarToView(null); setCarToEdit(car); }}
                             onDeleteClick={setCarToDelete}
                             onReserveClick={car => { setCarToView(null); setCarToReserve(car); }}
-                            onCancelReservationClick={setCarToCancelReservation} 
+                            onCancelReservationClick={setCarToCancelReservation}
                             onResolveIncident={handleResolveIncident}
                             onDeleteIncident={handleDeleteIncident}
                             onDeleteNote={handleDeleteNote}
+                            onAddExpenseClick={(car) => { setCarForExpense(car); setAddExpenseModalOpen(true); }}
+                            onEditExpenseClick={setExpenseToEdit}
+                            onDeleteExpense={setExpenseToDelete}
+                            onAddIncidentClick={(car) => { setCarToView(null); setCarForIncident(car); }}
                         />
                     </div>
                 </div>
             )}
+
             {isAddCarModalOpen && <AddCarModal onClose={() => setAddCarModalOpen(false)} onAdd={handleAddCar} locations={locations} />}
             {carToEdit && <EditCarModal car={carToEdit} onClose={() => setCarToEdit(null)} onUpdate={handleUpdateCar} locations={locations} />}
             {carToSell && <SellCarModal car={carToSell} onClose={() => setCarToSell(null)} onConfirm={handleSellConfirm} />}
             {carForIncident && <AddIncidentModal car={carForIncident} onClose={() => setCarForIncident(null)} onConfirm={handleAddIncident} />}
             {carToDelete && <DeleteCarConfirmationModal car={carToDelete} onClose={() => setCarToDelete(null)} onConfirm={handleDeleteCar} />}
-            {isAddExpenseModalOpen && <AddExpenseModal cars={cars} onClose={() => setAddExpenseModalOpen(false)} onAdd={handleAddExpense} />}
+            {isAddExpenseModalOpen && <AddExpenseModal car={carForExpense} onClose={() => { setAddExpenseModalOpen(false); setCarForExpense(null); }} onAdd={handleAddExpense} />}
+            {expenseToEdit && <EditExpenseModal expense={expenseToEdit} onClose={() => setExpenseToEdit(null)} onUpdate={handleUpdateExpense} />}
             {expenseToDelete && <DeleteExpenseConfirmationModal expense={expenseToDelete} onClose={() => setExpenseToDelete(null)} onConfirm={confirmDeleteExpense} />}
-            {expenseToEdit && <EditExpenseModal expense={expenseToEdit} cars={cars} onClose={() => setExpenseToEdit(null)} onUpdate={handleUpdateExpense} />}
+            {incidentToDelete && <DeleteIncidentConfirmationModal incident={incidentToDelete} onClose={() => setIncidentToDelete(null)} onConfirm={confirmDeleteIncident} />}
             {isDeleteAccountModalOpen && <DeleteAccountConfirmationModal onClose={() => setIsDeleteAccountModalOpen(false)} />}
             {carToReserve && <ReserveCarModal car={carToReserve} onClose={() => setCarToReserve(null)} onConfirm={handleReserveConfirm} />}
             {carToCancelReservation && <CancelReservationModal car={carToCancelReservation} onClose={() => setCarToCancelReservation(null)} onConfirm={handleConfirmCancelReservation} />}
-            
+
             {isAddUserModalOpen && <AddUserModal onClose={() => setAddUserModalOpen(false)} onUserAdded={handleUserAdded} />}
             {userToEdit && <EditUserModal user={userToEdit} onClose={() => setUserToEdit(null)} onUserUpdated={handleUserUpdated} />}
             {userToDelete && <DeleteUserConfirmationModal user={userToDelete} onClose={() => setUserToDelete(null)} onConfirmDelete={handleUserDeleted} />}
-            
-            <InvestmentDetailsModal 
+
+            <InvestmentDetailsModal
                 isOpen={isInvestmentModalOpen}
                 onClose={() => setInvestmentModalOpen(false)}
                 cars={cars}
                 expenses={expenses}
             />
-            
-            <RevenueDetailsModal 
+
+            <RevenueDetailsModal
                 isOpen={isRevenueModalOpen}
                 onClose={() => setRevenueModalOpen(false)}
                 cars={cars}

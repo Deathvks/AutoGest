@@ -2,11 +2,13 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faPlusCircle, faCar, faTrash, faCalendarDay, faTag, faEuroSign, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faPlusCircle, faCar, faTrash, faCalendarDay, faTag, faEuroSign, faPaperclip, faEdit } from '@fortawesome/free-solid-svg-icons';
 
-const Expenses = ({ expenses, cars, onAddExpense, onEditExpense, onDeleteExpense }) => {
+const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) => {
+    const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+
     useEffect(() => {
-        // Carga de scripts para PDF (se mantiene igual)
+        // Carga de scripts para PDF
         const jspdfScript = document.createElement('script');
         jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
         jspdfScript.async = true;
@@ -20,47 +22,37 @@ const Expenses = ({ expenses, cars, onAddExpense, onEditExpense, onDeleteExpense
         document.head.appendChild(jspdfScript);
     }, []);
 
-    const getCarNameAndPlate = (licensePlate) => {
-        const car = cars.find(c => c.licensePlate === licensePlate);
-        return car ? `${car.make} ${car.model}\n${car.licensePlate}` : 'General';
-    };
-
     const generatePDF = () => {
         if (window.jspdf && window.jspdf.jsPDF) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text("Resumen de Gastos", 14, 16);
+            doc.text("Resumen de Gastos Generales", 14, 16);
             doc.autoTable({
                 startY: 20,
-                head: [['Fecha', 'Categoría', 'Importe', 'Coche Asociado', 'Descripción']],
+                head: [['Fecha', 'Categoría', 'Importe', 'Descripción']],
                 body: expenses.map(exp => [
                     new Date(exp.date).toLocaleDateString('es-ES'), 
                     exp.category,
                     new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(exp.amount),
-                    getCarNameAndPlate(exp.carLicensePlate).replace('\n', ' '), // Para PDF, mejor en una línea
                     exp.description
                 ]),
             });
-            doc.save('resumen_gastos.pdf');
+            doc.save('resumen_gastos_generales.pdf');
         } else {
             console.error("La librería jsPDF no está cargada todavía.");
             alert("La función para exportar a PDF no está lista, por favor inténtalo de nuevo en unos segundos.");
         }
     };
 
-    const noCarsRegistered = cars.length === 0;
-
     return (
         <div>
-            {/* --- HEADER COMO EN IMAGE 1 --- */}
             <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-text-primary tracking-tight">Gastos</h1>
+                <h1 className="text-3xl font-bold text-text-primary tracking-tight">Gastos Generales</h1>
                 <div className="flex gap-4">
                     <button 
                         onClick={onAddExpense}
-                        disabled={noCarsRegistered}
-                        className="bg-blue-accent text-white w-12 h-12 flex items-center justify-center rounded-xl shadow-sm hover:opacity-90 transition-opacity disabled:bg-slate-400 disabled:cursor-not-allowed"
-                        title={noCarsRegistered ? "Debes registrar al menos un coche para añadir un gasto" : "Añadir nuevo gasto"}
+                        className="bg-blue-accent text-white w-12 h-12 flex items-center justify-center rounded-xl shadow-sm hover:opacity-90 transition-opacity"
+                        title="Añadir nuevo gasto general"
                     >
                         <FontAwesomeIcon icon={faPlusCircle} className="w-6 h-6" />
                     </button>
@@ -77,31 +69,33 @@ const Expenses = ({ expenses, cars, onAddExpense, onEditExpense, onDeleteExpense
 
             {expenses.length > 0 ? (
                 <>
-                    {/* --- VISTA DE TARJETAS PARA MÓVIL (AJUSTADA A IMAGE 2) --- */}
+                    {/* --- VISTA DE TARJETAS PARA MÓVIL --- */}
                     <div className="space-y-4 md:hidden">
                         {expenses.map(expense => (
-                            <div key={expense.id} className="bg-component-bg rounded-xl border border-border-color p-4">
-                                <div className="flex justify-between items-center mb-3">
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-sm text-text-secondary">
-                                            <p className="flex items-center gap-2"><FontAwesomeIcon icon={faCalendarDay} />{new Date(expense.date).toLocaleDateString('es-ES')}</p>
-                                            <p className="flex items-center gap-2 mt-1"><FontAwesomeIcon icon={faTag} />{expense.category}</p>
-                                        </div>
+                            <div key={expense.id} className="bg-component-bg rounded-xl border border-border-color p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="text-sm text-text-secondary space-y-1">
+                                        <p className="flex items-center gap-2"><FontAwesomeIcon icon={faCalendarDay} />{new Date(expense.date).toLocaleDateString('es-ES')}</p>
+                                        <p className="flex items-center gap-2"><FontAwesomeIcon icon={faTag} />{expense.category}</p>
                                     </div>
                                     <p className="font-bold text-text-primary text-xl">€ {new Intl.NumberFormat('es-ES').format(expense.amount)}</p>
                                 </div>
                                 
+                                {expense.description && <p className="text-sm text-text-primary pt-3 border-t border-border-color">{expense.description}</p>}
+
                                 <div className="flex justify-between items-end pt-3 border-t border-border-color">
-                                    <div className="text-sm text-text-primary">
-                                        <p className="font-medium flex items-center gap-2"><FontAwesomeIcon icon={faCar} />{getCarNameAndPlate(expense.carLicensePlate).split('\n')[0]}</p>
-                                        <p className="text-text-secondary ml-6">{getCarNameAndPlate(expense.carLicensePlate).split('\n')[1]}</p>
+                                    <div className="flex items-center gap-2">
+                                        {expense.attachments && expense.attachments.map((fileUrl, index) => (
+                                            <a href={`${API_BASE_URL}${fileUrl}`} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={`Ver adjunto ${index + 1}`}>
+                                                <FontAwesomeIcon icon={faPaperclip} />
+                                            </a>
+                                        ))}
                                     </div>
-                                    {/* --- BOTONES DE ACCIÓN MÓVIL --- */}
-                                    <div className="flex items-center">
-                                        <button onClick={() => onEditExpense(expense)} className="text-blue-accent hover:opacity-80 transition-opacity p-2">
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => onEditExpense(expense)} className="text-blue-accent hover:opacity-80 transition-opacity p-2" title="Editar gasto">
                                             <FontAwesomeIcon icon={faEdit} />
                                         </button>
-                                        <button onClick={() => onDeleteExpense(expense)} className="text-red-accent hover:opacity-80 transition-opacity p-2">
+                                        <button onClick={() => onDeleteExpense(expense)} className="text-red-accent hover:opacity-80 transition-opacity p-2 flex-shrink-0" title="Eliminar gasto">
                                             <FontAwesomeIcon icon={faTrash} />
                                         </button>
                                     </div>
@@ -110,7 +104,7 @@ const Expenses = ({ expenses, cars, onAddExpense, onEditExpense, onDeleteExpense
                         ))}
                     </div>
 
-                    {/* --- VISTA DE TABLA PARA ESCRITORIO (Mantiene el deslizamiento) --- */}
+                    {/* --- VISTA DE TABLA PARA ESCRITORIO --- */}
                     <div className="hidden md:block bg-component-bg rounded-xl border border-border-color overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left text-text-secondary">
@@ -119,8 +113,8 @@ const Expenses = ({ expenses, cars, onAddExpense, onEditExpense, onDeleteExpense
                                         <th scope="col" className="px-6 py-4 whitespace-nowrap">Fecha</th>
                                         <th scope="col" className="px-6 py-4 whitespace-nowrap">Categoría</th>
                                         <th scope="col" className="px-6 py-4 whitespace-nowrap">Importe</th>
-                                        <th scope="col" className="px-6 py-4">Coche Asociado</th>
                                         <th scope="col" className="px-6 py-4">Descripción</th>
+                                        <th scope="col" className="px-6 py-4">Adjuntos</th>
                                         <th scope="col" className="px-6 py-4"><span className="sr-only">Acciones</span></th>
                                     </tr>
                                 </thead>
@@ -130,14 +124,21 @@ const Expenses = ({ expenses, cars, onAddExpense, onEditExpense, onDeleteExpense
                                             <td className="px-6 py-4 whitespace-nowrap">{new Date(expense.date).toLocaleDateString('es-ES')}</td>
                                             <td className="px-6 py-4 whitespace-nowrap"><span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-medium px-2.5 py-1 rounded-full">{expense.category}</span></td>
                                             <td className="px-6 py-4 font-bold text-text-primary whitespace-nowrap">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</td>
-                                            <td className="px-6 py-4">{getCarNameAndPlate(expense.carLicensePlate).replace('\n', ' ')}</td>
                                             <td className="px-6 py-4">{expense.description}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    {expense.attachments && expense.attachments.map((fileUrl, index) => (
+                                                        <a href={`${API_BASE_URL}${fileUrl}`} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={`Ver adjunto ${index + 1}`}>
+                                                            <FontAwesomeIcon icon={faPaperclip} />
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            </td>
                                             <td className="px-6 py-4 text-right">
-                                                {/* --- BOTONES DE ACCIÓN ESCRITORIO --- */}
-                                                <button onClick={() => onEditExpense(expense)} className="text-blue-accent hover:opacity-80 transition-opacity mr-4">
+                                                <button onClick={() => onEditExpense(expense)} className="text-blue-accent hover:opacity-80 transition-opacity mr-4" title="Editar gasto">
                                                     <FontAwesomeIcon icon={faEdit} />
                                                 </button>
-                                                <button onClick={() => onDeleteExpense(expense)} className="text-red-accent hover:opacity-80 transition-opacity">
+                                                <button onClick={() => onDeleteExpense(expense)} className="text-red-accent hover:opacity-80 transition-opacity" title="Eliminar gasto">
                                                     <FontAwesomeIcon icon={faTrash} />
                                                 </button>
                                             </td>
@@ -150,19 +151,9 @@ const Expenses = ({ expenses, cars, onAddExpense, onEditExpense, onDeleteExpense
                 </>
             ) : (
                 <div className="text-center py-16 px-4 bg-component-bg rounded-xl border border-border-color">
-                    <FontAwesomeIcon icon={faCar} className="text-5xl text-zinc-500 dark:text-zinc-700 mb-4" />
-                    <h3 className="text-xl font-semibold text-text-primary">Aún no hay gastos</h3>
-                    {noCarsRegistered ? (
-                        <>
-                            <p className="text-text-secondary mt-2">Para poder registrar un gasto, primero necesitas añadir un coche.</p>
-                            <Link to="/cars" className="mt-4 inline-flex items-center gap-2 bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
-                                <FontAwesomeIcon icon={faPlusCircle} />
-                                Añadir mi primer coche
-                            </Link>
-                        </>
-                    ) : (
-                        <p className="text-text-secondary mt-2">Cuando añadas tu primer gasto, aparecerá aquí.</p>
-                    )}
+                    <FontAwesomeIcon icon={faEuroSign} className="text-5xl text-zinc-500 dark:text-zinc-700 mb-4" />
+                    <h3 className="text-xl font-semibold text-text-primary">Aún no hay gastos generales</h3>
+                    <p className="text-text-secondary mt-2">Cuando añadas tu primer gasto general (luz, agua, alquiler...), aparecerá aquí.</p>
                 </div>
             )}
         </div>

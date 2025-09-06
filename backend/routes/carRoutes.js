@@ -13,7 +13,4 @@ router.post('/', protect, fileUploads, carController.createCar);
 router.put('/:id', protect, fileUploads, carController.updateCar); 
 router.delete('/:id', protect, carController.deleteCar);
 
-// --- NUEVA RUTA PARA ANÁLISIS CON IA ---
-router.post('/analyze-document', protect, carController.analyzeDocument);
-
 module.exports = router;

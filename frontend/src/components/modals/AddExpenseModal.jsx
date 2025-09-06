@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/AddExpenseModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faEuroSign, faCalendarDays, faTag, faCar } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faEuroSign, faCalendarDays, faTag, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select';
 
 // --- Componentes de Formulario ---
@@ -39,17 +39,19 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
 };
 
 // --- Componente Principal del Modal ---
-const AddExpenseModal = ({ cars, onClose, onAdd }) => {
+const AddExpenseModal = ({ car, onClose, onAdd }) => {
     const today = new Date().toISOString().split('T')[0];
     const [newExpense, setNewExpense] = useState({
         date: today,
         category: 'Mecánica',
+        customCategory: '', // <-- NUEVO CAMPO PARA LA CATEGORÍA PERSONALIZADA
         amount: '',
         description: '',
-        carLicensePlate: ''
+        carLicensePlate: car ? car.licensePlate : null
     });
-    const [otherCategory, setOtherCategory] = useState(''); // Estado para la categoría personalizada
+    const [attachments, setAttachments] = useState([]);
     const [error, setError] = useState('');
+    const fileInputRef = useRef(null);
 
     const categoryOptions = [
         { id: 'Mecánica', name: 'Mecánica' },
@@ -67,14 +69,19 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
     const handleSelectChange = (name, value) => {
         setNewExpense(prev => ({ ...prev, [name]: value }));
     };
+    
+    const handleFileChange = (e) => {
+        setAttachments([...e.target.files]);
+    };
 
     const validateForm = () => {
-        if (!newExpense.date || !newExpense.category || !newExpense.amount || !newExpense.carLicensePlate) {
-            setError("Todos los campos, incluida la matrícula, son obligatorios.");
+        if (!newExpense.date || !newExpense.category || !newExpense.amount) {
+            setError("Los campos de fecha, categoría e importe son obligatorios.");
             return false;
         }
-        if (newExpense.category === 'Otros' && !otherCategory.trim()) {
-            setError("Debes especificar la categoría si seleccionas 'Otros'.");
+        // --- NUEVA VALIDACIÓN ---
+        if (newExpense.category === 'Otros' && !newExpense.customCategory.trim()) {
+            setError("Debes especificar la categoría personalizada.");
             return false;
         }
         if (isNaN(parseFloat(newExpense.amount)) || parseFloat(newExpense.amount) <= 0) {
@@ -90,12 +97,25 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
             return;
         }
         try {
-            // Si la categoría es 'Otros', usamos el valor personalizado
-            const finalExpenseData = {
-                ...newExpense,
-                category: newExpense.category === 'Otros' ? otherCategory.trim() : newExpense.category,
-            };
-            await onAdd(finalExpenseData);
+            const formData = new FormData();
+            
+            // --- LÓGICA MODIFICADA PARA ENVIAR LA CATEGORÍA CORRECTA ---
+            const finalCategory = newExpense.category === 'Otros' ? newExpense.customCategory.trim() : newExpense.category;
+
+            // Añadimos los datos del gasto al FormData
+            formData.append('date', newExpense.date);
+            formData.append('category', finalCategory);
+            formData.append('amount', newExpense.amount);
+            formData.append('description', newExpense.description);
+            if (newExpense.carLicensePlate) {
+                formData.append('carLicensePlate', newExpense.carLicensePlate);
+            }
+            
+            attachments.forEach(file => {
+                formData.append('attachments', file);
+            });
+            
+            await onAdd(formData);
         } catch (err) {
             setError(err.message || 'Ha ocurrido un error inesperado.');
         }
@@ -111,6 +131,13 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
                     </button>
                 </div>
                 <form onSubmit={(e) => e.preventDefault()} noValidate>
+                    {car && (
+                        <div className="mb-4 p-3 bg-background rounded-lg text-center">
+                            <p className="text-sm text-text-secondary">
+                                Gasto para: <span className="font-bold text-text-primary">{car.make} {car.model} ({car.licensePlate})</span>
+                            </p>
+                        </div>
+                    )}
                     <div className="space-y-4">
                         <InputField label="Fecha" name="date" type="date" value={newExpense.date} onChange={handleChange} icon={faCalendarDays} />
                         <Select
@@ -122,24 +149,35 @@ const AddExpenseModal = ({ cars, onClose, onAdd }) => {
                         {/* --- CAMPO CONDICIONAL --- */}
                         {newExpense.category === 'Otros' && (
                             <InputField 
-                                label="Especificar Categoría"
-                                name="otherCategory"
-                                value={otherCategory}
-                                onChange={(e) => setOtherCategory(e.target.value)}
-                                placeholder="Ej: Impuestos"
-                                icon={faTag}
+                                label="Especificar Categoría" 
+                                name="customCategory" 
+                                value={newExpense.customCategory} 
+                                onChange={handleChange}
+                                placeholder="Ej: Impuestos, material de oficina..." 
                             />
                         )}
                         <InputField label="Importe (€)" name="amount" type="number" value={newExpense.amount} onChange={handleChange} icon={faEuroSign} />
-                        <InputField 
-                            label="Asociar a Coche (Matrícula)" 
-                            name="carLicensePlate" 
-                            value={newExpense.carLicensePlate} 
-                            onChange={handleChange} 
-                            icon={faCar}
-                            placeholder="Escribe la matrícula"
-                        />
-                        <TextareaField label="Descripción" name="description" value={newExpense.description} onChange={handleChange} placeholder="Detalles del gasto..." />
+                        <TextareaField label="Descripción (Opcional)" name="description" value={newExpense.description} onChange={handleChange} placeholder="Detalles del gasto..." />
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">Adjuntar Archivos</label>
+                            <input
+                                type="file"
+                                multiple
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
+                                accept="image/*,application/pdf"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current.click()}
+                                className="w-full bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 border border-border-color"
+                            >
+                                <FontAwesomeIcon icon={faPaperclip} />
+                                {attachments.length > 0 ? `${attachments.length} archivo(s) seleccionado(s)` : 'Seleccionar archivos'}
+                            </button>
+                        </div>
                     </div>
                     {error && <p className="mt-4 text-sm text-red-accent text-center">{error}</p>}
                 </form>

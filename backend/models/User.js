@@ -10,7 +10,7 @@ const User = sequelize.define('User', {
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
+        // Removemos unique: true de aquí
         validate: {
             isEmail: true,
         },
@@ -28,8 +28,33 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    subscriptionStatus: {
+        type: DataTypes.ENUM('inactive', 'active', 'cancelled', 'past_due'),
+        allowNull: false,
+        defaultValue: 'inactive',
+    },
+    subscriptionExpiry: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
+    stripeCustomerId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        // Removemos unique: true de aquí también
+    },
 }, {
     timestamps: true,
+    // Mantenemos solo los índices explícitos
+    indexes: [
+        {
+            unique: true,
+            fields: ['email']
+        },
+        {
+            unique: true,
+            fields: ['stripeCustomerId']
+        }
+    ]
 });
 
 module.exports = User;

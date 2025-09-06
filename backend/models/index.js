@@ -36,6 +36,12 @@ const { User, Car, Expense, Incident, Location } = db;
 User.hasMany(Car, { foreignKey: 'userId', onDelete: 'CASCADE' });
 Car.belongsTo(User, { foreignKey: 'userId' });
 
+// --- NUEVA RELACIÓN ---
+// Un usuario tiene muchos gastos
+User.hasMany(Expense, { foreignKey: 'userId', onDelete: 'CASCADE' });
+Expense.belongsTo(User, { foreignKey: 'userId' });
+// --- FIN NUEVA RELACIÓN ---
+
 // Un usuario tiene muchas ubicaciones
 User.hasMany(Location, { foreignKey: 'userId', onDelete: 'CASCADE' });
 Location.belongsTo(User, { foreignKey: 'userId' });

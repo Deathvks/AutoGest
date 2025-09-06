@@ -1,84 +1,55 @@
 // autogest-app/backend/controllers/expenseController.js
-const { Expense, Car, sequelize } = require('../models'); // Importamos sequelize
-const { Op } = require('sequelize'); // Importamos los operadores
+const { Expense, Car, sequelize } = require('../models');
+const { Op } = require('sequelize');
+const fs = require('fs');
+const path = require('path');
 
-// Obtener todos los gastos de los coches del usuario
+// Obtener todos los gastos GENERALES (sin coche) del usuario
 exports.getAllExpenses = async (req, res) => {
     try {
         const expenses = await Expense.findAll({
-            include: [{
-                model: Car,
-                where: { userId: req.user.id },
-                attributes: []
-            }],
+            where: { 
+                userId: req.user.id,
+                carLicensePlate: { [Op.is]: null }
+            },
             order: [['date', 'DESC']]
         });
         res.status(200).json(expenses);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Error al obtener los gastos' });
+        res.status(500).json({ error: 'Error al obtener los gastos generales' });
     }
 };
 
-// Crear un nuevo gasto, verificando la matrícula y la propiedad del coche
+// Obtener TODOS los gastos del usuario (generales + específicos de coches)
+exports.getAllUserExpenses = async (req, res) => {
+    try {
+        const expenses = await Expense.findAll({
+            where: { 
+                userId: req.user.id
+            },
+            order: [['date', 'DESC']]
+        });
+        res.status(200).json(expenses);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener todos los gastos del usuario' });
+    }
+};
+
+// Crear un nuevo gasto
 exports.createExpense = async (req, res) => {
     try {
         const { carLicensePlate, ...expenseData } = req.body;
-
-        if (!carLicensePlate) {
-            return res.status(400).json({ error: 'La matrícula del coche es obligatoria.' });
-        }
         
-        const normalizedLicensePlate = carLicensePlate.replace(/\s/g, '').toUpperCase();
+        const dataToCreate = {
+            ...expenseData,
+            userId: req.user.id
+        };
 
-        // Buscamos el coche comparando las matrículas sin espacios
-        const car = await Car.findOne({
-            where: {
-                [Op.and]: [
-                    sequelize.where(
-                        sequelize.fn('REPLACE', sequelize.col('licensePlate'), ' ', ''),
-                        normalizedLicensePlate
-                    ),
-                    { userId: req.user.id }
-                ]
-            }
-        });
-        
-        if (!car) {
-            return res.status(403).json({ error: 'Permiso denegado. El coche no existe o no pertenece a este usuario.' });
-        }
-        
-        // Guardamos el gasto usando la matrícula original del coche encontrado para mantener consistencia
-        const newExpense = await Expense.create({ carLicensePlate: car.licensePlate, ...expenseData });
-        res.status(201).json(newExpense);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error al crear el gasto' });
-    }
-};
-
-// --- FUNCIÓN NUEVA ---
-// Actualizar un gasto existente
-exports.updateExpense = async (req, res) => {
-    try {
-        const { carLicensePlate, ...updateData } = req.body;
-
-        // 1. Encontrar el gasto y asegurarse de que pertenece al usuario
-        const expense = await Expense.findByPk(req.params.id, {
-            include: [{
-                model: Car,
-                where: { userId: req.user.id }
-            }]
-        });
-
-        if (!expense) {
-            return res.status(404).json({ error: 'Gasto no encontrado o no tienes permiso para editarlo.' });
-        }
-
-        // 2. Si se cambia la matrícula, verificar que el nuevo coche también pertenece al usuario
-        if (carLicensePlate && carLicensePlate !== expense.carLicensePlate) {
+        if (carLicensePlate) {
             const normalizedLicensePlate = carLicensePlate.replace(/\s/g, '').toUpperCase();
-            const newCar = await Car.findOne({
+            const car = await Car.findOne({
                 where: {
                     [Op.and]: [
                         sequelize.where(
@@ -89,37 +60,89 @@ exports.updateExpense = async (req, res) => {
                     ]
                 }
             });
-
-            if (!newCar) {
-                return res.status(403).json({ error: 'Permiso denegado. El nuevo coche no existe o no pertenece a este usuario.' });
+            
+            if (!car) {
+                return res.status(403).json({ error: 'Permiso denegado. El coche no existe o no pertenece a este usuario.' });
             }
-            // Usar la matrícula original del nuevo coche
-            updateData.carLicensePlate = newCar.licensePlate;
+            
+            dataToCreate.carLicensePlate = car.licensePlate;
+        } else {
+            dataToCreate.carLicensePlate = null;
         }
+        
+        // --- NUEVA LÓGICA PARA ARCHIVOS ---
+        if (req.files && req.files.length > 0) {
+            dataToCreate.attachments = req.files.map(file => `/expenses/${file.filename}`);
+        }
+        // --- FIN ---
 
-        // 3. Actualizar el gasto con los nuevos datos
-        await expense.update(updateData);
-        res.status(200).json(expense);
-
+        const newExpense = await Expense.create(dataToCreate);
+        res.status(201).json(newExpense);
     } catch (error) {
-        console.error('Error al actualizar el gasto:', error);
-        res.status(500).json({ error: 'Error interno del servidor al actualizar el gasto.' });
+        console.error(error);
+        res.status(500).json({ error: 'Error al crear el gasto' });
     }
 };
 
-// Eliminar un gasto, verificando que pertenece a un coche del usuario
+// Actualizar un gasto
+exports.updateExpense = async (req, res) => {
+    try {
+        const expense = await Expense.findOne({
+            where: {
+                id: req.params.id,
+                userId: req.user.id
+            }
+        });
+
+        if (!expense) {
+            return res.status(404).json({ error: 'Gasto no encontrado o no tienes permiso para editarlo.' });
+        }
+        
+        const { date, category, amount, description } = req.body;
+        const updateData = { date, category, amount, description };
+
+        // --- NUEVA LÓGICA PARA ARCHIVOS ---
+        if (req.files && req.files.length > 0) {
+            const newAttachments = req.files.map(file => `/expenses/${file.filename}`);
+            // Aquí podrías combinar con los antiguos si quisieras, pero por ahora reemplazamos
+            updateData.attachments = newAttachments; 
+        }
+        // --- FIN ---
+
+        await expense.update(updateData);
+
+        res.status(200).json(expense);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al actualizar el gasto.' });
+    }
+};
+
+// Eliminar un gasto
 exports.deleteExpense = async (req, res) => {
     try {
-        const expense = await Expense.findByPk(req.params.id, {
-            include: [{
-                model: Car,
-                where: { userId: req.user.id }
-            }]
+        const expense = await Expense.findOne({
+            where: {
+                id: req.params.id,
+                userId: req.user.id
+            }
         });
 
         if (!expense) {
             return res.status(404).json({ error: 'Gasto no encontrado o no tienes permiso para eliminarlo.' });
         }
+        
+        // --- NUEVA LÓGICA PARA BORRAR ARCHIVOS ---
+        if (expense.attachments && expense.attachments.length > 0) {
+            expense.attachments.forEach(fileUrl => {
+                const filename = path.basename(fileUrl);
+                const filePath = path.join(__dirname, '..', 'public', 'expenses', filename);
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                }
+            });
+        }
+        // --- FIN ---
 
         await expense.destroy();
         res.status(200).json({ message: 'Gasto eliminado correctamente' });
@@ -129,7 +152,7 @@ exports.deleteExpense = async (req, res) => {
     }
 };
 
-// Obtener gastos por matrícula, verificando la propiedad del coche
+// Obtener gastos por matrícula
 exports.getExpensesByCarLicensePlate = async (req, res) => {
     try {
         const { licensePlate } = req.params;

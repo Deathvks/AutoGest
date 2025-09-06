@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSearch, faTimes, faFilter, faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSearch, faTimes, faFilter, faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags, faShieldAlt, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import Select from '../components/Select';
 import FilterModal from '../components/modals/FilterModal';
 
@@ -22,7 +22,7 @@ const ToggleSwitch = ({ enabled, onChange }) => (
 );
 
 // Tarjeta de Coche
-const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance }) => {
+const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance, onAddIncidentClick }) => {
   const getStatusChipClass = (status) => {
     switch (status) {
       case 'Vendido': return 'bg-green-accent/10 text-green-accent';
@@ -128,6 +128,11 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
             >
               Detalles
             </button>
+            {car.status === 'Vendido' && (
+              <button onClick={() => onAddIncidentClick(car)} className="p-2 aspect-square text-accent bg-accent/10 rounded-lg hover:bg-accent/20 flex items-center justify-center transition-colors" title="Añadir Incidencia">
+                <FontAwesomeIcon icon={faExclamationTriangle} />
+              </button>
+            )}
             {(car.status === 'En venta' || car.status === 'Reservado') && (
               <button onClick={() => onSellClick(car)} className="p-2 aspect-square text-green-accent bg-green-accent/10 rounded-lg hover:bg-green-accent/20 flex items-center justify-center transition-colors" title="Vender">
                 <FontAwesomeIcon icon={faHandHoldingUsd} />
@@ -197,7 +202,7 @@ const FilterSidebar = ({ cars, filters, setFilters, resetFilters }) => {
 };
 
 // Principal
-const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance }) => {
+const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance, onAddIncidentClick }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setFilterModalOpen] = useState(false);
   const [filters, setFilters] = useState({ make: '', status: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
@@ -285,6 +290,7 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
                 onReserveClick={onReserveClick}
                 onCancelReservationClick={onCancelReservationClick}
                 onUpdateInsurance={onUpdateInsurance}
+                onAddIncidentClick={onAddIncidentClick}
               />
             ))}
           </div>
