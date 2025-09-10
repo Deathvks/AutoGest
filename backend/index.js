@@ -8,7 +8,24 @@ const db = require('./models');
 
 const app = express();
 
-// --- INICIO DE LA CORRECCIÓN ---
+// --- INICIO DE LA MODIFICACIÓN ---
+// Manejo de errores global y no capturados para asegurar que todo se loguea
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION! 💥 Apagando...');
+  console.error(err.name, err.message);
+  console.error(err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! 💥 Apagando...');
+  console.error(err.name, err.message);
+  console.error(err);
+  process.exit(1);
+});
+// --- FIN DE LA MODIFICACIÓN ---
+
+
 // Lista de orígenes permitidos
 const allowedOrigins = [
   'http://localhost:5173',
@@ -19,7 +36,6 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Permitir peticiones sin origen (como las de Postman o apps móviles) y las de la lista blanca
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -28,8 +44,7 @@ const corsOptions = {
   },
 };
 
-app.use(cors(corsOptions)); // Usamos la nueva configuración
-// --- FIN DE LA CORRECCIÓN ---
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -41,7 +56,6 @@ app.use('/api/expenses', require('./routes/expenseRoutes'));
 app.use('/api/incidents', require('./routes/incidentRoutes'));
 app.use('/api/locations', require('./routes/locationRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
-// --- NUEVA RUTA PARA EL DASHBOARD ---
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
 // Ruta raíz
