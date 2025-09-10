@@ -120,9 +120,6 @@ exports.createCar = async (req, res) => {
 };
 
 exports.updateCar = async (req, res) => {
-    // --- NUEVO LOG ---
-    console.log(`[LOG] Iniciando updateCar para el coche ID: ${req.params.id}`);
-    
     try {
         const car = await Car.findOne({ where: { id: req.params.id, userId: req.user.id } });
         if (!car) {
@@ -176,6 +173,16 @@ exports.updateCar = async (req, res) => {
                 updateData[field] = (!updateData[field] || isNaN(new Date(updateData[field]).getTime())) ? null : updateData[field];
             }
         });
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Estandarizar campos de texto opcionales: si están vacíos, se guardan como null
+        const optionalTextFields = ['fuel', 'transmission', 'vin', 'location', 'notes'];
+        optionalTextFields.forEach(field => {
+            if (updateData[field] !== undefined && String(updateData[field]).trim() === '') {
+                updateData[field] = null;
+            }
+        });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (updateData.buyerDetails) {
             try {
@@ -241,9 +248,7 @@ exports.updateCar = async (req, res) => {
         await car.update(updateData);
         res.status(200).json(car);
     } catch (error) {
-        // --- LOG DE ERROR DETALLADO ---
         console.error(`[ERROR] Fallo en updateCar para el coche ID: ${req.params.id}. Error:`, error);
-        
         if (error.name === 'SequelizeUniqueConstraintError') {
             const field = error.errors[0]?.path;
             const value = error.errors[0]?.value;
