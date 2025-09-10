@@ -102,15 +102,23 @@ const Car = sequelize.define('Car', {
 }, {
     timestamps: true,
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Se elimina `paranoid: true` y se restauran los índices originales
+    // Habilitar el borrado lógico (soft delete)
+    paranoid: true, 
+    // Modificar los índices para que permitan duplicados en registros borrados
     indexes: [
         {
             unique: true,
-            fields: ['licensePlate']
+            fields: ['licensePlate'],
+            where: {
+                deletedAt: null // La matrícula debe ser única solo si el coche NO está borrado
+            }
         },
         {
             unique: true,
-            fields: ['vin']
+            fields: ['vin'],
+            where: {
+                deletedAt: null // El VIN debe ser único solo si el coche NO está borrado
+            }
         }
     ]
     // --- FIN DE LA MODIFICACIÓN ---

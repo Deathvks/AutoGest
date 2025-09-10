@@ -8,35 +8,22 @@ const runMigration = async () => {
     console.log('Iniciando migración manual...');
 
     try {
-        // --- Tabla: Expenses ---
-        if (tables.includes('Expenses')) {
-            const expensesDescription = await queryInterface.describeTable('Expenses');
-            
-            if (!expensesDescription.userId) {
-                console.log('-> Añadiendo columna "userId" a Expenses...');
-                await queryInterface.addColumn('Expenses', 'userId', {
-                    type: sequelize.Sequelize.INTEGER,
-                    allowNull: false,
-                    references: { model: 'Users', key: 'id' },
-                    onDelete: 'CASCADE'
-                });
-                console.log('✅ Columna "userId" añadida.');
-            }
-
-            if (!expensesDescription.attachments) {
-                console.log('-> Añadiendo columna "attachments" a Expenses...');
-                await queryInterface.addColumn('Expenses', 'attachments', {
-                    type: sequelize.Sequelize.JSON,
-                    allowNull: true
-                });
-                console.log('✅ Columna "attachments" añadida.');
-            }
-        }
-
-        // --- Tabla: Cars ---
         if (tables.includes('Cars')) {
             const carsDescription = await queryInterface.describeTable('Cars');
 
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Añadir la columna deletedAt si no existe para el borrado lógico
+            if (!carsDescription.deletedAt) {
+                console.log('-> Añadiendo columna "deletedAt" a Cars para el borrado lógico...');
+                await queryInterface.addColumn('Cars', 'deletedAt', {
+                    type: sequelize.Sequelize.DATE,
+                    allowNull: true,
+                });
+                console.log('✅ Columna "deletedAt" añadida.');
+            }
+            // --- FIN DE LA MODIFICACIÓN ---
+
+            // (El resto de las migraciones se mantienen por si son necesarias en el futuro)
             if (!carsDescription.saleDate) {
                 console.log('-> Añadiendo columna "saleDate" a Cars...');
                 await queryInterface.addColumn('Cars', 'saleDate', { type: sequelize.Sequelize.DATEONLY, allowNull: true });
@@ -69,7 +56,6 @@ const runMigration = async () => {
                 console.log('✅ Columna "reservationExpiry" añadida.');
             }
 
-            // --- NUEVA MIGRACIÓN ---
             if (!carsDescription.reservationPdfUrl) {
                 console.log('-> Añadiendo columna "reservationPdfUrl" a Cars...');
                 await queryInterface.addColumn('Cars', 'reservationPdfUrl', {
