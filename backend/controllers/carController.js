@@ -255,7 +255,6 @@ exports.updateCar = async (req, res) => {
     }
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
 exports.deleteCar = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
@@ -308,4 +307,3 @@ exports.deleteCar = async (req, res) => {
         res.status(500).json({ error: 'Error al eliminar el coche' });
     }
 };
-// --- FIN DE LA MODIFICACIÓN ---
