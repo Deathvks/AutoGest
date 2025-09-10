@@ -5,7 +5,6 @@ const path = require('path');
 const { Car, Location, Expense, Incident, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
-// ... (el resto de las funciones como getAllCars, createCar, updateCar se mantienen igual)
 const sanitizeFilename = (name) => {
     if (typeof name !== 'string') return '';
     const map = {
@@ -174,7 +173,7 @@ exports.updateCar = async (req, res) => {
                 updateData[field] = (!updateData[field] || isNaN(new Date(updateData[field]).getTime())) ? null : updateData[field];
             }
         });
-
+        
         const optionalTextFields = ['fuel', 'transmission', 'vin', 'location', 'notes'];
         optionalTextFields.forEach(field => {
             if (updateData[field] !== undefined && String(updateData[field]).trim() === '') {
@@ -256,17 +255,21 @@ exports.updateCar = async (req, res) => {
     }
 };
 
+// --- INICIO DE LA MODIFICACIÓN ---
 exports.deleteCar = async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {
-        const car = await Car.findOne({ where: { id: req.params.id, userId: req.user.id } });
+        const car = await Car.findOne({ 
+            where: { id: req.params.id, userId: req.user.id },
+            transaction 
+        });
 
         if (!car) {
+            await transaction.rollback();
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para eliminarlo' });
         }
         
-        // --- INICIO DE LA MODIFICACIÓN (TEMPORAL) ---
-        // Se comentan las líneas que borran archivos para aislar el problema.
-        /*
+        // 1. Borrar archivos físicos
         deleteFile(car.imageUrl);
         deleteFile(car.reservationPdfUrl);
         
@@ -274,9 +277,7 @@ exports.deleteCar = async (req, res) => {
         if (car.documentUrls && typeof car.documentUrls === 'string') {
             try {
                 const parsed = JSON.parse(car.documentUrls);
-                if (Array.isArray(parsed)) {
-                    documentUrlsArray = parsed;
-                }
+                if (Array.isArray(parsed)) documentUrlsArray = parsed;
             } catch (e) {
                 console.error("Error al parsear documentUrls al eliminar:", e);
             }
@@ -287,15 +288,24 @@ exports.deleteCar = async (req, res) => {
         if (documentUrlsArray.length > 0) {
             documentUrlsArray.forEach(doc => deleteFile(doc.path));
         }
-        */
-        // --- FIN DE LA MODIFICACIÓN (TEMPORAL) ---
 
-        await car.destroy();
+        // 2. Borrar registros asociados manualmente
+        await Expense.destroy({ where: { carLicensePlate: car.licensePlate }, transaction });
+        await Incident.destroy({ where: { carId: car.id }, transaction });
+        
+        // 3. Borrar el coche
+        await car.destroy({ transaction });
+        
+        // 4. Confirmar la transacción
+        await transaction.commit();
         
         res.status(200).json({ message: 'Coche eliminado correctamente' });
 
     } catch (error) {
+        // Si algo falla, revertir todo
+        await transaction.rollback();
         console.error("Error al eliminar coche:", error);
         res.status(500).json({ error: 'Error al eliminar el coche' });
     }
 };
+// --- FIN DE LA MODIFICACIÓN ---
