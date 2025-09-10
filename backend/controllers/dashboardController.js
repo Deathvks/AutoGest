@@ -1,5 +1,5 @@
 // autogest-app/backend/controllers/dashboardController.js
-const { Car, Expense, sequelize } = require('../models');
+const { Car, Expense, sequelize } = require('../models'); // Asegúrate de que sequelize esté aquí
 const { Op } = require('sequelize');
 
 exports.getDashboardStats = async (req, res) => {
@@ -21,17 +21,12 @@ exports.getDashboardStats = async (req, res) => {
             }
         }
 
-        // --- CÁLCULOS PRINCIPALES ---
-
-        // 1. Inversión Total: Suma del precio de compra de TODOS los coches + TODOS los gastos
         const totalPurchasePrice = await Car.sum('purchasePrice', { where: { userId, ...(startDate || endDate ? { createdAt: dateFilter } : {}) } });
         const totalExpenses = await Expense.sum('amount', { where: { userId, ...(startDate || endDate ? { date: dateFilter } : {}) } });
         const totalInvestment = (totalPurchasePrice || 0) + (totalExpenses || 0);
 
-        // 2. Ingresos Totales: Suma del precio de venta de los coches vendidos
         const totalRevenue = await Car.sum('salePrice', { where: { userId, status: 'Vendido', ...(startDate || endDate ? { saleDate: dateFilter } : {}) } });
 
-        // --- CÁLCULO DE BENEFICIO CORREGIDO ---
         let totalProfit = 0;
         const soldCars = await Car.findAll({
             where: { userId, status: 'Vendido', salePrice: { [Op.gt]: 0 }, ...(startDate || endDate ? { saleDate: dateFilter } : {}) }
@@ -55,7 +50,6 @@ exports.getDashboardStats = async (req, res) => {
             }, 0);
         }
 
-        // Logs de depuración para el servidor
         console.log(`[Dashboard Stats for UserID: ${userId}]`);
         console.log(`- Inversión (Compras): ${totalPurchasePrice || 0}`);
         console.log(`- Gastos Totales: ${totalExpenses || 0}`);
@@ -76,7 +70,7 @@ exports.getDashboardStats = async (req, res) => {
     }
 };
 
-
+// --- FUNCIÓN MODIFICADA ---
 exports.getActivityHistory = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -84,6 +78,7 @@ exports.getActivityHistory = async (req, res) => {
         const limit = 10;
         const offset = (page - 1) * limit;
 
+        // 1. Obtener los coches para eventos de creación, venta y reserva
         const cars = await Car.findAll({
             where: { userId },
             attributes: ['id', 'make', 'model', 'licensePlate', 'status', 'createdAt', 'updatedAt', 'saleDate', 'reservationExpiry'],
@@ -118,9 +113,36 @@ exports.getActivityHistory = async (req, res) => {
                 });
             }
         });
+
+        // 2. Obtener todos los gastos del usuario
+        const expenses = await Expense.findAll({
+            where: { userId },
+            order: [['date', 'DESC']],
+        });
+
+        // 3. Crear actividades para cada gasto
+        expenses.forEach(expense => {
+            const car = expense.carLicensePlate ? cars.find(c => c.licensePlate === expense.carLicensePlate) : null;
+            let description = '';
+            
+            if (car) { // Gasto asociado a un coche
+                description = `Nuevo gasto de ${expense.category} en ${car.make} ${car.model}`;
+            } else { // Gasto general
+                description = `Nuevo gasto general de ${expense.category}`;
+            }
+
+            activities.push({
+                type: 'gasto',
+                description: description,
+                date: expense.createdAt, // Usamos createdAt para la fecha del evento
+                carId: car ? car.id : null, // Asociamos el carId si existe
+            });
+        });
         
+        // 4. Ordenar todas las actividades por fecha descendente
         activities.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+        // 5. Paginación
         const paginatedActivities = activities.slice(offset, offset + limit);
         const totalPages = Math.ceil(activities.length / limit);
 

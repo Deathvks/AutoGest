@@ -7,7 +7,7 @@ import {
     faCheckCircle, faPencilAlt, faTrashAlt, faFileInvoiceDollar, faBan, faHandHoldingUsd,
     faBell, faTags, faBolt, faShieldAlt, faPaperclip, faEdit, faUser, faPhone, faEnvelope, 
     faMapPin, faUndo, faClock, faFilePdf, faFileInvoice, faTruckPickup,
-    faCalendarDay, faCalendarCheck // <-- ICONOS AÑADIDOS
+    faCalendarDay, faCalendarCheck
 } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
@@ -27,6 +27,23 @@ const DetailItem = ({ icon, label, value }) => (
 const FileLinkItem = ({ label, urls, car }) => {
     const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Asegurarse de que `urls` sea siempre un array, incluso si viene como un string '[]'
+    let documentUrlsArray = [];
+    if (Array.isArray(urls)) {
+        documentUrlsArray = urls;
+    } else if (typeof urls === 'string') {
+        try {
+            const parsed = JSON.parse(urls);
+            if (Array.isArray(parsed)) {
+                documentUrlsArray = parsed;
+            }
+        } catch (e) {
+            // No hacer nada si no es un JSON válido
+        }
+    }
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const handleDownload = async (url, filename) => {
         try {
             const response = await fetch(`${API_BASE_URL}${url}`);
@@ -44,7 +61,7 @@ const FileLinkItem = ({ label, urls, car }) => {
         }
     };
 
-    const allFiles = [...(urls || [])];
+    const allFiles = [...documentUrlsArray];
     if (car.reservationPdfUrl) {
         allFiles.push({
             path: car.reservationPdfUrl,

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCar, faCalendarPlus, faReceipt, faTags, faChevronLeft, faChevronRight, faFilter, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCar, faCalendarPlus, faReceipt, faTags, faChevronLeft, faChevronRight, faFilter, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import api from '../services/api';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
@@ -51,6 +51,7 @@ const ActivityHistory = () => {
             case 'creacion': return { icon: faCalendarPlus, color: 'text-blue-accent' };
             case 'venta': return { icon: faReceipt, color: 'text-green-accent' };
             case 'reserva': return { icon: faTags, color: 'text-yellow-accent' };
+            case 'gasto': return { icon: faWrench, color: 'text-red-accent' };
             default: return { icon: faCar, color: 'text-text-secondary' };
         }
     };
@@ -62,11 +63,18 @@ const ActivityHistory = () => {
                 <div className="flex-grow flex items-center justify-center text-text-secondary">Cargando...</div>
             ) : activityData.activities.length > 0 ? (
                 <>
-                    <div className="space-y-4 flex-grow">
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <div className="space-y-4 flex-grow overflow-y-auto">
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                         {activityData.activities.map((item, index) => {
                             const { icon, color } = getActivityIcon(item.type);
+                            const isClickable = !!item.carId;
                             return (
-                                <div key={index} onClick={() => handleCarClick(item.carId)} className="flex items-center gap-4 cursor-pointer p-2 rounded-md hover:bg-component-bg-hover">
+                                <div 
+                                    key={index} 
+                                    onClick={() => isClickable && handleCarClick(item.carId)} 
+                                    className={`flex items-center gap-4 p-2 rounded-md ${isClickable ? 'cursor-pointer hover:bg-component-bg-hover' : 'cursor-default'}`}
+                                >
                                     <FontAwesomeIcon icon={icon} className={`w-5 h-5 ${color}`} />
                                     <div className="flex-grow">
                                         <p className="text-sm font-medium text-text-primary">{item.description}</p>
@@ -186,7 +194,6 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
                 
                 {showFilters && (
                     <div className="mt-4 pt-4 border-t border-border-color animate-fade-in">
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
                             <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                                 <div>
@@ -200,7 +207,6 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
                             </div>
                             <button onClick={clearDates} className="w-full sm:w-auto text-sm text-accent hover:opacity-80 transition-opacity px-4 py-2">Limpiar</button>
                         </div>
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </div>
                 )}
             </div>
