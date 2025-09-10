@@ -3,6 +3,10 @@ module.exports = {
   apps : [{
     name   : "backend",
     script : "./index.js",
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Ignorar el fichero .env en producción para evitar conflictos
+    ignore_watch: [".env"],
+    // --- FIN DE LA MODIFICACIÓN ---
     env_production: {
        NODE_ENV: "production",
        // --- Configuración de la Base de Datos de PRODUCCIÓN ---
