@@ -5,6 +5,7 @@ const path = require('path');
 const { Car, Location, Expense, Incident, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
+// ... (el resto de las funciones como getAllCars, createCar, updateCar se mantienen igual)
 const sanitizeFilename = (name) => {
     if (typeof name !== 'string') return '';
     const map = {
@@ -173,7 +174,7 @@ exports.updateCar = async (req, res) => {
                 updateData[field] = (!updateData[field] || isNaN(new Date(updateData[field]).getTime())) ? null : updateData[field];
             }
         });
-        
+
         const optionalTextFields = ['fuel', 'transmission', 'vin', 'location', 'notes'];
         optionalTextFields.forEach(field => {
             if (updateData[field] !== undefined && String(updateData[field]).trim() === '') {
@@ -263,10 +264,12 @@ exports.deleteCar = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para eliminarlo' });
         }
         
+        // --- INICIO DE LA MODIFICACIÓN (TEMPORAL) ---
+        // Se comentan las líneas que borran archivos para aislar el problema.
+        /*
         deleteFile(car.imageUrl);
         deleteFile(car.reservationPdfUrl);
         
-        // --- INICIO DE LA CORRECCIÓN ---
         let documentUrlsArray = [];
         if (car.documentUrls && typeof car.documentUrls === 'string') {
             try {
@@ -284,7 +287,8 @@ exports.deleteCar = async (req, res) => {
         if (documentUrlsArray.length > 0) {
             documentUrlsArray.forEach(doc => deleteFile(doc.path));
         }
-        // --- FIN DE LA CORRECCIÓN ---
+        */
+        // --- FIN DE LA MODIFICACIÓN (TEMPORAL) ---
 
         await car.destroy();
         
