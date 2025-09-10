@@ -289,8 +289,8 @@ exports.deleteCar = async (req, res) => {
         }
 
         // 2. Borrar registros asociados manualmente
-        await Expense.destroy({ where: { carLicensePlate: car.licensePlate }, transaction });
         await Incident.destroy({ where: { carId: car.id }, transaction });
+        await Expense.destroy({ where: { carLicensePlate: car.licensePlate }, transaction });
         
         // 3. Borrar el coche
         await car.destroy({ transaction });
