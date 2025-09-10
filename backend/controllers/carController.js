@@ -120,6 +120,9 @@ exports.createCar = async (req, res) => {
 };
 
 exports.updateCar = async (req, res) => {
+    // --- NUEVO LOG ---
+    console.log(`[LOG] Iniciando updateCar para el coche ID: ${req.params.id}`);
+    
     try {
         const car = await Car.findOne({ where: { id: req.params.id, userId: req.user.id } });
         if (!car) {
@@ -192,20 +195,21 @@ exports.updateCar = async (req, res) => {
             });
         }
         
-        // --- INICIO DE LA CORRECCIÓN ---
-        // Asegurarse de que `car.documentUrls` sea un array antes de cualquier operación.
         let currentDocumentUrls = [];
-        if (typeof car.documentUrls === 'string') {
-            try {
-                currentDocumentUrls = JSON.parse(car.documentUrls);
-            } catch (e) {
-                 // Si falla el parseo, asumimos que no es un JSON válido y lo ignoramos o tratamos como array vacío.
-                console.error('Error al parsear documentUrls, se tratará como un array vacío:', e);
+        if (car.documentUrls) {
+            if (typeof car.documentUrls === 'string') {
+                try {
+                    const parsed = JSON.parse(car.documentUrls);
+                    if (Array.isArray(parsed)) {
+                        currentDocumentUrls = parsed;
+                    }
+                } catch (e) {
+                    console.error(`[LOG] Error al parsear documentUrls para el coche ID ${car.id}:`, e);
+                }
+            } else if (Array.isArray(car.documentUrls)) {
+                currentDocumentUrls = car.documentUrls;
             }
-        } else if (Array.isArray(car.documentUrls)) {
-            currentDocumentUrls = car.documentUrls;
         }
-
 
         if (updateData.filesToRemove) {
             try {
@@ -214,7 +218,9 @@ exports.updateCar = async (req, res) => {
                     filesToRemovePaths.forEach(deleteFile);
                     updateData.documentUrls = currentDocumentUrls.filter(doc => !filesToRemovePaths.includes(doc.path));
                 }
-            } catch (e) { console.error('Error parsing filesToRemove:', e); }
+            } catch (e) { 
+                console.error(`[LOG] Error al procesar filesToRemove para el coche ID ${car.id}:`, e);
+            }
         }
 
         if (req.files) {
@@ -223,7 +229,6 @@ exports.updateCar = async (req, res) => {
                 updateData.imageUrl = `/uploads/${req.files.image[0].filename}`;
             }
             if (req.files.documents && req.files.documents.length > 0) {
-                // Usar la variable `updateData.documentUrls` si ya fue modificada, si no, la original parseada
                 const existingDocs = updateData.documentUrls || currentDocumentUrls;
                 const newDocs = req.files.documents.map(file => ({
                     path: `/documents/${file.filename}`,
@@ -232,12 +237,13 @@ exports.updateCar = async (req, res) => {
                 updateData.documentUrls = [...existingDocs, ...newDocs];
             }
         }
-        // --- FIN DE LA CORRECCIÓN ---
         
         await car.update(updateData);
         res.status(200).json(car);
     } catch (error) {
-        console.error(error);
+        // --- LOG DE ERROR DETALLADO ---
+        console.error(`[ERROR] Fallo en updateCar para el coche ID: ${req.params.id}. Error:`, error);
+        
         if (error.name === 'SequelizeUniqueConstraintError') {
             const field = error.errors[0]?.path;
             const value = error.errors[0]?.value;
