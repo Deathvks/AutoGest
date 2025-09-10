@@ -1,52 +1,67 @@
 // autogest-app/backend/controllers/dashboardController.js
-const { Car, Expense } = require('../models');
+const { Car, Expense, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
-// --- OBTENER ESTADÍSTICAS FILTRADAS POR FECHA ---
 exports.getDashboardStats = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
         const userId = req.user.id;
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se crean objetos de filtro base para cada consulta
-        const carPurchaseFilter = { userId };
-        const expenseFilter = { userId };
-        const carSaleFilter = { userId, status: 'Vendido' };
-
-        // Se ajusta la fecha final para que incluya el día completo
-        const endOfDay = endDate ? new Date(endDate) : null;
-        if (endOfDay) {
-            endOfDay.setHours(23, 59, 59, 999);
+        const dateFilter = {};
+        if (startDate || endDate) {
+            const endOfDay = endDate ? new Date(endDate) : new Date();
+            if (endDate) endOfDay.setHours(23, 59, 59, 999);
+            
+            if (startDate && endDate) {
+                dateFilter[Op.between] = [new Date(startDate), endOfDay];
+            } else if (startDate) {
+                dateFilter[Op.gte] = new Date(startDate);
+            } else {
+                dateFilter[Op.lte] = endOfDay;
+            }
         }
-        
-        // Se aplica la lógica de fechas a cada filtro
-        if (startDate && endDate) {
-            carPurchaseFilter.createdAt = { [Op.between]: [new Date(startDate), endOfDay] };
-            expenseFilter.date = { [Op.between]: [new Date(startDate), endOfDay] };
-            carSaleFilter.saleDate = { [Op.between]: [new Date(startDate), endOfDay] };
-        } else if (startDate) {
-            // Desde la fecha de inicio hasta ahora
-            carPurchaseFilter.createdAt = { [Op.gte]: new Date(startDate) };
-            expenseFilter.date = { [Op.gte]: new Date(startDate) };
-            carSaleFilter.saleDate = { [Op.gte]: new Date(startDate) };
-        } else if (endDate) {
-            // Desde el principio hasta la fecha de fin
-            carPurchaseFilter.createdAt = { [Op.lte]: endOfDay };
-            expenseFilter.date = { [Op.lte]: endOfDay };
-            carSaleFilter.saleDate = { [Op.lte]: endOfDay };
+
+        // --- CÁLCULOS PRINCIPALES ---
+
+        // 1. Inversión Total: Suma del precio de compra de TODOS los coches + TODOS los gastos
+        const totalPurchasePrice = await Car.sum('purchasePrice', { where: { userId, ...(startDate || endDate ? { createdAt: dateFilter } : {}) } });
+        const totalExpenses = await Expense.sum('amount', { where: { userId, ...(startDate || endDate ? { date: dateFilter } : {}) } });
+        const totalInvestment = (totalPurchasePrice || 0) + (totalExpenses || 0);
+
+        // 2. Ingresos Totales: Suma del precio de venta de los coches vendidos
+        const totalRevenue = await Car.sum('salePrice', { where: { userId, status: 'Vendido', ...(startDate || endDate ? { saleDate: dateFilter } : {}) } });
+
+        // --- CÁLCULO DE BENEFICIO CORREGIDO ---
+        let totalProfit = 0;
+        const soldCars = await Car.findAll({
+            where: { userId, status: 'Vendido', salePrice: { [Op.gt]: 0 }, ...(startDate || endDate ? { saleDate: dateFilter } : {}) }
+        });
+
+        if (soldCars.length > 0) {
+            const soldCarsExpenses = await Expense.findAll({
+                where: {
+                    userId,
+                    carLicensePlate: { [Op.in]: soldCars.map(c => c.licensePlate) }
+                }
+            });
+
+            totalProfit = soldCars.reduce((profitSum, car) => {
+                const expensesForThisCar = soldCarsExpenses
+                    .filter(exp => exp.carLicensePlate === car.licensePlate)
+                    .reduce((expSum, exp) => expSum + (exp.amount || 0), 0);
+                
+                const carProfit = (car.salePrice || 0) - (car.purchasePrice || 0) - expensesForThisCar;
+                return profitSum + carProfit;
+            }, 0);
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
-        // --- Consultas a la base de datos con los filtros actualizados ---
-        const totalPurchasePriceAllCars = await Car.sum('purchasePrice', { where: carPurchaseFilter });
-        const totalExpenses = await Expense.sum('amount', { where: expenseFilter });
-        const totalRevenue = await Car.sum('salePrice', { where: carSaleFilter });
-        const purchasePriceOfSoldCars = await Car.sum('purchasePrice', { where: carSaleFilter });
-
-        // --- Cálculos ---
-        const totalInvestment = (totalPurchasePriceAllCars || 0) + (totalExpenses || 0);
-        const totalProfit = (totalRevenue || 0) - ((purchasePriceOfSoldCars || 0) + (totalExpenses || 0));
+        // Logs de depuración para el servidor
+        console.log(`[Dashboard Stats for UserID: ${userId}]`);
+        console.log(`- Inversión (Compras): ${totalPurchasePrice || 0}`);
+        console.log(`- Gastos Totales: ${totalExpenses || 0}`);
+        console.log(`- Inversión Total: ${totalInvestment}`);
+        console.log(`- Ingresos Totales: ${totalRevenue || 0}`);
+        console.log(`- Beneficio Neto: ${totalProfit}`);
 
         res.status(200).json({
             totalInvestment,
@@ -62,7 +77,6 @@ exports.getDashboardStats = async (req, res) => {
 };
 
 
-// --- OBTENER HISTORIAL DE ACTIVIDAD PAGINADO ---
 exports.getActivityHistory = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -79,7 +93,6 @@ exports.getActivityHistory = async (req, res) => {
         let activities = [];
 
         cars.forEach(car => {
-            // Evento de Creación
             activities.push({
                 type: 'creacion',
                 description: `Se añadió el coche ${car.make} ${car.model}`,
@@ -87,7 +100,6 @@ exports.getActivityHistory = async (req, res) => {
                 carId: car.id,
             });
 
-            // Evento de Venta
             if (car.status === 'Vendido' && car.saleDate) {
                 activities.push({
                     type: 'venta',
@@ -97,21 +109,18 @@ exports.getActivityHistory = async (req, res) => {
                 });
             }
 
-            // Evento de Reserva (usamos updatedAt porque es cuando cambia el estado)
             if (car.status === 'Reservado' && car.reservationExpiry) {
                  activities.push({
                     type: 'reserva',
                     description: `Se reservó el coche ${car.make} ${car.model}`,
-                    date: car.updatedAt, // La reserva actualiza el coche
+                    date: car.updatedAt,
                     carId: car.id,
                 });
             }
         });
         
-        // Ordenar todas las actividades por fecha descendente
         activities.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // Paginación
         const paginatedActivities = activities.slice(offset, offset + limit);
         const totalPages = Math.ceil(activities.length / limit);
 
