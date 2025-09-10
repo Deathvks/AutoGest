@@ -91,7 +91,6 @@ const Car = sequelize.define('Car', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     gestoriaPickupDate: {
         type: DataTypes.DATEONLY,
         allowNull: true,
@@ -100,19 +99,29 @@ const Car = sequelize.define('Car', {
         type: DataTypes.DATEONLY,
         allowNull: true,
     },
-    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Habilitar el borrado lógico (soft delete)
+    paranoid: true, 
+    // Modificar los índices para que permitan duplicados en registros borrados
     indexes: [
         {
             unique: true,
-            fields: ['licensePlate']
+            fields: ['licensePlate'],
+            where: {
+                deletedAt: null // La matrícula debe ser única solo si el coche NO está borrado
+            }
         },
         {
             unique: true,
-            fields: ['vin']
+            fields: ['vin'],
+            where: {
+                deletedAt: null // El VIN debe ser único solo si el coche NO está borrado
+            }
         }
     ]
+    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 module.exports = Car;

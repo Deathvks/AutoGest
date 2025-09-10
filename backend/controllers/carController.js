@@ -173,16 +173,13 @@ exports.updateCar = async (req, res) => {
                 updateData[field] = (!updateData[field] || isNaN(new Date(updateData[field]).getTime())) ? null : updateData[field];
             }
         });
-
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Estandarizar campos de texto opcionales: si están vacíos, se guardan como null
+        
         const optionalTextFields = ['fuel', 'transmission', 'vin', 'location', 'notes'];
         optionalTextFields.forEach(field => {
             if (updateData[field] !== undefined && String(updateData[field]).trim() === '') {
                 updateData[field] = null;
             }
         });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (updateData.buyerDetails) {
             try {
@@ -268,9 +265,26 @@ exports.deleteCar = async (req, res) => {
         
         deleteFile(car.imageUrl);
         deleteFile(car.reservationPdfUrl);
-        if (car.documentUrls && car.documentUrls.length > 0) {
-            car.documentUrls.forEach(doc => deleteFile(doc.path));
+        
+        // --- INICIO DE LA CORRECCIÓN ---
+        let documentUrlsArray = [];
+        if (car.documentUrls && typeof car.documentUrls === 'string') {
+            try {
+                const parsed = JSON.parse(car.documentUrls);
+                if (Array.isArray(parsed)) {
+                    documentUrlsArray = parsed;
+                }
+            } catch (e) {
+                console.error("Error al parsear documentUrls al eliminar:", e);
+            }
+        } else if (Array.isArray(car.documentUrls)) {
+            documentUrlsArray = car.documentUrls;
         }
+
+        if (documentUrlsArray.length > 0) {
+            documentUrlsArray.forEach(doc => deleteFile(doc.path));
+        }
+        // --- FIN DE LA CORRECCIÓN ---
 
         await car.destroy();
         
