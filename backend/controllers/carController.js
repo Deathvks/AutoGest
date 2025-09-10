@@ -249,7 +249,7 @@ exports.updateCar = async (req, res) => {
         if (error.name === 'SequelizeUniqueConstraintError') {
             const field = error.errors[0]?.path;
             const value = error.errors[0]?.value;
-            return res.status(400).json({ error: `Ya existe un coche con ${field === 'licensePlate' ? 'la matrícula' : 'el VIN'} ${value}.` });
+            return res.status(400).json({ error: `Ya existe un coche con ${field === 'licensePlate' ? 'la matrícula' : 'el VIN'} ${value}` });
         }
         res.status(500).json({ error: 'Error al actualizar el coche' });
     }
@@ -258,8 +258,11 @@ exports.updateCar = async (req, res) => {
 exports.deleteCar = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se añade `paranoid: false` para asegurar que busca también entre los "borrados"
         const car = await Car.findOne({ 
             where: { id: req.params.id, userId: req.user.id },
+            paranoid: false, 
             transaction 
         });
 
@@ -268,7 +271,6 @@ exports.deleteCar = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para eliminarlo' });
         }
         
-        // 1. Borrar archivos físicos
         deleteFile(car.imageUrl);
         deleteFile(car.reservationPdfUrl);
         
@@ -288,22 +290,20 @@ exports.deleteCar = async (req, res) => {
             documentUrlsArray.forEach(doc => deleteFile(doc.path));
         }
 
-        // 2. Borrar registros asociados manualmente
         await Incident.destroy({ where: { carId: car.id }, transaction });
         await Expense.destroy({ where: { carLicensePlate: car.licensePlate }, transaction });
         
-        // 3. Borrar el coche
-        await car.destroy({ transaction });
+        // Se usa `force: true` para forzar un borrado físico y permanente
+        await car.destroy({ force: true, transaction });
         
-        // 4. Confirmar la transacción
         await transaction.commit();
         
-        res.status(200).json({ message: 'Coche eliminado correctamente' });
+        res.status(200).json({ message: 'Coche eliminado permanentemente' });
 
     } catch (error) {
-        // Si algo falla, revertir todo
         await transaction.rollback();
-        console.error("Error al eliminar coche:", error);
+        console.error("Error al eliminar coche (forzado):", error);
         res.status(500).json({ error: 'Error al eliminar el coche' });
     }
 };
+// --- FIN DE LA MODIFICACIÓN ---
