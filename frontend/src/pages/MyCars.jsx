@@ -1,10 +1,11 @@
 // autogest-app/frontend/src/pages/MyCars.jsx
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSearch, faTimes, faFilter, faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags, faShieldAlt, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSearch, faTimes, faFilter, faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags, faShieldAlt, faExclamationTriangle, faClock } from '@fortawesome/free-solid-svg-icons';
 import Select from '../components/Select';
 import FilterModal from '../components/modals/FilterModal';
+import { AuthContext } from '../context/AuthContext';
 
 const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
@@ -23,6 +24,42 @@ const ToggleSwitch = ({ enabled, onChange }) => (
 
 // Tarjeta de Coche
 const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance, onAddIncidentClick }) => {
+  const { user } = useContext(AuthContext);
+  const [remainingTime, setRemainingTime] = useState('');
+
+  const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
+  const isLockedForUser = isReservedAndActive && user.role !== 'admin';
+
+  useEffect(() => {
+    if (!isReservedAndActive) return;
+
+    const interval = setInterval(() => {
+        const now = new Date();
+        const expiry = new Date(car.reservationExpiry);
+        const diff = expiry - now;
+
+        if (diff <= 0) {
+            setRemainingTime('Expirado');
+            clearInterval(interval);
+            return;
+        }
+
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const m = Math.floor((diff / 1000 / 60) % 60);
+        
+        let timeString = '';
+        if (d > 0) timeString += `${d}d `;
+        if (h > 0 || d > 0) timeString += `${h}h `;
+        timeString += `${m}m`;
+        
+        setRemainingTime(timeString.trim());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [car.reservationExpiry, isReservedAndActive]);
+
+
   const getStatusChipClass = (status) => {
     switch (status) {
       case 'Vendido': return 'bg-green-accent/10 text-green-accent';
@@ -44,8 +81,7 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
   const imageUrl = car.imageUrl ? `${API_BASE_URL}${car.imageUrl}` : `https://placehold.co/400x300/f1f3f5/6c757d?text=${car.make}+${car.model}`;
 
   return (
-    <div className="bg-component-bg rounded-lg shadow-sm border border-border-color overflow-hidden flex flex-col sm:flex-row transition-shadow duration-300 hover:shadow-lg">
-      {/* Imagen: 4:3 en escritorio; cuadrada en móvil */}
+    <div className={`bg-component-bg rounded-lg shadow-sm border border-border-color overflow-hidden flex flex-col sm:flex-row transition-all duration-300 hover:shadow-lg ${isLockedForUser ? 'opacity-70' : ''}`}>
       <div className="flex-shrink-0 w-full aspect-square overflow-hidden sm:w-48 sm:aspect-[4/3] lg:w-60 lg:aspect-[4/3]">
         <img
           src={imageUrl}
@@ -60,12 +96,18 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
           <div>
             <h3 className="text-xl font-bold text-text-primary truncate">{car.make} {car.model}</h3>
             <p className="text-sm text-text-secondary">{car.licensePlate}</p>
+            {isReservedAndActive && (
+                <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-yellow-accent">
+                    <FontAwesomeIcon icon={faClock} />
+                    <span>Quedan: {remainingTime}</span>
+                </div>
+            )}
           </div>
           <span className={`flex-shrink-0 text-xs font-bold px-3 py-1 rounded-full ${getStatusChipClass(car.status)} ml-2`}>
             {car.status}
           </span>
         </div>
-
+        
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-sm text-text-secondary my-4">
           <div className="flex items-center gap-2 truncate" title={`${new Intl.NumberFormat('es-ES').format(car.km)} km`}>
             <FontAwesomeIcon icon={faRoad} className="w-4 h-4" />
@@ -134,12 +176,12 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
               </button>
             )}
             {(car.status === 'En venta' || car.status === 'Reservado') && (
-              <button onClick={() => onSellClick(car)} className="p-2 aspect-square text-green-accent bg-green-accent/10 rounded-lg hover:bg-green-accent/20 flex items-center justify-center transition-colors" title="Vender">
+              <button onClick={() => onSellClick(car)} disabled={isLockedForUser} className="p-2 aspect-square text-green-accent bg-green-accent/10 rounded-lg hover:bg-green-accent/20 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Vender">
                 <FontAwesomeIcon icon={faHandHoldingUsd} />
               </button>
             )}
             {car.status === 'En venta' && (
-              <button onClick={() => onReserveClick(car)} className="p-2 aspect-square text-yellow-accent bg-yellow-accent/10 rounded-lg hover:bg-yellow-accent/20 flex items-center justify-center transition-colors" title="Reservar">
+              <button onClick={() => onReserveClick(car)} disabled={isLockedForUser} className="p-2 aspect-square text-yellow-accent bg-yellow-accent/10 rounded-lg hover:bg-yellow-accent/20 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Reservar">
                 <FontAwesomeIcon icon={faBell} />
               </button>
             )}
@@ -244,7 +286,6 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
           <FilterSidebar cars={cars} filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
         </aside>
 
-        {/* Más ancho, pero con margen de seguridad a la derecha para no chocar con el badge */}
         <main className="flex-1 space-y-6 min-w-0 max-w-5xl 2xl:max-w-6xl lg:pr-12 xl:pr-16">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="relative w-full sm:flex-grow">

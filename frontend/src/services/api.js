@@ -105,6 +105,19 @@ const api = {
         updateUser: (userId, userData) => fetch(`${BASE_URL}/admin/users/${userId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(userData) }).then(handleProtectedResponse),
         deleteUser: (userId) => fetch(`${BASE_URL}/admin/users/${userId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
     },
+
+    // --- NUEVAS FUNCIONES PARA EL DASHBOARD ---
+    dashboard: {
+        getStats: (startDate, endDate) => {
+            const params = new URLSearchParams();
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            return fetch(`${BASE_URL}/dashboard/stats?${params.toString()}`, { headers: getAuthHeaders() }).then(handleProtectedResponse);
+        },
+        getActivity: (page = 1) => {
+            return fetch(`${BASE_URL}/dashboard/activity?page=${page}`, { headers: getAuthHeaders() }).then(handleProtectedResponse);
+        }
+    }
 };
 
 export default api;

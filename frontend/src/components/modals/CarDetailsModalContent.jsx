@@ -1,13 +1,18 @@
 // autogest-app/frontend/src/components/modals/CarDetailsModalContent.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTimes, faEuroSign, faTachometerAlt, faGasPump, faCogs, faCalendarAlt, 
     faMapMarkerAlt, faStickyNote, faFingerprint, faIdCard, faExclamationTriangle, 
     faCheckCircle, faPencilAlt, faTrashAlt, faFileInvoiceDollar, faBan, faHandHoldingUsd,
-    faBell, faTags, faBolt, faShieldAlt, faPaperclip, faEdit, faUser, faPhone, faEnvelope, faMapPin, faUndo
+    faBell, faTags, faBolt, faShieldAlt, faPaperclip, faEdit, faUser, faPhone, faEnvelope, 
+    faMapPin, faUndo, faClock, faFilePdf, faFileInvoice, faTruckPickup,
+    faCalendarDay, faCalendarCheck // <-- ICONOS AÑADIDOS
 } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
+import { AuthContext } from '../../context/AuthContext';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const DetailItem = ({ icon, label, value }) => (
     <div className="flex flex-col">
@@ -19,32 +24,35 @@ const DetailItem = ({ icon, label, value }) => (
     </div>
 );
 
-const FileLinkItem = ({ label, urls }) => {
+const FileLinkItem = ({ label, urls, car }) => {
     const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
-    const formatFilename = (url) => {
-        const filename = url.split('/').pop().split('?')[0]; // Limpia query params si los hubiera
-        const maxLength = 25;
-
-        if (filename.length <= maxLength) {
-            return filename;
+    const handleDownload = async (url, filename) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}${url}`);
+            const blob = await response.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+        } catch (error) {
+            console.error("Error al descargar el archivo:", error);
         }
-
-        const lastDot = filename.lastIndexOf('.');
-        if (lastDot === -1) { // Sin extensión
-            return filename.substring(0, maxLength - 3) + '...';
-        }
-
-        const name = filename.substring(0, lastDot);
-        const ext = filename.substring(lastDot);
-        
-        const maxNameLength = maxLength - ext.length - 3;
-        const truncatedName = name.substring(0, maxNameLength);
-        
-        return truncatedName + '...' + ext;
     };
 
-    if (!urls || urls.length === 0) {
+    const allFiles = [...(urls || [])];
+    if (car.reservationPdfUrl) {
+        allFiles.push({
+            path: car.reservationPdfUrl,
+            originalname: `Reserva_${car.licensePlate}.pdf`
+        });
+    }
+
+    if (allFiles.length === 0) {
         return <DetailItem icon={faPaperclip} label={label} value="No hay archivos" />;
     }
 
@@ -55,19 +63,27 @@ const FileLinkItem = ({ label, urls }) => {
                 <span>{label}</span>
             </div>
             <div className="flex flex-col gap-1">
-                {urls.map((url, index) => (
-                    <a 
-                        href={`${API_BASE_URL}${url}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        key={index}
-                        className="text-sm font-semibold text-blue-accent hover:underline flex items-center gap-2"
-                        title={url.split('/').pop()}
-                    >
-                        <FontAwesomeIcon icon={faPaperclip} className="w-3 h-3" />
-                        {formatFilename(url)}
-                    </a>
-                ))}
+                {allFiles.map((fileOrUrl, index) => {
+                    const isObject = typeof fileOrUrl === 'object' && fileOrUrl !== null && fileOrUrl.path;
+                    const path = isObject ? fileOrUrl.path : fileOrUrl;
+                    const originalname = isObject ? fileOrUrl.originalname : path.split('/').pop();
+
+                    if (!path) return null;
+
+                    const isReservationPdf = path.includes('reservationPdf');
+
+                    return (
+                        <button 
+                            onClick={() => handleDownload(path, originalname)} 
+                            key={index}
+                            className="text-sm font-semibold text-blue-accent hover:underline flex items-center gap-2 text-left w-full"
+                            title={originalname}
+                        >
+                            <FontAwesomeIcon icon={isReservationPdf ? faFilePdf : faPaperclip} className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{originalname}</span>
+                        </button>
+                    );
+                })}
             </div>
         </div>
     );
@@ -147,9 +163,129 @@ const ExpenseItem = ({ expense, onEditExpenseClick, onDeleteExpense }) => {
 };
 
 
-const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onResolveIncident, onDeleteIncident, onDeleteNote, onAddExpenseClick, onEditExpenseClick, onDeleteExpense, onAddIncidentClick }) => {
+const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onResolveIncident, onDeleteIncident, onDeleteNote, onAddExpenseClick, onEditExpenseClick, onDeleteExpense, onAddIncidentClick, onGestoriaPickupClick, onGestoriaReturnClick }) => {
+    const { user } = useContext(AuthContext);
     const [carExpenses, setCarExpenses] = useState([]);
     const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
+    const [remainingTime, setRemainingTime] = useState('');
+    const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+
+    const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
+    const isLockedForUser = isReservedAndActive && user.role !== 'admin';
+    
+    const handleGeneratePdf = (type) => {
+        const doc = new jsPDF();
+        const isProforma = type === 'proforma';
+        const docTitle = isProforma ? 'FACTURA PROFORMA' : 'FACTURA';
+        
+        const sanitizeForFilename = (name) => {
+             if (typeof name !== 'string') return '';
+            const map = {
+                'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ñ': 'n', 'ç': 'c',
+                'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ñ': 'N', 'Ç': 'C'
+            };
+            name = name.replace(/[áéíóúñçÁÉÍÓÚÑÇ]/g, char => map[char]);
+            return name.replace(/[^a-zA-Z0-9_.-]/g, '_');
+        };
+
+        const safeMake = sanitizeForFilename(car.make);
+        const safeModel = sanitizeForFilename(car.model);
+        const safePlate = sanitizeForFilename(car.licensePlate);
+        const docFilename = `${isProforma ? 'Proforma' : 'Factura'}_${safeMake}_${safeModel}_${safePlate}.pdf`;
+
+        const formatCurrency = (value) => new Intl.NumberFormat('es-ES', {
+            style: 'currency',
+            currency: 'EUR'
+        }).format(value);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(22);
+        doc.text(docTitle, 105, 20, { align: 'center' });
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text("DATOS DEL VENDEDOR:", 14, 40);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Nombre: ${user.name}`, 14, 48);
+        doc.text(`Email: ${user.email}`, 14, 54);
+
+        const buyerDetails = car.buyerDetails || {};
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text("DATOS DEL COMPRADOR:", 110, 40);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Nombre: ${buyerDetails.name || ''} ${buyerDetails.lastName || ''}`, 110, 48);
+        doc.text(`DNI/NIE: ${buyerDetails.dni || ''}`, 110, 54);
+        doc.text(`Dirección: ${buyerDetails.address || ''}`, 110, 60);
+        doc.text(`Teléfono: ${buyerDetails.phone || ''}`, 110, 66);
+        doc.text(`Email: ${buyerDetails.email || ''}`, 110, 72);
+
+        const saleDate = car.saleDate ? new Date(car.saleDate).toLocaleDateString('es-ES') : new Date().toLocaleDateString('es-ES');
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text("DETALLES:", 14, 90);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Fecha: ${saleDate}`, 14, 98);
+        doc.text(`Nº Factura: ${isProforma ? 'PROFORMA' : car.id}-${new Date(car.saleDate || Date.now()).getFullYear()}`, 14, 104);
+
+        const finalPrice = car.salePrice || car.price;
+
+        autoTable(doc, {
+            startY: 115,
+            head: [['Concepto', 'Total']],
+            body: [[`Vehículo ${car.make} ${car.model} con matrícula ${car.licensePlate} y bastidor ${car.vin || 'N/A'}`, formatCurrency(finalPrice)]],
+            theme: 'striped',
+            headStyles: { fillColor: [41, 128, 185] },
+            columnStyles: { 1: { halign: 'right' } }
+        });
+        
+        const finalY = doc.lastAutoTable.finalY;
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'normal');
+        doc.text("Total a pagar:", 140, finalY + 20);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(formatCurrency(finalPrice), 205, finalY + 20, { align: 'right' });
+
+        if (isProforma) {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.text("Este documento no tiene validez fiscal. Es un presupuesto previo a la factura final.", 105, doc.internal.pageSize.height - 20, { align: 'center' });
+        }
+
+        doc.save(docFilename);
+    };
+
+    useEffect(() => {
+        if (!isReservedAndActive) return;
+
+        const interval = setInterval(() => {
+            const now = new Date();
+            const expiry = new Date(car.reservationExpiry);
+            const diff = expiry - now;
+
+            if (diff <= 0) {
+                setRemainingTime('Expirado');
+                clearInterval(interval);
+                return;
+            }
+
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const m = Math.floor((diff / 1000 / 60) % 60);
+            
+            let timeString = '';
+            if (d > 0) timeString += `${d}d `;
+            if (h > 0 || d > 0) timeString += `${h}h `;
+            timeString += `${m}m`;
+            
+            setRemainingTime(timeString.trim());
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [car.reservationExpiry, isReservedAndActive]);
 
     useEffect(() => {
         const fetchExpenses = async () => {
@@ -200,9 +336,7 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
     if (typeof car.tags === 'string') {
         try {
             tagsToShow = JSON.parse(car.tags);
-        } catch (e) {
-            tagsToShow = []; 
-        }
+        } catch (e) { tagsToShow = []; }
     } else if (Array.isArray(car.tags)) {
         tagsToShow = car.tags;
     }
@@ -223,7 +357,7 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="space-y-4">
                         <img 
-                            src={car.imageUrl || `https://placehold.co/600x400/f1f3f5/6c757d?text=${car.make}+${car.model}`}
+                            src={car.imageUrl ? `${API_BASE_URL}${car.imageUrl}` : `https://placehold.co/600x400/f1f3f5/6c757d?text=${car.make}+${car.model}`}
                             alt={`${car.make} ${car.model}`}
                             className="w-full h-auto object-cover rounded-lg border border-border-color"
                         />
@@ -245,6 +379,12 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
                             <span className={`mt-2 inline-block text-sm font-bold px-3 py-1 rounded-full ${getStatusChipClass(car.status)}`}>
                                 {car.status} {car.saleDate ? ` - ${new Date(car.saleDate).toLocaleDateString('es-ES')}` : ''}
                             </span>
+                            {isReservedAndActive && (
+                                <div className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-yellow-accent bg-yellow-accent/10 px-3 py-1 rounded-md">
+                                    <FontAwesomeIcon icon={faClock} />
+                                    <span>Quedan: {remainingTime}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="space-y-6">
@@ -266,7 +406,7 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
                                 <DetailItem icon={faIdCard} label="Matrícula" value={car.licensePlate} />
                                 <DetailItem icon={faFingerprint} label="Nº de Bastidor" value={car.vin} />
                                 <DetailItem icon={faMapMarkerAlt} label="Ubicación" value={car.location} />
-                                <FileLinkItem label="Archivos Varios" urls={car.documentUrls} />
+                                <FileLinkItem label="Archivos Varios" urls={car.documentUrls} car={car} />
                             </div>
                         </section>
                         
@@ -291,7 +431,36 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
                             <DetailItem icon={faEnvelope} label="Email" value={buyer.email} />
                             <DetailItem icon={faMapPin} label="Dirección" value={buyer.address} />
                         </div>
-                        <hr className="border-border-color mt-8" />
+                    </section>
+                )}
+                
+                {car.status === 'Vendido' && (
+                    <section>
+                        <h3 className="text-lg font-semibold text-text-primary my-4 border-b border-border-color pb-2">Gestión Documentación</h3>
+                        <div className="p-4 bg-background rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                                <DetailItem icon={faCalendarDay} label="Fecha de Recogida" value={car.gestoriaPickupDate ? new Date(car.gestoriaPickupDate).toLocaleDateString('es-ES') : 'Pendiente'} />
+                                <DetailItem icon={faCalendarCheck} label="Fecha de Entrega" value={car.gestoriaReturnDate ? new Date(car.gestoriaReturnDate).toLocaleDateString('es-ES') : 'Pendiente'} />
+                            </div>
+                            <div className="w-full sm:w-auto flex-shrink-0">
+                                {!car.gestoriaPickupDate ? (
+                                    <button onClick={() => onGestoriaPickupClick(car)} className="w-full sm:w-auto bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 text-sm font-semibold flex items-center justify-center gap-2">
+                                        <FontAwesomeIcon icon={faTruckPickup} />
+                                        Registrar Recogida
+                                    </button>
+                                ) : !car.gestoriaReturnDate ? (
+                                    <button onClick={() => onGestoriaReturnClick(car)} className="w-full sm:w-auto bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 text-sm font-semibold flex items-center justify-center gap-2">
+                                        <FontAwesomeIcon icon={faCalendarCheck} />
+                                        Registrar Entrega
+                                    </button>
+                                ) : (
+                                    <p className="text-sm font-semibold text-green-accent flex items-center gap-2">
+                                        <FontAwesomeIcon icon={faCheckCircle} />
+                                        Proceso Finalizado
+                                    </p>
+                                )}
+                            </div>
+                        </div>
                     </section>
                 )}
 
@@ -348,21 +517,31 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
             </div>
             
             <div className="flex-shrink-0 p-4 border-t border-border-color flex flex-wrap justify-center sm:justify-end gap-3">
-                <button onClick={() => onAddExpenseClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-blue-accent rounded-lg shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2">
+                {car.status === 'Vendido' && (
+                    <button onClick={() => handleGeneratePdf('invoice')} className="px-4 py-2 text-sm font-semibold text-white bg-green-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
+                        <FontAwesomeIcon icon={faFileInvoice} /> Factura
+                    </button>
+                )}
+                {car.status !== 'Vendido' && (
+                    <button onClick={() => handleGeneratePdf('proforma')} className="px-4 py-2 text-sm font-semibold text-white bg-green-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
+                        <FontAwesomeIcon icon={faFileInvoice} /> Proforma
+                    </button>
+                )}
+                <button disabled={isLockedForUser} onClick={() => onAddExpenseClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-blue-accent rounded-lg shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     <FontAwesomeIcon icon={faFileInvoiceDollar} /> Añadir Gasto
                 </button>
                 {car.status === 'Vendido' && (
-                    <button onClick={() => onAddIncidentClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2">
+                    <button disabled={isLockedForUser} onClick={() => onAddIncidentClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <FontAwesomeIcon icon={faExclamationTriangle} /> Añadir Incidencia
                     </button>
                 )}
                  {(car.status === 'En venta' || car.status === 'Reservado') && (
-                    <button onClick={() => onSellClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2">
+                    <button disabled={isLockedForUser} onClick={() => onSellClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <FontAwesomeIcon icon={faHandHoldingUsd} /> Vender
                     </button>
                 )}
                 {car.status === 'En venta' && (
-                    <button onClick={() => onReserveClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2">
+                    <button disabled={isLockedForUser} onClick={() => onReserveClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                        <FontAwesomeIcon icon={faBell} /> Reservar
                     </button>
                 )}
@@ -371,10 +550,10 @@ const CarDetailsModalContent = ({ car, incidents, onClose, onSellClick, onEditCl
                         <FontAwesomeIcon icon={faBan} /> Cancelar Reserva
                     </button>
                 )}
-                <button onClick={() => onEditClick(car)} className="px-4 py-2 text-sm font-semibold text-text-primary bg-component-bg-hover rounded-lg border border-border-color hover:bg-border-color flex items-center gap-2">
+                <button disabled={isLockedForUser} onClick={() => onEditClick(car)} className="px-4 py-2 text-sm font-semibold text-text-primary bg-component-bg-hover rounded-lg border border-border-color hover:bg-border-color flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                    <FontAwesomeIcon icon={faPencilAlt} /> Editar
                 </button>
-                <button onClick={() => onDeleteClick(car)} className="px-4 py-2 text-sm font-semibold text-red-accent bg-red-accent/10 rounded-lg hover:bg-red-accent/20 flex items-center gap-2">
+                <button disabled={isLockedForUser} onClick={() => onDeleteClick(car)} className="px-4 py-2 text-sm font-semibold text-red-accent bg-red-accent/10 rounded-lg hover:bg-red-accent/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     <FontAwesomeIcon icon={faTrashAlt} /> Eliminar
                 </button>
             </div>

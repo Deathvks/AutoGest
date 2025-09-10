@@ -52,13 +52,31 @@ const runMigration = async () => {
             if (!carsDescription.documentUrls && carsDescription.registrationDocumentUrl) {
                 console.log('-> Renombrando "registrationDocumentUrl" a "documentUrls" en Cars...');
                 await queryInterface.renameColumn('Cars', 'registrationDocumentUrl', 'documentUrls');
-                // Cambiar el tipo de dato de la columna renombrada
                 await queryInterface.changeColumn('Cars', 'documentUrls', { type: sequelize.Sequelize.JSON, allowNull: true });
                 console.log('✅ Columna renombrada y tipo cambiado a JSON.');
             } else if (!carsDescription.documentUrls) {
                 console.log('-> Añadiendo columna "documentUrls" a Cars...');
                  await queryInterface.addColumn('Cars', 'documentUrls', { type: sequelize.Sequelize.JSON, allowNull: true });
                  console.log('✅ Columna "documentUrls" añadida.');
+            }
+            
+            if (!carsDescription.reservationExpiry) {
+                console.log('-> Añadiendo columna "reservationExpiry" a Cars...');
+                await queryInterface.addColumn('Cars', 'reservationExpiry', {
+                    type: sequelize.Sequelize.DATE,
+                    allowNull: true,
+                });
+                console.log('✅ Columna "reservationExpiry" añadida.');
+            }
+
+            // --- NUEVA MIGRACIÓN ---
+            if (!carsDescription.reservationPdfUrl) {
+                console.log('-> Añadiendo columna "reservationPdfUrl" a Cars...');
+                await queryInterface.addColumn('Cars', 'reservationPdfUrl', {
+                    type: sequelize.Sequelize.STRING,
+                    allowNull: true,
+                });
+                console.log('✅ Columna "reservationPdfUrl" añadida.');
             }
         }
         

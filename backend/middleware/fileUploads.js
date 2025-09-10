@@ -13,8 +13,15 @@ const ensureDirExists = (dir) => {
 // Configuración de almacenamiento genérica
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        // Guarda las imágenes en 'uploads' y los documentos en 'documents'
-        const dest = file.fieldname === 'image' ? 'public/uploads/' : 'public/documents/';
+        // Guarda las imágenes en 'uploads' y los documentos/PDFs en 'documents'
+        let dest;
+        if (file.fieldname === 'image') {
+            dest = 'public/uploads/';
+        } else if (file.fieldname === 'documents' || file.fieldname === 'reservationPdf') {
+            dest = 'public/documents/';
+        } else {
+            dest = 'public/uploads/'; // Default
+        }
         ensureDirExists(dest);
         cb(null, dest);
     },
@@ -32,11 +39,17 @@ const fileFilter = (req, file, cb) => {
         } else {
             cb(new Error('¡El campo de imagen solo acepta archivos de imagen!'), false);
         }
-    } else if (file.fieldname === 'documents') { // <-- CAMBIO DE NOMBRE DEL CAMPO
+    } else if (file.fieldname === 'documents') {
         if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
             cb(null, true);
         } else {
             cb(new Error('¡Los documentos solo pueden ser una imagen o un PDF!'), false);
+        }
+    } else if (file.fieldname === 'reservationPdf') {
+        if (file.mimetype === 'application/pdf') {
+            cb(null, true);
+        } else {
+            cb(new Error('¡El archivo de reserva solo puede ser un PDF!'), false);
         }
     } else {
         cb(null, false);
@@ -50,8 +63,8 @@ const upload = multer({
 });
 
 // Exportamos el middleware configurado para manejar múltiples campos
-// 'image' puede tener 1 archivo, 'documents' ahora puede tener hasta 10.
 module.exports = upload.fields([
     { name: 'image', maxCount: 1 },
-    { name: 'documents', maxCount: 10 } // <-- CAMPO MODIFICADO
+    { name: 'documents', maxCount: 10 },
+    { name: 'reservationPdf', maxCount: 1 } // <-- NUEVO CAMPO AÑADIDO
 ]);

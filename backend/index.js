@@ -40,9 +40,9 @@ app.use('/api/cars', require('./routes/carRoutes'));
 app.use('/api/expenses', require('./routes/expenseRoutes'));
 app.use('/api/incidents', require('./routes/incidentRoutes'));
 app.use('/api/locations', require('./routes/locationRoutes'));
-
-// --- NUEVA RUTA PARA LA ADMINISTRACIÓN ---
 app.use('/api/admin', require('./routes/adminRoutes'));
+// --- NUEVA RUTA PARA EL DASHBOARD ---
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
 // Ruta raíz
 app.get('/', (req, res) => {

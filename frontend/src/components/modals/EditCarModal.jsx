@@ -71,7 +71,6 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
         } else if (!Array.isArray(sanitizedData.tags)) {
             sanitizedData.tags = [];
         }
-        // Asegurarse de que documentUrls sea un array
         if (!Array.isArray(sanitizedData.documentUrls)) {
             sanitizedData.documentUrls = [];
         }
@@ -129,7 +128,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     
     const handleDocumentChange = (e) => {
         const newFiles = Array.from(e.target.files);
-        const totalFiles = (editedCar.documentUrls?.length || 0) - filesToRemove.length + documentFiles.length + newFiles.length;
+        const totalFiles = (editedCar.documentUrls?.length || 0) + documentFiles.length + newFiles.length;
         if (totalFiles > 2) {
             alert("Solo puedes tener un máximo de 2 archivos en total.");
             e.target.value = '';
@@ -139,13 +138,15 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
         e.target.value = '';
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
     const removeExistingFile = (fileUrl) => {
-        setFilesToRemove(prev => [...prev, fileUrl]);
+        setFilesToRemove(prev => [...prev, fileUrl]); // Guardamos el path para el backend
         setEditedCar(prev => ({
             ...prev,
-            documentUrls: prev.documentUrls.filter(url => url !== fileUrl)
+            documentUrls: prev.documentUrls.filter(doc => doc.path !== fileUrl)
         }));
     };
+    // --- FIN DE LA MODIFICACIÓN ---
     
     const removeNewFile = (fileToRemove) => {
         setDocumentFiles(prev => prev.filter(file => file !== fileToRemove));
@@ -174,7 +175,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
         try {
             setServerError('');
             const formData = new FormData();
-            const ignoredFields = ['id', 'createdAt', 'updatedAt', 'userId', 'notes', 'newLocation', 'documentUrls'];
+            const ignoredFields = ['id', 'createdAt', 'updatedAt', 'userId', 'notes', 'newLocation'];
 
             const selectedLocation = locations.find(loc => loc.id === editedCar.location);
             const finalLocation = editedCar.newLocation.trim() || (selectedLocation ? selectedLocation.name : '');
@@ -193,7 +194,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             Object.keys(finalCarData).forEach(key => {
                 if (!ignoredFields.includes(key)) {
                     const value = finalCarData[key];
-                    if (key === 'tags') {
+                    if (key === 'tags' || key === 'documentUrls') { // También se aplica a documentUrls
                         formData.append(key, JSON.stringify(value));
                     } else if (value !== null && value !== undefined) {
                         formData.append(key, value);
@@ -232,12 +233,11 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                 
                 <form onSubmit={(e) => e.preventDefault()} noValidate>
                     <div className="space-y-4">
-                        {/* ... (otros campos del formulario sin cambios) ... */}
                         <div className="flex flex-col">
                             <label className="block text-sm font-medium text-text-secondary mb-2">Imagen Principal</label>
                             <div className="w-40 h-28 rounded-lg bg-background flex items-center justify-center overflow-hidden border border-border-color">
                                 <img 
-                                    src={imagePreview || editedCar.imageUrl || `https://placehold.co/600x400/e2e8f0/1e293b?text=${editedCar.make}+${editedCar.model}`} 
+                                    src={imagePreview || (editedCar.imageUrl ? `${API_BASE_URL}${editedCar.imageUrl}` : `https://placehold.co/600x400/e2e8f0/1e293b?text=${editedCar.make}+${editedCar.model}`)} 
                                     alt="Vista previa" 
                                     className="h-full w-full object-cover" 
                                 />
@@ -278,21 +278,22 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                         </div>
                         <Select label="Estado" value={editedCar.status} onChange={(value) => handleSelectChange('status', value)} options={statusOptions} />
 
-                        {/* --- SECCIÓN DE ARCHIVOS MODIFICADA --- */}
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         <div>
                             <label className="block text-sm font-medium text-text-secondary mb-1">Archivos varios (Máx. 2)</label>
                             {editedCar.documentUrls && editedCar.documentUrls.length > 0 && (
                                 <ul className="mt-2 space-y-1">
-                                    {editedCar.documentUrls.map((url, index) => (
+                                    {editedCar.documentUrls.map((doc, index) => (
                                         <li key={index} className="flex items-center justify-between text-xs text-text-secondary bg-background p-2 rounded-md">
-                                            <a href={`${API_BASE_URL}${url}`} target="_blank" rel="noopener noreferrer" className="truncate hover:underline">{url.split('/').pop()}</a>
-                                            <button type="button" onClick={() => removeExistingFile(url)} className="ml-2 text-red-accent hover:opacity-75">
+                                            <a href={`${API_BASE_URL}${doc.path}`} target="_blank" rel="noopener noreferrer" className="truncate hover:underline">{doc.originalname}</a>
+                                            <button type="button" onClick={() => removeExistingFile(doc.path)} className="ml-2 text-red-accent hover:opacity-75">
                                                 <FontAwesomeIcon icon={faXmark} />
                                             </button>
                                         </li>
                                     ))}
                                 </ul>
                             )}
+                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                             {documentFiles.length > 0 && (
                                 <ul className="mt-2 space-y-1">
                                     {documentFiles.map((file, index) => (

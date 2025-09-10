@@ -5,21 +5,58 @@ const path = require('path');
 const { Car, Location, Expense, Incident, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
-// Función auxiliar para convertir valores vacíos a null
-const emptyToNull = (value) => {
-    if (value === '' || value === null || value === undefined) {
-        return null;
-    }
-    return value;
+const sanitizeFilename = (name) => {
+    if (typeof name !== 'string') return '';
+    const map = {
+        'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ñ': 'n', 'ç': 'c',
+        'Á': 'A', 'É': 'E', 'Í': 'I', 'Ó': 'O', 'Ú': 'U', 'Ñ': 'N', 'Ç': 'C'
+    };
+    name = name.replace(/[áéíóúñçÁÉÍÓÚÑÇ]/g, char => map[char]);
+    return name.replace(/[^a-zA-Z0-9_.\- ]/g, '_');
 };
 
-// Obtener todos los coches DEL USUARIO LOGUEADO
+const deleteFile = (fileUrl) => {
+    if (!fileUrl) return;
+    const filename = path.basename(fileUrl);
+    let dir = 'uploads';
+    if (fileUrl.includes('/documents/')) dir = 'documents';
+    else if (fileUrl.includes('/avatars/')) dir = 'avatars';
+    else if (fileUrl.includes('/expenses/')) dir = 'expenses';
+    
+    const filePath = path.join(__dirname, '..', 'public', dir, filename);
+    if (fs.existsSync(filePath)) {
+        try {
+            fs.unlinkSync(filePath);
+        } catch (err) {
+            console.error(`Error al eliminar el archivo: ${filePath}`, err);
+        }
+    }
+};
+
 exports.getAllCars = async (req, res) => {
     try {
         const cars = await Car.findAll({
             where: { userId: req.user.id },
             order: [['createdAt', 'DESC']]
         });
+
+        const now = new Date();
+        const promises = cars.map(car => {
+            if (car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) < now) {
+                if (car.reservationPdfUrl) {
+                    deleteFile(car.reservationPdfUrl);
+                    car.reservationPdfUrl = null;
+                }
+                car.status = 'En venta';
+                car.reservationDeposit = null;
+                car.reservationExpiry = null;
+                return car.save();
+            }
+            return Promise.resolve();
+        });
+
+        await Promise.all(promises);
+
         res.status(200).json(cars);
     } catch (error) {
         console.error(error);
@@ -27,14 +64,10 @@ exports.getAllCars = async (req, res) => {
     }
 };
 
-// Obtener un solo coche, ASEGURANDO QUE PERTENECE AL USUARIO
 exports.getCarById = async (req, res) => {
     try {
         const car = await Car.findOne({
-            where: {
-                id: req.params.id,
-                userId: req.user.id
-            }
+            where: { id: req.params.id, userId: req.user.id }
         });
         if (car) {
             res.status(200).json(car);
@@ -47,13 +80,9 @@ exports.getCarById = async (req, res) => {
     }
 };
 
-// Crear un nuevo coche
 exports.createCar = async (req, res) => {
     try {
-        const carData = { 
-            ...req.body, 
-            userId: req.user.id
-        };
+        const carData = { ...req.body, userId: req.user.id };
 
         if (carData.licensePlate) {
             carData.licensePlate = carData.licensePlate.replace(/\s/g, '').toUpperCase();
@@ -61,22 +90,19 @@ exports.createCar = async (req, res) => {
 
         if (carData.location && carData.location.trim() !== '') {
             await Location.findOrCreate({
-                where: { 
-                    name: carData.location.trim(), 
-                    userId: req.user.id 
-                }
+                where: { name: carData.location.trim(), userId: req.user.id }
             });
         }
 
         if (req.files) {
             if (req.files.image) {
-                const imageUrl = `/uploads/${req.files.image[0].filename}`;
-                carData.imageUrl = imageUrl;
+                carData.imageUrl = `/uploads/${req.files.image[0].filename}`;
             }
-            // --- LÓGICA MODIFICADA PARA MÚLTIPLES DOCUMENTOS ---
             if (req.files.documents && req.files.documents.length > 0) {
-                const docUrls = req.files.documents.map(file => `/documents/${file.filename}`);
-                carData.documentUrls = docUrls;
+                carData.documentUrls = req.files.documents.map(file => ({
+                    path: `/documents/${file.filename}`,
+                    originalname: sanitizeFilename(file.originalname)
+                }));
             }
         }
 
@@ -84,25 +110,15 @@ exports.createCar = async (req, res) => {
         res.status(201).json(newCar);
     } catch (error) {
         console.error('Error al crear coche:', error);
-        
         if (error.name === 'SequelizeUniqueConstraintError') {
-            if (error.fields && error.fields.cars_license_plate) {
-                return res.status(400).json({ 
-                    error: `Ya existe un coche con la matrícula ${error.fields.cars_license_plate}` 
-                });
-            }
-            if (error.fields && error.fields.cars_vin) {
-                return res.status(400).json({ 
-                    error: `Ya existe un coche con el VIN ${error.fields.cars_vin}` 
-                });
-            }
+            const field = error.errors[0]?.path;
+            const value = error.errors[0]?.value;
+            return res.status(400).json({ error: `Ya existe un coche con ${field === 'licensePlate' ? 'la matrícula' : 'el VIN'} ${value}` });
         }
-        
         res.status(500).json({ error: 'Error al crear el coche' });
     }
 };
 
-// Actualizar un coche existente
 exports.updateCar = async (req, res) => {
     try {
         const car = await Car.findOne({ where: { id: req.params.id, userId: req.user.id } });
@@ -110,7 +126,37 @@ exports.updateCar = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para editarlo' });
         }
         
+        const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
+        const isUserTryingToModifyLockedCar = isReservedAndActive && req.user.role !== 'admin';
+
+        if (isUserTryingToModifyLockedCar) {
+            const isCancellingReservation = req.body.status && req.body.status !== 'Reservado';
+            if (!isCancellingReservation) {
+                return res.status(403).json({ error: 'Este coche está reservado y no se puede modificar.' });
+            }
+        }
+
         const updateData = req.body;
+
+        if (updateData.status === 'Reservado' && updateData.reservationDuration) {
+            const durationInHours = parseInt(updateData.reservationDuration, 10);
+            if (!isNaN(durationInHours) && durationInHours > 0) {
+                const expiryDate = new Date();
+                expiryDate.setHours(expiryDate.getHours() + durationInHours);
+                updateData.reservationExpiry = expiryDate;
+            }
+            delete updateData.reservationDuration;
+
+            if (req.files && req.files.reservationPdf) {
+                deleteFile(car.reservationPdfUrl);
+                updateData.reservationPdfUrl = `/documents/${req.files.reservationPdf[0].filename}`;
+            }
+        } else if (updateData.status === 'En venta') {
+            deleteFile(car.reservationPdfUrl);
+            updateData.reservationPdfUrl = null;
+            updateData.reservationDeposit = null;
+            updateData.reservationExpiry = null;
+        }
 
         const numericFields = ['price', 'purchasePrice', 'salePrice', 'reservationDeposit', 'km', 'horsepower'];
         numericFields.forEach(field => {
@@ -121,21 +167,16 @@ exports.updateCar = async (req, res) => {
             }
         });
         
-        const dateFields = ['registrationDate', 'saleDate'];
+        const dateFields = ['registrationDate', 'saleDate', 'gestoriaPickupDate', 'gestoriaReturnDate'];
         dateFields.forEach(field => {
             if (updateData[field] !== undefined) {
-                const dateValue = updateData[field];
-                if (!dateValue || isNaN(new Date(dateValue).getTime())) {
-                    updateData[field] = null;
-                }
+                updateData[field] = (!updateData[field] || isNaN(new Date(updateData[field]).getTime())) ? null : updateData[field];
             }
         });
 
         if (updateData.buyerDetails) {
             try {
-                updateData.buyerDetails = typeof updateData.buyerDetails === 'string'
-                    ? JSON.parse(updateData.buyerDetails)
-                    : updateData.buyerDetails;
+                updateData.buyerDetails = typeof updateData.buyerDetails === 'string' ? JSON.parse(updateData.buyerDetails) : updateData.buyerDetails;
             } catch (e) {
                 return res.status(400).json({ error: 'Los detalles del comprador no tienen un formato JSON válido.' });
             }
@@ -151,42 +192,44 @@ exports.updateCar = async (req, res) => {
             });
         }
         
-        const deleteFile = (fileUrl) => {
-            if (!fileUrl) return;
-            const filename = path.basename(fileUrl);
-            const dir = fileUrl.includes('/uploads/') ? 'uploads' : 'documents';
-            const filePath = path.join(__dirname, '..', 'public', dir, filename);
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        };
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Asegurarse de que `car.documentUrls` sea un array antes de usarlo.
+        let currentDocumentUrls = [];
+        if (typeof car.documentUrls === 'string') {
+            try {
+                currentDocumentUrls = JSON.parse(car.documentUrls);
+            } catch (e) {
+                console.error('Error al parsear documentUrls:', e);
+                // Si hay un error, se trata como si no hubiera documentos.
+            }
+        } else if (Array.isArray(car.documentUrls)) {
+            currentDocumentUrls = car.documentUrls;
+        }
 
-        // Procesar archivos a eliminar
         if (updateData.filesToRemove) {
             try {
-                const filesToRemove = JSON.parse(updateData.filesToRemove);
-                if (Array.isArray(filesToRemove) && filesToRemove.length > 0) {
-                    // Eliminar archivos del sistema de archivos
-                    filesToRemove.forEach(deleteFile);
-                    
-                    // Actualizar la lista de documentUrls eliminando los archivos especificados
-                    if (car.documentUrls && car.documentUrls.length > 0) {
-                        updateData.documentUrls = car.documentUrls.filter(url => !filesToRemove.includes(url));
-                    }
+                const filesToRemovePaths = JSON.parse(updateData.filesToRemove);
+                if (Array.isArray(filesToRemovePaths)) {
+                    filesToRemovePaths.forEach(deleteFile);
+                    // Usar la variable parseada y asegurada
+                    updateData.documentUrls = currentDocumentUrls.filter(doc => !filesToRemovePaths.includes(doc.path));
                 }
-            } catch (e) {
-                console.error('Error parsing filesToRemove:', e);
-            }
+            } catch (e) { console.error('Error parsing filesToRemove:', e); }
         }
+        // --- FIN DE LA CORRECCIÓN ---
 
         if (req.files) {
             if (req.files.image) {
                 deleteFile(car.imageUrl);
                 updateData.imageUrl = `/uploads/${req.files.image[0].filename}`;
             }
-            // --- LÓGICA MODIFICADA PARA MÚLTIPLES DOCUMENTOS ---
             if (req.files.documents && req.files.documents.length > 0) {
-                // Si hay documentos existentes y no se especificaron archivos a eliminar, mantenerlos
-                const existingDocs = updateData.documentUrls || car.documentUrls || [];
-                const newDocs = req.files.documents.map(file => `/documents/${file.filename}`);
+                // Usar la variable `updateData.documentUrls` si ya fue modificada, si no, la original parseada
+                const existingDocs = updateData.documentUrls || currentDocumentUrls;
+                const newDocs = req.files.documents.map(file => ({
+                    path: `/documents/${file.filename}`,
+                    originalname: sanitizeFilename(file.originalname)
+                }));
                 updateData.documentUrls = [...existingDocs, ...newDocs];
             }
         }
@@ -195,27 +238,15 @@ exports.updateCar = async (req, res) => {
         res.status(200).json(car);
     } catch (error) {
         console.error(error);
-        
         if (error.name === 'SequelizeUniqueConstraintError') {
             const field = error.errors[0]?.path;
             const value = error.errors[0]?.value;
-            
-            if (field === 'licensePlate') {
-                return res.status(400).json({ 
-                    error: `Ya existe un coche con la matrícula ${value}.` 
-                });
-            } else if (field === 'vin') {
-                return res.status(400).json({ 
-                    error: `Ya existe un coche con el número de bastidor ${value}.` 
-                });
-            }
+            return res.status(400).json({ error: `Ya existe un coche con ${field === 'licensePlate' ? 'la matrícula' : 'el VIN'} ${value}.` });
         }
-        
         res.status(500).json({ error: 'Error al actualizar el coche' });
     }
 };
 
-// Eliminar un coche
 exports.deleteCar = async (req, res) => {
     try {
         const car = await Car.findOne({ where: { id: req.params.id, userId: req.user.id } });
@@ -224,18 +255,10 @@ exports.deleteCar = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para eliminarlo' });
         }
         
-        const deleteFile = (fileUrl) => {
-            if (!fileUrl) return;
-            const filename = path.basename(fileUrl);
-            const dir = fileUrl.includes('/uploads/') ? 'uploads' : 'documents';
-            const filePath = path.join(__dirname, '..', 'public', dir, filename);
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        };
-
         deleteFile(car.imageUrl);
-        // --- LÓGICA MODIFICADA PARA MÚLTIPLES DOCUMENTOS ---
+        deleteFile(car.reservationPdfUrl);
         if (car.documentUrls && car.documentUrls.length > 0) {
-            car.documentUrls.forEach(deleteFile);
+            car.documentUrls.forEach(doc => deleteFile(doc.path));
         }
 
         await car.destroy();

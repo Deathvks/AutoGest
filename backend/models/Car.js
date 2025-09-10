@@ -64,9 +64,8 @@ const Car = sequelize.define('Car', {
     imageUrl: {
         type: DataTypes.STRING,
     },
-    // --- CAMPO MODIFICADO ---
-    documentUrls: { // Anteriormente registrationDocumentUrl
-        type: DataTypes.JSON, // Ahora es JSON para guardar una lista
+    documentUrls: {
+        type: DataTypes.JSON,
         allowNull: true,
     },
     tags: {
@@ -84,6 +83,24 @@ const Car = sequelize.define('Car', {
         type: DataTypes.JSON,
         allowNull: true,
     },
+    reservationExpiry: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
+    reservationPdfUrl: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    gestoriaPickupDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+    },
+    gestoriaReturnDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
     indexes: [
