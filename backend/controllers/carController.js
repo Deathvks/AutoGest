@@ -193,30 +193,29 @@ exports.updateCar = async (req, res) => {
         }
         
         // --- INICIO DE LA CORRECCIÓN ---
-        // Asegurarse de que `car.documentUrls` sea un array antes de usarlo.
+        // Asegurarse de que `car.documentUrls` sea un array antes de cualquier operación.
         let currentDocumentUrls = [];
         if (typeof car.documentUrls === 'string') {
             try {
                 currentDocumentUrls = JSON.parse(car.documentUrls);
             } catch (e) {
-                console.error('Error al parsear documentUrls:', e);
-                // Si hay un error, se trata como si no hubiera documentos.
+                 // Si falla el parseo, asumimos que no es un JSON válido y lo ignoramos o tratamos como array vacío.
+                console.error('Error al parsear documentUrls, se tratará como un array vacío:', e);
             }
         } else if (Array.isArray(car.documentUrls)) {
             currentDocumentUrls = car.documentUrls;
         }
+
 
         if (updateData.filesToRemove) {
             try {
                 const filesToRemovePaths = JSON.parse(updateData.filesToRemove);
                 if (Array.isArray(filesToRemovePaths)) {
                     filesToRemovePaths.forEach(deleteFile);
-                    // Usar la variable parseada y asegurada
                     updateData.documentUrls = currentDocumentUrls.filter(doc => !filesToRemovePaths.includes(doc.path));
                 }
             } catch (e) { console.error('Error parsing filesToRemove:', e); }
         }
-        // --- FIN DE LA CORRECCIÓN ---
 
         if (req.files) {
             if (req.files.image) {
@@ -233,6 +232,7 @@ exports.updateCar = async (req, res) => {
                 updateData.documentUrls = [...existingDocs, ...newDocs];
             }
         }
+        // --- FIN DE LA CORRECCIÓN ---
         
         await car.update(updateData);
         res.status(200).json(car);
