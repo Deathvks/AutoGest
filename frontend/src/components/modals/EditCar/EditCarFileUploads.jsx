@@ -7,23 +7,31 @@ const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 const FileUploadSection = ({ label, existingFiles = [], newFiles = [], onFileChange, onRemoveNewFile, onRemoveExistingFile, fileType, maxFiles }) => {
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Usamos una única referencia para el input
     const fileInputRef = useRef(null);
     const totalFiles = (existingFiles?.length || 0) + newFiles.length;
 
-    // Esta función modifica el input antes de hacer clic en él
     const handleButtonClick = (isCamera) => {
-        if (fileInputRef.current) {
+        try {
+            if (!fileInputRef.current) {
+                alert('Error: La referencia al input de fichero no existe.');
+                return;
+            }
+
             if (isCamera) {
                 fileInputRef.current.setAttribute('accept', 'image/*');
                 fileInputRef.current.setAttribute('capture', 'environment');
                 fileInputRef.current.removeAttribute('multiple');
             } else {
                 fileInputRef.current.setAttribute('accept', 'image/*,application/pdf');
-                fileInputRef.current.setAttribute('multiple', '');
+                fileInputRef.current.setAttribute('multiple', 'true');
                 fileInputRef.current.removeAttribute('capture');
             }
+
             fileInputRef.current.click();
+
+        } catch (error) {
+            console.error('Error al intentar abrir el selector de fichero/cámara:', error);
+            alert(`Error al activar la función: ${error.message}`);
         }
     };
     // --- FIN DE LA MODIFICACIÓN ---
@@ -55,18 +63,13 @@ const FileUploadSection = ({ label, existingFiles = [], newFiles = [], onFileCha
             </div>
             {totalFiles < maxFiles && (
                  <div className="flex items-center gap-2 mt-2">
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    {/* Solo hay un input ahora */}
-                    <input type="file" ref={fileInputRef} onChange={e => onFileChange(e, fileType)} className="hidden" />
-
-                    {/* Los botones ahora llaman a la función handleButtonClick */}
+                    <input type="file" ref={fileInputRef} onChange={e => onFileChange(e, fileType)} className="hidden" style={{ display: 'none' }} />
                     <button type="button" onClick={() => handleButtonClick(false)} className="flex-1 bg-component-bg-hover text-text-secondary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-border-color">
                         <FontAwesomeIcon icon={faUpload} /> Subir
                     </button>
                     <button type="button" onClick={() => handleButtonClick(true)} className="flex-1 bg-component-bg-hover text-text-secondary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-border-color">
                         <FontAwesomeIcon icon={faCamera} /> Cámara
                     </button>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
             )}
         </div>

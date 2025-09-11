@@ -5,22 +5,37 @@ import { faCar, faUpload, faCamera, faFileLines, faXmark } from '@fortawesome/fr
 
 const FileUploadSection = ({ label, files, onFileChange, onRemoveFile, fileType, maxFiles }) => {
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Usamos una única referencia para el input
     const fileInputRef = useRef(null);
 
-    // Esta función modifica el input antes de hacer clic en él
     const handleButtonClick = (isCamera) => {
-        if (fileInputRef.current) {
+        try {
+            if (!fileInputRef.current) {
+                alert('Error: La referencia al input de fichero no existe.');
+                return;
+            }
+            
+            console.log(`Botón pulsado. ¿Es cámara? ${isCamera}`);
+
             if (isCamera) {
                 fileInputRef.current.setAttribute('accept', 'image/*');
                 fileInputRef.current.setAttribute('capture', 'environment');
                 fileInputRef.current.removeAttribute('multiple');
+                console.log('Atributos para cámara establecidos.');
             } else {
                 fileInputRef.current.setAttribute('accept', 'image/*,application/pdf');
-                fileInputRef.current.setAttribute('multiple', '');
+                fileInputRef.current.setAttribute('multiple', 'true');
                 fileInputRef.current.removeAttribute('capture');
+                console.log('Atributos para subir fichero establecidos.');
             }
+
+            // Simular el clic
             fileInputRef.current.click();
+            console.log('Clic en el input simulado.');
+
+        } catch (error) {
+            // Si algo falla, lo veremos en una alerta en el móvil
+            console.error('Error al intentar abrir el selector de fichero/cámara:', error);
+            alert(`Error al activar la función: ${error.message}`);
         }
     };
     // --- FIN DE LA MODIFICACIÓN ---
@@ -41,18 +56,13 @@ const FileUploadSection = ({ label, files, onFileChange, onRemoveFile, fileType,
             </div>
             {files.length < maxFiles && (
                  <div className="flex items-center gap-2 mt-2">
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    {/* Solo hay un input ahora */}
-                    <input type="file" ref={fileInputRef} onChange={e => onFileChange(e, fileType)} className="hidden" />
-                    
-                    {/* Los botones ahora llaman a la función handleButtonClick */}
+                    <input type="file" ref={fileInputRef} onChange={e => onFileChange(e, fileType)} className="hidden" style={{ display: 'none' }} />
                     <button type="button" onClick={() => handleButtonClick(false)} className="flex-1 bg-component-bg-hover text-text-secondary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-border-color">
                         <FontAwesomeIcon icon={faUpload} /> Subir
                     </button>
                     <button type="button" onClick={() => handleButtonClick(true)} className="flex-1 bg-component-bg-hover text-text-secondary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-border-color">
                         <FontAwesomeIcon icon={faCamera} /> Cámara
                     </button>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
             )}
         </div>
