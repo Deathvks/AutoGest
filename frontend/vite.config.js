@@ -15,31 +15,19 @@ export default defineConfig({
       // '/api': 'http://localhost:3001',
     }
   },
-  // --- INICIO DE LA MODIFICACIÓN ---
   build: {
     rollupOptions: {
       output: {
+        // --- INICIO DE LA MODIFICACIÓN ---
         manualChunks(id) {
-          // Separa las librerías más pesadas en sus propios ficheros (chunks)
+          // Agrupa todas las dependencias de node_modules en un único chunk "vendor".
+          // Esto es más estable que intentar separar librerías interdependientes como React.
           if (id.includes('node_modules')) {
-            if (id.includes('jspdf')) {
-              return 'vendor_jspdf';
-            }
-            if (id.includes('chart.js')) {
-              return 'vendor_chartjs';
-            }
-            if (id.includes('html2canvas')) {
-              return 'vendor_html2canvas';
-            }
-            if (id.includes('react') || id.includes('scheduler')) {
-              return 'vendor_react';
-            }
-            // Agrupa el resto de vendors en un chunk común
-            return 'vendor_others';
+            return 'vendor';
           }
         }
+        // --- FIN DE LA MODIFICACIÓN ---
       }
     }
   }
-  // --- FIN DE LA MODIFICACIÓN ---
 })
