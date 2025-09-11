@@ -15,8 +15,10 @@ const sanitizeFilename = (name) => {
     return name.replace(/[^a-zA-Z0-9_.\- ]/g, '_');
 };
 
-const deleteFile = (fileUrl) => {
+const deleteFile = (fileUrlData) => {
+    const fileUrl = (typeof fileUrlData === 'object' && fileUrlData !== null) ? fileUrlData.path : fileUrlData;
     if (!fileUrl) return;
+
     const filename = path.basename(fileUrl);
     let dir = 'uploads';
     if (fileUrl.includes('/documents/')) dir = 'documents';
@@ -30,6 +32,16 @@ const deleteFile = (fileUrl) => {
         } catch (err) {
             console.error(`Error al eliminar el archivo: ${filePath}`, err);
         }
+    }
+};
+
+const safeJsonParse = (jsonString) => {
+    if (!jsonString) return [];
+    try {
+        const parsed = JSON.parse(jsonString);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        return [];
     }
 };
 
@@ -93,17 +105,24 @@ exports.createCar = async (req, res) => {
                 where: { name: carData.location.trim(), userId: req.user.id }
             });
         }
-
+        
         if (req.files) {
             if (req.files.image) {
                 carData.imageUrl = `/uploads/${req.files.image[0].filename}`;
             }
-            if (req.files.documents && req.files.documents.length > 0) {
-                carData.documentUrls = req.files.documents.map(file => ({
-                    path: `/documents/${file.filename}`,
-                    originalname: sanitizeFilename(file.originalname)
-                }));
-            }
+            // --- INICIO DE LA MODIFICACIÓN ---
+            const fileFields = ['technicalSheet', 'registrationCertificate', 'otherDocuments'];
+            fileFields.forEach(field => {
+                if (req.files[field] && req.files[field].length > 0) {
+                    const urlField = field === 'otherDocuments' ? 'otherDocumentsUrls' : `${field}Url`;
+                    // Guardamos un array de objetos
+                    carData[urlField] = req.files[field].map(file => ({
+                        path: `/documents/${file.filename}`,
+                        originalname: sanitizeFilename(file.originalname)
+                    }));
+                }
+            });
+            // --- FIN DE LA MODIFICACIÓN ---
         }
 
         const newCar = await Car.create(carData);
@@ -199,28 +218,17 @@ exports.updateCar = async (req, res) => {
             });
         }
         
-        let currentDocumentUrls = [];
-        if (car.documentUrls) {
-            if (typeof car.documentUrls === 'string') {
-                try {
-                    const parsed = JSON.parse(car.documentUrls);
-                    if (Array.isArray(parsed)) {
-                        currentDocumentUrls = parsed;
-                    }
-                } catch (e) {
-                    console.error(`[LOG] Error al parsear documentUrls para el coche ID ${car.id}:`, e);
-                }
-            } else if (Array.isArray(car.documentUrls)) {
-                currentDocumentUrls = car.documentUrls;
-            }
-        }
-
+        // --- INICIO DE LA MODIFICACIÓN ---
         if (updateData.filesToRemove) {
             try {
-                const filesToRemovePaths = JSON.parse(updateData.filesToRemove);
-                if (Array.isArray(filesToRemovePaths)) {
-                    filesToRemovePaths.forEach(deleteFile);
-                    updateData.documentUrls = currentDocumentUrls.filter(doc => !filesToRemovePaths.includes(doc.path));
+                const filesToRemove = safeJsonParse(updateData.filesToRemove);
+                if (filesToRemove.length > 0) {
+                    filesToRemove.forEach(fileData => { // Ahora fileData es un objeto {path, type}
+                        deleteFile(fileData.path);
+                        const urlField = fileData.type === 'otherDocuments' ? 'otherDocumentsUrls' : `${fileData.type}Url`;
+                        const currentDocs = safeJsonParse(car[urlField]);
+                        updateData[urlField] = currentDocs.filter(doc => doc.path !== fileData.path);
+                    });
                 }
             } catch (e) { 
                 console.error(`[LOG] Error al procesar filesToRemove para el coche ID ${car.id}:`, e);
@@ -232,15 +240,23 @@ exports.updateCar = async (req, res) => {
                 deleteFile(car.imageUrl);
                 updateData.imageUrl = `/uploads/${req.files.image[0].filename}`;
             }
-            if (req.files.documents && req.files.documents.length > 0) {
-                const existingDocs = updateData.documentUrls || currentDocumentUrls;
-                const newDocs = req.files.documents.map(file => ({
-                    path: `/documents/${file.filename}`,
-                    originalname: sanitizeFilename(file.originalname)
-                }));
-                updateData.documentUrls = [...existingDocs, ...newDocs];
-            }
+            
+            const fileFields = ['technicalSheet', 'registrationCertificate', 'otherDocuments'];
+            fileFields.forEach(field => {
+                if (req.files[field] && req.files[field].length > 0) {
+                    const urlField = field === 'otherDocuments' ? 'otherDocumentsUrls' : `${field}Url`;
+                    // Aseguramos que trabajamos con un array
+                    const existingDocs = updateData[urlField] || safeJsonParse(car[urlField]);
+                    const newDocs = req.files[field].map(file => ({
+                        path: `/documents/${file.filename}`,
+                        originalname: sanitizeFilename(file.originalname)
+                    }));
+                    // Concatenamos los archivos existentes con los nuevos
+                    updateData[urlField] = [...existingDocs, ...newDocs];
+                }
+            });
         }
+        // --- FIN DE LA MODIFICACIÓN ---
         
         await car.update(updateData);
         res.status(200).json(car);
@@ -268,24 +284,17 @@ exports.deleteCar = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para eliminarlo' });
         }
         
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Borrado de archivos simple y múltiple
         deleteFile(car.imageUrl);
         deleteFile(car.reservationPdfUrl);
         
-        let documentUrlsArray = [];
-        if (car.documentUrls && typeof car.documentUrls === 'string') {
-            try {
-                const parsed = JSON.parse(car.documentUrls);
-                if (Array.isArray(parsed)) documentUrlsArray = parsed;
-            } catch (e) {
-                console.error("Error al parsear documentUrls al eliminar:", e);
-            }
-        } else if (Array.isArray(car.documentUrls)) {
-            documentUrlsArray = car.documentUrls;
-        }
-
-        if (documentUrlsArray.length > 0) {
-            documentUrlsArray.forEach(doc => deleteFile(doc.path));
-        }
+        const documentFields = ['technicalSheetUrl', 'registrationCertificateUrl', 'otherDocumentsUrls'];
+        documentFields.forEach(field => {
+            const docs = safeJsonParse(car[field]);
+            docs.forEach(doc => deleteFile(doc));
+        });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         await Incident.destroy({ where: { carId: car.id }, transaction });
         await Expense.destroy({ where: { carLicensePlate: car.licensePlate }, transaction });

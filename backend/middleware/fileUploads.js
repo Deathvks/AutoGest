@@ -17,7 +17,12 @@ const storage = multer.diskStorage({
         let dest;
         if (file.fieldname === 'image') {
             dest = 'public/uploads/';
-        } else if (file.fieldname === 'documents' || file.fieldname === 'reservationPdf') {
+        } else if ([
+            'technicalSheet', 
+            'registrationCertificate', 
+            'otherDocuments', 
+            'reservationPdf'
+        ].includes(file.fieldname)) {
             dest = 'public/documents/';
         } else {
             dest = 'public/uploads/'; // Default
@@ -33,14 +38,21 @@ const storage = multer.diskStorage({
 
 // Filtro de archivos para aceptar imágenes o PDFs
 const fileFilter = (req, file, cb) => {
+    const allowedImageTypes = /jpeg|jpg|png|webp/;
+    const allowedDocumentTypes = /jpeg|jpg|png|webp|pdf/;
+
     if (file.fieldname === 'image') {
-        if (file.mimetype.startsWith('image/')) {
+        if (allowedImageTypes.test(file.mimetype)) {
             cb(null, true);
         } else {
             cb(new Error('¡El campo de imagen solo acepta archivos de imagen!'), false);
         }
-    } else if (file.fieldname === 'documents') {
-        if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+    } else if ([
+        'technicalSheet', 
+        'registrationCertificate', 
+        'otherDocuments'
+    ].includes(file.fieldname)) {
+        if (allowedDocumentTypes.test(file.mimetype)) {
             cb(null, true);
         } else {
             cb(new Error('¡Los documentos solo pueden ser una imagen o un PDF!'), false);
@@ -59,12 +71,16 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB por archivo
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB por archivo
 });
 
-// Exportamos el middleware configurado para manejar múltiples campos
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se actualiza el maxCount de otherDocuments a 6
 module.exports = upload.fields([
     { name: 'image', maxCount: 1 },
-    { name: 'documents', maxCount: 10 },
-    { name: 'reservationPdf', maxCount: 1 } // <-- NUEVO CAMPO AÑADIDO
+    { name: 'technicalSheet', maxCount: 2 },
+    { name: 'registrationCertificate', maxCount: 2 },
+    { name: 'otherDocuments', maxCount: 6 }, // <-- LÍNEA CORREGIDA
+    { name: 'reservationPdf', maxCount: 1 }
 ]);
+// --- FIN DE LA MODIFICACIÓN ---

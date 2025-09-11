@@ -8,7 +8,7 @@ pnpm-lock.yaml
 
 # --- Entorno ---
 .env
-.env.*        # .env.local, .env.production, etc
+.env.* # .env.local, .env.production, etc
 .envrc
 .DS_Store
 
@@ -16,6 +16,7 @@ pnpm-lock.yaml
 logs
 *.log
 logs/*.log
+cleanup.log
 *.csv
 *.dat
 *.out

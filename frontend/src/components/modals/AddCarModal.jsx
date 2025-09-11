@@ -1,117 +1,40 @@
 // autogest-app/frontend/src/components/modals/AddCarModal.jsx
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faCar, faStar, faIdCard, faFingerprint, faCalendarDay, faRoad, faEuroSign,
-    faMapMarkerAlt, faXmark, faUpload, faPaperclip, faBolt, faShieldAlt
-} from '@fortawesome/free-solid-svg-icons';
-import Select from '../Select';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
+
 import InsuranceConfirmationModal from './InsuranceConfirmationModal';
-
-const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, error, required = false, placeholder = '' }) => (
-    <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">
-            {label}
-            {required && <span className="text-red-accent ml-1">*</span>}
-        </label>
-        <div className="relative">
-            {icon && (
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
-                </div>
-            )}
-            <input 
-                type={type} 
-                name={name} 
-                value={value} 
-                onChange={onChange} 
-                inputMode={inputMode}
-                placeholder={placeholder}
-                className={`w-full px-3 py-2 bg-background border rounded-md focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${
-                    error ? 'border-red-accent' : 'border-border-color'
-                } ${icon ? 'pl-9' : ''}`} 
-            />
-        </div>
-        {error && <p className="mt-1 text-xs text-red-accent">{error}</p>}
-    </div>
-);
-
-const TextareaField = ({ label, name, value, onChange, placeholder }) => {
-    const textareaRef = useRef(null);
-    useEffect(() => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-        }
-    }, [value]);
-    return (
-        <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
-            <textarea 
-                ref={textareaRef} 
-                name={name} 
-                value={value} 
-                onChange={onChange} 
-                placeholder={placeholder}
-                className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary resize-none overflow-hidden" 
-                rows="3" 
-            />
-        </div>
-    );
-};
-
-const ToggleSwitch = ({ label, icon, enabled, onChange }) => (
-    <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
-        <div className="flex items-center gap-4 mt-2">
-            <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
-            <button
-                type="button"
-                onClick={onChange}
-                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent ${enabled ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}`}
-            >
-                <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-            <span className={`font-semibold ${enabled ? 'text-accent' : 'text-text-secondary'}`}>
-                {enabled ? 'Sí' : 'No'}
-            </span>
-        </div>
-    </div>
-);
-
+import AddCarFormFields from './AddCar/AddCarFormFields';
+import AddCarFileUploads from './AddCar/AddCarFileUploads';
 
 const AddCarModal = ({ onClose, onAdd, locations }) => {
     const [newCar, setNewCar] = useState({
         make: '', model: '', licensePlate: '', vin: '', registrationDate: new Date().toISOString().split('T')[0],
         purchasePrice: '', price: '', km: '', horsepower: '', location: '', 
-        newLocation: '',
-        notes: '', tags: [], hasInsurance: false
+        newLocation: '', notes: '', tags: [], hasInsurance: false, fuel: '', transmission: ''
     });
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
+    
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
-    const [documentFiles, setDocumentFiles] = useState([]);
+    const [technicalSheetFiles, setTechnicalSheetFiles] = useState([]);
+    const [registrationCertificateFiles, setRegistrationCertificateFiles] = useState([]);
+    const [otherDocumentFiles, setOtherDocumentFiles] = useState([]);
+    
     const [tagInput, setTagInput] = useState('');
     const [showInsuranceConfirm, setShowInsuranceConfirm] = useState(false);
-    const imageInputRef = useRef(null);
-    const documentInputRef = useRef(null);
 
-    const fuelOptions = [ { id: 'Gasolina', name: 'Gasolina' }, { id: 'Diesel', name: 'Diesel' }, { id: 'Híbrido', name: 'Híbrido' }, { id: 'Eléctrico', name: 'Eléctrico' } ];
-    const transmissionOptions = [ { id: 'Manual', name: 'Manual' }, { id: 'Automático', name: 'Automático' } ];
+    const fuelOptions = useMemo(() => [ { id: 'Gasolina', name: 'Gasolina' }, { id: 'Diesel', name: 'Diesel' }, { id: 'Híbrido', name: 'Híbrido' }, { id: 'Eléctrico', name: 'Eléctrico' } ], []);
+    const transmissionOptions = useMemo(() => [ { id: 'Manual', name: 'Manual' }, { id: 'Automático', name: 'Automático' } ], []);
+    const locationOptions = useMemo(() => {
+        const sortedLocations = [...locations].sort((a, b) => a.name.localeCompare(b.name));
+        return [{ id: '', name: 'Seleccionar existente...' }, ...sortedLocations];
+    }, [locations]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setNewCar(prev => ({ ...prev, [name]: value }));
-    };
-    
-    const handleLocationSelect = (value) => {
-        setNewCar(prev => ({ ...prev, location: value, newLocation: '' }));
-    };
-
-    const handleNewLocationInput = (e) => {
-        const { value } = e.target;
-        setNewCar(prev => ({ ...prev, newLocation: value, location: '' }));
+        const { name, value, type, checked } = e.target;
+        setNewCar(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
     
     const handleImageChange = (e) => {
@@ -122,18 +45,40 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         }
     };
 
-    const handleDocumentChange = (e) => {
+    const handleFileChange = (e, fileType) => {
         const newFiles = Array.from(e.target.files);
-        if (documentFiles.length + newFiles.length > 2) {
-            alert("Solo puedes subir un máximo de 2 archivos.");
+        const setters = {
+            technicalSheet: setTechnicalSheetFiles,
+            registrationCertificate: setRegistrationCertificateFiles,
+            otherDocuments: setOtherDocumentFiles,
+        };
+        const currentFiles = {
+            technicalSheet: technicalSheetFiles,
+            registrationCertificate: registrationCertificateFiles,
+            otherDocuments: otherDocumentFiles,
+        };
+        const MAX_FILES = { technicalSheet: 2, registrationCertificate: 2, otherDocuments: 6 };
+
+        if (currentFiles[fileType].length + newFiles.length > MAX_FILES[fileType]) {
+            setError(`Puedes subir un máximo de ${MAX_FILES[fileType]} archivos para esta sección.`);
+            setTimeout(() => setError(''), 4000);
             return;
         }
-        setDocumentFiles(prevFiles => [...prevFiles, ...newFiles]);
+        setters[fileType](prev => [...prev, ...newFiles]);
     };
 
-    const removeDocumentFile = (fileToRemove) => {
-        setDocumentFiles(prevFiles => prevFiles.filter(file => file !== fileToRemove));
+    const handleRemoveFile = (fileToRemove, fileType) => {
+        const setters = {
+            technicalSheet: setTechnicalSheetFiles,
+            registrationCertificate: setRegistrationCertificateFiles,
+            otherDocuments: setOtherDocumentFiles,
+        };
+        setters[fileType](prev => prev.filter(file => file !== fileToRemove));
     };
+    
+    const handleLocationSelect = (value) => setNewCar(prev => ({ ...prev, location: value, newLocation: '' }));
+    const handleNewLocationInput = (e) => setNewCar(prev => ({ ...prev, newLocation: e.target.value, location: '' }));
+    const handleSelectChange = (name, value) => setNewCar(prev => ({ ...prev, [name]: value }));
 
     const handleTagKeyDown = (e) => {
         if (e.key === 'Enter' && tagInput) {
@@ -145,14 +90,8 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         }
     };
     
-    const removeTag = (tagToRemove) => {
-        setNewCar(prev => ({...prev, tags: prev.tags.filter(tag => tag !== tagToRemove)}));
-    };
-
-    const parseNumber = (str) => {
-        if (typeof str !== 'string' || !str) return '';
-        return str.replace(/\./g, '').replace(',', '.');
-    };
+    const removeTag = (tagToRemove) => setNewCar(prev => ({...prev, tags: prev.tags.filter(tag => tag !== tagToRemove)}));
+    const parseNumber = (str) => (typeof str !== 'string' || !str) ? '' : str.replace(/\./g, '').replace(',', '.');
 
     const validateForm = () => {
         const errors = {};
@@ -167,7 +106,6 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
             setError('Por favor, corrige los errores marcados.');
             return false;
         }
-        
         setError('');
         return true;
     };
@@ -190,37 +128,26 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
             const formData = new FormData();
             Object.keys(finalCarData).forEach(key => {
                 const value = finalCarData[key];
-                if (key === 'tags') {
-                    formData.append(key, JSON.stringify(value));
-                } else if (value !== null && value !== undefined && value !== '') {
-                    formData.append(key, value);
-                }
+                if (key === 'tags') formData.append(key, JSON.stringify(value));
+                else if (value !== null && value !== undefined && value !== '') formData.append(key, value);
             });
+            
             if (imageFile) formData.append('image', imageFile);
-            documentFiles.forEach(file => {
-                formData.append('documents', file);
-            });
+            technicalSheetFiles.forEach(file => formData.append('technicalSheet', file));
+            registrationCertificateFiles.forEach(file => formData.append('registrationCertificate', file));
+            otherDocumentFiles.forEach(file => formData.append('otherDocuments', file));
             
             await onAdd(formData);
         } catch (error) {
-            console.error('Error al añadir coche:', error);
-            setError(error.message || 'Error al añadir el coche. Por favor, inténtalo de nuevo.');
+            setError(error.message || 'Error al añadir el coche.');
         }
     };
 
     const handleAdd = () => {
         if (!validateForm()) return;
-        if (!newCar.hasInsurance) {
-            setShowInsuranceConfirm(true);
-        } else {
-            proceedWithAdd();
-        }
+        if (!newCar.hasInsurance) setShowInsuranceConfirm(true);
+        else proceedWithAdd();
     };
-    
-    const locationOptions = useMemo(() => {
-        const sortedLocations = [...locations].sort((a, b) => a.name.localeCompare(b.name));
-        return [{ id: '', name: 'Seleccionar existente...' }, ...sortedLocations];
-    }, [locations]);
 
     return (
        <>
@@ -234,103 +161,30 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                     </div>
                     
                     <form onSubmit={(e) => e.preventDefault()} noValidate className="flex-grow overflow-y-auto p-6 space-y-4">
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-text-secondary mb-2">Imagen Principal</label>
-                            <div className="w-40 h-28 rounded-lg bg-background flex items-center justify-center overflow-hidden border border-border-color">
-                                {imagePreview ? ( <img src={imagePreview} alt="Vista previa" className="h-full w-full object-cover" /> ) : ( <span className="text-xs text-text-secondary">Sin imagen</span> )}
-                            </div>
-                            <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} className="hidden" />
-                            <button type="button" onClick={() => imageInputRef.current.click()} className="mt-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium w-40 flex items-center justify-center gap-2">
-                                <FontAwesomeIcon icon={faUpload} />
-                                Seleccionar
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField label="Marca" name="make" value={newCar.make} onChange={handleChange} icon={faCar} error={fieldErrors.make} required={true} />
-                            <InputField label="Modelo" name="model" value={newCar.model} onChange={handleChange} icon={faStar} error={fieldErrors.model} required={true} />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField label="Matrícula" name="licensePlate" value={newCar.licensePlate} onChange={handleChange} icon={faIdCard} error={fieldErrors.licensePlate} required={true} />
-                            <InputField label="Nº de Bastidor" name="vin" value={newCar.vin} onChange={handleChange} icon={faFingerprint} error={fieldErrors.vin} />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField label="Fecha de Matriculación" name="registrationDate" type="date" value={newCar.registrationDate} onChange={handleChange} icon={faCalendarDay} />
-                            <InputField label="Precio de Compra (€)" name="purchasePrice" type="text" inputMode="decimal" value={newCar.purchasePrice} onChange={handleChange} icon={faEuroSign} error={fieldErrors.purchasePrice} required={true} />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <InputField label="Precio de Venta (€)" name="price" type="text" inputMode="decimal" value={newCar.price} onChange={handleChange} icon={faEuroSign} error={fieldErrors.price} required={true} />
-                            <InputField label="Kilómetros" name="km" type="text" inputMode="numeric" value={newCar.km} onChange={handleChange} icon={faRoad} />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InputField label="Potencia (CV)" name="horsepower" type="text" inputMode="numeric" value={newCar.horsepower} onChange={handleChange} icon={faBolt} />
-                            <ToggleSwitch 
-                                label="¿Tiene seguro en vigor?"
-                                icon={faShieldAlt}
-                                enabled={newCar.hasInsurance}
-                                onChange={() => setNewCar(prev => ({ ...prev, hasInsurance: !prev.hasInsurance }))}
-                            />
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Select
-                                label="Ubicación Existente"
-                                value={newCar.location}
-                                onChange={handleLocationSelect}
-                                options={locationOptions}
-                                icon={faMapMarkerAlt}
-                            />
-                             <InputField
-                                label="O Nueva Ubicación"
-                                name="newLocation"
-                                value={newCar.newLocation}
-                                onChange={handleNewLocationInput}
-                                icon={faMapMarkerAlt}
-                                placeholder="Escribe para crear una nueva"
-                            />
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Select label="Combustible" value={newCar.fuel} onChange={(value) => handleSelectChange('fuel', value)} options={fuelOptions} />
-                            <Select label="Tipo de Cambio" value={newCar.transmission} onChange={(value) => handleSelectChange('transmission', value)} options={transmissionOptions} />
-                        </div>
-                        
-                        <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">Archivos varios (Ficha, Permiso circulación, etc.)</label>
-                            <div className="flex items-center gap-2 mt-2">
-                                <button type="button" onClick={() => documentInputRef.current.click()} className="w-full bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 border border-border-color disabled:opacity-50" disabled={documentFiles.length >= 2}>
-                                    <FontAwesomeIcon icon={faPaperclip} />
-                                    <span>{documentFiles.length >= 2 ? 'Límite alcanzado' : 'Añadir archivo'}</span>
-                                </button>
-                                <input type="file" accept="image/*,application/pdf" ref={documentInputRef} onChange={handleDocumentChange} className="hidden" multiple />
-                            </div>
-                            {documentFiles.length > 0 && (
-                                <ul className="mt-2 space-y-1">
-                                    {documentFiles.map((file, index) => (
-                                        <li key={index} className="flex items-center justify-between text-xs text-text-secondary bg-background p-2 rounded-md">
-                                            <span className="truncate">{file.name}</span>
-                                            <button onClick={() => removeDocumentFile(file)} className="ml-2 text-red-accent hover:opacity-75">
-                                                <FontAwesomeIcon icon={faXmark} />
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                        
-                        <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">Etiquetas</label>
-                            <div className="flex flex-wrap items-center gap-2 w-full px-3 py-2 bg-background border border-border-color rounded-lg focus-within:ring-1 focus-within:ring-blue-accent focus-within:border-blue-accent">
-                                {newCar.tags.map(tag => (
-                                    <span key={tag} className="flex items-center gap-1 bg-blue-accent/10 text-blue-accent text-sm px-2 py-1 rounded">
-                                        {tag}
-                                        <button onClick={() => removeTag(tag)} className="hover:opacity-75"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
-                                    </span>
-                                ))}
-                                <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="Añadir etiqueta y pulsar Enter" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px]" />
-                            </div>
-                        </div>
-                        <TextareaField label="Anotaciones" name="notes" value={newCar.notes} onChange={handleChange} placeholder="Añade cualquier anotación relevante sobre el coche..." />
+                        <AddCarFileUploads 
+                            imagePreview={imagePreview}
+                            handleImageChange={handleImageChange}
+                            technicalSheetFiles={technicalSheetFiles}
+                            registrationCertificateFiles={registrationCertificateFiles}
+                            otherDocumentFiles={otherDocumentFiles}
+                            handleFileChange={handleFileChange}
+                            handleRemoveFile={handleRemoveFile}
+                        />
+                        <AddCarFormFields 
+                            newCar={newCar}
+                            fieldErrors={fieldErrors}
+                            locations={locationOptions}
+                            fuelOptions={fuelOptions}
+                            transmissionOptions={transmissionOptions}
+                            handleChange={handleChange}
+                            handleLocationSelect={handleLocationSelect}
+                            handleNewLocationInput={handleNewLocationInput}
+                            handleSelectChange={handleSelectChange}
+                            handleTagKeyDown={handleTagKeyDown}
+                            tagInput={tagInput}
+                            setTagInput={setTagInput}
+                            removeTag={removeTag}
+                        />
                     </form>
 
                     {error && <p className="flex-shrink-0 px-6 pb-4 text-sm text-red-accent text-center">{error}</p>}
