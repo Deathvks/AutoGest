@@ -10,7 +10,7 @@ const FileUploadSection = ({ label, existingFiles = [], newFiles = [], onFileCha
     const fileInputRef = useRef(null);
     const totalFiles = (existingFiles?.length || 0) + newFiles.length;
 
-    const handleButtonClick = (isCamera) => {
+    const handleButtonClick = async (isCamera) => {
         try {
             if (!fileInputRef.current) {
                 alert('Error: La referencia al input de fichero no existe.');
@@ -18,6 +18,11 @@ const FileUploadSection = ({ label, existingFiles = [], newFiles = [], onFileCha
             }
 
             if (isCamera) {
+                // Comprueba si el navegador es Brave y muestra un aviso específico
+                if (navigator.brave && (await navigator.brave.isBrave())) {
+                    alert('Parece que estás usando Brave. Si la cámara no se abre, por favor, desactiva los escudos de Brave (el icono del león en la barra de direcciones) para este sitio y vuelve a intentarlo.');
+                }
+                
                 fileInputRef.current.setAttribute('accept', 'image/*');
                 fileInputRef.current.setAttribute('capture', 'environment');
                 fileInputRef.current.removeAttribute('multiple');

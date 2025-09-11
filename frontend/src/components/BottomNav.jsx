@@ -3,17 +3,20 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-    faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, faCog 
+    faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
+    faUser 
 } from '@fortawesome/free-solid-svg-icons';
 
 const BottomNav = () => {
+    // --- INICIO DE LA MODIFICACIÓN ---
     const navItems = [
         { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
         { icon: faCar, text: 'Coches', path: '/cars' },
         { icon: faChartLine, text: 'Ventas', path: '/sales' },
         { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
-        { icon: faCog, text: 'Ajustes', path: '/settings' },
+        { icon: faUser, text: 'Perfil', path: '/profile' },
     ];
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const NavItem = ({ icon, text, path }) => (
         <NavLink 

@@ -2,7 +2,9 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield } from '@fortawesome/free-solid-svg-icons';
+// --- INICIO DE LA MODIFICACIÓN ---
+import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faChevronRight, faUser } from '@fortawesome/free-solid-svg-icons';
+// --- FIN DE LA MODIFICACIÓN ---
 import Papa from 'papaparse';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
@@ -63,6 +65,17 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
     return (
         <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">Ajustes</h1>
+
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <Link to="/profile" className="flex items-center justify-between p-4 mb-8 bg-component-bg rounded-xl border border-border-color lg:hidden hover:bg-component-bg-hover transition-colors">
+                <div className="flex items-center gap-4">
+                    <FontAwesomeIcon icon={faUser} className="w-5 h-5 text-accent" />
+                    <span className="font-bold text-text-primary">VER MI PERFIL</span>
+                </div>
+                <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4 text-text-secondary" />
+            </Link>
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
+
 
             <div className="space-y-8">
 

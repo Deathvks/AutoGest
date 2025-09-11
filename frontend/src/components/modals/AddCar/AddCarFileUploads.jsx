@@ -4,36 +4,34 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar, faUpload, faCamera, faFileLines, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 const FileUploadSection = ({ label, files, onFileChange, onRemoveFile, fileType, maxFiles }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
     const fileInputRef = useRef(null);
 
-    const handleButtonClick = (isCamera) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleButtonClick = async (isCamera) => {
         try {
             if (!fileInputRef.current) {
                 alert('Error: La referencia al input de fichero no existe.');
                 return;
             }
-            
-            console.log(`Botón pulsado. ¿Es cámara? ${isCamera}`);
 
             if (isCamera) {
+                // Comprueba si el navegador es Brave y muestra un aviso específico
+                if (navigator.brave && (await navigator.brave.isBrave())) {
+                    alert('Parece que estás usando Brave. Si la cámara no se abre, por favor, desactiva los escudos de Brave (el icono del león en la barra de direcciones) para este sitio y vuelve a intentarlo.');
+                }
+                
                 fileInputRef.current.setAttribute('accept', 'image/*');
                 fileInputRef.current.setAttribute('capture', 'environment');
                 fileInputRef.current.removeAttribute('multiple');
-                console.log('Atributos para cámara establecidos.');
             } else {
                 fileInputRef.current.setAttribute('accept', 'image/*,application/pdf');
                 fileInputRef.current.setAttribute('multiple', 'true');
                 fileInputRef.current.removeAttribute('capture');
-                console.log('Atributos para subir fichero establecidos.');
             }
 
-            // Simular el clic
             fileInputRef.current.click();
-            console.log('Clic en el input simulado.');
 
         } catch (error) {
-            // Si algo falla, lo veremos en una alerta en el móvil
             console.error('Error al intentar abrir el selector de fichero/cámara:', error);
             alert(`Error al activar la función: ${error.message}`);
         }

@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCar, faCalendarPlus, faReceipt, faTags, faChevronLeft, faChevronRight, faFilter, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faCar, faCalendarPlus, faReceipt, faTags, faChevronLeft, faChevronRight, faWrench, faCalendarDay } from '@fortawesome/free-solid-svg-icons';
 import api from '../services/api';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 const StatCard = ({ title, value, colorClass, onClick, isClickable }) => (
     <div 
-        className={`bg-component-bg p-6 rounded-lg shadow-sm border border-border-color ${isClickable ? 'cursor-pointer transition-colors hover:bg-component-bg-hover' : ''}`}
+        className={`bg-component-bg p-6 rounded-xl shadow-sm border border-border-color ${isClickable ? 'cursor-pointer transition-colors hover:bg-component-bg-hover' : ''}`}
         onClick={onClick}
     >
         <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider">{title}</h3>
@@ -57,15 +57,13 @@ const ActivityHistory = () => {
     };
 
     return (
-        <div className="bg-component-bg p-6 rounded-lg shadow-sm border border-border-color h-full flex flex-col">
-            <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">Historial de Actividad</h3>
+        <div className="bg-component-bg p-6 rounded-xl shadow-sm border border-border-color h-full flex flex-col">
+            <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">HISTORIAL DE ACTIVIDAD</h3>
             {isLoading ? (
-                <div className="flex-grow flex items-center justify-center text-text-secondary">Cargando...</div>
+                <div className="flex-grow flex items-center justify-center text-text-secondary">CARGANDO...</div>
             ) : activityData.activities.length > 0 ? (
                 <>
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    <div className="space-y-4 flex-grow overflow-y-auto">
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+                    <div className="space-y-4 flex-grow overflow-y-auto pr-2">
                         {activityData.activities.map((item, index) => {
                             const { icon, color } = getActivityIcon(item.type);
                             const isClickable = !!item.carId;
@@ -88,35 +86,51 @@ const ActivityHistory = () => {
                         <button onClick={() => fetchActivity(activityData.currentPage - 1)} disabled={activityData.currentPage <= 1} className="px-3 py-1 rounded-md bg-component-bg-hover disabled:opacity-50">
                             <FontAwesomeIcon icon={faChevronLeft} />
                         </button>
-                        <span className="text-sm text-text-secondary">Página {activityData.currentPage} de {activityData.totalPages}</span>
+                        <span className="text-sm text-text-secondary">PÁGINA {activityData.currentPage} DE {activityData.totalPages}</span>
                         <button onClick={() => fetchActivity(activityData.currentPage + 1)} disabled={activityData.currentPage >= activityData.totalPages} className="px-3 py-1 rounded-md bg-component-bg-hover disabled:opacity-50">
                             <FontAwesomeIcon icon={faChevronRight} />
                         </button>
                     </div>
                 </>
             ) : (
-                <div className="flex-grow flex items-center justify-center text-text-secondary">No hay actividad reciente.</div>
+                <div className="flex-grow flex items-center justify-center text-text-secondary">NO HAY ACTIVIDAD RECIENTE.</div>
             )}
         </div>
     );
 };
 
 const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onRevenueClick }) => {
-    const [stats, setStats] = useState({ totalInvestment: 0, totalRevenue: 0, totalExpenses: 0, totalProfit: 0 });
-    const [dates, setDates] = useState({ startDate: '', endDate: '' });
-    const [showFilters, setShowFilters] = useState(false);
+    const [generalStats, setGeneralStats] = useState({ totalInvestment: 0, totalRevenue: 0, totalExpenses: 0, totalProfit: 0 });
+    const [dailyStats, setDailyStats] = useState({ totalInvestment: 0, totalRevenue: 0, totalExpenses: 0, totalProfit: 0 });
+    
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const today = new Date().toISOString().split('T')[0];
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchGeneralStats = async () => {
             try {
-                const data = await api.dashboard.getStats(dates.startDate, dates.endDate);
-                setStats(data);
+                const data = await api.dashboard.getStats();
+                setGeneralStats(data);
             } catch (error) {
-                console.error("Error al cargar estadísticas:", error);
+                console.error("Error al cargar estadísticas generales:", error);
             }
         };
-        fetchStats();
-    }, [dates]);
+        fetchGeneralStats();
+    }, []);
+
+    useEffect(() => {
+        const fetchDailyStats = async () => {
+            if (selectedDate) {
+                try {
+                    const data = await api.dashboard.getStats(selectedDate, selectedDate);
+                    setDailyStats(data);
+                } catch (error) {
+                    console.error("Error al cargar estadísticas diarias:", error);
+                }
+            }
+        };
+        fetchDailyStats();
+    }, [selectedDate]);
     
     useEffect(() => {
         const textColor = isDarkMode ? '#94a3b8' : '#64748b';
@@ -126,11 +140,13 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
     }, [isDarkMode]);
 
     const handleDateChange = (e) => {
-        setDates(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        setSelectedDate(e.target.value);
     };
-
-    const clearDates = () => {
-        setDates({ startDate: '', endDate: '' });
+    
+    const changeDay = (amount) => {
+        const currentDate = new Date(selectedDate);
+        currentDate.setDate(currentDate.getDate() + amount);
+        setSelectedDate(currentDate.toISOString().split('T')[0]);
     };
 
     const expensesByCategoryData = useMemo(() => {
@@ -141,7 +157,7 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
         return {
             labels: Object.keys(categories),
             datasets: [{ 
-                label: 'Gastos', 
+                label: 'GASTOS', 
                 data: Object.values(categories), 
                 backgroundColor: isDarkMode ? 'rgba(197, 164, 126, 0.5)' : 'rgba(184, 134, 11, 0.6)', 
                 borderColor: isDarkMode ? '#C5A47E' : '#B8860B', 
@@ -159,10 +175,10 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
         
         const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim();
         const colors = {
-            'En venta': accentColor,
-            'Reservado': isDarkMode ? '#FFA500' : '#FF8C00',
-            'Vendido': isDarkMode ? '#00FF00' : '#32CD32',
-            'Otro': isDarkMode ? '#94a3b8' : '#64748b'
+            'EN VENTA': accentColor,
+            'RESERVADO': isDarkMode ? '#FFA500' : '#FF8C00',
+            'VENDIDO': isDarkMode ? '#00FF00' : '#32CD32',
+            'OTRO': isDarkMode ? '#94a3b8' : '#64748b'
         };
 
         const labels = Object.keys(statusCounts);
@@ -170,7 +186,7 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
             labels: labels,
             datasets: [{ 
                 data: Object.values(statusCounts), 
-                backgroundColor: labels.map(label => colors[label] || colors['Otro']), 
+                backgroundColor: labels.map(label => colors[label.toUpperCase()] || colors['OTRO']), 
                 borderColor: 'var(--color-component-bg)'
             }],
         };
@@ -180,61 +196,75 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
     const pieOptions = { ...chartOptions, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } } } };
 
     return (
-        <div className="space-y-6">
-            <div className="relative bg-component-bg p-4 rounded-lg shadow-sm border border-border-color">
-                <button 
-                    onClick={() => setShowFilters(!showFilters)} 
-                    className="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition-colors z-10 p-2 rounded-full hover:bg-component-bg-hover"
-                    title={showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
-                >
-                    <FontAwesomeIcon icon={showFilters ? faTimes : faFilter} className="w-5 h-5" />
-                </button>
+        <div className="space-y-12">
+            <div>
+                <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-4">DASHBOARD GENERAL</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    <StatCard title="INVERSIÓN TOTAL" value={generalStats.totalInvestment} colorClass="text-text-primary" onClick={onTotalInvestmentClick} isClickable={true} />
+                    <StatCard title="INGRESOS" value={generalStats.totalRevenue} colorClass="text-green-accent" onClick={onRevenueClick} isClickable={true} />
+                    <StatCard title="GASTOS" value={generalStats.totalExpenses} colorClass="text-red-accent" />
+                    <StatCard title="BENEFICIO NETO" value={generalStats.totalProfit} colorClass={generalStats.totalProfit >= 0 ? 'text-accent' : 'text-red-accent'} />
+                </div>
+            </div>
 
-                <h3 className="text-lg font-semibold text-text-primary mb-4 pr-12">Filtros de Datos</h3>
-                
-                {showFilters && (
-                    <div className="mt-4 pt-4 border-t border-border-color animate-fade-in">
-                        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-                            <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                                <div>
-                                    <label htmlFor="startDate" className="text-xs text-text-secondary">Desde</label>
-                                    <input type="date" name="startDate" id="startDate" value={dates.startDate} onChange={handleDateChange} className="w-full text-sm p-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
+            <div>
+                <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-4">DASHBOARD POR DÍA</h2>
+                <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="lg:w-72 xl:w-80 flex-shrink-0">
+                        <div className="bg-component-bg p-6 rounded-xl shadow-sm border border-border-color">
+                            <h3 className="text-lg font-semibold text-text-primary mb-4">SELECCIONAR DÍA</h3>
+                            <div className="space-y-4">
+                                <div className="relative">
+                                    <input type="date" name="selectedDate" value={selectedDate} onChange={handleDateChange} className="w-full text-sm p-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
+                                    <FontAwesomeIcon icon={faCalendarDay} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
                                 </div>
-                                <div>
-                                    <label htmlFor="endDate" className="text-xs text-text-secondary">Hasta</label>
-                                    <input type="date" name="endDate" id="endDate" value={dates.endDate} onChange={handleDateChange} className="w-full text-sm p-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => changeDay(-1)} className="p-2 w-10 h-10 flex items-center justify-center bg-component-bg-hover rounded-md border border-border-color hover:bg-border-color transition-colors" title="DÍA ANTERIOR">
+                                        <FontAwesomeIcon icon={faChevronLeft} />
+                                    </button>
+                                    <button 
+                                        onClick={() => changeDay(1)} 
+                                        disabled={selectedDate >= today}
+                                        className="p-2 w-10 h-10 flex items-center justify-center bg-component-bg-hover rounded-md border border-border-color hover:bg-border-color transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        title="SIGUIENTE DÍA"
+                                    >
+                                        <FontAwesomeIcon icon={faChevronRight} />
+                                    </button>
                                 </div>
                             </div>
-                            <button onClick={clearDates} className="w-full sm:w-auto text-sm text-accent hover:opacity-80 transition-opacity px-4 py-2">Limpiar</button>
                         </div>
                     </div>
-                )}
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                <StatCard title="Inversión Total" value={stats.totalInvestment} colorClass="text-text-primary" onClick={onTotalInvestmentClick} isClickable={true} />
-                <StatCard title="Ingresos" value={stats.totalRevenue} colorClass="text-green-accent" onClick={onRevenueClick} isClickable={true} />
-                <StatCard title="Gastos" value={stats.totalExpenses} colorClass="text-red-accent" />
-                <StatCard title="Beneficio Neto" value={stats.totalProfit} colorClass={stats.totalProfit >= 0 ? 'text-accent' : 'text-red-accent'} />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-3 bg-component-bg p-6 rounded-lg shadow-sm border border-border-color h-96 flex flex-col">
-                    <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">Gastos por Categoría (Total)</h3>
-                    <div className="relative flex-grow">
-                        <Bar data={expensesByCategoryData} options={chartOptions} />
-                    </div>
-                </div>
-                <div className="lg:col-span-2 bg-component-bg p-6 rounded-lg shadow-sm border border-border-color h-96 flex flex-col">
-                    <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">Coches por Estado (Total)</h3>
-                    <div className="relative flex-grow">
-                        <Pie data={statusData} options={pieOptions} />
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <StatCard title="INVERSIÓN DEL DÍA" value={dailyStats.totalInvestment} colorClass="text-text-primary" />
+                        <StatCard title="INGRESOS DEL DÍA" value={dailyStats.totalRevenue} colorClass="text-green-accent" />
+                        <StatCard title="GASTOS DEL DÍA" value={dailyStats.totalExpenses} colorClass="text-red-accent" />
+                        <StatCard title="BENEFICIO DEL DÍA" value={dailyStats.totalProfit} colorClass={dailyStats.totalProfit >= 0 ? 'text-accent' : 'text-red-accent'} />
                     </div>
                 </div>
             </div>
             
-            <div className="h-96">
-                 <ActivityHistory />
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                <div className="xl:col-span-2 space-y-8">
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <div className="bg-component-bg p-6 rounded-xl shadow-sm border border-border-color h-96 flex flex-col">
+                        <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">GASTOS GENERALES POR CATEGORÍA</h3>
+                        <div className="relative flex-grow">
+                            <Bar data={expensesByCategoryData} options={chartOptions} />
+                        </div>
+                    </div>
+                    <div className="bg-component-bg p-6 rounded-xl shadow-sm border border-border-color h-96 flex flex-col">
+                        <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">DISTRIBUCIÓN GENERAL DE COCHES</h3>
+                        <div className="relative flex-grow">
+                            <Pie data={statusData} options={pieOptions} />
+                        </div>
+                    </div>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+                </div>
+
+                <div className="xl:col-span-1 h-[calc(2*24rem+2rem)]">
+                     <ActivityHistory />
+                </div>
             </div>
         </div>
     );
