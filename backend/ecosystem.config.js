@@ -13,6 +13,7 @@ module.exports = {
        // --- INICIO DE LA MODIFICACIÓN ---
        DB_DIALECT: "mysql", // <-- Esta es la línea que faltaba
        // --- FIN DE LA MODIFICACIÓN ---
+       JWT_SECRET: "%W5z7%NPvr2gMGzBDB14hEfY!kYKS%*Q5PBExM5Zbev3!U5Jdn&T9uGQ8Ez!q9sx" 
     }
   }]
 }
