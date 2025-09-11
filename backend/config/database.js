@@ -1,7 +1,11 @@
+// autogest-app/backend/config/database.js
 const { Sequelize } = require('sequelize');
-require('dotenv').config(); // Carga las variables del archivo .env
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se elimina la siguiente línea. La configuración de dotenv ya se gestiona en index.js
+// require('dotenv').config(); 
+// --- FIN DE LA MODIFICACIÓN ---
 
-// Creamos la instancia de Sequelize con los datos de conexión de .env
+// Creamos la instancia de Sequelize con los datos de conexión que ya existen en el entorno
 const sequelize = new Sequelize(
     process.env.DB_NAME,
     process.env.DB_USER,
