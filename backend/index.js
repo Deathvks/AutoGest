@@ -2,8 +2,9 @@
 
 const express = require('express');
 const cors = require('cors');
+
 // --- INICIO DE LA MODIFICACIÓN ---
-// Solo cargar dotenv si no estamos en producción
+// Solo cargar dotenv si NO estamos en producción.
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
