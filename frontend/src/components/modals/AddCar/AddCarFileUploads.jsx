@@ -4,8 +4,26 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar, faUpload, faCamera, faFileLines, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 const FileUploadSection = ({ label, files, onFileChange, onRemoveFile, fileType, maxFiles }) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Usamos una única referencia para el input
     const fileInputRef = useRef(null);
-    const cameraInputRef = useRef(null);
+
+    // Esta función modifica el input antes de hacer clic en él
+    const handleButtonClick = (isCamera) => {
+        if (fileInputRef.current) {
+            if (isCamera) {
+                fileInputRef.current.setAttribute('accept', 'image/*');
+                fileInputRef.current.setAttribute('capture', 'environment');
+                fileInputRef.current.removeAttribute('multiple');
+            } else {
+                fileInputRef.current.setAttribute('accept', 'image/*,application/pdf');
+                fileInputRef.current.setAttribute('multiple', '');
+                fileInputRef.current.removeAttribute('capture');
+            }
+            fileInputRef.current.click();
+        }
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     return (
         <div>
@@ -23,16 +41,18 @@ const FileUploadSection = ({ label, files, onFileChange, onRemoveFile, fileType,
             </div>
             {files.length < maxFiles && (
                  <div className="flex items-center gap-2 mt-2">
-                    <input type="file" multiple accept="image/*,application/pdf" ref={fileInputRef} onChange={e => onFileChange(e, fileType)} className="hidden" />
                     {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} onChange={e => onFileChange(e, fileType)} className="hidden" />
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
-                    <button type="button" onClick={() => fileInputRef.current.click()} className="flex-1 bg-component-bg-hover text-text-secondary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-border-color">
+                    {/* Solo hay un input ahora */}
+                    <input type="file" ref={fileInputRef} onChange={e => onFileChange(e, fileType)} className="hidden" />
+                    
+                    {/* Los botones ahora llaman a la función handleButtonClick */}
+                    <button type="button" onClick={() => handleButtonClick(false)} className="flex-1 bg-component-bg-hover text-text-secondary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-border-color">
                         <FontAwesomeIcon icon={faUpload} /> Subir
                     </button>
-                    <button type="button" onClick={() => cameraInputRef.current.click()} className="flex-1 bg-component-bg-hover text-text-secondary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-border-color">
+                    <button type="button" onClick={() => handleButtonClick(true)} className="flex-1 bg-component-bg-hover text-text-secondary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-border-color">
                         <FontAwesomeIcon icon={faCamera} /> Cámara
                     </button>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
             )}
         </div>
