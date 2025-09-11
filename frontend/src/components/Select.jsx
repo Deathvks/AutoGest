@@ -18,7 +18,9 @@ const Select = ({ label, value, onChange, options, icon }) => {
                                 <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" aria-hidden="true" />
                             </span>
                         )}
-                        <span className={`block ${icon ? 'pl-6' : ''}`}>{selectedOption?.name || 'Selecciona una opción'}</span>
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        <span className={`block uppercase ${icon ? 'pl-6' : ''}`}>{selectedOption?.name || 'Selecciona una opción'}</span>
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                             <FontAwesomeIcon icon={faChevronDown} className="h-4 w-4 text-text-secondary" aria-hidden="true" />
                         </span>

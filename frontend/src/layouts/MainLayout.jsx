@@ -1,5 +1,5 @@
 // autogest-app/frontend/src/layouts/MainLayout.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react'; // <-- INICIO DE LA MODIFICACIÓN
 import { useAppState } from '../hooks/useAppState';
 
 // Componentes
@@ -49,7 +49,11 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
             <div className="flex flex-col flex-1 min-w-0">
                 <Header />
                 <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
-                    <AppRoutes appState={appState} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <Suspense fallback={<div className="flex h-full w-full items-center justify-center">Cargando página...</div>}>
+                        <AppRoutes appState={appState} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+                    </Suspense>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </main>
             </div>
             <BottomNav />

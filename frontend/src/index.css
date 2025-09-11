@@ -58,7 +58,25 @@
 body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* --- INICIO DE LA MODIFICACIÓN --- */
+    text-transform: uppercase;
+    /* --- FIN DE LA MODIFICACIÓN --- */
 }
+
+/* --- INICIO DE LA MODIFICACIÓN --- */
+/* Forzar mayúsculas en los campos de texto al escribir */
+input,
+textarea {
+    text-transform: uppercase;
+}
+
+/* Evitar que los placeholders se pongan en mayúsculas */
+input::placeholder,
+textarea::placeholder {
+    text-transform: none;
+}
+/* --- FIN DE LA MODIFICACIÓN --- */
+
 
 /* Estilos para el icono del calendario */
 input[type="date"]::-webkit-calendar-picker-indicator {

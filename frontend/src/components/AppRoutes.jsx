@@ -1,16 +1,18 @@
 // autogest-app/frontend/src/components/AppRoutes.jsx
-import React, { useContext } from 'react';
+import React, { useContext, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
-// Páginas
-import Dashboard from '../pages/Dashboard';
-import MyCars from '../pages/MyCars';
-import SalesSummary from '../pages/SalesSummary';
-import Expenses from '../pages/Expenses';
-import Profile from '../pages/Profile';
-import Settings from '../pages/Settings';
-import ManageUsersPage from '../pages/ManageUsersPage';
+// --- INICIO DE LA MODIFICACIÓN ---
+// Páginas (carga perezosa para code-splitting)
+const Dashboard = lazy(() => import('../pages/Dashboard'));
+const MyCars = lazy(() => import('../pages/MyCars'));
+const SalesSummary = lazy(() => import('../pages/SalesSummary'));
+const Expenses = lazy(() => import('../pages/Expenses'));
+const Profile = lazy(() => import('../pages/Profile'));
+const Settings = lazy(() => import('../pages/Settings'));
+const ManageUsersPage = lazy(() => import('../pages/ManageUsersPage'));
+// --- FIN DE LA MODIFICACIÓN ---
 
 const AppRoutes = ({ appState, isDarkMode, setIsDarkMode }) => {
     const { user } = useContext(AuthContext);

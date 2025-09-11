@@ -38,7 +38,9 @@ const FileUploadSection = ({ label, existingFiles = [], newFiles = [], onFileCha
             {totalFiles < maxFiles && (
                  <div className="flex items-center gap-2 mt-2">
                     <input type="file" multiple accept="image/*,application/pdf" ref={fileInputRef} onChange={e => onFileChange(e, fileType)} className="hidden" />
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} onChange={e => onFileChange(e, fileType)} className="hidden" />
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <button type="button" onClick={() => fileInputRef.current.click()} className="flex-1 bg-component-bg-hover text-text-secondary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-border-color">
                         <FontAwesomeIcon icon={faUpload} /> Subir
                     </button>
