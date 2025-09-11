@@ -1,5 +1,5 @@
 // autogest-app/frontend/src/components/modals/EditCarModal.jsx
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import EditCarFormFields from './EditCar/EditCarFormFields';
@@ -25,6 +25,9 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             registrationCertificateUrl: safeParse(car.registrationCertificateUrl),
             otherDocumentsUrls: safeParse(car.otherDocumentsUrls),
             location: currentLocation ? currentLocation.id : '',
+            // --- INICIO DE LA MODIFICACIÓN ---
+            keys: car.keys || 1, // Aseguramos que el campo keys tenga un valor
+            // --- FIN DE LA MODIFICACIÓN ---
             newLocation: ''
         };
     });
@@ -160,7 +163,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
             <div className="bg-component-bg rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
                 <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary">Editar Coche</h2>
+                    <h2 className="text-xl font-bold text-text-primary">EDITAR COCHE</h2>
                     <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
@@ -199,9 +202,9 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                 </form>
                 
                 <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-border-color"> 
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">Cancelar</button>
+                    <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">CANCELAR</button>
                     <button onClick={handleUpdate} className="px-4 py-2 rounded-lg shadow-sm transition-opacity bg-blue-accent text-white hover:opacity-90">
-                        Guardar Cambios
+                        GUARDAR CAMBIOS
                     </button>
                 </div>
             </div>

@@ -83,6 +83,13 @@ const Car = sequelize.define('Car', {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    keys: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 1,
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
     saleDate: {
         type: DataTypes.DATEONLY,
         allowNull: true,
@@ -109,14 +116,11 @@ const Car = sequelize.define('Car', {
     },
 }, {
     timestamps: true,
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se restaura la opción `paranoid` para el borrado lógico.
     paranoid: true, 
     indexes: [
         {
             unique: true,
             fields: ['licensePlate'],
-            // Se restaura la condición para que la unicidad solo aplique a coches no eliminados.
             where: {
                 deletedAt: null
             }
@@ -129,7 +133,6 @@ const Car = sequelize.define('Car', {
             }
         }
     ]
-    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 module.exports = Car;

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCar, faCalendarPlus, faReceipt, faTags, faChevronLeft, faChevronRight, faWrench, faCalendarDay } from '@fortawesome/free-solid-svg-icons';
+import { faCar, faCalendarPlus, faReceipt, faTags, faChevronLeft, faChevronRight, faWrench, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import api from '../services/api';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
@@ -100,11 +100,10 @@ const ActivityHistory = () => {
 };
 
 const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onRevenueClick }) => {
-    const [generalStats, setGeneralStats] = useState({ totalInvestment: 0, totalRevenue: 0, totalExpenses: 0, totalProfit: 0 });
-    const [dailyStats, setDailyStats] = useState({ totalInvestment: 0, totalRevenue: 0, totalExpenses: 0, totalProfit: 0 });
+    const [generalStats, setGeneralStats] = useState({ totalInvestment: 0, totalRevenue: 0, potentialRevenue: 0, totalExpenses: 0, totalProfit: 0 });
+    const [monthlyStats, setMonthlyStats] = useState({ totalInvestment: 0, totalRevenue: 0, potentialRevenue: 0, totalExpenses: 0, totalProfit: 0 });
     
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const today = new Date().toISOString().split('T')[0];
+    const [currentMonth, setCurrentMonth] = useState(new Date());
 
     useEffect(() => {
         const fetchGeneralStats = async () => {
@@ -119,18 +118,21 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
     }, []);
 
     useEffect(() => {
-        const fetchDailyStats = async () => {
-            if (selectedDate) {
-                try {
-                    const data = await api.dashboard.getStats(selectedDate, selectedDate);
-                    setDailyStats(data);
-                } catch (error) {
-                    console.error("Error al cargar estadísticas diarias:", error);
-                }
+        const fetchMonthlyStats = async () => {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            const startDate = new Date(year, month, 1).toISOString().split('T')[0];
+            const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+            
+            try {
+                const data = await api.dashboard.getStats(startDate, endDate);
+                setMonthlyStats(data);
+            } catch (error) {
+                console.error("Error al cargar estadísticas mensuales:", error);
             }
         };
-        fetchDailyStats();
-    }, [selectedDate]);
+        fetchMonthlyStats();
+    }, [currentMonth]);
     
     useEffect(() => {
         const textColor = isDarkMode ? '#94a3b8' : '#64748b';
@@ -139,14 +141,18 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
         ChartJS.defaults.borderColor = gridColor;
     }, [isDarkMode]);
 
-    const handleDateChange = (e) => {
-        setSelectedDate(e.target.value);
+    const changeMonth = (amount) => {
+        setCurrentMonth(prevDate => {
+            const newDate = new Date(prevDate);
+            newDate.setMonth(newDate.getMonth() + amount);
+            return newDate;
+        });
     };
     
-    const changeDay = (amount) => {
-        const currentDate = new Date(selectedDate);
-        currentDate.setDate(currentDate.getDate() + amount);
-        setSelectedDate(currentDate.toISOString().split('T')[0]);
+    const isNextMonthDisabled = () => {
+        const nextMonth = new Date(currentMonth);
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        return nextMonth > new Date();
     };
 
     const expensesByCategoryData = useMemo(() => {
@@ -199,54 +205,51 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
         <div className="space-y-12">
             <div>
                 <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-4">DASHBOARD GENERAL</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
                     <StatCard title="INVERSIÓN TOTAL" value={generalStats.totalInvestment} colorClass="text-text-primary" onClick={onTotalInvestmentClick} isClickable={true} />
-                    <StatCard title="INGRESOS" value={generalStats.totalRevenue} colorClass="text-green-accent" onClick={onRevenueClick} isClickable={true} />
+                    <StatCard title="INGRESOS REALES" value={generalStats.totalRevenue} colorClass="text-green-accent" onClick={onRevenueClick} isClickable={true} />
+                    <StatCard title="INGRESOS POTENCIALES" value={generalStats.potentialRevenue} colorClass="text-blue-accent" />
                     <StatCard title="GASTOS" value={generalStats.totalExpenses} colorClass="text-red-accent" />
                     <StatCard title="BENEFICIO NETO" value={generalStats.totalProfit} colorClass={generalStats.totalProfit >= 0 ? 'text-accent' : 'text-red-accent'} />
                 </div>
             </div>
 
             <div>
-                <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-4">DASHBOARD POR DÍA</h2>
+                <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-4">DASHBOARD POR MES</h2>
                 <div className="flex flex-col lg:flex-row gap-8">
                     <div className="lg:w-72 xl:w-80 flex-shrink-0">
                         <div className="bg-component-bg p-6 rounded-xl shadow-sm border border-border-color">
-                            <h3 className="text-lg font-semibold text-text-primary mb-4">SELECCIONAR DÍA</h3>
-                            <div className="space-y-4">
-                                <div className="relative">
-                                    <input type="date" name="selectedDate" value={selectedDate} onChange={handleDateChange} className="w-full text-sm p-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
-                                    <FontAwesomeIcon icon={faCalendarDay} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
+                            <h3 className="text-lg font-semibold text-text-primary mb-4">SELECCIONAR MES</h3>
+                            <div className="flex items-center justify-between p-2 bg-background rounded-md border border-border-color">
+                                <button onClick={() => changeMonth(-1)} className="p-2 w-10 h-10 flex items-center justify-center hover:bg-component-bg-hover rounded-md transition-colors" title="MES ANTERIOR">
+                                    <FontAwesomeIcon icon={faChevronLeft} />
+                                </button>
+                                <div className="text-center font-semibold text-text-primary">
+                                    {currentMonth.toLocaleString('es-ES', { month: 'long', year: 'numeric' }).toUpperCase()}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => changeDay(-1)} className="p-2 w-10 h-10 flex items-center justify-center bg-component-bg-hover rounded-md border border-border-color hover:bg-border-color transition-colors" title="DÍA ANTERIOR">
-                                        <FontAwesomeIcon icon={faChevronLeft} />
-                                    </button>
-                                    <button 
-                                        onClick={() => changeDay(1)} 
-                                        disabled={selectedDate >= today}
-                                        className="p-2 w-10 h-10 flex items-center justify-center bg-component-bg-hover rounded-md border border-border-color hover:bg-border-color transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        title="SIGUIENTE DÍA"
-                                    >
-                                        <FontAwesomeIcon icon={faChevronRight} />
-                                    </button>
-                                </div>
+                                <button 
+                                    onClick={() => changeMonth(1)} 
+                                    disabled={isNextMonthDisabled()}
+                                    className="p-2 w-10 h-10 flex items-center justify-center hover:bg-component-bg-hover rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="SIGUIENTE MES"
+                                >
+                                    <FontAwesomeIcon icon={faChevronRight} />
+                                </button>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <StatCard title="INVERSIÓN DEL DÍA" value={dailyStats.totalInvestment} colorClass="text-text-primary" />
-                        <StatCard title="INGRESOS DEL DÍA" value={dailyStats.totalRevenue} colorClass="text-green-accent" />
-                        <StatCard title="GASTOS DEL DÍA" value={dailyStats.totalExpenses} colorClass="text-red-accent" />
-                        <StatCard title="BENEFICIO DEL DÍA" value={dailyStats.totalProfit} colorClass={dailyStats.totalProfit >= 0 ? 'text-accent' : 'text-red-accent'} />
+                        <StatCard title="INVERSIÓN DEL MES" value={monthlyStats.totalInvestment} colorClass="text-text-primary" />
+                        <StatCard title="INGRESOS DEL MES" value={monthlyStats.totalRevenue} colorClass="text-green-accent" />
+                        <StatCard title="GASTOS DEL MES" value={monthlyStats.totalExpenses} colorClass="text-red-accent" />
+                        <StatCard title="BENEFICIO DEL MES" value={monthlyStats.totalProfit} colorClass={monthlyStats.totalProfit >= 0 ? 'text-accent' : 'text-red-accent'} />
                     </div>
                 </div>
             </div>
             
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 <div className="xl:col-span-2 space-y-8">
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <div className="bg-component-bg p-6 rounded-xl shadow-sm border border-border-color h-96 flex flex-col">
                         <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">GASTOS GENERALES POR CATEGORÍA</h3>
                         <div className="relative flex-grow">
@@ -259,12 +262,13 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
                             <Pie data={statusData} options={pieOptions} />
                         </div>
                     </div>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
 
-                <div className="xl:col-span-1 h-[calc(2*24rem+2rem)]">
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className="xl:col-span-1 h-[32rem] xl:h-[calc(2*24rem+2rem)]">
                      <ActivityHistory />
                 </div>
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
         </div>
     );

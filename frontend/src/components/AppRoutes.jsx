@@ -3,7 +3,6 @@ import React, { useContext, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Páginas (carga perezosa para code-splitting)
 const Dashboard = lazy(() => import('../pages/Dashboard'));
 const MyCars = lazy(() => import('../pages/MyCars'));
@@ -12,12 +11,10 @@ const Expenses = lazy(() => import('../pages/Expenses'));
 const Profile = lazy(() => import('../pages/Profile'));
 const Settings = lazy(() => import('../pages/Settings'));
 const ManageUsersPage = lazy(() => import('../pages/ManageUsersPage'));
-// --- FIN DE LA MODIFICACIÓN ---
 
 const AppRoutes = ({ appState, isDarkMode, setIsDarkMode }) => {
     const { user } = useContext(AuthContext);
 
-    // Desestructuramos el estado y los manejadores para pasarlos a las páginas
     const {
         cars,
         expenses,
@@ -41,6 +38,10 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode }) => {
         setAddUserModalOpen,
         setUserToEdit,
         setUserToDelete,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setIsBusinessDataModalOpen,
+        businessDataMessage,
+        // --- FIN DE LA MODIFICACIÓN ---
     } = appState;
 
     return (
@@ -94,7 +95,11 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode }) => {
                     cars={cars} 
                     expenses={expenses} 
                     incidents={incidents} 
-                    onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)} 
+                    onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)}
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    onBusinessDataClick={() => setIsBusinessDataModalOpen(true)}
+                    businessDataMessage={businessDataMessage}
+                    // --- FIN DE LA MODIFICACIÓN ---
                 />} 
             />
             <Route 

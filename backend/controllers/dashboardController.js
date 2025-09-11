@@ -1,5 +1,5 @@
 // autogest-app/backend/controllers/dashboardController.js
-const { Car, Expense, sequelize } = require('../models'); // Asegúrate de que sequelize esté aquí
+const { Car, Expense, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 exports.getDashboardStats = async (req, res) => {
@@ -27,6 +27,19 @@ exports.getDashboardStats = async (req, res) => {
 
         const totalRevenue = await Car.sum('salePrice', { where: { userId, status: 'Vendido', ...(startDate || endDate ? { saleDate: dateFilter } : {}) } });
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Calcular los ingresos potenciales de los coches que no están vendidos
+        const potentialRevenue = await Car.sum('price', {
+            where: {
+                userId,
+                status: {
+                    [Op.not]: 'Vendido'
+                }
+            }
+        });
+        // --- FIN DE LA MODIFICACIÓN ---
+
+
         let totalProfit = 0;
         const soldCars = await Car.findAll({
             where: { userId, status: 'Vendido', salePrice: { [Op.gt]: 0 }, ...(startDate || endDate ? { saleDate: dateFilter } : {}) }
@@ -50,18 +63,12 @@ exports.getDashboardStats = async (req, res) => {
             }, 0);
         }
 
-        console.log(`[Dashboard Stats for UserID: ${userId}]`);
-        console.log(`- Inversión (Compras): ${totalPurchasePrice || 0}`);
-        console.log(`- Gastos Totales: ${totalExpenses || 0}`);
-        console.log(`- Inversión Total: ${totalInvestment}`);
-        console.log(`- Ingresos Totales: ${totalRevenue || 0}`);
-        console.log(`- Beneficio Neto: ${totalProfit}`);
-
         res.status(200).json({
             totalInvestment,
             totalRevenue: totalRevenue || 0,
             totalExpenses: totalExpenses || 0,
             totalProfit,
+            potentialRevenue: potentialRevenue || 0, // Añadir el nuevo dato a la respuesta
         });
 
     } catch (error) {
@@ -70,7 +77,6 @@ exports.getDashboardStats = async (req, res) => {
     }
 };
 
-// --- FUNCIÓN MODIFICADA ---
 exports.getActivityHistory = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -78,7 +84,6 @@ exports.getActivityHistory = async (req, res) => {
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        // 1. Obtener los coches para eventos de creación, venta y reserva
         const cars = await Car.findAll({
             where: { userId },
             attributes: ['id', 'make', 'model', 'licensePlate', 'status', 'createdAt', 'updatedAt', 'saleDate', 'reservationExpiry'],
@@ -114,35 +119,31 @@ exports.getActivityHistory = async (req, res) => {
             }
         });
 
-        // 2. Obtener todos los gastos del usuario
         const expenses = await Expense.findAll({
             where: { userId },
             order: [['date', 'DESC']],
         });
 
-        // 3. Crear actividades para cada gasto
         expenses.forEach(expense => {
             const car = expense.carLicensePlate ? cars.find(c => c.licensePlate === expense.carLicensePlate) : null;
             let description = '';
             
-            if (car) { // Gasto asociado a un coche
+            if (car) {
                 description = `Nuevo gasto de ${expense.category} en ${car.make} ${car.model}`;
-            } else { // Gasto general
+            } else {
                 description = `Nuevo gasto general de ${expense.category}`;
             }
 
             activities.push({
                 type: 'gasto',
                 description: description,
-                date: expense.createdAt, // Usamos createdAt para la fecha del evento
-                carId: car ? car.id : null, // Asociamos el carId si existe
+                date: expense.createdAt,
+                carId: car ? car.id : null,
             });
         });
         
-        // 4. Ordenar todas las actividades por fecha descendente
         activities.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // 5. Paginación
         const paginatedActivities = activities.slice(offset, offset + limit);
         const totalPages = Math.ceil(activities.length / limit);
 

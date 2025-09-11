@@ -10,7 +10,6 @@ const User = sequelize.define('User', {
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        // Removemos unique: true de aquí
         validate: {
             isEmail: true,
         },
@@ -28,6 +27,29 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    // --- INICIO DE LA CORRECCIÓN ---
+    // Los campos deben permitir valores nulos para no romper los usuarios existentes
+    businessName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    dni: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    cif: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    address: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    phone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    // --- FIN DE LA CORRECCIÓN ---
     subscriptionStatus: {
         type: DataTypes.ENUM('inactive', 'active', 'cancelled', 'past_due'),
         allowNull: false,
@@ -40,11 +62,9 @@ const User = sequelize.define('User', {
     stripeCustomerId: {
         type: DataTypes.STRING,
         allowNull: true,
-        // Removemos unique: true de aquí también
     },
 }, {
     timestamps: true,
-    // Mantenemos solo los índices explícitos
     indexes: [
         {
             unique: true,

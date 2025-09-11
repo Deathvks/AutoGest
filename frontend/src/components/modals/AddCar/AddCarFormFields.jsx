@@ -3,7 +3,7 @@ import React, { useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faCar, faStar, faIdCard, faFingerprint, faCalendarDay, faRoad, faEuroSign,
-    faMapMarkerAlt, faBolt, faShieldAlt, faXmark
+    faMapMarkerAlt, faBolt, faShieldAlt, faXmark, faKey // --- INICIO DE LA MODIFICACIÓN ---
 } from '@fortawesome/free-solid-svg-icons';
 import Select from '../../Select';
 
@@ -72,62 +72,87 @@ const ToggleSwitch = ({ label, icon, enabled, onChange }) => (
                 <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
             <span className={`font-semibold ${enabled ? 'text-accent' : 'text-text-secondary'}`}>
-                {enabled ? 'Sí' : 'No'}
+                {enabled ? 'SÍ' : 'NO'}
             </span>
         </div>
     </div>
 );
 
+// --- INICIO DE LA MODIFICACIÓN ---
+const KeySelector = ({ label, icon, value, onChange }) => (
+    <div>
+        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+        <div className="flex items-center gap-4 mt-2">
+            <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+            <div className="flex items-center rounded-lg bg-background p-1 border border-border-color text-text-secondary">
+                {[1, 2, 3].map(num => (
+                    <button
+                        key={num}
+                        type="button"
+                        onClick={() => onChange(num)}
+                        className={`px-4 py-1 text-sm rounded-md transition-colors ${value === num ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}
+                    >
+                        {num}
+                    </button>
+                ))}
+            </div>
+        </div>
+    </div>
+);
+// --- FIN DE LA MODIFICACIÓN ---
+
 const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmissionOptions, handleChange, handleLocationSelect, handleNewLocationInput, handleSelectChange, handleTagKeyDown, tagInput, setTagInput, removeTag }) => (
     <>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField label="Marca" name="make" value={newCar.make} onChange={handleChange} icon={faCar} error={fieldErrors.make} required={true} />
-            <InputField label="Modelo" name="model" value={newCar.model} onChange={handleChange} icon={faStar} error={fieldErrors.model} required={true} />
+            <InputField label="MARCA" name="make" value={newCar.make} onChange={handleChange} icon={faCar} error={fieldErrors.make} required={true} />
+            <InputField label="MODELO" name="model" value={newCar.model} onChange={handleChange} icon={faStar} error={fieldErrors.model} required={true} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField label="Matrícula" name="licensePlate" value={newCar.licensePlate} onChange={handleChange} icon={faIdCard} error={fieldErrors.licensePlate} required={true} />
-            <InputField label="Nº de Bastidor" name="vin" value={newCar.vin} onChange={handleChange} icon={faFingerprint} error={fieldErrors.vin} />
+            <InputField label="MATRÍCULA" name="licensePlate" value={newCar.licensePlate} onChange={handleChange} icon={faIdCard} error={fieldErrors.licensePlate} required={true} />
+            <InputField label="Nº DE BASTIDOR" name="vin" value={newCar.vin} onChange={handleChange} icon={faFingerprint} error={fieldErrors.vin} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField label="Fecha de Matriculación" name="registrationDate" type="date" value={newCar.registrationDate} onChange={handleChange} icon={faCalendarDay} />
-            <InputField label="Precio de Compra (€)" name="purchasePrice" type="text" inputMode="decimal" value={newCar.purchasePrice} onChange={handleChange} icon={faEuroSign} error={fieldErrors.purchasePrice} required={true} />
+            <InputField label="FECHA DE MATRICULACIÓN" name="registrationDate" type="date" value={newCar.registrationDate} onChange={handleChange} icon={faCalendarDay} />
+            <InputField label="PRECIO DE COMPRA (€)" name="purchasePrice" type="text" inputMode="decimal" value={newCar.purchasePrice} onChange={handleChange} icon={faEuroSign} error={fieldErrors.purchasePrice} required={true} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField label="Precio de Venta (€)" name="price" type="text" inputMode="decimal" value={newCar.price} onChange={handleChange} icon={faEuroSign} error={fieldErrors.price} required={true} />
-            <InputField label="Kilómetros" name="km" type="text" inputMode="numeric" value={newCar.km} onChange={handleChange} icon={faRoad} />
+            <InputField label="PRECIO DE VENTA (€)" name="price" type="text" inputMode="decimal" value={newCar.price} onChange={handleChange} icon={faEuroSign} error={fieldErrors.price} required={true} />
+            <InputField label="KILÓMETROS" name="km" type="text" inputMode="numeric" value={newCar.km} onChange={handleChange} icon={faRoad} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <InputField label="Potencia (CV)" name="horsepower" type="text" inputMode="numeric" value={newCar.horsepower} onChange={handleChange} icon={faBolt} />
-            <ToggleSwitch
-                label="¿Tiene seguro en vigor?"
-                icon={faShieldAlt}
-                enabled={newCar.hasInsurance}
-                onChange={() => handleChange({ target: { name: 'hasInsurance', value: !newCar.hasInsurance }})}
+            <InputField label="POTENCIA (CV)" name="horsepower" type="text" inputMode="numeric" value={newCar.horsepower} onChange={handleChange} icon={faBolt} />
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <KeySelector
+                label="Nº DE LLAVES"
+                icon={faKey}
+                value={newCar.keys}
+                onChange={(value) => handleChange({ target: { name: 'keys', value } })}
             />
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-                label="Ubicación Existente"
+             <Select
+                label="UBICACIÓN EXISTENTE"
                 value={newCar.location}
                 onChange={handleLocationSelect}
                 options={locations}
                 icon={faMapMarkerAlt}
             />
             <InputField
-                label="O Nueva Ubicación"
+                label="O NUEVA UBICACIÓN"
                 name="newLocation"
                 value={newCar.newLocation}
                 onChange={handleNewLocationInput}
                 icon={faMapMarkerAlt}
-                placeholder="Escribe para crear una nueva"
+                placeholder="ESCRIBE PARA CREAR UNA NUEVA"
             />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select label="Combustible" value={newCar.fuel} onChange={(value) => handleSelectChange('fuel', value)} options={fuelOptions} />
-            <Select label="Tipo de Cambio" value={newCar.transmission} onChange={(value) => handleSelectChange('transmission', value)} options={transmissionOptions} />
+            <Select label="COMBUSTIBLE" value={newCar.fuel} onChange={(value) => handleSelectChange('fuel', value)} options={fuelOptions} />
+            <Select label="TIPO DE CAMBIO" value={newCar.transmission} onChange={(value) => handleSelectChange('transmission', value)} options={transmissionOptions} />
         </div>
         <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">Etiquetas</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">ETIQUETAS</label>
             <div className="flex flex-wrap items-center gap-2 w-full px-3 py-2 bg-background border border-border-color rounded-lg focus-within:ring-1 focus-within:ring-blue-accent focus-within:border-blue-accent">
                 {newCar.tags.map(tag => (
                     <span key={tag} className="flex items-center gap-1 bg-blue-accent/10 text-blue-accent text-sm px-2 py-1 rounded">
@@ -135,10 +160,10 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
                         <button onClick={() => removeTag(tag)} className="hover:opacity-75"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
                     </span>
                 ))}
-                <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="Añadir etiqueta y pulsar Enter" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px]" />
+                <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="AÑADIR ETIQUETA Y PULSAR ENTER" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px]" />
             </div>
         </div>
-        <TextareaField label="Anotaciones" name="notes" value={newCar.notes} onChange={handleChange} placeholder="Añade cualquier anotación relevante sobre el coche..." />
+        <TextareaField label="ANOTACIONES" name="notes" value={newCar.notes} onChange={handleChange} placeholder="AÑADE CUALQUIER ANOTACIÓN RELEVANTE SOBRE EL COCHE..." />
     </>
 );
 

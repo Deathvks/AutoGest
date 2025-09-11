@@ -2,17 +2,14 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// --- INICIO DE LA MODIFICACIÓN ---
-import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faChevronRight, faUser } from '@fortawesome/free-solid-svg-icons';
-// --- FIN DE LA MODIFICACIÓN ---
+import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faBuilding } from '@fortawesome/free-solid-svg-icons';
 import Papa from 'papaparse';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import VersionIndicator from '../components/VersionIndicator';
 import { APP_NAME } from '../config/version';
 
-// --- Componente Principal de la Página ---
-const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDeleteAccountClick }) => {
+const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDeleteAccountClick, onBusinessDataClick, businessDataMessage }) => {
     const { user, logout } = useContext(AuthContext);
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
     const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
@@ -64,50 +61,53 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
 
     return (
         <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">Ajustes</h1>
-
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
-            <Link to="/profile" className="flex items-center justify-between p-4 mb-8 bg-component-bg rounded-xl border border-border-color lg:hidden hover:bg-component-bg-hover transition-colors">
-                <div className="flex items-center gap-4">
-                    <FontAwesomeIcon icon={faUser} className="w-5 h-5 text-accent" />
-                    <span className="font-bold text-text-primary">VER MI PERFIL</span>
-                </div>
-                <FontAwesomeIcon icon={faChevronRight} className="w-4 h-4 text-text-secondary" />
-            </Link>
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
-
+            <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">AJUSTES</h1>
 
             <div className="space-y-8">
 
-                {/* --- Sección de Apariencia --- */}
                 <div className="p-6 bg-component-bg rounded-xl border border-border-color">
-                    <h3 className="text-lg font-bold text-text-primary mb-4">Apariencia</h3>
+                    <h3 className="text-lg font-bold text-text-primary mb-4">APARIENCIA</h3>
                     <div className="flex justify-between items-center">
-                        <span className="font-medium text-text-primary">Modo Oscuro</span>
+                        <span className="font-medium text-text-primary">MODO OSCURO</span>
                         <button
                             onClick={() => setIsDarkMode(!isDarkMode)}
-                            className="p-2 rounded-full bg-component-bg-hover text-text-secondary hover:bg-border-color transition-colors"
+                            className="p-2 rounded-full text-text-secondary transition-colors"
                         >
                             <FontAwesomeIcon icon={isDarkMode ? faSun : faMoon} />
                         </button>
                     </div>
                 </div>
-
-                {/* --- Sección de Cuenta --- */}
+                
                 <div className="p-6 bg-component-bg rounded-xl border border-border-color">
-                    <h3 className="text-lg font-bold text-text-primary mb-4">Cuenta y Datos</h3>
+                    <h3 className="text-lg font-bold text-text-primary mb-4">DATOS DE EMPRESA</h3>
+                    <p className="text-sm text-text-secondary mb-3">EDITA LOS DATOS DE TU EMPRESA QUE APARECERÁN EN LAS FACTURAS Y PROFORMAS.</p>
+                    <div className="flex items-center gap-4">
+                        <button onClick={onBusinessDataClick} className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
+                            <FontAwesomeIcon icon={faBuilding} className="mr-2" />
+                            EDITAR DATOS DE EMPRESA
+                        </button>
+                        {businessDataMessage && (
+                            <span className="text-sm text-green-accent font-medium">
+                                {businessDataMessage}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                <div className="p-6 bg-component-bg rounded-xl border border-border-color">
+                    <h3 className="text-lg font-bold text-text-primary mb-4">CUENTA Y DATOS</h3>
                     <div className="space-y-6">
 
                         <form onSubmit={handlePasswordSubmit}>
-                            <h4 className="font-semibold text-text-primary mb-2">Cambiar contraseña</h4>
+                            <h4 className="font-semibold text-text-primary mb-2">CAMBIAR CONTRASEÑA</h4>
                             <div className="grid sm:grid-cols-2 gap-4">
-                                <input name="currentPassword" type="password" placeholder="Contraseña actual" value={passwordData.currentPassword} onChange={handlePasswordChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary" />
-                                <input name="newPassword" type="password" placeholder="Nueva contraseña" value={passwordData.newPassword} onChange={handlePasswordChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary" />
+                                <input name="currentPassword" type="password" placeholder="CONTRASEÑA ACTUAL" value={passwordData.currentPassword} onChange={handlePasswordChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary" />
+                                <input name="newPassword" type="password" placeholder="NUEVA CONTRASEÑA" value={passwordData.newPassword} onChange={handlePasswordChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary" />
                             </div>
                             <div className="mt-3 flex items-center gap-4">
                                 <button type="submit" className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
                                     <FontAwesomeIcon icon={faKey} className="mr-2" />
-                                    Actualizar Contraseña
+                                    ACTUALIZAR CONTRASEÑA
                                 </button>
                                 {passwordMessage.text && (
                                     <span className={`text-sm ${passwordMessage.type === 'success' ? 'text-green-accent' : 'text-red-accent'}`}>
@@ -120,65 +120,66 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                         <hr className="border-border-color" />
 
                         <div>
-                            <h4 className="font-semibold text-text-primary mb-2">Exportar datos</h4>
-                            <p className="text-sm text-text-secondary mb-3">Descarga una copia de seguridad de tus datos en formato CSV.</p>
+                            <h4 className="font-semibold text-text-primary mb-2">EXPORTAR DATOS</h4>
+                            <p className="text-sm text-text-secondary mb-3">DESCARGA UNA COPIA DE SEGURIDAD DE TUS DATOS EN FORMATO CSV.</p>
                             <div className="flex flex-wrap gap-2">
                                 <button onClick={() => handleExport(cars, 'coches.csv', 'coches')} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
                                     <FontAwesomeIcon icon={faFileExport} className="mr-2" />
-                                    Exportar Coches
+                                    EXPORTAR COCHES
                                 </button>
                                 <button onClick={() => handleExport(expenses, 'gastos.csv', 'gastos')} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
                                     <FontAwesomeIcon icon={faFileExport} className="mr-2" />
-                                    Exportar Gastos
+                                    EXPORTAR GASTOS
                                 </button>
                                 <button onClick={() => handleExport(incidents, 'incidencias.csv', 'incidencias')} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
                                     <FontAwesomeIcon icon={faFileExport} className="mr-2" />
-                                    Exportar Incidencias
+                                    EXPORTAR INCIDENCIAS
                                 </button>
                             </div>
                             {exportMessage && <p className="text-sm text-yellow-accent mt-3">{exportMessage}</p>}
                         </div>
 
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         {user && user.role === 'admin' && (
-                            <>
+                            <div className="lg:hidden">
                                 <hr className="border-border-color" />
-                                <div>
-                                    <h4 className="font-semibold text-text-primary mb-2">Administración</h4>
+                                <div className="mt-6">
+                                    <h4 className="font-semibold text-text-primary mb-2">ADMINISTRACIÓN</h4>
                                     <Link to="/admin" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
                                         <FontAwesomeIcon icon={faUserShield} className="mr-2" />
-                                        Gestionar Usuarios
+                                        GESTIONAR USUARIOS
                                     </Link>
                                 </div>
-                            </>
+                            </div>
                         )}
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                         
                         <hr className="border-border-color" />
                         
                         <div>
-                            <h4 className="font-semibold text-text-primary mb-2">Sesión</h4>
+                            <h4 className="font-semibold text-text-primary mb-2">SESIÓN</h4>
                              <button onClick={logout} className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
                                 <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-                                Cerrar Sesión
+                                CERRAR SESIÓN
                             </button>
                         </div>
 
                         <hr className="border-border-color" />
 
                         <div>
-                            <h4 className="font-semibold text-red-accent mb-2">Zona de peligro</h4>
-                            <p className="text-sm text-text-secondary mb-3">La eliminación de tu cuenta es permanente y no se puede deshacer.</p>
+                            <h4 className="font-semibold text-red-accent mb-2">ZONA DE PELIGRO</h4>
+                            <p className="text-sm text-text-secondary mb-3">LA ELIMINACIÓN DE TU CUENTA ES PERMANENTE Y NO SE PUEDE DESHACER.</p>
                             <button onClick={onDeleteAccountClick} className="w-full sm:w-auto bg-red-accent/10 text-red-accent px-4 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-medium">
                                 <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2" />
-                                Eliminar mi cuenta
+                                ELIMINAR MI CUENTA
                             </button>
                         </div>
                         
                     </div>
                 </div>
 
-                {/* --- Sección de Información (Solo móvil) --- */}
                 <div className="p-6 bg-component-bg rounded-xl border border-border-color lg:hidden">
-                    <h3 className="text-lg font-bold text-text-primary mb-4">Acerca de</h3>
+                    <h3 className="text-lg font-bold text-text-primary mb-4">ACERCA DE</h3>
                     <div className="flex justify-between items-center">
                         <span className="font-medium text-text-primary">{APP_NAME}</span>
                         <VersionIndicator />

@@ -1,9 +1,71 @@
 // autogest-app/backend/controllers/authController.js
-const { User, Car, Expense, Incident, Location, sequelize } = require('../models'); // Importamos todos los modelos y sequelize
+const { User, Car, Expense, Incident, Location, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const validator = require('validator');
+
+// Función para validar DNI/NIE español
+const isValidDniNie = (value) => {
+    const dniRegex = /^([0-9]{8}[A-Z])$/i;
+    const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/i;
+    value = value.toUpperCase();
+
+    if (!dniRegex.test(value) && !nieRegex.test(value)) {
+        return false;
+    }
+
+    const controlChars = 'TRWAGMYFPDXBNJZSQVHLCKE';
+    let number;
+
+    if (nieRegex.test(value)) {
+        const firstChar = value.charAt(0);
+        let numPrefix;
+        if (firstChar === 'X') numPrefix = '0';
+        else if (firstChar === 'Y') numPrefix = '1';
+        else if (firstChar === 'Z') numPrefix = '2';
+        number = parseInt(numPrefix + value.substring(1, 8), 10);
+    } else {
+        number = parseInt(value.substring(0, 8), 10);
+    }
+
+    const calculatedChar = controlChars.charAt(number % 23);
+    const providedChar = value.charAt(value.length - 1);
+
+    return calculatedChar === providedChar;
+};
+
+// Función para validar CIF español
+const isValidCif = (value) => {
+    value = value.toUpperCase();
+    if (!/^[A-Z][0-9]{8}$/.test(value)) {
+        return false;
+    }
+
+    const controlDigit = value.charAt(value.length - 1);
+    const numberPart = value.substring(1, 8);
+    let sum = 0;
+
+    for (let i = 0; i < numberPart.length; i++) {
+        let num = parseInt(numberPart[i], 10);
+        if (i % 2 === 0) { // Posiciones impares (índice par)
+            num *= 2;
+            sum += num < 10 ? num : Math.floor(num / 10) + (num % 10);
+        } else { // Posiciones pares (índice impar)
+            sum += num;
+        }
+    }
+
+    const lastDigitOfSum = sum % 10;
+    const calculatedControl = lastDigitOfSum === 0 ? 0 : 10 - lastDigitOfSum;
+    
+    if (/[A-Z]/.test(controlDigit)) { // Letra
+        return String.fromCharCode(64 + calculatedControl) === controlDigit;
+    } else { // Número
+        return calculatedControl === parseInt(controlDigit, 10);
+    }
+};
 
 // Registrar un nuevo usuario (POST /api/auth/register)
 exports.register = async (req, res) => {
@@ -80,18 +142,31 @@ exports.getMe = async (req, res) => {
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {
     try {
-        const { name, email } = req.body;
+        const { name, email, businessName, dni, cif, address, phone } = req.body;
         const user = await User.findByPk(req.user.id);
         
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
 
-        // Actualizar nombre y email si se proporcionan
+        if (dni && !isValidDniNie(dni)) {
+            return res.status(400).json({ error: 'El DNI o NIE introducido no es válido.' });
+        }
+        if (cif && !isValidCif(cif)) {
+            return res.status(400).json({ error: 'El CIF introducido no es válido.' });
+        }
+        if (email && !validator.isEmail(email)) {
+            return res.status(400).json({ error: 'El formato del email no es válido.' });
+        }
+
         if (name) user.name = name;
         if (email) user.email = email;
+        if (businessName) user.businessName = businessName;
+        if (dni) user.dni = dni;
+        if (cif) user.cif = cif;
+        if (address) user.address = address;
+        if (phone) user.phone = phone;
 
-        // Manejar la subida del avatar si se proporciona
         if (req.file) {
             const oldAvatarUrl = user.avatarUrl;
             const newAvatarUrl = `/avatars/${req.file.filename}`;
@@ -114,13 +189,17 @@ exports.updateProfile = async (req, res) => {
             email: user.email,
             role: user.role,
             avatarUrl: user.avatarUrl,
+            businessName: user.businessName,
+            dni: user.dni,
+            cif: user.cif,
+            address: user.address,
+            phone: user.phone,
         };
 
         res.status(200).json(userResponse);
     } catch (error) {
         console.error('Error en updateProfile:', error);
         
-        // Manejar errores específicos de Multer
         if (error.code === 'LIMIT_FILE_SIZE') {
             return res.status(400).json({ 
                 error: 'El archivo es demasiado grande. El tamaño máximo permitido es 10MB.' 
@@ -139,7 +218,6 @@ exports.updateProfile = async (req, res) => {
             });
         }
         
-        // Error genérico
         res.status(500).json({ error: 'Error interno del servidor al actualizar el perfil.' });
     }
 };
@@ -216,7 +294,6 @@ exports.deleteAccount = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        // 1. Encontrar todos los coches del usuario para borrar sus archivos
         const cars = await Car.findAll({ where: { userId }, transaction });
         for (const car of cars) {
             if (car.imageUrl) {
@@ -231,13 +308,11 @@ exports.deleteAccount = async (req, res) => {
             }
         }
 
-        // 2. Eliminar datos asociados en cascada (gracias a las relaciones del modelo)
         await Incident.destroy({ where: { carId: cars.map(c => c.id) }, transaction });
         await Expense.destroy({ where: { carLicensePlate: cars.map(c => c.licensePlate) }, transaction });
         await Car.destroy({ where: { userId }, transaction });
         await Location.destroy({ where: { userId }, transaction });
         
-        // 3. Eliminar el avatar del usuario si existe
         if (req.user.avatarUrl) {
             const avatarFilename = path.basename(req.user.avatarUrl);
             const avatarFilePath = path.join(__dirname, '..', 'public', 'avatars', avatarFilename);
@@ -246,16 +321,13 @@ exports.deleteAccount = async (req, res) => {
             }
         }
 
-        // 4. Finalmente, eliminar al usuario
         await User.destroy({ where: { id: userId }, transaction });
 
-        // Si todo ha ido bien, confirmamos la transacción
         await transaction.commit();
 
         res.status(200).json({ message: 'Cuenta eliminada permanentemente con éxito.' });
 
     } catch (error) {
-        // Si algo falla, revertimos todos los cambios
         await transaction.rollback();
         console.error('Error al eliminar la cuenta:', error);
         res.status(500).json({ error: 'Error en el servidor al intentar eliminar la cuenta.' });

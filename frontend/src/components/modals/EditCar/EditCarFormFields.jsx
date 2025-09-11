@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faCar, faStar, faIdCard, faFingerprint, faCalendarDay, faRoad, faEuroSign,
-    faMapMarkerAlt, faBolt, faXmark
+    faMapMarkerAlt, faBolt, faXmark, faKey // --- INICIO DE LA MODIFICACIÓN ---
 } from '@fortawesome/free-solid-svg-icons';
 import Select from '../../Select';
 
@@ -27,6 +27,29 @@ export const InputField = ({ label, name, value, onChange, type = 'text', icon, 
     </div>
 );
 
+// --- INICIO DE LA MODIFICACIÓN ---
+const KeySelector = ({ label, icon, value, onChange }) => (
+    <div>
+        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+        <div className="flex items-center gap-4 mt-2">
+            <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+            <div className="flex items-center rounded-lg bg-background p-1 border border-border-color text-text-secondary">
+                {[1, 2, 3].map(num => (
+                    <button
+                        key={num}
+                        type="button"
+                        onClick={() => onChange(num)}
+                        className={`px-4 py-1 text-sm rounded-md transition-colors ${value === num ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}
+                    >
+                        {num}
+                    </button>
+                ))}
+            </div>
+        </div>
+    </div>
+);
+// --- FIN DE LA MODIFICACIÓN ---
+
 const EditCarFormFields = ({
     editedCar,
     locations,
@@ -44,41 +67,49 @@ const EditCarFormFields = ({
 }) => {
     const locationOptions = useMemo(() => {
         const sortedLocations = [...locations].sort((a, b) => a.name.localeCompare(b.name));
-        return [{ id: '', name: 'Seleccionar existente...' }, ...sortedLocations];
+        return [{ id: '', name: 'SELECCIONAR EXISTENTE...' }, ...sortedLocations];
     }, [locations]);
 
     return (
         <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField label="Marca" name="make" value={editedCar.make} onChange={handleChange} icon={faCar} required />
-                <InputField label="Modelo" name="model" value={editedCar.model} onChange={handleChange} icon={faStar} required />
+                <InputField label="MARCA" name="make" value={editedCar.make} onChange={handleChange} icon={faCar} required />
+                <InputField label="MODELO" name="model" value={editedCar.model} onChange={handleChange} icon={faStar} required />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField label="Matrícula" name="licensePlate" value={editedCar.licensePlate} onChange={handleChange} icon={faIdCard} required />
-                <InputField label="Nº de Bastidor" name="vin" value={editedCar.vin} onChange={handleChange} icon={faFingerprint} />
+                <InputField label="MATRÍCULA" name="licensePlate" value={editedCar.licensePlate} onChange={handleChange} icon={faIdCard} required />
+                <InputField label="Nº DE BASTIDOR" name="vin" value={editedCar.vin} onChange={handleChange} icon={faFingerprint} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField label="Precio de Compra (€)" name="purchasePrice" type="text" inputMode="decimal" value={editedCar.purchasePrice} onChange={handleChange} icon={faEuroSign} required />
-                <InputField label="Precio de Venta (€)" name="price" type="text" inputMode="decimal" value={editedCar.price} onChange={handleChange} icon={faEuroSign} required />
+                <InputField label="PRECIO DE COMPRA (€)" name="purchasePrice" type="text" inputMode="decimal" value={editedCar.purchasePrice} onChange={handleChange} icon={faEuroSign} required />
+                <InputField label="PRECIO DE VENTA (€)" name="price" type="text" inputMode="decimal" value={editedCar.price} onChange={handleChange} icon={faEuroSign} required />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField label="Fecha de Matriculación" name="registrationDate" type="date" value={editedCar.registrationDate ? editedCar.registrationDate.split('T')[0] : ''} onChange={handleChange} icon={faCalendarDay} />
-                <InputField label="Kilómetros" name="km" type="text" inputMode="decimal" value={editedCar.km} onChange={handleChange} icon={faRoad} />
+                <InputField label="FECHA DE MATRICULACIÓN" name="registrationDate" type="date" value={editedCar.registrationDate ? editedCar.registrationDate.split('T')[0] : ''} onChange={handleChange} icon={faCalendarDay} />
+                <InputField label="KILÓMETROS" name="km" type="text" inputMode="decimal" value={editedCar.km} onChange={handleChange} icon={faRoad} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField label="Potencia (CV)" name="horsepower" type="text" inputMode="decimal" value={editedCar.horsepower} onChange={handleChange} icon={faBolt} />
+                <InputField label="POTENCIA (CV)" name="horsepower" type="text" inputMode="decimal" value={editedCar.horsepower} onChange={handleChange} icon={faBolt} />
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <KeySelector
+                    label="Nº DE LLAVES"
+                    icon={faKey}
+                    value={editedCar.keys}
+                    onChange={(value) => handleChange({ target: { name: 'keys', value } })}
+                />
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select label="Ubicación Existente" value={editedCar.location} onChange={handleLocationSelect} options={locationOptions} icon={faMapMarkerAlt} />
-                <InputField label="O Nueva Ubicación" name="newLocation" value={editedCar.newLocation} onChange={handleNewLocationInput} icon={faMapMarkerAlt} placeholder="Escribe para crear/actualizar" />
+                <Select label="UBICACIÓN EXISTENTE" value={editedCar.location} onChange={handleLocationSelect} options={locationOptions} icon={faMapMarkerAlt} />
+                <InputField label="O NUEVA UBICACIÓN" name="newLocation" value={editedCar.newLocation} onChange={handleNewLocationInput} icon={faMapMarkerAlt} placeholder="ESCRIBE PARA CREAR/ACTUALIZAR" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select label="Combustible" value={editedCar.fuel} onChange={(value) => handleSelectChange('fuel', value)} options={fuelOptions} />
-                <Select label="Tipo de Cambio" value={editedCar.transmission} onChange={(value) => handleSelectChange('transmission', value)} options={transmissionOptions} />
+                <Select label="COMBUSTIBLE" value={editedCar.fuel} onChange={(value) => handleSelectChange('fuel', value)} options={fuelOptions} />
+                <Select label="TIPO DE CAMBIO" value={editedCar.transmission} onChange={(value) => handleSelectChange('transmission', value)} options={transmissionOptions} />
             </div>
-            <Select label="Estado" value={editedCar.status} onChange={(value) => handleSelectChange('status', value)} options={statusOptions} />
+            <Select label="ESTADO" value={editedCar.status} onChange={(value) => handleSelectChange('status', value)} options={statusOptions} />
             <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Etiquetas</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">ETIQUETAS</label>
                 <div className="flex flex-wrap items-center gap-2 w-full px-3 py-2 bg-background border border-border-color rounded-lg focus-within:ring-1 focus-within:ring-blue-accent focus-within:border-blue-accent">
                     {editedCar.tags.map(tag => (
                         <span key={tag} className="flex items-center gap-1 bg-blue-accent/10 text-blue-accent text-sm px-2 py-1 rounded">
@@ -86,13 +117,11 @@ const EditCarFormFields = ({
                             <button onClick={() => removeTag(tag)} className="hover:opacity-75"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
                         </span>
                     ))}
-                    <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="Añadir etiqueta y pulsar Enter" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px]" />
+                    <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="AÑADIR ETIQUETA Y PULSAR ENTER" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px]" />
                 </div>
             </div>
         </>
     );
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
 export default EditCarFormFields;
-// --- FIN DE LA MODIFICACIÓN ---

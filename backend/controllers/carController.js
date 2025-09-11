@@ -110,19 +110,16 @@ exports.createCar = async (req, res) => {
             if (req.files.image) {
                 carData.imageUrl = `/uploads/${req.files.image[0].filename}`;
             }
-            // --- INICIO DE LA MODIFICACIÓN ---
             const fileFields = ['technicalSheet', 'registrationCertificate', 'otherDocuments'];
             fileFields.forEach(field => {
                 if (req.files[field] && req.files[field].length > 0) {
                     const urlField = field === 'otherDocuments' ? 'otherDocumentsUrls' : `${field}Url`;
-                    // Guardamos un array de objetos
                     carData[urlField] = req.files[field].map(file => ({
                         path: `/documents/${file.filename}`,
                         originalname: sanitizeFilename(file.originalname)
                     }));
                 }
             });
-            // --- FIN DE LA MODIFICACIÓN ---
         }
 
         const newCar = await Car.create(carData);
@@ -177,7 +174,9 @@ exports.updateCar = async (req, res) => {
             updateData.reservationExpiry = null;
         }
 
-        const numericFields = ['price', 'purchasePrice', 'salePrice', 'reservationDeposit', 'km', 'horsepower'];
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const numericFields = ['price', 'purchasePrice', 'salePrice', 'reservationDeposit', 'km', 'horsepower', 'keys'];
+        // --- FIN DE LA MODIFICACIÓN ---
         numericFields.forEach(field => {
             if (updateData[field] !== undefined) {
                 const value = updateData[field];
@@ -218,12 +217,11 @@ exports.updateCar = async (req, res) => {
             });
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (updateData.filesToRemove) {
             try {
                 const filesToRemove = safeJsonParse(updateData.filesToRemove);
                 if (filesToRemove.length > 0) {
-                    filesToRemove.forEach(fileData => { // Ahora fileData es un objeto {path, type}
+                    filesToRemove.forEach(fileData => {
                         deleteFile(fileData.path);
                         const urlField = fileData.type === 'otherDocuments' ? 'otherDocumentsUrls' : `${fileData.type}Url`;
                         const currentDocs = safeJsonParse(car[urlField]);
@@ -245,18 +243,15 @@ exports.updateCar = async (req, res) => {
             fileFields.forEach(field => {
                 if (req.files[field] && req.files[field].length > 0) {
                     const urlField = field === 'otherDocuments' ? 'otherDocumentsUrls' : `${field}Url`;
-                    // Aseguramos que trabajamos con un array
                     const existingDocs = updateData[urlField] || safeJsonParse(car[urlField]);
                     const newDocs = req.files[field].map(file => ({
                         path: `/documents/${file.filename}`,
                         originalname: sanitizeFilename(file.originalname)
                     }));
-                    // Concatenamos los archivos existentes con los nuevos
                     updateData[urlField] = [...existingDocs, ...newDocs];
                 }
             });
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         
         await car.update(updateData);
         res.status(200).json(car);
@@ -284,8 +279,6 @@ exports.deleteCar = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para eliminarlo' });
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Borrado de archivos simple y múltiple
         deleteFile(car.imageUrl);
         deleteFile(car.reservationPdfUrl);
         
@@ -294,7 +287,6 @@ exports.deleteCar = async (req, res) => {
             const docs = safeJsonParse(car[field]);
             docs.forEach(doc => deleteFile(doc));
         });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         await Incident.destroy({ where: { carId: car.id }, transaction });
         await Expense.destroy({ where: { carLicensePlate: car.licensePlate }, transaction });

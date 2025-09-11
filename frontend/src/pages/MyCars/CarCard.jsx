@@ -1,7 +1,9 @@
 // autogest-app/frontend/src/pages/MyCars/CarCard.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags, faShieldAlt, faExclamationTriangle, faClock } from '@fortawesome/free-solid-svg-icons';
+// --- INICIO DE LA MODIFICACIÓN ---
+import { faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags, faShieldAlt, faExclamationTriangle, faClock, faKey } from '@fortawesome/free-solid-svg-icons';
+// --- FIN DE LA MODIFICACIÓN ---
 import { AuthContext } from '../../context/AuthContext';
 
 const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
@@ -95,7 +97,7 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
             {isReservedAndActive && (
                 <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-yellow-accent">
                     <FontAwesomeIcon icon={faClock} />
-                    <span>Quedan: {remainingTime}</span>
+                    <span>QUEDAN: {remainingTime}</span>
                 </div>
             )}
           </div>
@@ -104,10 +106,10 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
           </span>
         </div>
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-sm text-text-secondary my-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 text-sm text-text-secondary my-4">
           <div className="flex items-center gap-2 truncate" title={`${new Intl.NumberFormat('es-ES').format(car.km)} km`}>
             <FontAwesomeIcon icon={faRoad} className="w-4 h-4" />
-            <span>{car.km ? `${new Intl.NumberFormat('es-ES').format(car.km)} km` : 'N/A'}</span>
+            <span>{car.km ? `${new Intl.NumberFormat('es-ES').format(car.km)} KM` : 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2 truncate" title={car.registrationDate ? new Date(car.registrationDate).getFullYear().toString() : 'N/A'}>
             <FontAwesomeIcon icon={faCalendarAlt} className="w-4 h-4" />
@@ -121,13 +123,17 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
             <FontAwesomeIcon icon={faCogs} className="w-4 h-4" />
             <span>{car.transmission || 'N/A'}</span>
           </div>
-          {/* --- INICIO DE LA MODIFICACIÓN --- */}
-          <div className="flex items-center gap-2" title={`Seguro: ${car.hasInsurance ? 'Sí' : 'No'}`}>
+          <div className="flex items-center gap-2" title={`SEGURO: ${car.hasInsurance ? 'SÍ' : 'NO'}`}>
             <FontAwesomeIcon 
               icon={faShieldAlt} 
               className={`w-4 h-4 flex-shrink-0 ${car.hasInsurance ? 'text-text-secondary' : 'text-red-accent'}`} 
             />
             <ToggleSwitch enabled={car.hasInsurance} onChange={() => onUpdateInsurance(car, !car.hasInsurance)} />
+          </div>
+          {/* --- INICIO DE LA MODIFICACIÓN --- */}
+          <div className="flex items-center gap-2 truncate" title={`${car.keys || 1} ${car.keys > 1 ? 'LLAVES' : 'LLAVE'}`}>
+            <FontAwesomeIcon icon={faKey} className="w-4 h-4" />
+            <span>{`${car.keys || 1} ${car.keys > 1 ? 'LLAVES' : 'LLAVE'}`}</span>
           </div>
           {/* --- FIN DE LA MODIFICACIÓN --- */}
         </div>
@@ -139,28 +145,28 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
               <span key={tag} className="bg-accent/10 text-accent text-xs font-semibold px-2 py-1 rounded-full">{tag}</span>
             ))}
             {hiddenTagsCount > 0 && (
-              <span className="text-xs font-semibold text-text-secondary px-2 py-1 rounded-full bg-component-bg-hover">+{hiddenTagsCount} más</span>
+              <span className="text-xs font-semibold text-text-secondary px-2 py-1 rounded-full bg-component-bg-hover">+{hiddenTagsCount} MÁS</span>
             )}
           </div>
         )}
 
         <div className="mt-auto flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-border-color">
           <div className="text-center sm:text-left w-full sm:w-auto">
-            <p className="text-xs text-text-secondary">Precio Venta</p>
+            <p className="text-xs text-text-secondary">PRECIO VENTA</p>
             <p className="text-3xl font-extrabold text-accent">
               {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
             </p>
             <p className="text-xs text-text-secondary mt-2">
-              Compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
+              COMPRA: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
             </p>
             {car.status === 'Vendido' && car.salePrice > 0 && (
               <p className="text-sm font-semibold text-green-accent mt-1">
-                Venta Final: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}
+                VENTA FINAL: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}
               </p>
             )}
             {car.status === 'Reservado' && car.reservationDeposit > 0 && (
               <p className="text-sm font-semibold text-yellow-accent mt-1">
-                Reserva: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}
+                RESERVA: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}
               </p>
             )}
           </div>
@@ -169,25 +175,25 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
               onClick={() => onViewDetailsClick(car)}
               className="flex-1 sm:flex-initial bg-component-bg-hover text-accent font-semibold py-2 px-4 rounded-lg border border-border-color hover:bg-border-color transition-colors"
             >
-              Detalles
+              DETALLES
             </button>
             {car.status === 'Vendido' && (
-              <button onClick={() => onAddIncidentClick(car)} className="p-2 aspect-square text-accent bg-accent/10 rounded-lg hover:bg-accent/20 flex items-center justify-center transition-colors" title="Añadir Incidencia">
+              <button onClick={() => onAddIncidentClick(car)} className="p-2 aspect-square text-accent bg-accent/10 rounded-lg hover:bg-accent/20 flex items-center justify-center transition-colors" title="AÑADIR INCIDENCIA">
                 <FontAwesomeIcon icon={faExclamationTriangle} />
               </button>
             )}
             {(car.status === 'En venta' || car.status === 'Reservado') && (
-              <button onClick={() => onSellClick(car)} disabled={isLockedForUser} className="p-2 aspect-square text-green-accent bg-green-accent/10 rounded-lg hover:bg-green-accent/20 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Vender">
+              <button onClick={() => onSellClick(car)} disabled={isLockedForUser} className="p-2 aspect-square text-green-accent bg-green-accent/10 rounded-lg hover:bg-green-accent/20 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="VENDER">
                 <FontAwesomeIcon icon={faHandHoldingUsd} />
               </button>
             )}
             {car.status === 'En venta' && (
-              <button onClick={() => onReserveClick(car)} disabled={isLockedForUser} className="p-2 aspect-square text-yellow-accent bg-yellow-accent/10 rounded-lg hover:bg-yellow-accent/20 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Reservar">
+              <button onClick={() => onReserveClick(car)} disabled={isLockedForUser} className="p-2 aspect-square text-yellow-accent bg-yellow-accent/10 rounded-lg hover:bg-yellow-accent/20 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="RESERVAR">
                 <FontAwesomeIcon icon={faBell} />
               </button>
             )}
             {car.status === 'Reservado' && (
-              <button onClick={() => onCancelReservationClick(car)} className="p-2 aspect-square text-red-accent bg-red-accent/10 rounded-lg hover:bg-red-accent/20 flex items-center justify-center transition-colors" title="Cancelar Reserva">
+              <button onClick={() => onCancelReservationClick(car)} className="p-2 aspect-square text-red-accent bg-red-accent/10 rounded-lg hover:bg-red-accent/20 flex items-center justify-center transition-colors" title="CANCELAR RESERVA">
                 <FontAwesomeIcon icon={faBan} />
               </button>
             )}
