@@ -2,14 +2,17 @@
 
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+// --- INICIO DE LA MODIFICACIÓN ---
+// Solo cargar dotenv si no estamos en producción
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+// --- FIN DE LA MODIFICACIÓN ---
 
 const db = require('./models');
 
 const app = express();
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Manejo de errores global y no capturados para asegurar que todo se loguea
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION! 💥 Apagando...');
   console.error(err.name, err.message);
@@ -23,7 +26,6 @@ process.on('unhandledRejection', (err) => {
   console.error(err);
   process.exit(1);
 });
-// --- FIN DE LA MODIFICACIÓN ---
 
 
 // Lista de orígenes permitidos
