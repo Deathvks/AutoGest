@@ -83,13 +83,11 @@ const Car = sequelize.define('Car', {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     keys: {
         type: DataTypes.INTEGER,
         allowNull: true,
         defaultValue: 1,
     },
-    // --- FIN DE LA MODIFICACIÓN ---
     saleDate: {
         type: DataTypes.DATEONLY,
         allowNull: true,
@@ -117,8 +115,11 @@ const Car = sequelize.define('Car', {
 }, {
     timestamps: true,
     paranoid: true, 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se cambia el índice para que la unicidad solo aplique a los registros no borrados
     indexes: [
         {
+            name: 'unique_licensePlate_not_deleted',
             unique: true,
             fields: ['licensePlate'],
             where: {
@@ -126,6 +127,7 @@ const Car = sequelize.define('Car', {
             }
         },
         {
+            name: 'unique_vin_not_deleted',
             unique: true,
             fields: ['vin'],
             where: {
@@ -133,6 +135,7 @@ const Car = sequelize.define('Car', {
             }
         }
     ]
+    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 module.exports = Car;
