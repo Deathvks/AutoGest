@@ -6,9 +6,15 @@ exports.getDashboardStats = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
         const userId = req.user.id;
+        const isMonthlyView = !!(startDate || endDate);
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        let totalInvestment = 0;
+        let totalExpenses = 0;
         const dateFilter = {};
-        if (startDate || endDate) {
+
+        // Configurar filtro de fecha si es vista mensual
+        if (isMonthlyView) {
             const endOfDay = endDate ? new Date(endDate) : new Date();
             if (endDate) endOfDay.setHours(23, 59, 59, 999);
             
@@ -21,14 +27,26 @@ exports.getDashboardStats = async (req, res) => {
             }
         }
 
-        const totalPurchasePrice = await Car.sum('purchasePrice', { where: { userId, ...(startDate || endDate ? { createdAt: dateFilter } : {}) } });
-        const totalExpenses = await Expense.sum('amount', { where: { userId, ...(startDate || endDate ? { date: dateFilter } : {}) } });
-        const totalInvestment = (totalPurchasePrice || 0) + (totalExpenses || 0);
+        if (isMonthlyView) {
+            // CÁLCULO PARA VISTA MENSUAL (FLUJO DE INVERSIÓN)
+            const purchasePriceInPeriod = await Car.sum('purchasePrice', { where: { userId, createdAt: dateFilter } });
+            totalExpenses = await Expense.sum('amount', { where: { userId, date: dateFilter } });
+            const costOfSoldCarsInPeriod = await Car.sum('purchasePrice', { where: { userId, status: 'Vendido', saleDate: dateFilter } });
 
-        const totalRevenue = await Car.sum('salePrice', { where: { userId, status: 'Vendido', ...(startDate || endDate ? { saleDate: dateFilter } : {}) } });
+            // Inversión neta = (Compras + Gastos) - Coste de coches vendidos
+            totalInvestment = (purchasePriceInPeriod || 0) + (totalExpenses || 0) - (costOfSoldCarsInPeriod || 0);
+        } else {
+            // CÁLCULO PARA VISTA GENERAL (VALOR ACTUAL INVERTIDO)
+            const totalPurchasePriceOfStock = await Car.sum('purchasePrice', { where: { userId, status: { [Op.not]: 'Vendido' } } });
+            totalExpenses = await Expense.sum('amount', { where: { userId } });
+            
+            // Inversión total = Valor de coches en stock + Gastos históricos totales
+            totalInvestment = (totalPurchasePriceOfStock || 0) + (totalExpenses || 0);
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Calcular los ingresos potenciales de los coches que no están vendidos
+        const totalRevenue = await Car.sum('salePrice', { where: { userId, status: 'Vendido', ...(isMonthlyView ? { saleDate: dateFilter } : {}) } });
+
         const potentialRevenue = await Car.sum('price', {
             where: {
                 userId,
@@ -37,12 +55,10 @@ exports.getDashboardStats = async (req, res) => {
                 }
             }
         });
-        // --- FIN DE LA MODIFICACIÓN ---
-
 
         let totalProfit = 0;
         const soldCars = await Car.findAll({
-            where: { userId, status: 'Vendido', salePrice: { [Op.gt]: 0 }, ...(startDate || endDate ? { saleDate: dateFilter } : {}) }
+            where: { userId, status: 'Vendido', salePrice: { [Op.gt]: 0 }, ...(isMonthlyView ? { saleDate: dateFilter } : {}) }
         });
 
         if (soldCars.length > 0) {
@@ -68,7 +84,7 @@ exports.getDashboardStats = async (req, res) => {
             totalRevenue: totalRevenue || 0,
             totalExpenses: totalExpenses || 0,
             totalProfit,
-            potentialRevenue: potentialRevenue || 0, // Añadir el nuevo dato a la respuesta
+            potentialRevenue: potentialRevenue || 0,
         });
 
     } catch (error) {
