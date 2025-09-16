@@ -2,13 +2,10 @@
 const { Car, Expense, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Función auxiliar para asegurar que el resultado de SUM sea un número válido.
 const normalizeSum = (value) => {
     const num = Number(value);
     return isNaN(num) ? 0 : num;
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 exports.getDashboardStats = async (req, res) => {
     try {
@@ -32,60 +29,58 @@ exports.getDashboardStats = async (req, res) => {
                 dateFilter[Op.lte] = endOfDay;
             }
         }
+        
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Vamos a obtener los coches y gastos primero, y luego calcularemos las sumas en la aplicación.
+
+        const allUserCars = await Car.findAll({ where: { userId } });
+        const allUserExpenses = await Expense.findAll({ where: { userId } });
+        
+        const carsInPeriod = isMonthlyView ? allUserCars.filter(c => {
+            const createdAt = new Date(c.createdAt);
+            return createdAt >= new Date(startDate) && createdAt <= new Date(endDate);
+        }) : allUserCars;
+
+        const expensesInPeriod = isMonthlyView ? allUserExpenses.filter(e => {
+            const expenseDate = new Date(e.date);
+            return expenseDate >= new Date(startDate) && expenseDate <= new Date(endDate);
+        }) : allUserExpenses;
+
+        const soldCarsInPeriod = allUserCars.filter(c => {
+            if (c.status !== 'Vendido') return false;
+            if (!isMonthlyView) return true;
+            const saleDate = new Date(c.saleDate);
+            return saleDate >= new Date(startDate) && saleDate <= new Date(endDate);
+        });
+        
+        // CÁLCULOS
+        totalExpenses = expensesInPeriod.reduce((sum, exp) => sum + normalizeSum(exp.amount), 0);
+        const totalRevenue = soldCarsInPeriod.reduce((sum, car) => sum + normalizeSum(car.salePrice), 0);
+        
+        const carsInStock = allUserCars.filter(car => car.status !== 'Vendido');
+        const potentialRevenue = carsInStock.reduce((sum, car) => sum + normalizeSum(car.price), 0);
 
         if (isMonthlyView) {
-            const purchasePriceInPeriod = await Car.sum('purchasePrice', { where: { userId, createdAt: dateFilter } });
-            totalExpenses = await Expense.sum('amount', { where: { userId, date: dateFilter } });
-            const costOfSoldCarsInPeriod = await Car.sum('purchasePrice', { where: { userId, status: 'Vendido', saleDate: dateFilter } });
-
-            totalInvestment = normalizeSum(purchasePriceInPeriod) + normalizeSum(totalExpenses) - normalizeSum(costOfSoldCarsInPeriod);
+            const purchasePriceInPeriod = carsInPeriod.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
+            const costOfSoldCarsInPeriod = soldCarsInPeriod.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
+            totalInvestment = purchasePriceInPeriod + totalExpenses - costOfSoldCarsInPeriod;
         } else {
-            const totalPurchasePriceOfStock = await Car.sum('purchasePrice', { where: { userId, status: { [Op.not]: 'Vendido' } } });
-            totalExpenses = await Expense.sum('amount', { where: { userId } });
-            
-            totalInvestment = normalizeSum(totalPurchasePriceOfStock) + normalizeSum(totalExpenses);
+            const totalPurchasePriceOfStock = carsInStock.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
+            totalInvestment = totalPurchasePriceOfStock + totalExpenses;
         }
-
-        const totalRevenueSum = await Car.sum('salePrice', { where: { userId, status: 'Vendido', ...(isMonthlyView ? { saleDate: dateFilter } : {}) } });
-        const potentialRevenueSum = await Car.sum('price', {
-            where: {
-                userId,
-                status: {
-                    [Op.not]: 'Vendido'
-                }
-            }
-        });
-
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Aplicamos la normalización a todos los resultados de SUM
-        const totalRevenue = normalizeSum(totalRevenueSum);
-        const potentialRevenue = normalizeSum(potentialRevenueSum);
-        totalExpenses = normalizeSum(totalExpenses);
-        // --- FIN DE LA MODIFICACIÓN ---
-
+        
         let totalProfit = 0;
-        const soldCars = await Car.findAll({
-            where: { userId, status: 'Vendido', salePrice: { [Op.gt]: 0 }, ...(isMonthlyView ? { saleDate: dateFilter } : {}) }
-        });
-
-        if (soldCars.length > 0) {
-            const soldCarsExpenses = await Expense.findAll({
-                where: {
-                    userId,
-                    carLicensePlate: { [Op.in]: soldCars.map(c => c.licensePlate) }
-                }
-            });
-
-            totalProfit = soldCars.reduce((profitSum, car) => {
-                const expensesForThisCar = soldCarsExpenses
+        if (soldCarsInPeriod.length > 0) {
+            totalProfit = soldCarsInPeriod.reduce((profitSum, car) => {
+                const expensesForThisCar = allUserExpenses
                     .filter(exp => exp.carLicensePlate === car.licensePlate)
-                    .reduce((expSum, exp) => expSum + (exp.amount || 0), 0);
+                    .reduce((expSum, exp) => expSum + normalizeSum(exp.amount), 0);
                 
-                const carProfit = (car.salePrice || 0) - (car.purchasePrice || 0) - expensesForThisCar;
+                const carProfit = normalizeSum(car.salePrice) - normalizeSum(car.purchasePrice) - expensesForThisCar;
                 return profitSum + carProfit;
             }, 0);
         }
-
+        
         res.status(200).json({
             totalInvestment,
             totalRevenue,
@@ -93,6 +88,7 @@ exports.getDashboardStats = async (req, res) => {
             totalProfit,
             potentialRevenue,
         });
+        // --- FIN DE LA MODIFICACIÓN ---
 
     } catch (error) {
         console.error('Error al obtener estadísticas del dashboard:', error);
