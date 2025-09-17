@@ -17,24 +17,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // --- INICIO DE LA MODIFICACIÓN ---
-        // Estrategia de code-splitting más granular para optimizar el tamaño de los chunks.
+        // Se revierte a una estrategia más simple y estable para evitar errores de dependencias.
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react-router-dom') || id.includes('react-dom') || id.includes('react')) {
-              return 'react-vendor';
-            }
-            if (id.includes('chart.js')) {
-              return 'chart-vendor';
-            }
-            // Crea un chunk específico para la librería de iconos, que suele ser grande.
-            if (id.includes('@fortawesome')) {
-              return 'fontawesome-vendor';
-            }
-            // Agrupa otras librerías de UI.
-            if (id.includes('@headlessui') || id.includes('@floating-ui')) {
-              return 'ui-vendor';
-            }
-            // El resto de dependencias menos comunes irán al chunk por defecto.
             return 'vendor';
           }
         }
