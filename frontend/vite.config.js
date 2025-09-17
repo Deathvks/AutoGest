@@ -16,15 +16,16 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se revierte a una estrategia más simple y estable para evitar errores de dependencias.
         manualChunks(id) {
           if (id.includes('node_modules')) {
             return 'vendor';
           }
         }
-        // --- FIN DE LA MODIFICACIÓN ---
       }
-    }
+    },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Aumenta el límite de advertencia para el tamaño de los chunks a 1500 kB.
+    chunkSizeWarningLimit: 1500,
+    // --- FIN DE LA MODIFICACIÓN ---
   }
 })
