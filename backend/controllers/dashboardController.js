@@ -2,8 +2,6 @@
 const { Car, Expense, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Se ha hecho la función más robusta para manejar valores nulos, indefinidos o no numéricos.
 const normalizeSum = (value) => {
     if (value === null || value === undefined) {
         return 0;
@@ -11,7 +9,6 @@ const normalizeSum = (value) => {
     const num = Number(value);
     return isNaN(num) ? 0 : num;
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 exports.getDashboardStats = async (req, res) => {
     try {
@@ -19,8 +16,6 @@ exports.getDashboardStats = async (req, res) => {
         const userId = req.user.id;
         const isMonthlyView = !!(startDate || endDate);
 
-        let totalInvestment = 0;
-        let totalExpenses = 0;
         const dateFilter = {};
 
         if (isMonthlyView) {
@@ -56,24 +51,20 @@ exports.getDashboardStats = async (req, res) => {
             return saleDate >= new Date(startDate) && saleDate <= new Date(endDate);
         });
         
-        totalExpenses = expensesInPeriod.reduce((sum, exp) => sum + normalizeSum(exp.amount), 0);
+        const totalExpenses = expensesInPeriod.reduce((sum, exp) => sum + normalizeSum(exp.amount), 0);
         const totalRevenue = soldCarsInPeriod.reduce((sum, car) => sum + normalizeSum(car.salePrice), 0);
         
         const carsInStock = allUserCars.filter(car => car.status !== 'Vendido');
         const potentialRevenue = carsInStock.reduce((sum, car) => sum + normalizeSum(car.price), 0);
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se ha corregido el cálculo de la inversión total para el dashboard general.
+        let totalInvestment = 0;
         if (isMonthlyView) {
             const purchasePriceInPeriod = carsInPeriod.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
             const costOfSoldCarsInPeriod = soldCarsInPeriod.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
             totalInvestment = purchasePriceInPeriod + totalExpenses - costOfSoldCarsInPeriod;
         } else {
-            // La inversión total es el valor de compra del stock actual.
-            // Los gastos totales ya se muestran en su propia tarjeta.
             totalInvestment = carsInStock.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         
         let totalProfit = 0;
         if (soldCarsInPeriod.length > 0) {
@@ -87,13 +78,20 @@ exports.getDashboardStats = async (req, res) => {
             }, 0);
         }
         
-        res.status(200).json({
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se crea un objeto explícito para la respuesta y se añade un log en el servidor.
+        const statsToSend = {
             totalInvestment,
             totalRevenue,
             totalExpenses,
             totalProfit,
             potentialRevenue,
-        });
+        };
+
+        console.log('[DEBUG] Enviando objeto de estadísticas:', statsToSend);
+        
+        res.status(200).json(statsToSend);
+        // --- FIN DE LA MODIFICACIÓN ---
 
     } catch (error) {
         console.error('Error al obtener estadísticas del dashboard:', error);
