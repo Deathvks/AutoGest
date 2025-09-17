@@ -64,7 +64,11 @@ exports.getDashboardStats = async (req, res) => {
             const costOfSoldCarsInPeriod = soldCarsInPeriod.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
             totalInvestment = purchasePriceInPeriod + totalExpenses - costOfSoldCarsInPeriod;
         } else {
-            totalInvestment = carsInStock.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Se suma el total de gastos a la inversión total en la vista general.
+            const totalPurchasePriceOfStock = carsInStock.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
+            totalInvestment = totalPurchasePriceOfStock + totalExpenses;
+            // --- FIN DE LA MODIFICACIÓN ---
         }
         
         let totalProfit = 0;
