@@ -16,6 +16,8 @@ exports.getDashboardStats = async (req, res) => {
         const userId = req.user.id;
         const isMonthlyView = !!(startDate || endDate);
 
+        let totalInvestment = 0;
+        let totalExpenses = 0;
         const dateFilter = {};
 
         if (isMonthlyView) {
@@ -51,13 +53,12 @@ exports.getDashboardStats = async (req, res) => {
             return saleDate >= new Date(startDate) && saleDate <= new Date(endDate);
         });
         
-        const totalExpenses = expensesInPeriod.reduce((sum, exp) => sum + normalizeSum(exp.amount), 0);
+        totalExpenses = expensesInPeriod.reduce((sum, exp) => sum + normalizeSum(exp.amount), 0);
         const totalRevenue = soldCarsInPeriod.reduce((sum, car) => sum + normalizeSum(car.salePrice), 0);
         
         const carsInStock = allUserCars.filter(car => car.status !== 'Vendido');
         const potentialRevenue = carsInStock.reduce((sum, car) => sum + normalizeSum(car.price), 0);
         
-        let totalInvestment = 0;
         if (isMonthlyView) {
             const purchasePriceInPeriod = carsInPeriod.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
             const costOfSoldCarsInPeriod = soldCarsInPeriod.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
@@ -78,20 +79,13 @@ exports.getDashboardStats = async (req, res) => {
             }, 0);
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se crea un objeto explícito para la respuesta y se añade un log en el servidor.
-        const statsToSend = {
+        res.status(200).json({
             totalInvestment,
             totalRevenue,
             totalExpenses,
             totalProfit,
             potentialRevenue,
-        };
-
-        console.log('[DEBUG] Enviando objeto de estadísticas:', statsToSend);
-        
-        res.status(200).json(statsToSend);
-        // --- FIN DE LA MODIFICACIÓN ---
+        });
 
     } catch (error) {
         console.error('Error al obtener estadísticas del dashboard:', error);

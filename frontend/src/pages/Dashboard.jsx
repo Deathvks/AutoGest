@@ -10,19 +10,12 @@ import api from '../services/api';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 const StatCard = ({ title, value, colorClass, onClick, isClickable }) => (
-    <div
+    <div 
         className={`bg-component-bg p-6 rounded-xl shadow-sm border border-border-color ${isClickable ? 'cursor-pointer transition-colors hover:bg-component-bg-hover' : ''}`}
         onClick={onClick}
     >
         <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider">{title}</h3>
-        {/* --- INICIO DE LA MODIFICACIÓN --- */}
-        {/* Se añade una comprobación para mostrar N/A si el valor no es un número válido */}
-        <p className={`text-3xl font-bold mt-2 ${colorClass}`}>
-            {typeof value === 'number' && !isNaN(value)
-                ? new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)
-                : 'N/A'}
-        </p>
-        {/* --- FIN DE LA MODIFICACIÓN --- */}
+        <p className={`text-3xl font-bold mt-2 ${colorClass}`}>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)}</p>
     </div>
 );
 
@@ -75,9 +68,9 @@ const ActivityHistory = () => {
                             const { icon, color } = getActivityIcon(item.type);
                             const isClickable = !!item.carId;
                             return (
-                                <div
-                                    key={index}
-                                    onClick={() => isClickable && handleCarClick(item.carId)}
+                                <div 
+                                    key={index} 
+                                    onClick={() => isClickable && handleCarClick(item.carId)} 
                                     className={`flex items-center gap-4 p-2 rounded-md ${isClickable ? 'cursor-pointer hover:bg-component-bg-hover' : 'cursor-default'}`}
                                 >
                                     <FontAwesomeIcon icon={icon} className={`w-5 h-5 ${color}`} />
@@ -116,10 +109,6 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
         const fetchGeneralStats = async () => {
             try {
                 const data = await api.dashboard.getStats();
-                // --- INICIO DE LA MODIFICACIÓN ---
-                // Añadimos logs para depurar en producción.
-                console.log('[DEBUG] Datos generales recibidos de la API:', data);
-                // --- FIN DE LA MODIFICACIÓN ---
                 setGeneralStats(data);
             } catch (error) {
                 console.error("Error al cargar estadísticas generales:", error);
