@@ -106,7 +106,7 @@ const api = {
         deleteUser: (userId) => fetch(`${BASE_URL}/admin/users/${userId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
     },
 
-    // --- NUEVAS FUNCIONES PARA EL DASHBOARD ---
+    // --- DASHBOARD ---
     dashboard: {
         getStats: (startDate, endDate) => {
             const params = new URLSearchParams();
@@ -117,7 +117,16 @@ const api = {
         getActivity: (page = 1) => {
             return fetch(`${BASE_URL}/dashboard/activity?page=${page}`, { headers: getAuthHeaders() }).then(handleProtectedResponse);
         }
+    },
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // --- Suscripciones (Stripe) ---
+    subscriptions: {
+        createSubscription: (paymentMethodId) => fetch(`${BASE_URL}/subscriptions/create-subscription`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ paymentMethodId }) }).then(handleProtectedResponse),
+        getSubscriptionStatus: () => fetch(`${BASE_URL}/subscriptions/status`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
+        cancelSubscription: () => fetch(`${BASE_URL}/subscriptions/cancel-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
     }
+    // --- FIN DE LA MODIFICACIÓN ---
 };
 
 export default api;

@@ -8,21 +8,29 @@ const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(localStorage.getItem('authToken'));
     const [isLoading, setIsLoading] = useState(true);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
-        const fetchUser = async () => {
+        const fetchUserAndSubscription = async () => {
             if (token) {
                 try {
-                    const userData = await api.getMe();
+                    // Obtenemos los datos del usuario y el estado de la suscripción al mismo tiempo
+                    const [userData, subData] = await Promise.all([
+                        api.getMe(),
+                        api.subscriptions.getSubscriptionStatus()
+                    ]);
                     setUser(userData);
+                    setSubscriptionStatus(subData.subscriptionStatus);
                 } catch (error) {
-                    console.error("Token inválido, cerrando sesión.", error);
+                    console.error("Token inválido o error al cargar datos, cerrando sesión.", error);
                     logout();
                 }
             }
             setIsLoading(false);
         };
-        fetchUser();
+        fetchUserAndSubscription();
     }, [token]);
 
     const login = async (email, password) => {
@@ -42,10 +50,10 @@ const AuthProvider = ({ children }) => {
     const logout = () => {
         setToken(null);
         setUser(null);
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setSubscriptionStatus(null); // Limpiamos el estado de la suscripción
+        // --- FIN DE LA MODIFICACIÓN ---
         localStorage.removeItem('authToken');
-        // Ya no eliminamos el tema al cerrar sesión
-        // El tema se mantendrá para el próximo login
-        // Forzamos la recarga para asegurar que el estado visual se reinicie
         window.location.reload();
     };
 
@@ -86,10 +94,8 @@ const AuthProvider = ({ children }) => {
     const register = async (userData) => {
         try {
             const response = await api.register(userData);
-            setToken(response.token);
-            setUser(response.user);
-            localStorage.setItem('authToken', response.token);
-            // Al registrarse, establecemos el tema por defecto (claro)
+            // La función de registro original no establecía el token ni el usuario, lo mantenemos así.
+            // El usuario será redirigido al login.
             localStorage.setItem('theme', 'light');
             return response;
         } catch (error) {
@@ -99,7 +105,9 @@ const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ token, user, login, logout, isLoading, updateUserProfile, deleteUserAvatar, deleteAccount }}>
+        // --- INICIO DE LA MODIFICACIÓN ---
+        <AuthContext.Provider value={{ token, user, login, logout, isLoading, updateUserProfile, deleteUserAvatar, deleteAccount, subscriptionStatus }}>
+        {/* --- FIN DE LA MODIFICACIÓN --- */}
             {!isLoading && children}
         </AuthContext.Provider>
     );

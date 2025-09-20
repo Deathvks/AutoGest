@@ -19,7 +19,9 @@ const User = sequelize.define('User', {
         allowNull: false,
     },
     role: {
-        type: DataTypes.ENUM('user', 'admin'),
+        // --- INICIO DE LA MODIFICACIÓN ---
+        type: DataTypes.ENUM('user', 'admin', 'technician'), // Se añade el nuevo rol 'technician'
+        // --- FIN DE LA MODIFICACIÓN ---
         allowNull: false,
         defaultValue: 'user',
     },
@@ -27,8 +29,6 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // --- INICIO DE LA CORRECCIÓN ---
-    // Los campos deben permitir valores nulos para no romper los usuarios existentes
     businessName: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -49,7 +49,8 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // --- FIN DE LA CORRECCIÓN ---
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Campos para la gestión de suscripciones con Stripe
     subscriptionStatus: {
         type: DataTypes.ENUM('inactive', 'active', 'cancelled', 'past_due'),
         allowNull: false,
@@ -63,6 +64,7 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
     indexes: [
@@ -70,10 +72,13 @@ const User = sequelize.define('User', {
             unique: true,
             fields: ['email']
         },
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se asegura que cada cliente de Stripe sea único
         {
             unique: true,
             fields: ['stripeCustomerId']
         }
+        // --- FIN DE LA MODIFICACIÓN ---
     ]
 });
 

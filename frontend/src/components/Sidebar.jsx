@@ -4,7 +4,10 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
-    faUser, faCog, faSignOutAlt, faUsersCog
+    faUser, faCog, faSignOutAlt, faUsersCog,
+    // --- INICIO DE LA MODIFICACIÓN ---
+    faCreditCard
+    // --- FIN DE LA MODIFICACIÓN ---
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
@@ -23,6 +26,9 @@ const Sidebar = () => {
         { icon: faChartLine, text: 'Ventas', path: '/sales' },
         { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
         { icon: faUser, text: 'Perfil', path: '/profile' },
+        // --- INICIO DE LA MODIFICACIÓN ---
+        { icon: faCreditCard, text: 'Suscripción', path: '/subscription' },
+        // --- FIN DE LA MODIFICACIÓN ---
     ];
 
     const adminNav = user && user.role === 'admin' ? 

@@ -1,26 +1,29 @@
-// Al inicio del archivo, reemplaza la línea de stripe
+// autogest-app/backend/controllers/subscriptionController.js
+
+const { User } = require('../models');
+
+// Configuración dinámica de Stripe basada en el entorno (producción o desarrollo)
 const stripe = require('stripe')(
   process.env.NODE_ENV === 'production' 
     ? process.env.STRIPE_SECRET_KEY_LIVE 
     : process.env.STRIPE_SECRET_KEY_TEST
 );
 
-// Función helper para obtener el Price ID correcto
+// Función para obtener las claves correctas según el entorno
 const getStripeConfig = () => {
   const isProduction = process.env.NODE_ENV === 'production';
   return {
     priceId: isProduction ? process.env.STRIPE_PRICE_ID_LIVE : process.env.STRIPE_PRICE_ID_TEST,
     webhookSecret: isProduction ? process.env.STRIPE_WEBHOOK_SECRET_LIVE : process.env.STRIPE_WEBHOOK_SECRET_TEST,
-    publishableKey: isProduction ? process.env.STRIPE_PUBLISHABLE_KEY_LIVE : process.env.STRIPE_PUBLISHABLE_KEY_TEST
   };
 };
-const { User } = require('../models');
 
-// Crear una suscripción
+// Crear una nueva suscripción
 exports.createSubscription = async (req, res) => {
     try {
         const { paymentMethodId } = req.body;
         const userId = req.user.id;
+        const { priceId } = getStripeConfig();
 
         const user = await User.findByPk(userId);
         if (!user) {
@@ -29,7 +32,7 @@ exports.createSubscription = async (req, res) => {
 
         let customerId = user.stripeCustomerId;
 
-        // Crear cliente en Stripe si no existe
+        // 1. Crear cliente en Stripe si no existe
         if (!customerId) {
             const customer = await stripe.customers.create({
                 email: user.email,
@@ -40,41 +43,32 @@ exports.createSubscription = async (req, res) => {
                 },
             });
             customerId = customer.id;
-
-            // Actualizar usuario con el ID del cliente de Stripe
             await user.update({ stripeCustomerId: customerId });
         } else {
-            // Adjuntar método de pago al cliente existente
-            await stripe.paymentMethods.attach(paymentMethodId, {
-                customer: customerId,
-            });
-
-            // Actualizar método de pago por defecto
+            // Adjuntar y establecer como método de pago por defecto si el cliente ya existe
+            await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
             await stripe.customers.update(customerId, {
-                invoice_settings: {
-                    default_payment_method: paymentMethodId,
-                },
+                invoice_settings: { default_payment_method: paymentMethodId },
             });
         }
 
-        // Crear suscripción
+        // 2. Crear la suscripción
         const subscription = await stripe.subscriptions.create({
             customer: customerId,
-            items: [{
-                price: process.env.STRIPE_PRICE_ID, // ID del precio mensual en Stripe
-            }],
+            items: [{ price: priceId }],
             payment_behavior: 'default_incomplete',
+            payment_settings: { save_default_payment_method: 'on_subscription' },
             expand: ['latest_invoice.payment_intent'],
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Aseguramos que no haya un período de prueba para forzar la factura inicial
+            trial_period_days: 0, 
+            // --- FIN DE LA MODIFICACIÓN ---
         });
 
-        // Actualizar estado del usuario
-        const expiryDate = new Date();
-        expiryDate.setMonth(expiryDate.getMonth() + 1);
-
-        await user.update({
-            subscriptionStatus: 'active',
-            subscriptionExpiry: expiryDate,
-        });
+        if (!subscription.latest_invoice || !subscription.latest_invoice.payment_intent) {
+            console.error('Stripe subscription object without payment intent:', subscription);
+            return res.status(500).json({ error: 'No se pudo crear la intención de pago.' });
+        }
 
         res.json({
             subscriptionId: subscription.id,
@@ -87,19 +81,12 @@ exports.createSubscription = async (req, res) => {
     }
 };
 
-// Verificar estado de suscripción
+// Obtener el estado de la suscripción del usuario
 exports.getSubscriptionStatus = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const user = await User.findByPk(userId);
-
+        const user = await User.findByPk(req.user.id);
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
-
-        // Verificar si la suscripción ha expirado
-        if (user.subscriptionExpiry && new Date() > user.subscriptionExpiry) {
-            await user.update({ subscriptionStatus: 'inactive' });
         }
 
         res.json({
@@ -113,33 +100,32 @@ exports.getSubscriptionStatus = async (req, res) => {
     }
 };
 
-// Cancelar suscripción
+// Cancelar una suscripción (al final del período de facturación)
 exports.cancelSubscription = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const user = await User.findByPk(userId);
-
+        const user = await User.findByPk(req.user.id);
         if (!user || !user.stripeCustomerId) {
-            return res.status(404).json({ error: 'Usuario o suscripción no encontrada' });
+            return res.status(404).json({ error: 'Suscripción no encontrada' });
         }
 
-        // Obtener suscripciones activas del cliente
         const subscriptions = await stripe.subscriptions.list({
             customer: user.stripeCustomerId,
             status: 'active',
+            limit: 1
         });
 
-        if (subscriptions.data.length > 0) {
-            // Cancelar la primera suscripción activa
-            await stripe.subscriptions.update(subscriptions.data[0].id, {
-                cancel_at_period_end: true,
-            });
+        if (subscriptions.data.length === 0) {
+            return res.status(404).json({ error: 'No se encontraron suscripciones activas.' });
         }
 
-        // Actualizar estado del usuario
+        await stripe.subscriptions.update(subscriptions.data[0].id, {
+            cancel_at_period_end: true,
+        });
+        
+        // Actualizamos nuestro estado interno a 'cancelled'
         await user.update({ subscriptionStatus: 'cancelled' });
 
-        res.json({ message: 'Suscripción cancelada exitosamente' });
+        res.json({ message: 'Tu suscripción se cancelará al final del período de facturación actual.' });
 
     } catch (error) {
         console.error('Error cancelando suscripción:', error);
@@ -147,54 +133,50 @@ exports.cancelSubscription = async (req, res) => {
     }
 };
 
-// Webhook de Stripe para manejar eventos
+// Manejador de Webhooks de Stripe
 exports.handleWebhook = async (req, res) => {
     const sig = req.headers['stripe-signature'];
+    const { webhookSecret } = getStripeConfig();
     let event;
 
     try {
-        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
     } catch (err) {
-        console.error('Error verificando webhook:', err.message);
+        console.error(`❌ Error en la firma del webhook: ${err.message}`);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
     // Manejar el evento
-    switch (event.type) {
-        case 'invoice.payment_succeeded':
-            const invoice = event.data.object;
-            // Actualizar suscripción como activa
-            const customer = await stripe.customers.retrieve(invoice.customer);
-            const user = await User.findOne({ where: { stripeCustomerId: customer.id } });
-            if (user) {
-                const expiryDate = new Date(invoice.period_end * 1000);
-                await user.update({
-                    subscriptionStatus: 'active',
-                    subscriptionExpiry: expiryDate,
-                });
-            }
-            break;
+    try {
+        const session = event.data.object;
+        const customerId = session.customer;
+        const user = await User.findOne({ where: { stripeCustomerId: customerId } });
 
-        case 'invoice.payment_failed':
-            const failedInvoice = event.data.object;
-            const failedCustomer = await stripe.customers.retrieve(failedInvoice.customer);
-            const failedUser = await User.findOne({ where: { stripeCustomerId: failedCustomer.id } });
-            if (failedUser) {
-                await failedUser.update({ subscriptionStatus: 'past_due' });
+        if (user) {
+            switch (event.type) {
+                case 'invoice.payment_succeeded':
+                    const subscription = await stripe.subscriptions.retrieve(session.subscription);
+                    await user.update({
+                        subscriptionStatus: 'active',
+                        subscriptionExpiry: new Date(subscription.current_period_end * 1000),
+                    });
+                    break;
+                case 'invoice.payment_failed':
+                    await user.update({ subscriptionStatus: 'past_due' });
+                    break;
+                case 'customer.subscription.deleted':
+                case 'customer.subscription.updated':
+                     if (session.cancel_at_period_end || session.status === 'canceled') {
+                        await user.update({ subscriptionStatus: 'cancelled' });
+                     }
+                    break;
+                default:
+                    console.log(`Evento no manejado: ${event.type}`);
             }
-            break;
-
-        case 'customer.subscription.deleted':
-            const subscription = event.data.object;
-            const deletedCustomer = await stripe.customers.retrieve(subscription.customer);
-            const deletedUser = await User.findOne({ where: { stripeCustomerId: deletedCustomer.id } });
-            if (deletedUser) {
-                await deletedUser.update({ subscriptionStatus: 'inactive' });
-            }
-            break;
-
-        default:
-            console.log(`Evento no manejado: ${event.type}`);
+        }
+    } catch(error) {
+        console.error('Error procesando el webhook:', error);
+        return res.status(500).json({ error: 'Error interno del servidor' });
     }
 
     res.json({ received: true });

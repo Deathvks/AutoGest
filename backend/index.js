@@ -3,14 +3,13 @@
 const express = require('express');
 const cors = require('cors');
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Solo cargar dotenv si NO estamos en producción.
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
-// --- FIN DE LA MODIFICACIÓN ---
 
 const db = require('./models');
+const subscriptionController = require('./controllers/subscriptionController');
 
 const app = express();
 
@@ -28,6 +27,11 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
+// --- INICIO DE LA MODIFICACIÓN ---
+// 1. Ruta de Webhook de Stripe. Se define ANTES de CUALQUIER OTRO middleware
+// que pueda parsear el body, incluyendo cors y express.json().
+app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), subscriptionController.handleWebhook);
+// --- FIN DE LA MODIFICACIÓN ---
 
 // Lista de orígenes permitidos
 const allowedOrigins = [
@@ -49,10 +53,12 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// 2. Se aplica el middleware express.json() DESPUÉS de la ruta del webhook.
+// De esta forma, solo las rutas definidas a continuación procesarán el body como JSON.
 app.use(express.json());
 app.use(express.static('public'));
 
-// --- Rutas de la API ---
+// --- Rutas de la API (ahora usarán express.json()) ---
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/cars', require('./routes/carRoutes'));
 app.use('/api/expenses', require('./routes/expenseRoutes'));
@@ -60,6 +66,7 @@ app.use('/api/incidents', require('./routes/incidentRoutes'));
 app.use('/api/locations', require('./routes/locationRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
 
 // Ruta raíz
 app.get('/', (req, res) => {
@@ -68,11 +75,9 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
-// Sincronizar la base de datos antes de iniciar el servidor
 db.sequelize.sync({ alter: true })
   .then(() => {
     console.log('✅ Conexión a la base de datos establecida correctamente.');
-    // Se inicia el servidor después de la sincronización
     app.listen(PORT, () => {
         console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
     });

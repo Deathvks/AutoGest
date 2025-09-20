@@ -11,6 +11,9 @@ const Expenses = lazy(() => import('../pages/Expenses'));
 const Profile = lazy(() => import('../pages/Profile'));
 const Settings = lazy(() => import('../pages/Settings'));
 const ManageUsersPage = lazy(() => import('../pages/ManageUsersPage'));
+// --- INICIO DE LA MODIFICACIÓN ---
+const SubscriptionPage = lazy(() => import('../pages/SubscriptionPage'));
+// --- FIN DE LA MODIFICACIÓN ---
 
 const AppRoutes = ({ appState, isDarkMode, setIsDarkMode }) => {
     const { user } = useContext(AuthContext);
@@ -38,10 +41,8 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode }) => {
         setAddUserModalOpen,
         setUserToEdit,
         setUserToDelete,
-        // --- INICIO DE LA MODIFICACIÓN ---
         setIsBusinessDataModalOpen,
         businessDataMessage,
-        // --- FIN DE LA MODIFICACIÓN ---
     } = appState;
 
     return (
@@ -96,10 +97,8 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode }) => {
                     expenses={expenses} 
                     incidents={incidents} 
                     onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)}
-                    // --- INICIO DE LA MODIFICACIÓN ---
                     onBusinessDataClick={() => setIsBusinessDataModalOpen(true)}
                     businessDataMessage={businessDataMessage}
-                    // --- FIN DE LA MODIFICACIÓN ---
                 />} 
             />
             <Route 
@@ -113,6 +112,12 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode }) => {
                       /> 
                     : <Navigate to="/" replace />} 
             />
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <Route 
+                path="/subscription" 
+                element={<SubscriptionPage />} 
+            />
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
