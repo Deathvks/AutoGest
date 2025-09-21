@@ -28,8 +28,10 @@ import ReservationPdfModal from './modals/ReservationPdfModal';
 import GestoriaPickupModal from './modals/GestoriaPickupModal';
 import GestoriaReturnModal from './modals/GestoriaReturnModal';
 import NotifyClientModal from './modals/NotifyClientModal';
-
 // --- INICIO DE LA MODIFICACIÓN ---
+import SubscriptionSuccessModal from './modals/SubscriptionSuccessModal';
+// --- FIN DE LA MODIFICACIÓN ---
+
 const InputField = ({ label, name, value, onChange, icon, required = false }) => (
     <div>
         <label className="block text-sm font-medium text-text-secondary mb-1">
@@ -196,7 +198,6 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
         </div>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 
 const AppModals = ({ appState }) => {
@@ -230,6 +231,9 @@ const AppModals = ({ appState }) => {
         carForGestoriaReturn, setCarForGestoriaReturn,
         carToNotify, setCarToNotify,
         isBusinessDataModalOpen, setIsBusinessDataModalOpen,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        isSubscriptionSuccessModalOpen, setSubscriptionSuccessModalOpen,
+        // --- FIN DE LA MODIFICACIÓN ---
         handleSaveBusinessData,
         handleUserAdded,
         handleUserUpdated,
@@ -310,6 +314,13 @@ const AppModals = ({ appState }) => {
                 onClose={() => setIsBusinessDataModalOpen(false)} 
                 onSave={handleSaveBusinessData} 
             />
+
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <SubscriptionSuccessModal 
+                isOpen={isSubscriptionSuccessModalOpen}
+                onClose={() => setSubscriptionSuccessModalOpen(false)}
+            />
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
     );
 };

@@ -134,10 +134,17 @@ exports.login = async (req, res) => {
     }
 };
 
+// --- INICIO DE LA MODIFICACIÓN ---
 // Obtener el perfil del usuario actual (GET /api/auth/me)
 exports.getMe = async (req, res) => {
-    res.status(200).json(req.user);
+    // Se vuelve a buscar al usuario en la base de datos para asegurar
+    // que se obtienen los datos más recientes, incluyendo el estado de la suscripción.
+    const user = await User.findByPk(req.user.id, {
+        attributes: { exclude: ['password'] }
+    });
+    res.status(200).json(user);
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {

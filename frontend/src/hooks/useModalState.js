@@ -27,6 +27,9 @@ export const useModalState = () => {
     const [carToNotify, setCarToNotify] = useState(null);
     const [isBusinessDataModalOpen, setIsBusinessDataModalOpen] = useState(false);
     const [businessDataMessage, setBusinessDataMessage] = useState('');
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [isSubscriptionSuccessModalOpen, setSubscriptionSuccessModalOpen] = useState(false);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     return {
         isAddUserModalOpen, setAddUserModalOpen,
@@ -54,5 +57,8 @@ export const useModalState = () => {
         carToNotify, setCarToNotify,
         isBusinessDataModalOpen, setIsBusinessDataModalOpen,
         businessDataMessage, setBusinessDataMessage,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        isSubscriptionSuccessModalOpen, setSubscriptionSuccessModalOpen,
+        // --- FIN DE LA MODIFICACIÓN ---
     };
 };
