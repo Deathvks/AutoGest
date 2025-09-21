@@ -43,6 +43,7 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode }) => {
         setUserToDelete,
         setIsBusinessDataModalOpen,
         businessDataMessage,
+        setSubscriptionSuccessModalOpen, // <-- AÑADIDO PARA PASARLO
     } = appState;
 
     return (
@@ -115,7 +116,7 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode }) => {
             {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <Route 
                 path="/subscription" 
-                element={<SubscriptionPage />} 
+                element={<SubscriptionPage setSubscriptionSuccessModalOpen={setSubscriptionSuccessModalOpen} />} 
             />
             {/* --- FIN DE LA MODIFICACIÓN --- */}
             <Route path="*" element={<Navigate to="/" replace />} />

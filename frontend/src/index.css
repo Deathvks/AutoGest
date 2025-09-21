@@ -26,7 +26,9 @@
     --color-yellow-accent: #f59e0b; 
     --color-blue-accent: #3b82f6;
 
+    /* --- INICIO DE LA MODIFICACIÓN --- */
     --color-accent-soft-glow: rgba(184, 134, 11, 0.15);
+    /* --- FIN DE LA MODIFICACIÓN --- */
   }
 
   .dark {
@@ -49,9 +51,12 @@
     --color-yellow-accent: #facc15;
     --color-blue-accent: #60a5fa;
 
-    /* --- INICIO DE LA MODIFICACIÓN --- */
-    --color-accent-soft-glow: rgba(197, 164, 126, 0.2); /* Aumentamos la opacidad del brillo */
-    /* --- FIN DE LA MODIFICACIÓN --- */
+    --color-accent-soft-glow: rgba(197, 164, 126, 0.2);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-secondary);
   }
 }
 
@@ -85,7 +90,20 @@ input[type="date"] { color-scheme: light; }
 
 /* Animaciones y transiciones */
 @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-.animate-fade-in-up { animation: fade-in-up 0.3s ease-out forwards; }
+@keyframes fade-in-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes rocket-liftoff {
+    0% { transform: translateY(50px) scale(0.8) rotate(-10deg); opacity: 0; }
+    100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes background-pan {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
+.animate-fade-in-down { animation: fade-in-down 0.6s ease-out forwards; }
+.animate-rocket-liftoff { animation: rocket-liftoff 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
 
 body, .bg-background, .bg-component-bg, .bg-component-bg-hover, .border-border-color, .text-text-primary, .text-text-secondary {
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
@@ -97,6 +115,7 @@ body, .bg-background, .bg-component-bg, .bg-component-bg-hover, .border-border-c
     100% { background-position: 0% 50%; }
 }
 
+/* --- INICIO DE LA MODIFICACIÓN --- */
 .animated-premium-background {
     background: linear-gradient(
         -45deg, 
@@ -141,3 +160,4 @@ body, .bg-background, .bg-component-bg, .bg-component-bg-hover, .border-border-c
     position: relative;
     z-index: 1;
 }
+/* --- FIN DE LA MODIFICACIÓN --- */

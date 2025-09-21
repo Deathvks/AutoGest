@@ -7,25 +7,29 @@ import { faCheckCircle, faSpinner, faExclamationTriangle } from '@fortawesome/fr
 
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
-import { useAppState } from '../hooks/useAppState';
 
 // Importa los componentes refactorizados
 import SubscriptionBenefits from './Subscription/SubscriptionBenefits';
 import CheckoutForm from './Subscription/CheckoutForm';
 import SubscriptionStatus from './Subscription/SubscriptionStatus';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST);
+// --- INICIO DE LA MODIFICACIÓN ---
+// Carga la clave correcta dependiendo del entorno (desarrollo o producción)
+const stripePublishableKey = import.meta.env.PROD 
+    ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE 
+    : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST;
 
-const SubscriptionPageContent = () => {
+const stripePromise = loadStripe(stripePublishableKey);
+// --- FIN DE LA MODIFICACIÓN ---
+
+const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
     const { user, subscriptionStatus, refreshSubscriptionStatus } = useContext(AuthContext);
-    const { setSubscriptionSuccessModalOpen } = useAppState();
 
     const [isLoading, setIsLoading] = useState(true);
     const [localExpiry, setLocalExpiry] = useState(null);
     const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
     const [verificationError, setVerificationError] = useState('');
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleSuccessfulPayment = () => {
         console.log('[Payment] Pago exitoso. Iniciando verificación...');
         setIsVerifyingPayment(true);
@@ -33,13 +37,12 @@ const SubscriptionPageContent = () => {
 
         let attempts = 0;
         const maxAttempts = 12;
-        const pollIntervals = [1000, 2000, 2000, 3000, 3000, 3000, 4000, 4000, 5000, 5000, 5000, 5000]; // Intervalos progresivos
+        const pollIntervals = [1000, 2000, 2000, 3000, 3000, 3000, 4000, 4000, 5000, 5000, 5000, 5000];
 
         const pollForStatus = async () => {
             if (attempts >= maxAttempts) {
-                // Como último recurso, intentar sincronización manual
                 try {
-                    await api.syncSubscription(); // Necesitarías crear este endpoint
+                    await api.syncSubscription();
                     const freshUser = await api.getMe();
                     if (freshUser.subscriptionStatus === 'active') {
                         await refreshSubscriptionStatus();
@@ -74,7 +77,6 @@ const SubscriptionPageContent = () => {
 
         setTimeout(pollForStatus, 2000);
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleCancel = async () => {
         await api.subscriptions.cancelSubscription();
@@ -90,7 +92,7 @@ const SubscriptionPageContent = () => {
 
     if (user.role === 'admin' || user.role === 'technician') {
         return (
-            <div className="p-8 bg-component-bg rounded-xl border border-border-color text-center">
+            <div className="p-8 bg-component-bg rounded-xl border border-border-color text-center animated-premium-background">
                 <FontAwesomeIcon icon={faCheckCircle} className="w-16 h-16 mx-auto mb-4 text-green-accent" />
                 <h3 className="text-xl font-bold text-green-accent">CUENTA DE ACCESO COMPLETO</h3>
                 <p className="text-text-secondary mt-2">TU ROL DE {user.role.toUpperCase()} NO REQUIERE UNA SUSCRIPCIÓN DE PAGO.</p>
@@ -102,11 +104,29 @@ const SubscriptionPageContent = () => {
         return <div className="text-center p-8"><FontAwesomeIcon icon={faSpinner} spin size="2x" /></div>;
     }
 
-    const showPaymentForm = subscriptionStatus === 'inactive' || subscriptionStatus === 'past_due';
+    const isSubscribed = subscriptionStatus === 'active' || subscriptionStatus === 'cancelled';
+    
+    if (isSubscribed) {
+        return (
+            <div className="max-w-4xl mx-auto space-y-12 animate-fade-in-up">
+                <div>
+                    <h1 className="text-3xl lg:text-4xl font-bold text-text-primary tracking-tight">Tu Suscripción</h1>
+                    <p className="mt-2 text-lg text-text-secondary">Gestiona el estado de tu plan y revisa los beneficios incluidos.</p>
+                </div>
 
+                <SubscriptionStatus status={subscriptionStatus} expiry={localExpiry} onCancel={handleCancel} />
+
+                <div>
+                    <h2 className="text-2xl font-semibold text-text-primary mb-6">Beneficios de tu Plan</h2>
+                    <SubscriptionBenefits />
+                </div>
+            </div>
+        );
+    }
+    
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-            <div className="lg:pt-8">
+            <div className="lg:pt-8 animate-fade-in-up">
                 <h2 className="text-3xl lg:text-4xl font-bold text-text-primary tracking-tight">
                     LA HERRAMIENTA DEFINITIVA PARA <span className="text-accent">COMPRA VENTAS DE COCHES</span>
                 </h2>
@@ -131,21 +151,19 @@ const SubscriptionPageContent = () => {
                         <h3 className="text-xl font-bold text-text-primary">ERROR DE VERIFICACIÓN</h3>
                         <p className="text-text-secondary mt-2 text-center">{verificationError}</p>
                     </div>
-                ) : showPaymentForm ? (
-                    <CheckoutForm onSuccessfulPayment={handleSuccessfulPayment} />
                 ) : (
-                    <SubscriptionStatus status={subscriptionStatus} expiry={localExpiry} onCancel={handleCancel} />
+                    <CheckoutForm onSuccessfulPayment={handleSuccessfulPayment} />
                 )}
             </div>
         </div>
     );
 };
 
-const SubscriptionPage = () => {
+const SubscriptionPage = ({ setSubscriptionSuccessModalOpen }) => {
     return (
         <div className="max-w-7xl mx-auto">
             <Elements stripe={stripePromise}>
-                <SubscriptionPageContent />
+                <SubscriptionPageContent setSubscriptionSuccessModalOpen={setSubscriptionSuccessModalOpen} />
             </Elements>
         </div>
     );

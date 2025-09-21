@@ -17,8 +17,15 @@ const SubscriptionBenefits = () => {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {benefits.map((benefit) => (
-                <div key={benefit.title} className="group bg-component-bg-hover dark:bg-component-bg p-6 rounded-xl border border-border-color shadow-sm transition-all duration-300 hover:shadow-xl hover:border-accent hover:scale-[1.03] cursor-pointer">
+            {benefits.map((benefit, index) => (
+                <div 
+                    key={benefit.title} 
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    // Se añade el fondo animado y se elimina el `style` que causaba el problema de visibilidad.
+                    className="group p-6 rounded-xl border border-border-color shadow-sm transition-all duration-300 hover:shadow-xl hover:border-accent hover:scale-[1.03] cursor-pointer animate-fade-in-up animated-premium-background"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                    // --- FIN DE LA MODIFICACIÓN ---
+                >
                     <FontAwesomeIcon icon={benefit.icon} className="text-accent text-3xl mb-4 transition-transform duration-300 group-hover:scale-110" />
                     <h4 className="font-bold text-text-primary text-lg mb-2 transition-colors duration-300 group-hover:text-accent">{benefit.title}</h4>
                     <p className="text-text-secondary text-sm leading-relaxed">{benefit.description}</p>

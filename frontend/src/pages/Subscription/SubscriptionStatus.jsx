@@ -29,15 +29,29 @@ const SubscriptionStatus = ({ status, expiry, onCancel }) => {
     const currentStatus = statusInfo[status] || statusInfo.inactive;
 
     return (
-        <div className="p-8 bg-component-bg rounded-xl border border-border-color shadow-lg text-center h-full flex flex-col justify-center">
-            <FontAwesomeIcon icon={currentStatus.icon} className={`w-16 h-16 mx-auto mb-4 ${currentStatus.color}`} />
-            <h3 className={`text-xl font-bold ${currentStatus.color}`}>{currentStatus.title}</h3>
-            <p className="text-text-secondary mt-2">{currentStatus.message}</p>
+        <div className="p-8 bg-component-bg rounded-xl border border-border-color shadow-lg text-center h-full flex flex-col justify-center animated-premium-background">
+            <FontAwesomeIcon 
+                icon={currentStatus.icon} 
+                className={`w-16 h-16 mx-auto mb-4 ${currentStatus.color} animate-fade-in-up`} 
+            />
+            <h3 
+                className={`text-xl font-bold ${currentStatus.color} animate-fade-in-up`}
+                style={{ animationDelay: '150ms' }}
+            >
+                {currentStatus.title}
+            </h3>
+            <p 
+                className="text-text-secondary mt-2 animate-fade-in-up"
+                style={{ animationDelay: '300ms' }}
+            >
+                {currentStatus.message}
+            </p>
             {status === 'active' && (
                  <button
                     onClick={handleCancel}
                     disabled={isCancelling}
-                    className="mt-6 bg-red-accent/10 text-red-accent font-semibold py-2 px-6 rounded-lg hover:bg-red-accent/20 transition-colors disabled:opacity-50"
+                    className="mt-6 bg-red-accent/10 text-red-accent font-semibold py-2 px-6 rounded-lg hover:bg-red-accent/20 transition-colors disabled:opacity-50 animate-fade-in-up"
+                    style={{ animationDelay: '450ms' }}
                 >
                     {isCancelling ? <FontAwesomeIcon icon={faSpinner} spin /> : 'CANCELAR SUSCRIPCIÓN'}
                 </button>
