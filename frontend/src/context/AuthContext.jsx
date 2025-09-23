@@ -11,9 +11,6 @@ const AuthProvider = ({ children }) => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Esta función ahora depende únicamente de api.getMe(), que ya trae
-    // la información de la suscripción más reciente gracias al cambio en el backend.
     const fetchUserAndSubscription = async () => {
         if (token) {
             try {
@@ -36,6 +33,19 @@ const AuthProvider = ({ children }) => {
             await fetchUserAndSubscription();
         } finally {
             setIsRefreshing(false);
+        }
+    };
+    
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const refreshUser = async () => {
+        if (token) {
+            try {
+                const userData = await api.getMe();
+                setUser(userData);
+                setSubscriptionStatus(userData.subscriptionStatus);
+            } catch (error) {
+                console.error("Error al refrescar el usuario.", error);
+            }
         }
     };
     // --- FIN DE LA MODIFICACIÓN ---
@@ -110,7 +120,7 @@ const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ token, user, login, logout, isAuthLoading, isRefreshing, updateUserProfile, deleteUserAvatar, deleteAccount, subscriptionStatus, refreshSubscriptionStatus }}>
+        <AuthContext.Provider value={{ token, user, login, logout, isAuthLoading, isRefreshing, updateUserProfile, deleteUserAvatar, deleteAccount, subscriptionStatus, refreshSubscriptionStatus, refreshUser }}>
             {!isAuthLoading && children}
         </AuthContext.Provider>
     );

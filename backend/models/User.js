@@ -19,9 +19,7 @@ const User = sequelize.define('User', {
         allowNull: false,
     },
     role: {
-        // --- INICIO DE LA MODIFICACIÓN ---
-        type: DataTypes.ENUM('user', 'admin', 'technician'), // Se añade el nuevo rol 'technician'
-        // --- FIN DE LA MODIFICACIÓN ---
+        type: DataTypes.ENUM('user', 'admin', 'technician'),
         allowNull: false,
         defaultValue: 'user',
     },
@@ -62,6 +60,18 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    invoiceCounter: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+    },
+    proformaCounter: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
     indexes: [

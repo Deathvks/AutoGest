@@ -16,12 +16,10 @@ const Car = sequelize.define('Car', {
         type: DataTypes.FLOAT,
         allowNull: false,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     purchasePrice: {
         type: DataTypes.FLOAT,
         allowNull: true, // Se cambia a true para que no sea obligatorio
     },
-    // --- FIN DE LA MODIFICACIÓN ---
     salePrice: {
         type: DataTypes.FLOAT,
         allowNull: true,
@@ -114,6 +112,16 @@ const Car = sequelize.define('Car', {
         type: DataTypes.DATEONLY,
         allowNull: true,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    invoiceNumber: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
+    proformaNumber: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
     paranoid: true, 

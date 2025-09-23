@@ -62,7 +62,16 @@ const api = {
     login: (credentials) => fetch(`${BASE_URL}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) }).then(handlePublicResponse),
     register: (userData) => fetch(`${BASE_URL}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(userData) }).then(handlePublicResponse),
     getMe: () => fetch(`${BASE_URL}/auth/me`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
-    updateProfile: (formData) => fetch(`${BASE_URL}/auth/profile`, { method: 'PUT', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
+    // --- INICIO DE LA MODIFICACIÓN ---
+    updateProfile: (data) => {
+        const isFormData = data instanceof FormData;
+        return fetch(`${BASE_URL}/auth/profile`, {
+            method: 'PUT',
+            headers: isFormData ? getAuthHeadersForFormData() : getAuthHeaders(),
+            body: isFormData ? data : JSON.stringify(data),
+        }).then(handleProtectedResponse);
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
     deleteAvatar: () => fetch(`${BASE_URL}/auth/avatar`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
     updatePassword: (passwordData) => fetch(`${BASE_URL}/auth/update-password`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(passwordData) }).then(handleProtectedResponse),
     deleteAccount: () => fetch(`${BASE_URL}/auth/me`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
@@ -119,14 +128,12 @@ const api = {
         }
     },
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     // --- Suscripciones (Stripe) ---
     subscriptions: {
         createSubscription: (paymentMethodId) => fetch(`${BASE_URL}/subscriptions/create-subscription`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ paymentMethodId }) }).then(handleProtectedResponse),
         getSubscriptionStatus: () => fetch(`${BASE_URL}/subscriptions/status`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
         cancelSubscription: () => fetch(`${BASE_URL}/subscriptions/cancel-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
     }
-    // --- FIN DE LA MODIFICACIÓN ---
 };
 
 export default api;
