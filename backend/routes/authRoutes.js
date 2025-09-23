@@ -1,7 +1,8 @@
 // autogest-app/backend/routes/authRoutes.js
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/authController');
+const userAccountController = require('../controllers/userAccountController');
+const userProfileController = require('../controllers/userProfileController');
 const { protect } = require('../middleware/auth');
 const avatarUpload = require('../middleware/avatarUpload');
 
@@ -26,25 +27,28 @@ const handleMulterError = (err, req, res, next) => {
     next();
 };
 
+// --- Rutas de Cuenta ---
 // POST /api/auth/register -> Registrar un nuevo usuario
-router.post('/register', authController.register);
+router.post('/register', userAccountController.register);
 
 // POST /api/auth/login -> Iniciar sesión
-router.post('/login', authController.login);
+router.post('/login', userAccountController.login);
 
+
+// --- Rutas de Perfil (Protegidas) ---
 // GET /api/auth/me -> Obtener el perfil del usuario logueado
-router.get('/me', protect, authController.getMe);
+router.get('/me', protect, userProfileController.getMe);
 
 // PUT /api/auth/profile -> Actualizar el perfil del usuario (nombre, email y avatar)
-router.put('/profile', protect, avatarUpload, handleMulterError, authController.updateProfile);
+router.put('/profile', protect, avatarUpload, handleMulterError, userProfileController.updateProfile);
 
 // DELETE /api/auth/avatar -> Eliminar la foto de perfil del usuario
-router.delete('/avatar', protect, authController.deleteAvatar);
+router.delete('/avatar', protect, userProfileController.deleteAvatar);
 
 // PUT /api/auth/update-password -> Cambiar la contraseña del usuario
-router.put('/update-password', protect, authController.updatePassword);
+router.put('/update-password', protect, userProfileController.updatePassword);
 
 // DELETE /api/auth/me -> Eliminar la cuenta del usuario actual
-router.delete('/me', protect, authController.deleteAccount);
+router.delete('/me', protect, userProfileController.deleteAccount);
 
 module.exports = router;
