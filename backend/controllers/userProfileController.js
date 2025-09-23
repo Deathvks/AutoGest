@@ -19,7 +19,9 @@ exports.getMe = async (req, res) => {
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {
     try {
-        const { name, email, businessName, dni, cif, address, phone } = req.body;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const { name, email, businessName, dni, cif, address, phone, proformaCounter, invoiceCounter } = req.body;
+        // --- FIN DE LA MODIFICACIÓN ---
         const user = await User.findByPk(req.user.id);
         
         if (!user) {
@@ -43,6 +45,11 @@ exports.updateProfile = async (req, res) => {
         if (cif) user.cif = cif;
         if (address) user.address = address;
         if (phone) user.phone = phone;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        if (proformaCounter) user.proformaCounter = proformaCounter;
+        if (invoiceCounter) user.invoiceCounter = invoiceCounter;
+        // --- FIN DE LA MODIFICACIÓN ---
+
 
         if (req.file) {
             const oldAvatarUrl = user.avatarUrl;
@@ -60,18 +67,8 @@ exports.updateProfile = async (req, res) => {
 
         await user.save();
 
-        const userResponse = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            avatarUrl: user.avatarUrl,
-            businessName: user.businessName,
-            dni: user.dni,
-            cif: user.cif,
-            address: user.address,
-            phone: user.phone,
-        };
+        const userResponse = user.toJSON();
+        delete userResponse.password;
 
         res.status(200).json(userResponse);
     } catch (error) {
@@ -119,14 +116,9 @@ exports.deleteAvatar = async (req, res) => {
 
         user.avatarUrl = null;
         await user.save();
-
-        const userResponse = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            avatarUrl: user.avatarUrl
-        };
+        
+        const userResponse = user.toJSON();
+        delete userResponse.password;
 
         res.status(200).json(userResponse);
     } catch (error) {

@@ -31,10 +31,8 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             // Actualizar el contador del usuario al siguiente número
             await api.updateProfile({ [fieldToUpdate]: num + 1 });
             
-            // --- INICIO DE LA MODIFICACIÓN ---
             // Refrescar los datos del usuario en toda la app para obtener el nuevo contador
             await refreshUser();
-            // --- FIN DE LA MODIFICACIÓN ---
             
             onConfirm(type, num);
         } catch (err) {

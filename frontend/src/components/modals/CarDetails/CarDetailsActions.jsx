@@ -1,5 +1,5 @@
 // autogest-app/frontend/src/components/modals/CarDetails/CarDetailsActions.jsx
-import React, { useContext, useState } from 'react'; // <-- Importar useState
+import React, { useContext, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faPencilAlt, faTrashAlt, faFileInvoiceDollar, faBan, faHandHoldingUsd,
@@ -8,18 +8,13 @@ import {
 import { AuthContext } from '../../../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-// --- INICIO DE LA MODIFICACIÓN ---
-// Asumo que crearé este modal a continuación
 import GeneratePdfModal from '../GeneratePdfModal'; 
-// --- FIN DE LA MODIFICACIÓN ---
-
 
 const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onAddExpenseClick, onAddIncidentClick }) => {
     const { user } = useContext(AuthContext);
     const isReservedAndActive = car.status.toUpperCase() === 'RESERVADO' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
     const isLockedForUser = isReservedAndActive && user.role !== 'admin';
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const [pdfModalInfo, setPdfModalInfo] = useState({ isOpen: false, type: '', number: 0 });
 
     const handleGeneratePdf = (type, number) => {
@@ -54,7 +49,6 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
 
         doc.text("DETALLES:", 14, 65);
         doc.text(`FECHA: ${type === 'proforma' ? today : new Date(car.saleDate).toLocaleDateString('es-ES')}`, 14, 70);
-        // Usamos el número proporcionado
         doc.text(`Nº FACTURA: ${type === 'proforma' ? `PROFORMA-${number}` : `${number}-${new Date().getFullYear()}`}`, 14, 75);
 
         const price = parseFloat(car.salePrice || car.price);
@@ -85,7 +79,6 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
         const nextNumber = type === 'proforma' ? user.proformaCounter : user.invoiceCounter;
         setPdfModalInfo({ isOpen: true, type, number: nextNumber });
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     return (
         <>
@@ -136,7 +129,6 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
                     <FontAwesomeIcon icon={faTrashAlt} /> ELIMINAR
                 </button>
             </div>
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             {pdfModalInfo.isOpen && (
                 <GeneratePdfModal
                     isOpen={pdfModalInfo.isOpen}
@@ -147,7 +139,6 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
                     car={car}
                 />
             )}
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
     );
 };

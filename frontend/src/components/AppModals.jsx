@@ -1,9 +1,8 @@
 // autogest-app/frontend/src/components/AppModals.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faBuilding, faIdCard, faFileInvoice, faMapMarkerAlt, faPhone } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faBuilding, faIdCard, faFileInvoice, faMapMarkerAlt, faPhone, faUser } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
-
 
 // Importa todos los componentes de modales
 import CarDetailsModalContent from './modals/CarDetailsModalContent';
@@ -29,9 +28,7 @@ import GestoriaPickupModal from './modals/GestoriaPickupModal';
 import GestoriaReturnModal from './modals/GestoriaReturnModal';
 import NotifyClientModal from './modals/NotifyClientModal';
 import SubscriptionSuccessModal from './modals/SubscriptionSuccessModal';
-// --- INICIO DE LA MODIFICACIÓN ---
-import LogoutConfirmationModal from './modals/LogoutConfirmationModal'; // Importamos el nuevo modal
-// --- FIN DE LA MODIFICACIÓN ---
+import LogoutConfirmationModal from './modals/LogoutConfirmationModal';
 
 const InputField = ({ label, name, value, onChange, icon, required = false }) => (
     <div>
@@ -46,28 +43,27 @@ const InputField = ({ label, name, value, onChange, icon, required = false }) =>
                 </div>
             )}
             <input
-                type="text" name={name} value={value} onChange={onChange}
+                type="text" name={name} value={value || ''} onChange={onChange}
                 className={`w-full px-3 py-2 bg-background border rounded-lg focus:ring-1 focus:border-blue-accent text-text-primary transition-colors border-border-color focus:ring-blue-accent ${icon ? 'pl-9' : ''}`}
             />
         </div>
     </div>
 );
 
+// --- INICIO DE LA MODIFICACIÓN ---
 const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
     const { user } = useContext(AuthContext);
     const [formData, setFormData] = useState({});
+    const [accountType, setAccountType] = useState('empresa');
     const [error, setError] = useState('');
 
     const isValidDniNie = (value) => {
         const dniRegex = /^([0-9]{8}[A-Z])$/i;
         const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/i;
         value = value.toUpperCase();
-
         if (!dniRegex.test(value) && !nieRegex.test(value)) return false;
-
         const controlChars = 'TRWAGMYFPDXBNJZSQVHLCKE';
         let number;
-
         if (nieRegex.test(value)) {
             const firstChar = value.charAt(0);
             let numPrefix;
@@ -84,11 +80,9 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
     const isValidCif = (value) => {
         value = value.toUpperCase();
         if (!/^[A-Z][0-9]{8}$/.test(value)) return false;
-
         const controlDigit = value.charAt(value.length - 1);
         const numberPart = value.substring(1, 8);
         let sum = 0;
-
         for (let i = 0; i < numberPart.length; i++) {
             let num = parseInt(numberPart[i], 10);
             if (i % 2 === 0) {
@@ -98,10 +92,8 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                 sum += num;
             }
         }
-
         const lastDigitOfSum = sum % 10;
         const calculatedControl = lastDigitOfSum === 0 ? 0 : 10 - lastDigitOfSum;
-        
         if (/[A-Z]/.test(controlDigit)) {
             return String.fromCharCode(64 + calculatedControl) === controlDigit;
         } else {
@@ -112,12 +104,14 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
     useEffect(() => {
         if (user && isOpen) {
             setFormData({
-                businessName: user.businessName || '',
+                businessName: user.businessName || user.name || '',
+                name: user.name || '',
                 dni: user.dni || '',
                 cif: user.cif || '',
                 address: user.address || '',
                 phone: user.phone || '',
             });
+            setAccountType(user.cif ? 'empresa' : 'particular');
             setError('');
         }
     }, [user, isOpen]);
@@ -127,19 +121,28 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
     };
     
     const validateForm = () => {
-        for (const key in formData) {
-            if (!formData[key] || formData[key].trim() === '') {
-                setError('TODOS LOS CAMPOS SON OBLIGATORIOS.');
+        if (!formData.address?.trim() || !formData.phone?.trim()) {
+            setError('La dirección y el teléfono son obligatorios.');
+            return false;
+        }
+        if (accountType === 'empresa') {
+            if (!formData.businessName?.trim() || !formData.cif?.trim()) {
+                setError('La razón social y el CIF son obligatorios para empresas.');
                 return false;
             }
-        }
-        if (!isValidDniNie(formData.dni)) {
-            setError('EL FORMATO DEL DNI/NIE NO ES VÁLIDO.');
-            return false;
-        }
-        if (!isValidCif(formData.cif)) {
-            setError('EL FORMATO DEL CIF NO ES VÁLIDO.');
-            return false;
+            if (!isValidCif(formData.cif)) {
+                setError('El formato del CIF no es válido.');
+                return false;
+            }
+        } else { // particular
+            if (!formData.name?.trim() || !formData.dni?.trim()) {
+                setError('El nombre y el DNI/NIE son obligatorios.');
+                return false;
+            }
+            if (!isValidDniNie(formData.dni)) {
+                setError('El formato del DNI/NIE no es válido.');
+                return false;
+            }
         }
         setError('');
         return true;
@@ -151,12 +154,21 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
         }
 
         const dataToSave = new FormData();
-        dataToSave.append('name', user.name);
         dataToSave.append('email', user.email);
-        
-        Object.keys(formData).forEach(key => {
-            dataToSave.append(key, formData[key]);
-        });
+        dataToSave.append('address', formData.address);
+        dataToSave.append('phone', formData.phone);
+
+        if (accountType === 'empresa') {
+            dataToSave.append('businessName', formData.businessName);
+            dataToSave.append('cif', formData.cif);
+            dataToSave.append('name', user.name); // Mantenemos el nombre de contacto del usuario
+            dataToSave.append('dni', ''); // Limpiamos el campo no relevante
+        } else {
+            dataToSave.append('name', formData.name);
+            dataToSave.append('dni', formData.dni);
+            dataToSave.append('businessName', formData.name); // Usamos el nombre como "razón social"
+            dataToSave.append('cif', ''); // Limpiamos el campo no relevante
+        }
 
         try {
             await onSave(dataToSave);
@@ -173,7 +185,7 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                 <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
                     <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
                         <FontAwesomeIcon icon={faBuilding} />
-                        DATOS DE EMPRESA
+                        DATOS DE FACTURACIÓN
                     </h2>
                     <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
@@ -181,13 +193,28 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                 </div>
 
                 <div className="flex-grow overflow-y-auto p-6 space-y-4">
-                    <InputField label="RAZÓN SOCIAL" name="businessName" value={formData.businessName} onChange={handleChange} icon={faBuilding} required={true} />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <InputField label="DNI" name="dni" value={formData.dni} onChange={handleChange} icon={faIdCard} required={true} />
-                        <InputField label="CIF" name="cif" value={formData.cif} onChange={handleChange} icon={faFileInvoice} required={true} />
+                    <div className="flex items-center rounded-lg bg-background p-1 border border-border-color text-text-secondary">
+                        <button type="button" onClick={() => setAccountType('empresa')} className={`flex-1 px-3 py-1 text-sm rounded-md transition-colors ${accountType === 'empresa' ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}>EMPRESA</button>
+                        <button type="button" onClick={() => setAccountType('particular')} className={`flex-1 px-3 py-1 text-sm rounded-md transition-colors ${accountType === 'particular' ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}>AUTÓNOMO / PARTICULAR</button>
                     </div>
+
+                    {accountType === 'empresa' ? (
+                        <>
+                            <InputField label="RAZÓN SOCIAL" name="businessName" value={formData.businessName} onChange={handleChange} icon={faBuilding} required={true} />
+                            <InputField label="CIF" name="cif" value={formData.cif} onChange={handleChange} icon={faFileInvoice} required={true} />
+                        </>
+                    ) : (
+                        <>
+                            <InputField label="NOMBRE Y APELLIDOS" name="name" value={formData.name} onChange={handleChange} icon={faUser} required={true} />
+                            <InputField label="DNI / NIE" name="dni" value={formData.dni} onChange={handleChange} icon={faIdCard} required={true} />
+                        </>
+                    )}
+                    
+                    <hr className="border-border-color" />
+
                     <InputField label="DIRECCIÓN" name="address" value={formData.address} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
                     <InputField label="TELÉFONO" name="phone" value={formData.phone} onChange={handleChange} icon={faPhone} required={true} />
+
                     {error && <p className="mt-2 text-sm text-red-accent text-center">{error}</p>}
                 </div>
 
@@ -199,67 +226,34 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
         </div>
     );
 };
-
+// --- FIN DE LA MODIFICACIÓN ---
 
 const AppModals = ({ appState }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
-    const { logout } = useContext(AuthContext); // Obtenemos la función logout
-    // --- FIN DE LA MODIFICACIÓN ---
+    const { logout } = useContext(AuthContext);
 
     const {
-        incidents,
-        locations,
-        allExpenses,
-        cars,
-        users,
-        isAddUserModalOpen, setAddUserModalOpen,
-        userToEdit, setUserToEdit,
-        userToDelete, setUserToDelete,
-        carToSell, setCarToSell,
-        carToView, setCarToView,
-        isAddCarModalOpen, setAddCarModalOpen,
-        carForIncident, setCarForIncident,
-        carToEdit, setCarToEdit,
-        carToDelete, setCarToDelete,
-        isAddExpenseModalOpen, setAddExpenseModalOpen,
-        carForExpense, setCarForExpense,
-        expenseToEdit, setExpenseToEdit,
-        expenseToDelete, setExpenseToDelete,
-        incidentToDelete, setIncidentToDelete,
-        isDeleteAccountModalOpen, setIsDeleteAccountModalOpen,
-        carToReserve, setCarToReserve,
-        carToCancelReservation, setCarToCancelReservation,
-        isInvestmentModalOpen, setInvestmentModalOpen,
-        isRevenueModalOpen, setRevenueModalOpen,
-        reservationSuccessData, setReservationSuccessData,
-        carForGestoriaPickup, setCarForGestoriaPickup,
-        carForGestoriaReturn, setCarForGestoriaReturn,
-        carToNotify, setCarToNotify,
-        isBusinessDataModalOpen, setIsBusinessDataModalOpen,
+        incidents, locations, allExpenses, cars, users,
+        isAddUserModalOpen, setAddUserModalOpen, userToEdit, setUserToEdit,
+        userToDelete, setUserToDelete, carToSell, setCarToSell,
+        carToView, setCarToView, isAddCarModalOpen, setAddCarModalOpen,
+        carForIncident, setCarForIncident, carToEdit, setCarToEdit,
+        carToDelete, setCarToDelete, isAddExpenseModalOpen, setAddExpenseModalOpen,
+        carForExpense, setCarForExpense, expenseToEdit, setExpenseToEdit,
+        expenseToDelete, setExpenseToDelete, incidentToDelete, setIncidentToDelete,
+        isDeleteAccountModalOpen, setIsDeleteAccountModalOpen, carToReserve, setCarToReserve,
+        carToCancelReservation, setCarToCancelReservation, isInvestmentModalOpen, setInvestmentModalOpen,
+        isRevenueModalOpen, setRevenueModalOpen, reservationSuccessData, setReservationSuccessData,
+        carForGestoriaPickup, setCarForGestoriaPickup, carForGestoriaReturn, setCarForGestoriaReturn,
+        carToNotify, setCarToNotify, isBusinessDataModalOpen, setIsBusinessDataModalOpen,
         isSubscriptionSuccessModalOpen, setSubscriptionSuccessModalOpen,
-        // --- INICIO DE LA MODIFICACIÓN ---
         isLogoutModalOpen, setLogoutModalOpen,
-        // --- FIN DE LA MODIFICACIÓN ---
-        handleSaveBusinessData,
-        handleUserAdded,
-        handleUserUpdated,
-        handleUserDeleted,
-        handleAddCar,
-        handleUpdateCar,
-        handleDeleteCar,
-        handleSellConfirm,
-        handleReserveConfirm,
-        handleConfirmCancelReservation,
-        handleDeleteNote,
-        handleAddIncident,
-        handleDeleteIncident,
-        confirmDeleteIncident,
-        handleResolveIncident,
-        handleAddExpense,
-        handleUpdateExpense,
-        confirmDeleteExpense,
-        handleGestoriaPickup, 
-        handleGestoriaReturn
+        handleSaveBusinessData, handleUserAdded, handleUserUpdated,
+        handleUserDeleted, handleAddCar, handleUpdateCar,
+        handleDeleteCar, handleSellConfirm, handleReserveConfirm,
+        handleConfirmCancelReservation, handleDeleteNote, handleAddIncident,
+        handleDeleteIncident, confirmDeleteIncident, handleResolveIncident,
+        handleAddExpense, handleUpdateExpense, confirmDeleteExpense,
+        handleGestoriaPickup, handleGestoriaReturn
     } = appState;
 
     return (
@@ -290,7 +284,7 @@ const AppModals = ({ appState }) => {
                 </div>
             )}
             
-            {isAddCarModalOpen && <AddCarModal onClose={() => setAddCarModalOpen(true)} onAdd={handleAddCar} locations={locations} />}
+            {isAddCarModalOpen && <AddCarModal onClose={() => setAddCarModalOpen(false)} onAdd={handleAddCar} locations={locations} />}
             {carToEdit && <EditCarModal car={carToEdit} onClose={() => setCarToEdit(null)} onUpdate={handleUpdateCar} locations={locations} />}
             {carToSell && <SellCarModal car={carToSell} onClose={() => setCarToSell(null)} onConfirm={handleSellConfirm} />}
             {carForIncident && <AddIncidentModal car={carForIncident} onClose={() => setCarForIncident(null)} onConfirm={handleAddIncident} />}
@@ -325,13 +319,11 @@ const AppModals = ({ appState }) => {
                 isOpen={isSubscriptionSuccessModalOpen}
                 onClose={() => setSubscriptionSuccessModalOpen(false)}
             />
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <LogoutConfirmationModal
                 isOpen={isLogoutModalOpen}
                 onClose={() => setLogoutModalOpen(false)}
                 onConfirm={logout}
             />
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
     );
 };
