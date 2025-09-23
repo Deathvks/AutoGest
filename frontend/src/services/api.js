@@ -39,8 +39,21 @@ const handlePublicResponse = async (response) => {
 const handleProtectedResponse = async (response) => {
     if (!response.ok) {
         if (response.status === 401) {
-            localStorage.removeItem('authToken');
-            window.location.href = '/login';
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Modificamos el manejo de errores 401 para gestionar cuentas no verificadas
+            const errorData = await response.json().catch(() => ({}));
+            if (errorData.needsVerification) {
+                // Si es un error de "no verificado", lanzamos un error especial
+                const err = new Error(errorData.error || 'La cuenta necesita verificación.');
+                err.needsVerification = true;
+                err.email = errorData.email;
+                throw err;
+            } else {
+                // Si es otro error 401, cerramos sesión
+                localStorage.removeItem('authToken');
+                window.location.href = '/login';
+            }
+            // --- FIN DE LA MODIFICACIÓN ---
         }
         
         let errorMessage = 'Algo salió mal en el servidor';
@@ -59,10 +72,13 @@ const handleProtectedResponse = async (response) => {
 
 const api = {
     // --- Autenticación (Auth) ---
-    login: (credentials) => fetch(`${BASE_URL}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) }).then(handlePublicResponse),
+    login: (credentials) => fetch(`${BASE_URL}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) }).then(handleProtectedResponse), // Cambiado a handleProtectedResponse
     register: (userData) => fetch(`${BASE_URL}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(userData) }).then(handlePublicResponse),
-    getMe: () => fetch(`${BASE_URL}/auth/me`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
     // --- INICIO DE LA MODIFICACIÓN ---
+    verifyEmail: (data) => fetch(`${BASE_URL}/auth/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+    resendVerificationCode: (data) => fetch(`${BASE_URL}/auth/resend-verification`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+    // --- FIN DE LA MODIFICACIÓN ---
+    getMe: () => fetch(`${BASE_URL}/auth/me`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
     updateProfile: (data) => {
         const isFormData = data instanceof FormData;
         return fetch(`${BASE_URL}/auth/profile`, {
@@ -71,7 +87,6 @@ const api = {
             body: isFormData ? data : JSON.stringify(data),
         }).then(handleProtectedResponse);
     },
-    // --- FIN DE LA MODIFICACIÓN ---
     deleteAvatar: () => fetch(`${BASE_URL}/auth/avatar`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
     updatePassword: (passwordData) => fetch(`${BASE_URL}/auth/update-password`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(passwordData) }).then(handleProtectedResponse),
     deleteAccount: () => fetch(`${BASE_URL}/auth/me`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),

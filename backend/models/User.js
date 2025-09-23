@@ -60,7 +60,6 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     invoiceCounter: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -70,6 +69,15 @@ const User = sequelize.define('User', {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 1,
+    },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    verificationCode: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    isVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
     },
     // --- FIN DE LA MODIFICACIÓN ---
 }, {
