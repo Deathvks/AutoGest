@@ -38,17 +38,14 @@ exports.createUser = async (req, res) => {
             email,
             password: hashedPassword,
             role,
+            isVerified: true, // Los usuarios creados por un admin se marcan como verificados
         });
 
-        // No devolvemos la contraseña en la respuesta
-        const userResponse = {
-            id: newUser.id,
-            name: newUser.name,
-            email: newUser.email,
-            role: newUser.role,
-            createdAt: newUser.createdAt,
-            updatedAt: newUser.updatedAt
-        };
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se devuelve el objeto de usuario completo para mantener la consistencia en el frontend
+        const userResponse = newUser.toJSON();
+        delete userResponse.password;
+        // --- FIN DE LA MODIFICACIÓN ---
 
         res.status(201).json(userResponse);
     } catch (error)
@@ -69,7 +66,7 @@ exports.updateUser = async (req, res) => {
         }
 
         // No permitir que un admin se quite el rol a sí mismo si es el último
-        if (user.id === req.user.id && user.role === 'admin' && role === 'user') {
+        if (user.id === req.user.id && user.role === 'admin' && role !== 'admin') {
             const adminCount = await User.count({ where: { role: 'admin' } });
             if (adminCount <= 1) {
                 return res.status(400).json({ error: 'No puedes eliminar el rol del último administrador.' });
@@ -80,7 +77,6 @@ exports.updateUser = async (req, res) => {
         user.email = email || user.email;
         user.role = role || user.role;
 
-        // Si se proporciona una nueva contraseña, la actualizamos
         if (password) {
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(password, salt);
@@ -88,14 +84,11 @@ exports.updateUser = async (req, res) => {
 
         await user.save();
         
-        const userResponse = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt
-        };
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se devuelve el objeto de usuario completo para mantener la consistencia en el frontend
+        const userResponse = user.toJSON();
+        delete userResponse.password;
+        // --- FIN DE LA MODIFICACIÓN ---
 
         res.status(200).json(userResponse);
     } catch (error) {
@@ -113,7 +106,6 @@ exports.deleteUser = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
 
-        // Medida de seguridad: no permitir que un admin se borre a sí mismo
         if (user.id === req.user.id) {
             return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta desde el panel de administración.' });
         }

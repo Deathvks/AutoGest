@@ -1,23 +1,37 @@
 // autogest-app/frontend/src/pages/ManageUsersPage.jsx
 import React, { useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlusCircle, faEdit, faTrash, faUserShield, faUser, faEnvelope, faCalendarDay } from '@fortawesome/free-solid-svg-icons';
+import { 
+    faPlusCircle, faEdit, faTrash, faUserShield, faUser, 
+    faEnvelope, faCalendarDay, faCheckCircle, faExclamationTriangle 
+} from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
 const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser }) => {
     const { user: currentUser } = useContext(AuthContext);
 
     const RoleBadge = ({ role }) => {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const roleStyles = {
             admin: 'bg-red-accent/10 text-red-accent',
             user: 'bg-blue-accent/10 text-blue-accent',
-            technician: 'bg-green-accent/10 text-green-accent', // <-- Estilo añadido
+            technician: 'bg-green-accent/10 text-green-accent',
         };
-        // --- FIN DE LA MODIFICACIÓN ---
         return (
             <span className={`px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap ${roleStyles[role] || 'bg-zinc-200'}`}>
                 {role}
+            </span>
+        );
+    };
+
+    const VerificationStatus = ({ isVerified }) => {
+        const statusClass = isVerified ? 'text-green-accent' : 'text-yellow-accent';
+        const icon = isVerified ? faCheckCircle : faExclamationTriangle;
+        const text = isVerified ? 'Verificado' : 'Pendiente';
+
+        return (
+            <span className={`flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${statusClass}`}>
+                <FontAwesomeIcon icon={icon} />
+                {text}
             </span>
         );
     };
@@ -44,18 +58,31 @@ const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser }) => {
                     <div className="space-y-4 md:hidden">
                         {users.map(user => (
                             <div key={user.id} className="bg-component-bg rounded-xl border border-border-color p-4">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div>
-                                        <p className="font-bold text-text-primary flex items-center gap-2"><FontAwesomeIcon icon={faUser} /> {user.name}</p>
-                                        <p className="text-sm text-text-secondary mt-1 flex items-center gap-2"><FontAwesomeIcon icon={faEnvelope} /> {user.email}</p>
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                <div className="flex justify-between items-start gap-3 mb-3">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="font-bold text-text-primary flex items-center gap-2 truncate">
+                                            <FontAwesomeIcon icon={faUser} className="flex-shrink-0"/>
+                                            <span className="truncate">{user.name}</span>
+                                        </p>
+                                        <p className="text-sm text-text-secondary mt-1 flex items-start gap-2">
+                                            <FontAwesomeIcon icon={faEnvelope} className="flex-shrink-0 mt-1"/>
+                                            <span className="break-all">{user.email}</span>
+                                        </p>
                                     </div>
-                                    <RoleBadge role={user.role} />
+                                    <div className="flex-shrink-0">
+                                        <RoleBadge role={user.role} />
+                                    </div>
                                 </div>
-                                <div className="flex justify-between items-end pt-3 border-t border-border-color">
-                                    <p className="text-sm text-text-secondary flex items-center gap-2">
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
+                                <div className="flex justify-between items-center text-sm my-3">
+                                     <p className="text-text-secondary flex items-center gap-2">
                                         <FontAwesomeIcon icon={faCalendarDay} />
                                         {new Date(user.createdAt).toLocaleDateString('es-ES')}
                                     </p>
+                                    <VerificationStatus isVerified={user.isVerified} />
+                                </div>
+                                <div className="flex justify-end items-end pt-3 border-t border-border-color">
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => onEditUser(user)}
@@ -88,6 +115,7 @@ const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser }) => {
                                         <th scope="col" className="px-6 py-4">Nombre</th>
                                         <th scope="col" className="px-6 py-4">Email</th>
                                         <th scope="col" className="px-6 py-4">Rol</th>
+                                        <th scope="col" className="px-6 py-4">Verificado</th>
                                         <th scope="col" className="px-6 py-4">Fecha de Creación</th>
                                         <th scope="col" className="px-6 py-4"><span className="sr-only">Acciones</span></th>
                                     </tr>
@@ -98,6 +126,7 @@ const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser }) => {
                                             <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{user.name}</td>
                                             <td className="px-6 py-4">{user.email}</td>
                                             <td className="px-6 py-4"><RoleBadge role={user.role} /></td>
+                                            <td className="px-6 py-4"><VerificationStatus isVerified={user.isVerified} /></td>
                                             <td className="px-6 py-4 whitespace-nowrap">{new Date(user.createdAt).toLocaleDateString('es-ES')}</td>
                                             <td className="px-6 py-4 text-right">
                                                 <button

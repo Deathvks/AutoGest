@@ -26,7 +26,7 @@ const getAuthHeadersForFormData = () => {
 
 // --- Funciones Genéricas para Respuestas ---
 
-// Para rutas PÚBLICAS (Login/Registro)
+// Para rutas PÚBLICAS (Registro)
 const handlePublicResponse = async (response) => {
     if (!response.ok) {
         const error = await response.json();
@@ -39,21 +39,9 @@ const handlePublicResponse = async (response) => {
 const handleProtectedResponse = async (response) => {
     if (!response.ok) {
         if (response.status === 401) {
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Modificamos el manejo de errores 401 para gestionar cuentas no verificadas
-            const errorData = await response.json().catch(() => ({}));
-            if (errorData.needsVerification) {
-                // Si es un error de "no verificado", lanzamos un error especial
-                const err = new Error(errorData.error || 'La cuenta necesita verificación.');
-                err.needsVerification = true;
-                err.email = errorData.email;
-                throw err;
-            } else {
-                // Si es otro error 401, cerramos sesión
-                localStorage.removeItem('authToken');
-                window.location.href = '/login';
-            }
-            // --- FIN DE LA MODIFICACIÓN ---
+            // El token es inválido, expiró o el usuario ya no existe.
+            localStorage.removeItem('authToken');
+            window.location.href = '/login';
         }
         
         let errorMessage = 'Algo salió mal en el servidor';
@@ -72,13 +60,32 @@ const handleProtectedResponse = async (response) => {
 
 const api = {
     // --- Autenticación (Auth) ---
-    login: (credentials) => fetch(`${BASE_URL}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) }).then(handleProtectedResponse), // Cambiado a handleProtectedResponse
+    // --- INICIO DE LA MODIFICACIÓN ---
+    login: async (credentials) => {
+        const response = await fetch(`${BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(credentials),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const error = new Error(data.error || 'Error en el inicio de sesión');
+            // Adjuntamos datos adicionales al objeto de error para que la UI pueda manejarlos
+            if (data.needsVerification) {
+                error.needsVerification = true;
+                error.email = data.email;
+            }
+            throw error;
+        }
+        return data;
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
     register: (userData) => fetch(`${BASE_URL}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(userData) }).then(handlePublicResponse),
     verifyEmail: (data) => fetch(`${BASE_URL}/auth/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
     resendVerificationCode: (data) => fetch(`${BASE_URL}/auth/resend-verification`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
-    // --- INICIO DE LA MODIFICACIÓN ---
     forceVerification: (data) => fetch(`${BASE_URL}/auth/force-verification`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
-    // --- FIN DE LA MODIFICACIÓN ---
     getMe: () => fetch(`${BASE_URL}/auth/me`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
     updateProfile: (data) => {
         const isFormData = data instanceof FormData;
@@ -149,6 +156,7 @@ const api = {
         createSubscription: (paymentMethodId) => fetch(`${BASE_URL}/subscriptions/create-subscription`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ paymentMethodId }) }).then(handleProtectedResponse),
         getSubscriptionStatus: () => fetch(`${BASE_URL}/subscriptions/status`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
         cancelSubscription: () => fetch(`${BASE_URL}/subscriptions/cancel-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
+        syncSubscription: () => fetch(`${BASE_URL}/subscriptions/sync`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse)
     }
 };
 
