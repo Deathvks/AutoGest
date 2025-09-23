@@ -5,31 +5,28 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
     faUser, faCog, faSignOutAlt, faUsersCog,
-    // --- INICIO DE LA MODIFICACIÓN ---
     faCreditCard
-    // --- FIN DE LA MODIFICACIÓN ---
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
-const Sidebar = () => {
-    const { logout, user } = useContext(AuthContext);
+// --- INICIO DE LA MODIFICACIÓN ---
+const Sidebar = ({ onLogoutClick }) => { // 1. Recibimos la función como prop
+    const { user } = useContext(AuthContext); // 2. Ya no necesitamos `logout` aquí
     const navigate = useNavigate();
+    // --- FIN DE LA MODIFICACIÓN ---
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
+    if (!user) {
+        return null;
+    }
 
     const navItems = [
-        { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
+        (user.role === 'admin' || user.role === 'technician') && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
         { icon: faCar, text: 'Mis Coches', path: '/cars' },
         { icon: faChartLine, text: 'Ventas', path: '/sales' },
         { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
         { icon: faUser, text: 'Perfil', path: '/profile' },
-        // --- INICIO DE LA MODIFICACIÓN ---
         { icon: faCreditCard, text: 'Suscripción', path: '/subscription' },
-        // --- FIN DE LA MODIFICACIÓN ---
-    ];
+    ].filter(Boolean); 
 
     const adminNav = user && user.role === 'admin' ? 
         { icon: faUsersCog, text: 'Gestión', path: '/admin' } : null;
@@ -67,7 +64,9 @@ const Sidebar = () => {
             <div className="space-y-2">
                 {bottomItems.map(item => <NavItem key={item.text} {...item} />)}
                 <button 
-                    onClick={handleLogout} 
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    onClick={onLogoutClick} // 3. Usamos la prop para abrir el modal
+                    // --- FIN DE LA MODIFICACIÓN ---
                     className="flex items-center w-full px-4 py-3 text-sm font-medium text-text-secondary rounded-lg hover:bg-red-accent/10 hover:text-red-accent transition-colors duration-200"
                 >
                     <FontAwesomeIcon icon={faSignOutAlt} className="w-5 h-5 mr-3" />

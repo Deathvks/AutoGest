@@ -1,9 +1,7 @@
 // autogest-app/frontend/src/pages/MyCars/CarCard.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// --- INICIO DE LA MODIFICACIÓN ---
 import { faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags, faShieldAlt, faExclamationTriangle, faClock, faKey } from '@fortawesome/free-solid-svg-icons';
-// --- FIN DE LA MODIFICACIÓN ---
 import { AuthContext } from '../../context/AuthContext';
 
 const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
@@ -130,12 +128,10 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
             />
             <ToggleSwitch enabled={car.hasInsurance} onChange={() => onUpdateInsurance(car, !car.hasInsurance)} />
           </div>
-          {/* --- INICIO DE LA MODIFICACIÓN --- */}
           <div className="flex items-center gap-2 truncate" title={`${car.keys || 1} ${car.keys > 1 ? 'LLAVES' : 'LLAVE'}`}>
             <FontAwesomeIcon icon={faKey} className="w-4 h-4" />
             <span>{`${car.keys || 1} ${car.keys > 1 ? 'LLAVES' : 'LLAVE'}`}</span>
           </div>
-          {/* --- FIN DE LA MODIFICACIÓN --- */}
         </div>
 
         {tagsToShow.length > 0 && (
@@ -156,9 +152,13 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
             <p className="text-3xl font-extrabold text-accent">
               {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
             </p>
-            <p className="text-xs text-text-secondary mt-2">
-              COMPRA: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
-            </p>
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            {(user.role === 'admin' || user.role === 'technician') && (
+              <p className="text-xs text-text-secondary mt-2">
+                COMPRA: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
+              </p>
+            )}
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
             {car.status === 'Vendido' && car.salePrice > 0 && (
               <p className="text-sm font-semibold text-green-accent mt-1">
                 VENTA FINAL: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}

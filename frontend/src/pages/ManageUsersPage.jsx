@@ -8,10 +8,13 @@ const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser }) => {
     const { user: currentUser } = useContext(AuthContext);
 
     const RoleBadge = ({ role }) => {
+        // --- INICIO DE LA MODIFICACIÓN ---
         const roleStyles = {
             admin: 'bg-red-accent/10 text-red-accent',
             user: 'bg-blue-accent/10 text-blue-accent',
+            technician: 'bg-green-accent/10 text-green-accent', // <-- Estilo añadido
         };
+        // --- FIN DE LA MODIFICACIÓN ---
         return (
             <span className={`px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap ${roleStyles[role] || 'bg-zinc-200'}`}>
                 {role}
@@ -21,7 +24,7 @@ const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser }) => {
 
     return (
         <div>
-            {/* --- CABECERA (IDÉNTICA A GASTOS) --- */}
+            {/* --- CABECERA --- */}
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold text-text-primary tracking-tight">Admin</h1>
                 <div className="flex gap-4">

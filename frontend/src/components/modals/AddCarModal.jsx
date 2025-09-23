@@ -1,7 +1,8 @@
 // autogest-app/frontend/src/components/modals/AddCarModal.jsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react'; // <-- Importar useContext
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { AuthContext } from '../../context/AuthContext'; // <-- Importar el contexto
 
 import InsuranceConfirmationModal from './InsuranceConfirmationModal';
 import AddCarFormFields from './AddCar/AddCarFormFields';
@@ -9,12 +10,14 @@ import AddCarFileUploads from './AddCar/AddCarFileUploads';
 
 const AddCarModal = ({ onClose, onAdd, locations }) => {
     // --- INICIO DE LA MODIFICACIÓN ---
+    const { user } = useContext(AuthContext); // Obtenemos el usuario del contexto
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const [newCar, setNewCar] = useState({
         make: '', model: '', licensePlate: '', vin: '', registrationDate: new Date().toISOString().split('T')[0],
         purchasePrice: '', price: '', km: '', horsepower: '', location: '', 
         newLocation: '', notes: '', tags: [], hasInsurance: false, fuel: '', transmission: '', keys: 1
     });
-    // --- FIN DE LA MODIFICACIÓN ---
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
     
@@ -100,7 +103,12 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         if (!newCar.make.trim()) errors.make = 'La marca es obligatoria';
         if (!newCar.model.trim()) errors.model = 'El modelo es obligatorio';
         if (!newCar.licensePlate.trim()) errors.licensePlate = 'La matrícula es obligatoria';
-        if (!newCar.purchasePrice.trim()) errors.purchasePrice = 'El precio de compra es obligatorio';
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // La validación del precio de compra solo se aplica a admin y técnicos
+        if ((user.role === 'admin' || user.role === 'technician') && !newCar.purchasePrice.trim()) {
+            errors.purchasePrice = 'El precio de compra es obligatorio';
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
         if (!newCar.price.trim()) errors.price = 'El precio de venta es obligatorio';
         
         setFieldErrors(errors);
@@ -131,6 +139,12 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
             Object.keys(finalCarData).forEach(key => {
                 const value = finalCarData[key];
                 if (key === 'tags') formData.append(key, JSON.stringify(value));
+                // --- INICIO DE LA MODIFICACIÓN ---
+                // Si el precio de compra está vacío, no lo añadimos al FormData
+                else if (key === 'purchasePrice' && !value) {
+                    // No hacer nada
+                }
+                // --- FIN DE LA MODIFICACIÓN ---
                 else if (value !== null && value !== undefined && value !== '') formData.append(key, value);
             });
             

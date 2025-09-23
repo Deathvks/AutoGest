@@ -2,15 +2,15 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faBuilding } from '@fortawesome/free-solid-svg-icons';
+import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faBuilding, faCreditCard } from '@fortawesome/free-solid-svg-icons';
 import Papa from 'papaparse';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import VersionIndicator from '../components/VersionIndicator';
 import { APP_NAME } from '../config/version';
 
-const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDeleteAccountClick, onBusinessDataClick, businessDataMessage }) => {
-    const { user, logout } = useContext(AuthContext);
+const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDeleteAccountClick, onBusinessDataClick, businessDataMessage, onLogoutClick }) => { // <-- 1. Recibir onLogoutClick como prop
+    const { user } = useContext(AuthContext); // <-- 2. Ya no necesitamos `logout` aquí
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
     const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
     const [exportMessage, setExportMessage] = useState('');
@@ -139,7 +139,20 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                             {exportMessage && <p className="text-sm text-yellow-accent mt-3">{exportMessage}</p>}
                         </div>
 
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        {user && (user.role === 'user') && (
+                            <div className="lg:hidden">
+                                <hr className="border-border-color" />
+                                <div className="mt-6">
+                                    <h4 className="font-semibold text-text-primary mb-2">SUSCRIPCIÓN</h4>
+                                    <p className="text-sm text-text-secondary mb-3">GESTIONA TU PLAN DE SUSCRIPCIÓN, FACTURACIÓN Y MÉTODOS DE PAGO.</p>
+                                    <Link to="/subscription" className="inline-flex items-center justify-center gap-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
+                                        <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
+                                        GESTIONAR SUSCRIPCIÓN
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
+
                         {user && user.role === 'admin' && (
                             <div className="lg:hidden">
                                 <hr className="border-border-color" />
@@ -152,16 +165,17 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                                 </div>
                             </div>
                         )}
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                         
                         <hr className="border-border-color" />
                         
                         <div>
                             <h4 className="font-semibold text-text-primary mb-2">SESIÓN</h4>
-                             <button onClick={logout} className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
+                             {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                             <button onClick={onLogoutClick} className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
                                 <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
                                 CERRAR SESIÓN
                             </button>
+                             {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
 
                         <hr className="border-border-color" />

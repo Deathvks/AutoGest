@@ -28,8 +28,9 @@ import ReservationPdfModal from './modals/ReservationPdfModal';
 import GestoriaPickupModal from './modals/GestoriaPickupModal';
 import GestoriaReturnModal from './modals/GestoriaReturnModal';
 import NotifyClientModal from './modals/NotifyClientModal';
-// --- INICIO DE LA MODIFICACIÓN ---
 import SubscriptionSuccessModal from './modals/SubscriptionSuccessModal';
+// --- INICIO DE LA MODIFICACIÓN ---
+import LogoutConfirmationModal from './modals/LogoutConfirmationModal'; // Importamos el nuevo modal
 // --- FIN DE LA MODIFICACIÓN ---
 
 const InputField = ({ label, name, value, onChange, icon, required = false }) => (
@@ -201,6 +202,10 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
 
 
 const AppModals = ({ appState }) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const { logout } = useContext(AuthContext); // Obtenemos la función logout
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const {
         incidents,
         locations,
@@ -231,8 +236,9 @@ const AppModals = ({ appState }) => {
         carForGestoriaReturn, setCarForGestoriaReturn,
         carToNotify, setCarToNotify,
         isBusinessDataModalOpen, setIsBusinessDataModalOpen,
-        // --- INICIO DE LA MODIFICACIÓN ---
         isSubscriptionSuccessModalOpen, setSubscriptionSuccessModalOpen,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        isLogoutModalOpen, setLogoutModalOpen,
         // --- FIN DE LA MODIFICACIÓN ---
         handleSaveBusinessData,
         handleUserAdded,
@@ -284,7 +290,7 @@ const AppModals = ({ appState }) => {
                 </div>
             )}
             
-            {isAddCarModalOpen && <AddCarModal onClose={() => setAddCarModalOpen(false)} onAdd={handleAddCar} locations={locations} />}
+            {isAddCarModalOpen && <AddCarModal onClose={() => setAddCarModalOpen(true)} onAdd={handleAddCar} locations={locations} />}
             {carToEdit && <EditCarModal car={carToEdit} onClose={() => setCarToEdit(null)} onUpdate={handleUpdateCar} locations={locations} />}
             {carToSell && <SellCarModal car={carToSell} onClose={() => setCarToSell(null)} onConfirm={handleSellConfirm} />}
             {carForIncident && <AddIncidentModal car={carForIncident} onClose={() => setCarForIncident(null)} onConfirm={handleAddIncident} />}
@@ -314,11 +320,16 @@ const AppModals = ({ appState }) => {
                 onClose={() => setIsBusinessDataModalOpen(false)} 
                 onSave={handleSaveBusinessData} 
             />
-
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            
             <SubscriptionSuccessModal 
                 isOpen={isSubscriptionSuccessModalOpen}
                 onClose={() => setSubscriptionSuccessModalOpen(false)}
+            />
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <LogoutConfirmationModal
+                isOpen={isLogoutModalOpen}
+                onClose={() => setLogoutModalOpen(false)}
+                onConfirm={logout}
             />
             {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>

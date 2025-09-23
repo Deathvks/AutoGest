@@ -47,7 +47,7 @@ const safeJsonParse = (jsonString) => {
 
 exports.getAllCars = async (req, res) => {
     try {
-        const cars = await Car.findAll({
+        let cars = await Car.findAll({
             where: { userId: req.user.id },
             order: [['createdAt', 'DESC']]
         });
@@ -69,6 +69,17 @@ exports.getAllCars = async (req, res) => {
 
         await Promise.all(promises);
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Si el usuario no es admin o técnico, se oculta el precio de compra
+        if (req.user.role === 'user') {
+            cars = cars.map(car => {
+                const carJson = car.toJSON();
+                delete carJson.purchasePrice;
+                return carJson;
+            });
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
+
         res.status(200).json(cars);
     } catch (error) {
         console.error(error);
@@ -82,7 +93,13 @@ exports.getCarById = async (req, res) => {
             where: { id: req.params.id, userId: req.user.id }
         });
         if (car) {
-            res.status(200).json(car);
+            // --- INICIO DE LA MODIFICACIÓN ---
+            const carJson = car.toJSON();
+            if (req.user.role === 'user') {
+                delete carJson.purchasePrice;
+            }
+            res.status(200).json(carJson);
+            // --- FIN DE LA MODIFICACIÓN ---
         } else {
             res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para verlo' });
         }
@@ -95,6 +112,13 @@ exports.getCarById = async (req, res) => {
 exports.createCar = async (req, res) => {
     try {
         const carData = { ...req.body, userId: req.user.id };
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Si el usuario es 'user', no se le permite establecer un precio de compra
+        if (req.user.role === 'user') {
+            delete carData.purchasePrice;
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (carData.licensePlate) {
             carData.licensePlate = carData.licensePlate.replace(/\s/g, '').toUpperCase();
@@ -143,7 +167,7 @@ exports.updateCar = async (req, res) => {
         }
         
         const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
-        const isUserTryingToModifyLockedCar = isReservedAndActive && req.user.role !== 'admin';
+        const isUserTryingToModifyLockedCar = isReservedAndActive && user.role !== 'admin';
 
         if (isUserTryingToModifyLockedCar) {
             const isCancellingReservation = req.body.status && req.body.status !== 'Reservado';
@@ -153,6 +177,13 @@ exports.updateCar = async (req, res) => {
         }
 
         const updateData = req.body;
+        
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Si el usuario es 'user', no se le permite actualizar el precio de compra
+        if (req.user.role === 'user') {
+            delete updateData.purchasePrice;
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (updateData.status === 'Reservado' && updateData.reservationDuration) {
             const durationInHours = parseInt(updateData.reservationDuration, 10);
@@ -174,9 +205,7 @@ exports.updateCar = async (req, res) => {
             updateData.reservationExpiry = null;
         }
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         const numericFields = ['price', 'purchasePrice', 'salePrice', 'reservationDeposit', 'km', 'horsepower', 'keys'];
-        // --- FIN DE LA MODIFICACIÓN ---
         numericFields.forEach(field => {
             if (updateData[field] !== undefined) {
                 const value = updateData[field];

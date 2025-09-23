@@ -15,11 +15,10 @@ import VersionIndicator from '../components/VersionIndicator';
 
 const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     const appState = useAppState();
-    const { isDataLoading, toast, handleUndoDelete, setToast } = appState;
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Se obtiene el nuevo estado 'isRefreshing' del contexto.
-    const { user, subscriptionStatus, isRefreshing } = useContext(AuthContext);
+    const { isDataLoading, toast, handleUndoDelete, setToast, setLogoutModalOpen } = appState;
     // --- FIN DE LA MODIFICACIÓN ---
+    const { user, subscriptionStatus, isRefreshing } = useContext(AuthContext);
     const location = useLocation();
 
     useEffect(() => {
@@ -45,13 +44,9 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
         };
     }, [appState]);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Si se está refrescando la sesión (ej. después de un pago), se muestra una pantalla de carga
-    // para pausar la lógica de redirección y esperar a que el estado se actualice.
     if (isRefreshing) {
         return <div className="flex h-screen w-full items-center justify-center bg-background text-text-primary">Actualizando estado de la suscripción...</div>;
     }
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const isExempt = user && (user.role === 'admin' || user.role === 'technician');
     const hasActiveSubscription = subscriptionStatus === 'active';
@@ -67,12 +62,21 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
 
     return (
         <div className="flex h-screen bg-background font-sans text-text-secondary">
-            <Sidebar />
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <Sidebar onLogoutClick={() => setLogoutModalOpen(true)} />
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
             <div className="flex flex-col flex-1 min-w-0">
                 <Header />
                 <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
                     <Suspense fallback={<div className="flex h-full w-full items-center justify-center">Cargando página...</div>}>
-                        <AppRoutes appState={appState} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        <AppRoutes 
+                            appState={appState} 
+                            isDarkMode={isDarkMode} 
+                            setIsDarkMode={setIsDarkMode} 
+                            onLogoutClick={() => setLogoutModalOpen(true)} 
+                        />
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </Suspense>
                 </main>
             </div>

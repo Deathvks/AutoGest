@@ -1,11 +1,12 @@
 // autogest-app/frontend/src/components/modals/EditCar/EditCarFormFields.jsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useContext } from 'react'; // <-- Importar useContext
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faCar, faStar, faIdCard, faFingerprint, faCalendarDay, faRoad, faEuroSign,
-    faMapMarkerAlt, faBolt, faXmark, faKey // --- INICIO DE LA MODIFICACIÓN ---
+    faMapMarkerAlt, faBolt, faXmark, faKey
 } from '@fortawesome/free-solid-svg-icons';
 import Select from '../../Select';
+import { AuthContext } from '../../../context/AuthContext'; // <-- Importar el contexto de autenticación
 
 export const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, required = false, placeholder = '' }) => (
     <div>
@@ -27,7 +28,6 @@ export const InputField = ({ label, name, value, onChange, type = 'text', icon, 
     </div>
 );
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const KeySelector = ({ label, icon, value, onChange }) => (
     <div>
         <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
@@ -48,7 +48,6 @@ const KeySelector = ({ label, icon, value, onChange }) => (
         </div>
     </div>
 );
-// --- FIN DE LA MODIFICACIÓN ---
 
 const EditCarFormFields = ({
     editedCar,
@@ -65,6 +64,10 @@ const EditCarFormFields = ({
     handleTagKeyDown,
     removeTag
 }) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const { user } = useContext(AuthContext); // Obtenemos el usuario del contexto
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const locationOptions = useMemo(() => {
         const sortedLocations = [...locations].sort((a, b) => a.name.localeCompare(b.name));
         return [{ id: '', name: 'SELECCIONAR EXISTENTE...' }, ...sortedLocations];
@@ -81,7 +84,12 @@ const EditCarFormFields = ({
                 <InputField label="Nº DE BASTIDOR" name="vin" value={editedCar.vin} onChange={handleChange} icon={faFingerprint} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField label="PRECIO DE COMPRA (€)" name="purchasePrice" type="text" inputMode="decimal" value={editedCar.purchasePrice} onChange={handleChange} icon={faEuroSign} required />
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {/* Solo mostramos este campo si el usuario es admin o técnico */}
+                {(user.role === 'admin' || user.role === 'technician') && (
+                    <InputField label="PRECIO DE COMPRA (€)" name="purchasePrice" type="text" inputMode="decimal" value={editedCar.purchasePrice} onChange={handleChange} icon={faEuroSign} required />
+                )}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <InputField label="PRECIO DE VENTA (€)" name="price" type="text" inputMode="decimal" value={editedCar.price} onChange={handleChange} icon={faEuroSign} required />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -90,14 +98,12 @@ const EditCarFormFields = ({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <InputField label="POTENCIA (CV)" name="horsepower" type="text" inputMode="decimal" value={editedCar.horsepower} onChange={handleChange} icon={faBolt} />
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <KeySelector
                     label="Nº DE LLAVES"
                     icon={faKey}
                     value={editedCar.keys}
                     onChange={(value) => handleChange({ target: { name: 'keys', value } })}
                 />
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select label="UBICACIÓN EXISTENTE" value={editedCar.location} onChange={handleLocationSelect} options={locationOptions} icon={faMapMarkerAlt} />
