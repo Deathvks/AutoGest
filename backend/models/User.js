@@ -78,10 +78,18 @@ const User = sequelize.define('User', {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     applyIgic: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
+    },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    resetPasswordToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    resetPasswordExpires: {
+        type: DataTypes.DATE,
+        allowNull: true,
     },
     // --- FIN DE LA MODIFICACIÓN ---
 }, {

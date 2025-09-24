@@ -60,7 +60,6 @@ const handleProtectedResponse = async (response) => {
 
 const api = {
     // --- Autenticación (Auth) ---
-    // --- INICIO DE LA MODIFICACIÓN ---
     login: async (credentials) => {
         const response = await fetch(`${BASE_URL}/auth/login`, {
             method: 'POST',
@@ -81,11 +80,16 @@ const api = {
         }
         return data;
     },
-    // --- FIN DE LA MODIFICACIÓN ---
     register: (userData) => fetch(`${BASE_URL}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(userData) }).then(handlePublicResponse),
     verifyEmail: (data) => fetch(`${BASE_URL}/auth/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
     resendVerificationCode: (data) => fetch(`${BASE_URL}/auth/resend-verification`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
     forceVerification: (data) => fetch(`${BASE_URL}/auth/force-verification`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+    
+    // --- INICIO DE LA MODIFICACIÓN ---
+    forgotPassword: (data) => fetch(`${BASE_URL}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+    resetPassword: (token, data) => fetch(`${BASE_URL}/auth/reset-password/${token}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+    // --- FIN DE LA MODIFICACIÓN ---
+
     getMe: () => fetch(`${BASE_URL}/auth/me`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
     updateProfile: (data) => {
         const isFormData = data instanceof FormData;

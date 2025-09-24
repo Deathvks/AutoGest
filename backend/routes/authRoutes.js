@@ -37,13 +37,19 @@ router.post('/verify', userAccountController.verifyEmail);
 // POST /api/auth/resend-verification -> Reenviar el código de verificación
 router.post('/resend-verification', userAccountController.resendVerificationCode);
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // POST /api/auth/force-verification -> Forzar el envío de código a un usuario existente no verificado
 router.post('/force-verification', userAccountController.forceVerification);
-// --- FIN DE LA MODIFICACIÓN ---
 
 // POST /api/auth/login -> Iniciar sesión
 router.post('/login', userAccountController.login);
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// POST /api/auth/forgot-password -> Solicitar reseteo de contraseña
+router.post('/forgot-password', userAccountController.forgotPassword);
+
+// POST /api/auth/reset-password/:token -> Resetear la contraseña con el token
+router.post('/reset-password/:token', userAccountController.resetPassword);
+// --- FIN DE LA MODIFICACIÓN ---
 
 
 // --- Rutas de Perfil (Protegidas) ---

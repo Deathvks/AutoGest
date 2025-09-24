@@ -2,7 +2,9 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
-const { sendVerificationEmail } = require('../utils/emailUtils');
+// --- INICIO DE LA MODIFICACIÓN ---
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailUtils');
+// --- FIN DE LA MODIFICACIÓN ---
 const crypto = require('crypto');
 
 // Registrar un nuevo usuario (POST /api/auth/register)
@@ -54,9 +56,7 @@ exports.register = async (req, res) => {
 // Verificar el email del usuario (POST /api/auth/verify)
 exports.verifyEmail = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const { email, code, newEmail } = req.body;
-        // --- FIN DE LA MODIFICACIÓN ---
 
         const user = await User.findOne({ where: { email } });
 
@@ -70,8 +70,6 @@ exports.verifyEmail = async (req, res) => {
             return res.status(400).json({ error: 'El código de verificación es incorrecto.' });
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Si se proporcionó un nuevo email y la verificación es correcta, lo actualizamos.
         if (newEmail && newEmail !== email) {
             const isNewEmailInUse = await User.findOne({ where: { email: newEmail } });
             if (isNewEmailInUse) {
@@ -79,7 +77,6 @@ exports.verifyEmail = async (req, res) => {
             }
             user.email = newEmail;
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         user.isVerified = true;
         user.verificationCode = null;
@@ -163,7 +160,6 @@ exports.resendVerificationCode = async (req, res) => {
     }
 };
 
-// --- FUNCIÓN NUEVA ---
 // Forzar verificación para usuarios existentes no verificados
 exports.forceVerification = async (req, res) => {
     try {
@@ -179,7 +175,6 @@ exports.forceVerification = async (req, res) => {
             return res.status(400).json({ error: 'Esta cuenta ya está verificada.' });
         }
 
-        // Si se proporciona un nuevo email, verificar que no esté en uso por otra cuenta verificada
         if (newEmail && newEmail !== currentEmail) {
             const existingVerifiedUser = await User.findOne({ where: { email: newEmail, isVerified: true } });
             if (existingVerifiedUser) {
@@ -202,4 +197,80 @@ exports.forceVerification = async (req, res) => {
         res.status(500).json({ error: 'Error al enviar el código de verificación.' });
     }
 };
-// --- FIN FUNCIÓN NUEVA ---
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// @desc    Solicitar restablecimiento de contraseña
+// @route   POST /api/auth/forgot-password
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ where: { email } });
+
+        if (!user) {
+            // Nota: No revelamos si el email existe o no por seguridad.
+            return res.status(200).json({ message: 'Si existe una cuenta con ese correo, se ha enviado un enlace para restablecer la contraseña.' });
+        }
+
+        // Generar token
+        const resetToken = crypto.randomBytes(20).toString('hex');
+
+        // Guardar el token hasheado y la fecha de expiración en la BBDD
+        user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hora de validez
+
+        await user.save();
+
+        // Enviar email
+        await sendPasswordResetEmail(user.email, resetToken);
+
+        res.status(200).json({ message: 'Si existe una cuenta con ese correo, se ha enviado un enlace para restablecer la contraseña.' });
+
+    } catch (error) {
+        console.error('Error en forgotPassword:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+};
+
+// @desc    Restablecer la contraseña
+// @route   POST /api/auth/reset-password/:token
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        // Buscar usuario por el token hasheado y verificar que no haya expirado
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        const user = await User.findOne({
+            where: {
+                resetPasswordToken: hashedToken,
+                resetPasswordExpires: { [require('sequelize').Op.gt]: Date.now() }
+            }
+        });
+
+        if (!user) {
+            return res.status(400).json({ error: 'El enlace para restablecer la contraseña es inválido o ha expirado.' });
+        }
+
+        // Validar nueva contraseña
+        if (!password || password.length < 6) {
+            return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres.' });
+        }
+
+        // Establecer la nueva contraseña
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+        user.isVerified = true; // Verificamos la cuenta si estaba pendiente
+
+        await user.save();
+
+        res.status(200).json({ message: '¡Contraseña actualizada con éxito! Ya puedes iniciar sesión.' });
+
+    } catch (error) {
+        console.error('Error en resetPassword:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+};
+// --- FIN DE LA MODIFICACIÓN ---

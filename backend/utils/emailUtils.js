@@ -38,3 +38,36 @@ exports.sendVerificationEmail = async (toEmail, code) => {
         throw new Error('No se pudo enviar el correo de verificación.');
     }
 };
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// 3. Función para enviar el correo de restablecimiento de contraseña
+exports.sendPasswordResetEmail = async (toEmail, token) => {
+    // La URL debe apuntar a tu frontend, a la página de restablecimiento de contraseña
+    const resetUrl = `http://localhost:5173/reset-password/${token}`;
+
+    const mailOptions = {
+        from: `"AutoGest" <${process.env.EMAIL_USER}>`,
+        to: toEmail,
+        subject: 'Restablecimiento de Contraseña - AutoGest',
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+                <h2 style="color: #B8860B;">Solicitud de Restablecimiento de Contraseña</h2>
+                <p>Has recibido este correo porque tú (o alguien más) ha solicitado restablecer la contraseña de tu cuenta.</p>
+                <p>Por favor, haz clic en el siguiente enlace o pégalo en tu navegador para completar el proceso:</p>
+                <a href="${resetUrl}" style="color: #B8860B; text-decoration: none;">${resetUrl}</a>
+                <p>Si no has solicitado esto, por favor, ignora este correo y tu contraseña permanecerá sin cambios.</p>
+                <p>El enlace es válido por una hora.</p>
+                <p>El equipo de AutoGest</p>
+            </div>
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Correo de restablecimiento de contraseña enviado a ${toEmail}`);
+    } catch (error) {
+        console.error(`Error al enviar correo de restablecimiento a ${toEmail}:`, error);
+        throw new Error('No se pudo enviar el correo de restablecimiento.');
+    }
+};
+// --- FIN DE LA MODIFICACIÓN ---
