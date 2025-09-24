@@ -58,6 +58,17 @@ const LoginForm = ({ onNeedsVerification }) => {
                         <InputField name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
                         <InputField name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" />
                     </div>
+
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <div className="flex items-center justify-end">
+                        <div className="text-sm">
+                            <Link to="/forgot-password" className="font-medium text-accent hover:opacity-80">
+                                ¿HAS OLVIDADO TU CONTRASEÑA?
+                            </Link>
+                        </div>
+                    </div>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+                    
                     {error && <p className="text-sm text-red-accent text-center">{error}</p>}
                     <div>
                         <button type="submit" disabled={isLoading}

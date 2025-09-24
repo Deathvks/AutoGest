@@ -55,7 +55,6 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
     const [durationUnit, setDurationUnit] = useState('hours'); // 'hours' or 'days'
     const [error, setError] = useState('');
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const [buyerData, setBuyerData] = useState({
         name: '',
         lastName: '',
@@ -84,26 +83,22 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
         }
         return controlChars.charAt(number % 23) === value.charAt(value.length - 1);
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const parseNumber = (str) => {
         if (typeof str !== 'string' || !str) return '';
         return str.replace(/\./g, '').replace(',', '.');
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleChange = (e) => {
         const { name, value } = e.target;
         setBuyerData(prev => ({ ...prev, [name]: value }));
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleConfirm = () => {
         setError('');
         const depositAmount = parseFloat(parseNumber(deposit));
         let durationValue = parseInt(duration, 10);
 
-        // --- INICIO DE LA MODIFICACIÓN (Validaciones) ---
         if (!deposit || !buyerData.name.trim() || !buyerData.lastName.trim() || !buyerData.dni.trim() || !buyerData.phone.trim() || !buyerData.email.trim()) {
             setError("Los campos de reserva y los datos del comprador (excepto dirección) son obligatorios.");
             return;
@@ -125,19 +120,17 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
             setError("Por favor, introduce un email válido para el comprador.");
             return;
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         const reservationDurationInHours = durationUnit === 'days' ? durationValue * 24 : durationValue;
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Pasamos todos los datos al handler onConfirm
         onConfirm(car, notes, depositAmount, reservationDurationInHours, buyerData);
-        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg rounded-xl shadow-lg w-full max-w-lg max-h-[90vh] flex flex-col">
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <div className="bg-component-bg rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] flex flex-col">
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
                     <h2 className="text-xl font-bold text-text-primary">RESERVAR COCHE</h2>
                     <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
@@ -169,26 +162,26 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                                     <span className="text-red-accent ml-1">*</span>
                                 </label>
                                 <div className="flex items-stretch gap-2">
-                                    <InputField
-                                        name="duration"
-                                        type="number"
-                                        inputMode="numeric"
-                                        value={duration}
-                                        onChange={(e) => setDuration(e.target.value)}
-                                        icon={faClock}
-                                        required={true}
-                                        className="flex-grow"
-                                        label=""
-                                    />
-                                    <div className="flex flex-grow-0 items-center rounded-lg bg-background p-1 border border-border-color text-text-secondary">
-                                        <button type="button" onClick={() => setDurationUnit('hours')} className={`flex-1 sm:flex-none px-3 py-1 text-sm rounded-md transition-colors ${durationUnit === 'hours' ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}>Horas</button>
-                                        <button type="button" onClick={() => setDurationUnit('days')} className={`flex-1 sm:flex-none px-3 py-1 text-sm rounded-md transition-colors ${durationUnit === 'days' ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}>Días</button>
+                                    <div className="flex-1 min-w-[100px]">
+                                        <InputField
+                                            name="duration"
+                                            type="number"
+                                            inputMode="numeric"
+                                            value={duration}
+                                            onChange={(e) => setDuration(e.target.value)}
+                                            icon={faClock}
+                                            required={true}
+                                            label=""
+                                        />
+                                    </div>
+                                    <div className="flex-shrink-0 flex items-center rounded-lg bg-background p-1 border border-border-color text-text-secondary">
+                                        <button type="button" onClick={() => setDurationUnit('hours')} className={`px-3 py-1 text-sm rounded-md transition-colors ${durationUnit === 'hours' ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}>Horas</button>
+                                        <button type="button" onClick={() => setDurationUnit('days')} className={`px-3 py-1 text-sm rounded-md transition-colors ${durationUnit === 'days' ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}>Días</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         <h3 className="text-lg font-semibold text-text-primary border-b border-border-color pb-2 pt-4">DATOS DEL COMPRADOR</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <InputField label="NOMBRE" name="name" value={buyerData.name} onChange={handleChange} icon={faUser} required={true} />
@@ -200,7 +193,6 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                         </div>
                         <InputField label="CORREO ELECTRÓNICO" name="email" value={buyerData.email} onChange={handleChange} type="email" icon={faEnvelope} required={true} />
                         <InputField label="DIRECCIÓN (OPCIONAL)" name="address" value={buyerData.address} onChange={handleChange} icon={faMapMarkerAlt} />
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                         
                         <TextareaField
                             label="Anotaciones de la reserva (Opcional)"

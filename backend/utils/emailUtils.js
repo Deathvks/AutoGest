@@ -40,7 +40,7 @@ exports.sendVerificationEmail = async (toEmail, code) => {
 };
 
 // --- INICIO DE LA MODIFICACIÓN ---
-// 3. Función para enviar el correo de restablecimiento de contraseña
+// 3. Función para enviar el correo de restablecimiento de contraseña (CON BOTÓN)
 exports.sendPasswordResetEmail = async (toEmail, token) => {
     // La URL debe apuntar a tu frontend, a la página de restablecimiento de contraseña
     const resetUrl = `http://localhost:5173/reset-password/${token}`;
@@ -50,13 +50,18 @@ exports.sendPasswordResetEmail = async (toEmail, token) => {
         to: toEmail,
         subject: 'Restablecimiento de Contraseña - AutoGest',
         html: `
-            <div style="font-family: Arial, sans-serif; color: #333;">
+            <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
                 <h2 style="color: #B8860B;">Solicitud de Restablecimiento de Contraseña</h2>
                 <p>Has recibido este correo porque tú (o alguien más) ha solicitado restablecer la contraseña de tu cuenta.</p>
-                <p>Por favor, haz clic en el siguiente enlace o pégalo en tu navegador para completar el proceso:</p>
-                <a href="${resetUrl}" style="color: #B8860B; text-decoration: none;">${resetUrl}</a>
-                <p>Si no has solicitado esto, por favor, ignora este correo y tu contraseña permanecerá sin cambios.</p>
-                <p>El enlace es válido por una hora.</p>
+                <p>Por favor, haz clic en el siguiente botón para completar el proceso. El enlace es válido por una hora.</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetUrl}" style="background-color: #B8860B; color: #ffffff; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                        RESTABLECER CONTRASEÑA
+                    </a>
+                </div>
+                <p>Si no puedes hacer clic en el botón, copia y pega el siguiente enlace en tu navegador:</p>
+                <a href="${resetUrl}" style="color: #B8860B; text-decoration: none; word-break: break-all;">${resetUrl}</a>
+                <p style="margin-top: 20px;">Si no has solicitado esto, por favor, ignora este correo y tu contraseña permanecerá sin cambios.</p>
                 <p>El equipo de AutoGest</p>
             </div>
         `,
