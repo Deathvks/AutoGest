@@ -127,7 +127,9 @@ export const useCarHandlers = (
         } catch (error) { console.error("Error al vender el coche:", error); }
     };
 
-    const handleReserveConfirm = async (carToUpdate, newNoteContent, depositAmount, reservationDurationInHours) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleReserveConfirm = async (carToUpdate, newNoteContent, depositAmount, reservationDurationInHours, buyerDetails) => {
+    // --- FIN DE LA MODIFICACIÓN ---
         try {
             const pdfBlob = generateReservationPDF(carToUpdate, depositAmount);
             if (!pdfBlob) return;
@@ -152,6 +154,9 @@ export const useCarHandlers = (
             formData.append('reservationDeposit', depositAmount);
             formData.append('reservationDuration', reservationDurationInHours);
             formData.append('reservationPdf', pdfBlob, `Reserva_${carToUpdate.licensePlate}.pdf`);
+            // --- INICIO DE LA MODIFICACIÓN ---
+            formData.append('buyerDetails', JSON.stringify(buyerDetails));
+            // --- FIN DE LA MODIFICACIÓN ---
 
             const updatedCar = await api.updateCar(carToUpdate.id, formData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));

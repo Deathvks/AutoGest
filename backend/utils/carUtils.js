@@ -1,6 +1,6 @@
 // autogest-app/backend/utils/carUtils.js
-const fs = 'fs';
-const path = 'path';
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Elimina caracteres no válidos de un nombre de fichero.

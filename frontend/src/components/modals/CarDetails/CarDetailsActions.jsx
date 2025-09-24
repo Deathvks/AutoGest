@@ -29,98 +29,114 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
             }
         }
         
+        const lightGreenColor = [219, 237, 213];
+        let currentY = 20;
+
+        doc.setFontSize(24);
+        doc.text(type.toUpperCase(), 14, currentY);
+
+        doc.setFontSize(10);
+        doc.text(`Nº ${type.toUpperCase()}: ${type.toUpperCase()}-${number}`, 150, currentY);
+        doc.text(`EMISIÓN: ${today}`, 150, currentY + 5);
+        
+        currentY += 25;
+
+        // Datos del Cliente y Vendedor (común para ambos)
+        doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
+        doc.rect(14, currentY - 5, 85, 7, 'F');
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        doc.text('CLIENTE:', 16, currentY);
+
+        doc.setFontSize(10);
+        doc.text(`${buyer.name || '...........................................'} ${buyer.lastName || ''}`, 16, currentY + 10);
+        doc.text(`${buyer.address || '...........................................'}`, 16, currentY + 15);
+        doc.text(`${buyer.phone || '...........................................'}`, 16, currentY + 20);
+        doc.text(`${buyer.email || '...........................................'}`, 16, currentY + 25);
+        doc.text(`${buyer.dni || '...........................................'}`, 16, currentY + 30);
+
+        doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
+        doc.rect(105, currentY - 5, 91, 7, 'F');
+        doc.setFontSize(11);
+        doc.text('EN SIGNA:', 107, currentY);
+        
+        doc.setFontSize(10);
+        if (user.cif) {
+            doc.text(`${user.businessName || ''}`, 107, currentY + 10);
+            doc.text(`${user.cif || ''}`, 107, currentY + 15);
+        } else {
+            doc.text(`${user.name || ''}`, 107, currentY + 10);
+            doc.text(`${user.dni || ''}`, 107, currentY + 15);
+        }
+        doc.text(`${user.address || ''}`, 107, currentY + 20);
+        doc.text(`${user.phone || ''}`, 107, currentY + 25);
+        doc.text(`${user.email || ''}`, 107, currentY + 30);
+
+        currentY += 45;
+        
+        const price = parseFloat(type === 'factura' ? car.salePrice : car.price);
+
         // --- INICIO DE LA MODIFICACIÓN ---
-        if (type === 'proforma') {
-            const lightGreenColor = [219, 237, 213]; // Color de la imagen: #dbedd5
-            let currentY = 20;
-
-            doc.setFontSize(24);
-            doc.text('PROFORMA', 14, currentY);
-
-            doc.setFontSize(10);
-            doc.text(`Nº PROFORMA: PROFORMA-${number}`, 150, currentY);
-            doc.text(`EMISIÓN: ${today}`, 150, currentY + 5);
-            
-            currentY += 25;
-
-            // Datos del Cliente (Izquierda)
-            doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
-            doc.rect(14, currentY - 5, 85, 7, 'F');
-            doc.setFontSize(11);
-            doc.setTextColor(0, 0, 0);
-            doc.text('CLIENTE:', 16, currentY);
-
-            doc.setFontSize(10);
-            doc.text(`${buyer.name || '...........................................'} ${buyer.lastName || ''}`, 16, currentY + 10);
-            doc.text(`${buyer.address || '...........................................'}`, 16, currentY + 15);
-            doc.text(`${buyer.phone || '...........................................'}`, 16, currentY + 20);
-            doc.text(`${buyer.email || '...........................................'}`, 16, currentY + 25);
-            doc.text(`${buyer.dni || '...........................................'}`, 16, currentY + 30);
-
-            // Datos del Vendedor (Derecha)
-            doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
-            doc.rect(105, currentY - 5, 91, 7, 'F');
-            doc.setFontSize(11);
-            doc.text('EN SIGNA:', 107, currentY);
-            
-            doc.setFontSize(10);
-            if (user.cif) {
-                doc.text(`${user.businessName || ''}`, 107, currentY + 10);
-                doc.text(`${user.cif || ''}`, 107, currentY + 15);
-            } else {
-                doc.text(`${user.name || ''}`, 107, currentY + 10);
-                doc.text(`${user.dni || ''}`, 107, currentY + 15);
-            }
-            doc.text(`${user.address || ''}`, 107, currentY + 20);
-            doc.text(`${user.phone || ''}`, 107, currentY + 25);
-            doc.text(`${user.email || ''}`, 107, currentY + 30);
-
-            currentY += 45;
-
-            const price = parseFloat(car.price);
+        if (type === 'factura' && user.applyIgic) {
+            const basePrice = price / 1.07;
+            const igicAmount = price - basePrice;
 
             autoTable(doc, {
                 startY: currentY,
-                head: [['Descripción', 'Precio', 'Cantidad', 'TOTAL']],
+                head: [['Descripción', 'Base Imponible', 'IGIC (7%)', 'TOTAL']],
                 body: [[
                     `VEHÍCULO: ${car.make} ${car.model} (${car.licensePlate})`,
-                    `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`,
-                    '1',
+                    `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(basePrice)} €`,
+                    `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(igicAmount)} €`,
                     `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`
                 ]],
                 theme: 'grid',
                 styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
                 headStyles: { fillColor: lightGreenColor, textColor: 0, fontStyle: 'bold' },
-                columnStyles: {
-                    0: { cellWidth: 105 },
-                    1: { cellWidth: 25, halign: 'right' },
-                    2: { cellWidth: 20, halign: 'center' },
-                    3: { cellWidth: 30, halign: 'right' }
-                }
+                columnStyles: { 0: { cellWidth: 85 }, 1: { cellWidth: 30, halign: 'right' }, 2: { cellWidth: 30, halign: 'right' }, 3: { cellWidth: 35, halign: 'right' } }
             });
 
             const finalYTable = doc.lastAutoTable.finalY;
-
-            // Totales con fondo verde claro
             doc.setFontSize(10);
             doc.text('SUBTOTAL:', 150, finalYTable + 10, { align: 'right' });
-            doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`, 190, finalYTable + 10, { align: 'right' });
+            doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(basePrice)} €`, 190, finalYTable + 10, { align: 'right' });
+            doc.text('IGIC (7%):', 150, finalYTable + 15, { align: 'right' });
+            doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(igicAmount)} €`, 190, finalYTable + 15, { align: 'right' });
 
+            doc.setFontSize(12);
+            doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
+            doc.rect(140, finalYTable + 20, 55, 7, 'F');
+            doc.setTextColor(0, 0, 0);
+            doc.text('TOTAL:', 145, finalYTable + 25);
+            doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`, 193, finalYTable + 25, { align: 'right' });
+        } else {
+            // Lógica para Proforma o Factura sin IGIC
+            autoTable(doc, {
+                startY: currentY,
+                head: [['Descripción', 'TOTAL']],
+                body: [[
+                    `VEHÍCULO: ${car.make} ${car.model} (${car.licensePlate})`,
+                    `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`
+                ]],
+                theme: 'grid',
+                styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
+                headStyles: { fillColor: lightGreenColor, textColor: 0, fontStyle: 'bold' },
+                columnStyles: { 0: { cellWidth: 150 }, 1: { cellWidth: 30, halign: 'right' } }
+            });
+
+            const finalYTable = doc.lastAutoTable.finalY;
             doc.setFontSize(12);
             doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
             doc.rect(140, finalYTable + 15, 55, 7, 'F');
             doc.setTextColor(0, 0, 0);
             doc.text('TOTAL:', 145, finalYTable + 20);
             doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`, 193, finalYTable + 20, { align: 'right' });
-            
-            doc.setTextColor(0, 0, 0);
+        }
+        
+        doc.setTextColor(0, 0, 0);
+        if (type === 'proforma') {
             doc.setFontSize(8);
             doc.text("ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL.", 105, doc.internal.pageSize.height - 10, { align: 'center' });
-        } else {
-            // Lógica para Factura (se mantiene como estaba)
-            doc.setFontSize(18);
-            doc.text('FACTURA', 105, 20, { align: 'center' });
-            // ... (resto de la lógica de la factura)
         }
         // --- FIN DE LA MODIFICACIÓN ---
 

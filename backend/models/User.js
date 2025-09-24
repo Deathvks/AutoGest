@@ -70,12 +70,16 @@ const User = sequelize.define('User', {
         allowNull: false,
         defaultValue: 1,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     verificationCode: {
         type: DataTypes.STRING,
         allowNull: true,
     },
     isVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    applyIgic: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     },

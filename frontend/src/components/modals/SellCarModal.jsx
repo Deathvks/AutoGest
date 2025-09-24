@@ -1,5 +1,5 @@
 // autogest-app/frontend/src/components/modals/SellCarModal.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 
@@ -34,7 +34,35 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
     });
     const [error, setError] = useState('');
 
-    // --- INICIO DE LA MODIFICACIÓN ---
+    useEffect(() => {
+        if (car) {
+            let buyerDetails = {};
+            if (car.buyerDetails) {
+                try {
+                    buyerDetails = typeof car.buyerDetails === 'string'
+                        ? JSON.parse(car.buyerDetails)
+                        : car.buyerDetails;
+                } catch (e) {
+                    console.error("Error al parsear los datos del comprador:", e);
+                }
+            }
+
+            setSaleData({
+                // --- INICIO DE LA MODIFICACIÓN ---
+                // Se inicializa vacío para que el usuario introduzca el precio final.
+                salePrice: '', 
+                // --- FIN DE LA MODIFICACIÓN ---
+                saleDate: new Date().toISOString().split('T')[0],
+                buyerName: buyerDetails.name || '',
+                buyerLastName: buyerDetails.lastName || '',
+                buyerDni: buyerDetails.dni || '',
+                buyerPhone: buyerDetails.phone || '',
+                buyerEmail: buyerDetails.email || '',
+                buyerAddress: buyerDetails.address || '',
+            });
+        }
+    }, [car]);
+
     const isValidDniNie = (value) => {
         const dniRegex = /^([0-9]{8}[A-Z])$/i;
         const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/i;
@@ -63,7 +91,6 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
 
         return calculatedChar === providedChar;
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -83,12 +110,10 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             return;
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (!isValidDniNie(saleData.buyerDni)) {
             setError("EL FORMATO DEL DNI/NIE DEL COMPRADOR NO ES VÁLIDO.");
             return;
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(saleData.buyerEmail)) {

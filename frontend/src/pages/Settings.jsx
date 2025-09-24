@@ -2,18 +2,37 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faBuilding, faCreditCard } from '@fortawesome/free-solid-svg-icons';
+import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faBuilding, faCreditCard, faPercentage } from '@fortawesome/free-solid-svg-icons';
 import Papa from 'papaparse';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import VersionIndicator from '../components/VersionIndicator';
 import { APP_NAME } from '../config/version';
 
-const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDeleteAccountClick, onBusinessDataClick, businessDataMessage, onLogoutClick }) => { // <-- 1. Recibir onLogoutClick como prop
-    const { user } = useContext(AuthContext); // <-- 2. Ya no necesitamos `logout` aquí
+const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDeleteAccountClick, onBusinessDataClick, businessDataMessage, onLogoutClick }) => {
+    const { user, updateUserProfile } = useContext(AuthContext); // <-- Se añade updateUserProfile
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
     const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
     const [exportMessage, setExportMessage] = useState('');
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [igicEnabled, setIgicEnabled] = useState(user?.applyIgic || false);
+    const [igicMessage, setIgicMessage] = useState('');
+
+    const handleIgicToggle = async () => {
+        const newIgicState = !igicEnabled;
+        setIgicEnabled(newIgicState);
+        try {
+            await updateUserProfile({ applyIgic: newIgicState });
+            setIgicMessage('¡GUARDADO!');
+            setTimeout(() => setIgicMessage(''), 3000);
+        } catch (error) {
+            setIgicMessage('Error al guardar');
+            // Revertir el estado si hay un error
+            setIgicEnabled(!newIgicState);
+        }
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
@@ -78,6 +97,28 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                     </div>
                 </div>
                 
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className="p-6 bg-component-bg rounded-xl border border-border-color">
+                    <h3 className="text-lg font-bold text-text-primary mb-4">IMPUESTOS</h3>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <span className="font-medium text-text-primary">APLICAR IGIC (7%) EN FACTURAS</span>
+                            <p className="text-xs text-text-secondary">Si se activa, se desglosará un 7% de IGIC en las facturas.</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            {igicMessage && <span className="text-sm text-green-accent font-medium">{igicMessage}</span>}
+                            <button
+                                type="button"
+                                onClick={handleIgicToggle}
+                                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent ${igicEnabled ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}`}
+                            >
+                                <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${igicEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
+
                 <div className="p-6 bg-component-bg rounded-xl border border-border-color">
                     <h3 className="text-lg font-bold text-text-primary mb-4">DATOS DE EMPRESA</h3>
                     <p className="text-sm text-text-secondary mb-3">EDITA LOS DATOS DE TU EMPRESA QUE APARECERÁN EN LAS FACTURAS Y PROFORMAS.</p>
@@ -170,12 +211,10 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                         
                         <div>
                             <h4 className="font-semibold text-text-primary mb-2">SESIÓN</h4>
-                             {/* --- INICIO DE LA MODIFICACIÓN --- */}
                              <button onClick={onLogoutClick} className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
                                 <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
                                 CERRAR SESIÓN
                             </button>
-                             {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
 
                         <hr className="border-border-color" />

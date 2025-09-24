@@ -19,7 +19,9 @@ exports.getMe = async (req, res) => {
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {
     try {
-        const { name, email, businessName, dni, cif, address, phone, proformaCounter, invoiceCounter } = req.body;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const { name, email, businessName, dni, cif, address, phone, proformaCounter, invoiceCounter, applyIgic } = req.body;
+        // --- FIN DE LA MODIFICACIÓN ---
         const user = await User.findByPk(req.user.id);
         
         if (!user) {
@@ -36,17 +38,17 @@ exports.updateProfile = async (req, res) => {
             return res.status(400).json({ error: 'El formato del email no es válido.' });
         }
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se actualiza la lógica para manejar campos que pueden llegar vacíos y deben limpiar el dato.
         if (name !== undefined) user.name = name;
         if (email !== undefined) user.email = email;
         if (businessName !== undefined) user.businessName = businessName;
-        if (dni !== undefined) user.dni = dni || null; // Guardar null si está vacío
-        if (cif !== undefined) user.cif = cif || null;   // Guardar null si está vacío
+        if (dni !== undefined) user.dni = dni || null;
+        if (cif !== undefined) user.cif = cif || null;
         if (address !== undefined) user.address = address;
         if (phone !== undefined) user.phone = phone;
         if (proformaCounter) user.proformaCounter = proformaCounter;
         if (invoiceCounter) user.invoiceCounter = invoiceCounter;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        if (applyIgic !== undefined) user.applyIgic = applyIgic;
         // --- FIN DE LA MODIFICACIÓN ---
 
         if (req.file) {
@@ -170,7 +172,7 @@ exports.deleteAccount = async (req, res) => {
             }
             if (car.registrationDocumentUrl) {
                 const docFilename = path.basename(car.registrationDocumentUrl);
-                const docFilePath = path.join(__dirname, '..', 'public', 'documents', docFilename);
+                const docFilePath = path.join(__dirname, '..', 'public', 'documents', docFilePath);
                 if (fs.existsSync(docFilePath)) fs.unlinkSync(docFilePath);
             }
         }
