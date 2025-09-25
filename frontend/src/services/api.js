@@ -26,7 +26,7 @@ const getAuthHeadersForFormData = () => {
 
 // --- Funciones Genéricas para Respuestas ---
 
-// Para rutas PÚBLICAS (Login/Registro)
+// Para rutas PÚBLICAS (Registro)
 const handlePublicResponse = async (response) => {
     if (!response.ok) {
         const error = await response.json();
@@ -39,6 +39,7 @@ const handlePublicResponse = async (response) => {
 const handleProtectedResponse = async (response) => {
     if (!response.ok) {
         if (response.status === 401) {
+            // El token es inválido, expiró o el usuario ya no existe.
             localStorage.removeItem('authToken');
             window.location.href = '/login';
         }
@@ -59,11 +60,47 @@ const handleProtectedResponse = async (response) => {
 
 const api = {
     // --- Autenticación (Auth) ---
-    login: (credentials) => fetch(`${BASE_URL}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) }).then(handlePublicResponse),
+    login: async (credentials) => {
+        const response = await fetch(`${BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(credentials),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            const error = new Error(data.error || 'Error en el inicio de sesión');
+            // Adjuntamos datos adicionales al objeto de error para que la UI pueda manejarlos
+            if (data.needsVerification) {
+                error.needsVerification = true;
+                error.email = data.email;
+            }
+            throw error;
+        }
+        return data;
+    },
     register: (userData) => fetch(`${BASE_URL}/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(userData) }).then(handlePublicResponse),
+    verifyEmail: (data) => fetch(`${BASE_URL}/auth/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+    resendVerificationCode: (data) => fetch(`${BASE_URL}/auth/resend-verification`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+    forceVerification: (data) => fetch(`${BASE_URL}/auth/force-verification`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+    
+    forgotPassword: (data) => fetch(`${BASE_URL}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+    resetPassword: (token, data) => fetch(`${BASE_URL}/auth/reset-password/${token}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+
     getMe: () => fetch(`${BASE_URL}/auth/me`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
-    updateProfile: (formData) => fetch(`${BASE_URL}/auth/profile`, { method: 'PUT', headers: getAuthHeadersForFormData(), body: formData }).then(handleProtectedResponse),
+    updateProfile: (data) => {
+        const isFormData = data instanceof FormData;
+        return fetch(`${BASE_URL}/auth/profile`, {
+            method: 'PUT',
+            headers: isFormData ? getAuthHeadersForFormData() : getAuthHeaders(),
+            body: isFormData ? data : JSON.stringify(data),
+        }).then(handleProtectedResponse);
+    },
     deleteAvatar: () => fetch(`${BASE_URL}/auth/avatar`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+    // --- INICIO DE LA MODIFICACIÓN ---
+    deleteLogo: () => fetch(`${BASE_URL}/auth/logo`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+    // --- FIN DE LA MODIFICACIÓN ---
     updatePassword: (passwordData) => fetch(`${BASE_URL}/auth/update-password`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(passwordData) }).then(handleProtectedResponse),
     deleteAccount: () => fetch(`${BASE_URL}/auth/me`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
 
@@ -119,14 +156,13 @@ const api = {
         }
     },
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     // --- Suscripciones (Stripe) ---
     subscriptions: {
         createSubscription: (paymentMethodId) => fetch(`${BASE_URL}/subscriptions/create-subscription`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ paymentMethodId }) }).then(handleProtectedResponse),
         getSubscriptionStatus: () => fetch(`${BASE_URL}/subscriptions/status`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
         cancelSubscription: () => fetch(`${BASE_URL}/subscriptions/cancel-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
+        syncSubscription: () => fetch(`${BASE_URL}/subscriptions/sync`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse)
     }
-    // --- FIN DE LA MODIFICACIÓN ---
 };
 
 export default api;

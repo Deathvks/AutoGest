@@ -1,7 +1,8 @@
 // autogest-app/frontend/src/components/modals/CarDetails/CarDetailsInfo.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react'; // <-- Importar useContext
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClock } from '@fortawesome/free-solid-svg-icons';
+import { AuthContext } from '../../../context/AuthContext'; // <-- Importar el contexto
 
 const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
@@ -15,6 +16,9 @@ const getStatusChipClass = (status) => {
 };
 
 const CarDetailsInfo = ({ car }) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const { user } = useContext(AuthContext); // Obtenemos el usuario del contexto
+    // --- FIN DE LA MODIFICACIÓN ---
     const [remainingTime, setRemainingTime] = useState('');
     const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
     const imageUrl = car.imageUrl ? `${API_BASE_URL}${car.imageUrl}` : `https://placehold.co/600x400/f1f3f5/6c757d?text=${car.make}+${car.model}`;
@@ -57,24 +61,29 @@ const CarDetailsInfo = ({ car }) => {
             />
             <div className="bg-background p-4 rounded-lg text-center">
                 <div className="flex flex-col items-center">
-                    <p className="text-lg text-text-secondary">Precio Venta Final</p>
+                    <p className="text-lg text-text-secondary uppercase">Precio Venta Final</p>
                     <p className="text-4xl font-extrabold text-accent">
                         {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice || car.price)}
                     </p>
-                    <p className="text-sm text-text-secondary mt-1">
-                        Compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
-                    </p>
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    {/* Solo mostramos el precio de compra si el usuario es admin o técnico */}
+                    {(user.role === 'admin' || user.role === 'technician') && (
+                        <p className="text-sm text-text-secondary mt-1 uppercase">
+                            Compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
+                        </p>
+                    )}
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     {car.status === 'Reservado' && car.reservationDeposit > 0 && (
-                        <p className="text-sm font-semibold text-yellow-accent mt-1">
+                        <p className="text-sm font-semibold text-yellow-accent mt-1 uppercase">
                             Reserva: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}
                         </p>
                     )}
                 </div>
-                <span className={`mt-2 inline-block text-sm font-bold px-3 py-1 rounded-full ${getStatusChipClass(car.status)}`}>
+                <span className={`mt-2 inline-block text-sm font-bold px-3 py-1 rounded-full ${getStatusChipClass(car.status)} uppercase`}>
                     {car.status} {car.saleDate ? ` - ${new Date(car.saleDate).toLocaleDateString('es-ES')}` : ''}
                 </span>
                 {isReservedAndActive && (
-                    <div className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-yellow-accent bg-yellow-accent/10 px-3 py-1 rounded-md">
+                    <div className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-yellow-accent bg-yellow-accent/10 px-3 py-1 rounded-md uppercase">
                         <FontAwesomeIcon icon={faClock} />
                         <span>Quedan: {remainingTime}</span>
                     </div>

@@ -1,21 +1,30 @@
 // autogest-app/frontend/src/components/BottomNav.jsx
-import React from 'react';
+import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
     faUser 
 } from '@fortawesome/free-solid-svg-icons';
+import { AuthContext } from '../context/AuthContext';
 
 const BottomNav = () => {
+    const { user } = useContext(AuthContext);
+
     // --- INICIO DE LA MODIFICACIÓN ---
+    // Añadimos una comprobación para asegurarnos de que `user` no sea nulo
+    if (!user) {
+        return null;
+    }
+
+    // Filtramos los elementos de navegación basándonos en el rol del usuario
     const navItems = [
-        { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
+        (user.role === 'admin' || user.role === 'technician') && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
         { icon: faCar, text: 'Coches', path: '/cars' },
         { icon: faChartLine, text: 'Ventas', path: '/sales' },
         { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
         { icon: faUser, text: 'Perfil', path: '/profile' },
-    ];
+    ].filter(Boolean);
     // --- FIN DE LA MODIFICACIÓN ---
 
     const NavItem = ({ icon, text, path }) => (

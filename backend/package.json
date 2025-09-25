@@ -23,6 +23,7 @@
     "jspdf-autotable": "^5.0.2",
     "multer": "^2.0.2",
     "mysql2": "^3.14.3",
+    "nodemailer": "^7.0.6",
     "openai": "^4.52.7",
     "sequelize": "^6.37.7",
     "stripe": "^18.5.0"

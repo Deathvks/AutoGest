@@ -42,10 +42,13 @@ const EditUserModal = ({ user, onClose, onUserUpdated }) => {
         }
     }, [user]);
 
+    // --- INICIO DE LA MODIFICACIÓN ---
     const roleOptions = [
         { id: 'user', name: 'Usuario' },
         { id: 'admin', name: 'Administrador' },
+        { id: 'technician', name: 'Técnico' }, // Opción añadida
     ];
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleChange = (e) => {
         const { name, value } = e.target;

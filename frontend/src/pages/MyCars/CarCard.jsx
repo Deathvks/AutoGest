@@ -1,9 +1,7 @@
 // autogest-app/frontend/src/pages/MyCars/CarCard.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// --- INICIO DE LA MODIFICACIÓN ---
 import { faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags, faShieldAlt, faExclamationTriangle, faClock, faKey } from '@fortawesome/free-solid-svg-icons';
-// --- FIN DE LA MODIFICACIÓN ---
 import { AuthContext } from '../../context/AuthContext';
 
 const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
@@ -92,80 +90,82 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
       <div className="p-4 flex-grow flex flex-col min-w-0">
         <div className="flex items-start justify-between mb-1">
           <div>
-            <h3 className="text-xl font-bold text-text-primary truncate">{car.make} {car.model}</h3>
-            <p className="text-sm text-text-secondary">{car.licensePlate}</p>
+            <h3 className="text-xl font-bold text-text-primary truncate uppercase">{car.make} {car.model}</h3>
+            <p className="text-sm text-text-secondary uppercase">{car.licensePlate}</p>
             {isReservedAndActive && (
-                <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-yellow-accent">
+                <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-yellow-accent uppercase">
                     <FontAwesomeIcon icon={faClock} />
                     <span>QUEDAN: {remainingTime}</span>
                 </div>
             )}
           </div>
-          <span className={`flex-shrink-0 text-xs font-bold px-3 py-1 rounded-full ${getStatusChipClass(car.status)} ml-2`}>
+          <span className={`flex-shrink-0 text-xs font-bold px-3 py-1 rounded-full ${getStatusChipClass(car.status)} ml-2 uppercase`}>
             {car.status}
           </span>
         </div>
         
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 text-sm text-text-secondary my-4">
-          <div className="flex items-center gap-2 truncate" title={`${new Intl.NumberFormat('es-ES').format(car.km)} km`}>
+          <div className="flex items-center gap-2 truncate uppercase" title={`${new Intl.NumberFormat('es-ES').format(car.km)} km`}>
             <FontAwesomeIcon icon={faRoad} className="w-4 h-4" />
             <span>{car.km ? `${new Intl.NumberFormat('es-ES').format(car.km)} KM` : 'N/A'}</span>
           </div>
-          <div className="flex items-center gap-2 truncate" title={car.registrationDate ? new Date(car.registrationDate).getFullYear().toString() : 'N/A'}>
+          <div className="flex items-center gap-2 truncate uppercase" title={car.registrationDate ? new Date(car.registrationDate).getFullYear().toString() : 'N/A'}>
             <FontAwesomeIcon icon={faCalendarAlt} className="w-4 h-4" />
             <span>{car.registrationDate ? new Date(car.registrationDate).getFullYear() : 'N/A'}</span>
           </div>
-          <div className="flex items-center gap-2 truncate" title={car.fuel || 'N/A'}>
+          {/* --- INICIO DE LA MODIFICACIÓN --- */}
+          <div className="flex items-center gap-2 truncate uppercase" title={car.fuel && car.fuel !== 'NULL' ? car.fuel : 'N/A'}>
             <FontAwesomeIcon icon={faGasPump} className="w-4 h-4" />
-            <span>{car.fuel || 'N/A'}</span>
+            <span>{car.fuel && car.fuel !== 'NULL' ? car.fuel : 'N/A'}</span>
           </div>
-          <div className="flex items-center gap-2 truncate" title={car.transmission || 'N/A'}>
+          <div className="flex items-center gap-2 truncate uppercase" title={car.transmission && car.transmission !== 'NULL' ? car.transmission : 'N/A'}>
             <FontAwesomeIcon icon={faCogs} className="w-4 h-4" />
-            <span>{car.transmission || 'N/A'}</span>
+            <span>{car.transmission && car.transmission !== 'NULL' ? car.transmission : 'N/A'}</span>
           </div>
-          <div className="flex items-center gap-2" title={`SEGURO: ${car.hasInsurance ? 'SÍ' : 'NO'}`}>
+          {/* --- FIN DE LA MODIFICACIÓN --- */}
+          <div className="flex items-center gap-2 uppercase" title={`SEGURO: ${car.hasInsurance ? 'SÍ' : 'NO'}`}>
             <FontAwesomeIcon 
               icon={faShieldAlt} 
               className={`w-4 h-4 flex-shrink-0 ${car.hasInsurance ? 'text-text-secondary' : 'text-red-accent'}`} 
             />
             <ToggleSwitch enabled={car.hasInsurance} onChange={() => onUpdateInsurance(car, !car.hasInsurance)} />
           </div>
-          {/* --- INICIO DE LA MODIFICACIÓN --- */}
-          <div className="flex items-center gap-2 truncate" title={`${car.keys || 1} ${car.keys > 1 ? 'LLAVES' : 'LLAVE'}`}>
+          <div className="flex items-center gap-2 truncate uppercase" title={`${car.keys || 1} ${car.keys > 1 ? 'LLAVES' : 'LLAVE'}`}>
             <FontAwesomeIcon icon={faKey} className="w-4 h-4" />
             <span>{`${car.keys || 1} ${car.keys > 1 ? 'LLAVES' : 'LLAVE'}`}</span>
           </div>
-          {/* --- FIN DE LA MODIFICACIÓN --- */}
         </div>
 
         {tagsToShow.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <FontAwesomeIcon icon={faTags} className="w-4 h-4 text-text-secondary" />
             {visibleTags.map(tag => (
-              <span key={tag} className="bg-accent/10 text-accent text-xs font-semibold px-2 py-1 rounded-full">{tag}</span>
+              <span key={tag} className="bg-accent/10 text-accent text-xs font-semibold px-2 py-1 rounded-full uppercase">{tag}</span>
             ))}
             {hiddenTagsCount > 0 && (
-              <span className="text-xs font-semibold text-text-secondary px-2 py-1 rounded-full bg-component-bg-hover">+{hiddenTagsCount} MÁS</span>
+              <span className="text-xs font-semibold text-text-secondary px-2 py-1 rounded-full bg-component-bg-hover uppercase">+{hiddenTagsCount} MÁS</span>
             )}
           </div>
         )}
 
         <div className="mt-auto flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-border-color">
           <div className="text-center sm:text-left w-full sm:w-auto">
-            <p className="text-xs text-text-secondary">PRECIO VENTA</p>
+            <p className="text-xs text-text-secondary uppercase">PRECIO VENTA</p>
             <p className="text-3xl font-extrabold text-accent">
               {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
             </p>
-            <p className="text-xs text-text-secondary mt-2">
-              COMPRA: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
-            </p>
+            {(user.role === 'admin' || user.role === 'technician') && (
+              <p className="text-xs text-text-secondary mt-2 uppercase">
+                COMPRA: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
+              </p>
+            )}
             {car.status === 'Vendido' && car.salePrice > 0 && (
-              <p className="text-sm font-semibold text-green-accent mt-1">
+              <p className="text-sm font-semibold text-green-accent mt-1 uppercase">
                 VENTA FINAL: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}
               </p>
             )}
             {car.status === 'Reservado' && car.reservationDeposit > 0 && (
-              <p className="text-sm font-semibold text-yellow-accent mt-1">
+              <p className="text-sm font-semibold text-yellow-accent mt-1 uppercase">
                 RESERVA: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}
               </p>
             )}
@@ -173,7 +173,7 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
           <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
             <button
               onClick={() => onViewDetailsClick(car)}
-              className="flex-1 sm:flex-initial bg-component-bg-hover text-accent font-semibold py-2 px-4 rounded-lg border border-border-color hover:bg-border-color transition-colors"
+              className="flex-1 sm:flex-initial bg-component-bg-hover text-accent font-semibold py-2 px-4 rounded-lg border border-border-color hover:bg-border-color transition-colors uppercase"
             >
               DETALLES
             </button>

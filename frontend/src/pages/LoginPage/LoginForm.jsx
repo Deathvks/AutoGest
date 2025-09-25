@@ -1,0 +1,90 @@
+// autogest-app/frontend/src/pages/LoginPage/LoginForm.jsx
+import React, { useState, useContext } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCar } from '@fortawesome/free-solid-svg-icons';
+
+// Componente InputField simplificado
+const InputField = ({ name, type, value, onChange, placeholder }) => (
+    <div>
+        <label htmlFor={name} className="sr-only">{placeholder}</label>
+        <input id={name} name={name} type={type} value={value} onChange={onChange}
+            className="relative block w-full appearance-none rounded-md border border-border-color px-3 py-2 bg-background text-text-primary placeholder-text-secondary focus:z-10 focus:border-accent focus:outline-none focus:ring-accent"
+            placeholder={placeholder} />
+    </div>
+);
+
+const LoginForm = ({ onNeedsVerification }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const { login } = useContext(AuthContext);
+    const navigate = useNavigate();
+
+    const handleLoginSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        if (!email || !password) return setError('Todos los campos son obligatorios.');
+
+        setIsLoading(true);
+        try {
+            await login(email, password);
+            navigate('/');
+        } catch (err) {
+            if (err.needsVerification) {
+                onNeedsVerification(err.email);
+            } else {
+                setError(err.message || 'Error al iniciar sesión.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-background">
+            <div className="w-[90%] sm:w-full max-w-md space-y-8 rounded-xl bg-component-bg p-8 sm:p-10 shadow-lg border border-border-color">
+                <div className="mx-auto flex h-12 w-auto items-center justify-center text-accent">
+                    <FontAwesomeIcon icon={faCar} className="h-10 w-10" />
+                </div>
+                
+                <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-text-primary">
+                    INICIAR SESIÓN
+                </h2>
+                <form className="mt-8 space-y-6" onSubmit={handleLoginSubmit} noValidate>
+                    <div className="space-y-4 rounded-md">
+                        <InputField name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+                        <InputField name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" />
+                    </div>
+
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <div className="flex items-center justify-end">
+                        <div className="text-sm">
+                            <Link to="/forgot-password" className="font-medium text-accent hover:opacity-80">
+                                ¿HAS OLVIDADO TU CONTRASEÑA?
+                            </Link>
+                        </div>
+                    </div>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+                    
+                    {error && <p className="text-sm text-red-accent text-center">{error}</p>}
+                    <div>
+                        <button type="submit" disabled={isLoading}
+                            className="group relative flex w-full justify-center rounded-md border border-transparent bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50">
+                            {isLoading ? 'ENTRANDO...' : 'ENTRAR'}
+                        </button>
+                    </div>
+                </form>
+                <div className="text-sm text-center">
+                    <Link to="/register" className="font-medium text-accent hover:opacity-80">
+                        ¿No tienes cuenta? Regístrate
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default LoginForm;

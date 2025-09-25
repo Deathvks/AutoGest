@@ -18,7 +18,7 @@ const Car = sequelize.define('Car', {
     },
     purchasePrice: {
         type: DataTypes.FLOAT,
-        allowNull: false,
+        allowNull: true, // Se cambia a true para que no sea obligatorio
     },
     salePrice: {
         type: DataTypes.FLOAT,
@@ -112,11 +112,19 @@ const Car = sequelize.define('Car', {
         type: DataTypes.DATEONLY,
         allowNull: true,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    invoiceNumber: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
+    proformaNumber: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
     paranoid: true, 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se cambia el índice para que la unicidad solo aplique a los registros no borrados
     indexes: [
         {
             name: 'unique_licensePlate_not_deleted',
@@ -135,7 +143,6 @@ const Car = sequelize.define('Car', {
             }
         }
     ]
-    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 module.exports = Car;

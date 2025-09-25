@@ -19,9 +19,7 @@ const User = sequelize.define('User', {
         allowNull: false,
     },
     role: {
-        // --- INICIO DE LA MODIFICACIÓN ---
-        type: DataTypes.ENUM('user', 'admin', 'technician'), // Se añade el nuevo rol 'technician'
-        // --- FIN DE LA MODIFICACIÓN ---
+        type: DataTypes.ENUM('user', 'admin', 'technician'),
         allowNull: false,
         defaultValue: 'user',
     },
@@ -29,6 +27,12 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    logoUrl: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
     businessName: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -49,8 +53,6 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Campos para la gestión de suscripciones con Stripe
     subscriptionStatus: {
         type: DataTypes.ENUM('inactive', 'active', 'cancelled', 'past_due'),
         allowNull: false,
@@ -64,7 +66,36 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // --- FIN DE LA MODIFICACIÓN ---
+    invoiceCounter: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+    },
+    proformaCounter: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+    },
+    verificationCode: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    isVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
+    applyIgic: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
+    resetPasswordToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    resetPasswordExpires: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
 }, {
     timestamps: true,
     indexes: [
@@ -72,13 +103,10 @@ const User = sequelize.define('User', {
             unique: true,
             fields: ['email']
         },
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se asegura que cada cliente de Stripe sea único
         {
             unique: true,
             fields: ['stripeCustomerId']
         }
-        // --- FIN DE LA MODIFICACIÓN ---
     ]
 });
 

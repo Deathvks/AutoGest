@@ -1,8 +1,8 @@
-// AutoGest/frontend/src/hooks/useCarHandlers.js
+// autogest-app/frontend/src/hooks/useCarHandlers.js
 import { useState, useRef } from 'react';
 import api from '../services/api';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 
 export const useCarHandlers = (
     cars,
@@ -30,7 +30,7 @@ export const useCarHandlers = (
         doc.text("DATOS DEL VEHÍCULO", 14, 80);
         doc.line(14, 82, 196, 82);
         
-        autoTable(doc, {
+        doc.autoTable({
             startY: 85, theme: 'grid', headStyles: { fillColor: [41, 128, 185] },
             body: [
                 ['Marca', car.make], ['Modelo', car.model], ['Matrícula', car.licensePlate],
@@ -67,14 +67,24 @@ export const useCarHandlers = (
         } catch (error) { console.error("Error al añadir coche:", error); throw error; }
     };
     
-    const handleUpdateCar = async (formData) => {
+    const handleUpdateCar = async (carId, formData) => {
         try {
-            const carId = modalState.carToEdit.id;
             const updatedCar = await api.updateCar(carId, formData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
+            
+            if (modalState.carToView && modalState.carToView.id === updatedCar.id) {
+                modalState.setCarToView(updatedCar);
+            }
+            
             await fetchLocations();
-            modalState.setCarToEdit(null);
-        } catch (error) { console.error("Error al actualizar coche:", error); throw error; }
+            
+            if (modalState.carToEdit && modalState.carToEdit.id === carId) {
+                modalState.setCarToEdit(null);
+            }
+        } catch (error) { 
+            console.error("Error al actualizar coche:", error); 
+            throw error; 
+        }
     };
 
     const confirmDelete = async (carId) => {
@@ -127,7 +137,7 @@ export const useCarHandlers = (
         } catch (error) { console.error("Error al vender el coche:", error); }
     };
 
-    const handleReserveConfirm = async (carToUpdate, newNoteContent, depositAmount, reservationDurationInHours) => {
+    const handleReserveConfirm = async (carToUpdate, newNoteContent, depositAmount, reservationDurationInHours, buyerDetails) => {
         try {
             const pdfBlob = generateReservationPDF(carToUpdate, depositAmount);
             if (!pdfBlob) return;
@@ -152,6 +162,7 @@ export const useCarHandlers = (
             formData.append('reservationDeposit', depositAmount);
             formData.append('reservationDuration', reservationDurationInHours);
             formData.append('reservationPdf', pdfBlob, `Reserva_${carToUpdate.licensePlate}.pdf`);
+            formData.append('buyerDetails', JSON.stringify(buyerDetails));
 
             const updatedCar = await api.updateCar(carToUpdate.id, formData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
@@ -232,7 +243,7 @@ export const useCarHandlers = (
                 modalState.setCarToView(updatedCar);
             }
             modalState.setCarForGestoriaReturn(null);
-            modalState.setCarToNotify(updatedCar); // Abrir el siguiente modal
+            modalState.setCarToNotify(updatedCar);
         } catch (error) {
             console.error("Error al registrar la entrega de la gestoría:", error);
         }
