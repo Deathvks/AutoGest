@@ -1,6 +1,12 @@
 // autogest-app/backend/utils/emailUtils.js
 const nodemailer = require('nodemailer');
 
+// --- INICIO DE LA MODIFICACIÓN ---
+// 1. Añadimos logs para verificar las variables de entorno al iniciar
+console.log(`[LOG] EMAIL_USER: ${process.env.EMAIL_USER}`);
+console.log(`[LOG] EMAIL_PASS: ${process.env.EMAIL_PASS ? 'Cargada' : 'NO Cargada'}`);
+// --- FIN DE LA MODIFICACIÓN ---
+
 // 1. Configurar el transportador de correo usando las credenciales de Gmail del .env
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -12,6 +18,9 @@ const transporter = nodemailer.createTransport({
 
 // 2. Función para enviar el correo de verificación
 exports.sendVerificationEmail = async (toEmail, code) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    console.log(`[LOG] Iniciando sendVerificationEmail a: ${toEmail}`);
+    // --- FIN DE LA MODIFICACIÓN ---
     const mailOptions = {
         from: `"AutoGest" <${process.env.EMAIL_USER}>`,
         to: toEmail,
@@ -39,7 +48,6 @@ exports.sendVerificationEmail = async (toEmail, code) => {
     }
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // 3. Función para enviar el correo de restablecimiento de contraseña (CON BOTÓN)
 exports.sendPasswordResetEmail = async (toEmail, token) => {
     // La URL debe apuntar a tu frontend, a la página de restablecimiento de contraseña
@@ -75,4 +83,3 @@ exports.sendPasswordResetEmail = async (toEmail, token) => {
         throw new Error('No se pudo enviar el correo de restablecimiento.');
     }
 };
-// --- FIN DE LA MODIFICACIÓN ---

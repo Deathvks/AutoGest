@@ -162,22 +162,29 @@ exports.resendVerificationCode = async (req, res) => {
 
 // Forzar verificación para usuarios existentes no verificados
 exports.forceVerification = async (req, res) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    console.log('[LOG] Se ha llamado a forceVerification.');
     try {
         const { currentEmail, newEmail } = req.body;
+        console.log(`[LOG] Datos recibidos: currentEmail=${currentEmail}, newEmail=${newEmail}`);
+        
         const emailToSend = newEmail || currentEmail;
 
         const user = await User.findOne({ where: { email: currentEmail } });
 
         if (!user) {
+            console.log(`[LOG] Usuario no encontrado para el email: ${currentEmail}`);
             return res.status(404).json({ error: 'No se encontró una cuenta con ese email.' });
         }
         if (user.isVerified) {
+            console.log(`[LOG] La cuenta para ${currentEmail} ya está verificada.`);
             return res.status(400).json({ error: 'Esta cuenta ya está verificada.' });
         }
 
         if (newEmail && newEmail !== currentEmail) {
             const existingVerifiedUser = await User.findOne({ where: { email: newEmail, isVerified: true } });
             if (existingVerifiedUser) {
+                console.log(`[LOG] El nuevo email ${newEmail} ya está en uso.`);
                 return res.status(400).json({ error: 'La nueva dirección de correo ya está en uso.' });
             }
         }
@@ -185,7 +192,9 @@ exports.forceVerification = async (req, res) => {
         const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
         user.verificationCode = verificationCode;
         await user.save();
+        console.log(`[LOG] Nuevo código de verificación generado: ${verificationCode}`);
 
+        console.log(`[LOG] Intentando enviar email a: ${emailToSend}`);
         await sendVerificationEmail(emailToSend, verificationCode);
 
         res.status(200).json({ 
@@ -193,12 +202,12 @@ exports.forceVerification = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error al forzar la verificación:", error);
+        console.error("[ERROR] Fallo en forceVerification:", error);
         res.status(500).json({ error: 'Error al enviar el código de verificación.' });
     }
+    // --- FIN DE LA MODIFICACIÓN ---
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // @desc    Solicitar restablecimiento de contraseña
 // @route   POST /api/auth/forgot-password
 exports.forgotPassword = async (req, res) => {
@@ -273,4 +282,3 @@ exports.resetPassword = async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
 };
-// --- FIN DE LA MODIFICACIÓN ---
