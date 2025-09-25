@@ -7,11 +7,11 @@ const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 export const DetailItem = ({ icon, label, value }) => (
     <div className="flex flex-col">
-        <div className="flex items-center text-sm text-text-secondary mb-1">
+        <div className="flex items-center text-sm text-text-secondary mb-1 uppercase">
             <FontAwesomeIcon icon={icon} className="w-4 h-4 mr-2" />
             <span>{label}</span>
         </div>
-        <p className="font-semibold text-text-primary break-words">{value || 'No especificado'}</p>
+        <p className="font-semibold text-text-primary break-words uppercase">{value || 'No especificado'}</p>
     </div>
 );
 
@@ -44,21 +44,21 @@ export const SingleFileLink = ({ label, icon, fileData }) => {
 
     return (
         <div className="flex flex-col">
-            <div className="flex items-center text-sm text-text-secondary mb-1">
+            <div className="flex items-center text-sm text-text-secondary mb-1 uppercase">
                 <FontAwesomeIcon icon={icon || faFileLines} className="w-4 h-4 mr-2" />
                 <span>{label}</span>
             </div>
             {file && file.path ? (
                 <button
                     onClick={() => handleDownload(file.path, file.originalname)}
-                    className="text-sm font-semibold text-blue-accent hover:underline flex items-center gap-2 text-left w-full"
+                    className="text-sm font-semibold text-blue-accent hover:underline flex items-center gap-2 text-left w-full uppercase"
                     title={file.originalname}
                 >
                     <FontAwesomeIcon icon={faPaperclip} className="w-3 h-3 flex-shrink-0" />
                     <span className="truncate">{file.originalname}</span>
                 </button>
             ) : (
-                <p className="font-semibold text-text-primary">No hay archivo</p>
+                <p className="font-semibold text-text-primary uppercase">No hay archivo</p>
             )}
         </div>
     );
@@ -77,7 +77,7 @@ export const MultiFileLinks = ({ label, icon, filesData }) => {
 
     return (
         <div className="flex flex-col">
-            <div className="flex items-center text-sm text-text-secondary mb-1">
+            <div className="flex items-center text-sm text-text-secondary mb-1 uppercase">
                 <FontAwesomeIcon icon={icon || faPaperclip} className="w-4 h-4 mr-2" />
                 <span>{label}</span>
             </div>
@@ -87,7 +87,7 @@ export const MultiFileLinks = ({ label, icon, filesData }) => {
                         <button
                             onClick={() => handleDownload(file.path, file.originalname)}
                             key={index}
-                            className="text-sm font-semibold text-blue-accent hover:underline flex items-center gap-2 text-left w-full"
+                            className="text-sm font-semibold text-blue-accent hover:underline flex items-center gap-2 text-left w-full uppercase"
                             title={file.originalname}
                         >
                             <FontAwesomeIcon icon={faPaperclip} className="w-3 h-3 flex-shrink-0" />
@@ -96,7 +96,7 @@ export const MultiFileLinks = ({ label, icon, filesData }) => {
                     ))}
                 </div>
             ) : (
-                <p className="font-semibold text-text-primary">No hay archivos</p>
+                <p className="font-semibold text-text-primary uppercase">No hay archivos</p>
             )}
         </div>
     );

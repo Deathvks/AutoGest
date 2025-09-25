@@ -15,18 +15,18 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
 
     const [newCar, setNewCar] = useState({
         make: '', model: '', licensePlate: '', vin: '', registrationDate: new Date().toISOString().split('T')[0],
-        purchasePrice: '', price: '', km: '', horsepower: '', location: '', 
+        purchasePrice: '', price: '', km: '', horsepower: '', location: '',
         newLocation: '', notes: '', tags: [], hasInsurance: false, fuel: '', transmission: '', keys: 1
     });
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
-    
+
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [technicalSheetFiles, setTechnicalSheetFiles] = useState([]);
     const [registrationCertificateFiles, setRegistrationCertificateFiles] = useState([]);
     const [otherDocumentFiles, setOtherDocumentFiles] = useState([]);
-    
+
     const [tagInput, setTagInput] = useState('');
     const [showInsuranceConfirm, setShowInsuranceConfirm] = useState(false);
 
@@ -39,9 +39,9 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setNewCar(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+        setNewCar(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value.toUpperCase() }));
     };
-    
+
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -80,37 +80,37 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         };
         setters[fileType](prev => prev.filter(file => file !== fileToRemove));
     };
-    
+
     const handleLocationSelect = (value) => setNewCar(prev => ({ ...prev, location: value, newLocation: '' }));
-    const handleNewLocationInput = (e) => setNewCar(prev => ({ ...prev, newLocation: e.target.value, location: '' }));
+    const handleNewLocationInput = (e) => setNewCar(prev => ({ ...prev, newLocation: e.target.value.toUpperCase(), location: '' }));
     const handleSelectChange = (name, value) => setNewCar(prev => ({ ...prev, [name]: value }));
 
     const handleTagKeyDown = (e) => {
         if (e.key === 'Enter' && tagInput) {
             e.preventDefault();
-            if (!newCar.tags.includes(tagInput.trim()) && tagInput.trim() !== '') {
-                setNewCar(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
+            if (!newCar.tags.includes(tagInput.trim().toUpperCase()) && tagInput.trim() !== '') {
+                setNewCar(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim().toUpperCase()] }));
             }
             setTagInput('');
         }
     };
-    
+
     const removeTag = (tagToRemove) => setNewCar(prev => ({...prev, tags: prev.tags.filter(tag => tag !== tagToRemove)}));
     const parseNumber = (str) => (typeof str !== 'string' || !str) ? '' : str.replace(/\./g, '').replace(',', '.');
 
     const validateForm = () => {
         const errors = {};
-        if (!newCar.make.trim()) errors.make = 'La marca es obligatoria';
-        if (!newCar.model.trim()) errors.model = 'El modelo es obligatorio';
-        if (!newCar.licensePlate.trim()) errors.licensePlate = 'La matrícula es obligatoria';
+        if (!newCar.make.trim()) errors.make = 'LA MARCA ES OBLIGATORIA';
+        if (!newCar.model.trim()) errors.model = 'EL MODELO ES OBLIGATORIO';
+        if (!newCar.licensePlate.trim()) errors.licensePlate = 'LA MATRÍCULA ES OBLIGATORIA';
         if ((user.role === 'admin' || user.role === 'technician') && !newCar.purchasePrice.trim()) {
-            errors.purchasePrice = 'El precio de compra es obligatorio';
+            errors.purchasePrice = 'EL PRECIO DE COMPRA ES OBLIGATORIO';
         }
-        if (!newCar.price.trim()) errors.price = 'El precio de venta es obligatorio';
-        
+        if (!newCar.price.trim()) errors.price = 'EL PRECIO DE VENTA ES OBLIGATORIO';
+
         setFieldErrors(errors);
         if (Object.keys(errors).length > 0) {
-            setError('Por favor, corrige los errores marcados.');
+            setError('POR FAVOR, CORRIGE LOS ERRORES MARCADOS.');
             return false;
         }
         setError('');
@@ -125,13 +125,13 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                 const initialNote = { id: Date.now(), content: newCar.notes, type: 'General', date: new Date().toISOString().split('T')[0] };
                 notesPayload = JSON.stringify([initialNote]);
             }
-            
+
             const selectedLocationObject = locations.find(loc => loc.id === newCar.location);
             const finalLocation = newCar.newLocation.trim() || (selectedLocationObject ? selectedLocationObject.name : '');
 
             const finalCarData = { ...newCar, location: finalLocation, notes: notesPayload, price: parseNumber(newCar.price), purchasePrice: parseNumber(newCar.purchasePrice), km: parseNumber(newCar.km), horsepower: parseNumber(newCar.horsepower) };
             delete finalCarData.newLocation;
-    
+
             const formData = new FormData();
             Object.keys(finalCarData).forEach(key => {
                 const value = finalCarData[key];
@@ -141,12 +141,12 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                 }
                 else if (value !== null && value !== undefined && value !== '') formData.append(key, value);
             });
-            
+
             if (imageFile) formData.append('image', imageFile);
             technicalSheetFiles.forEach(file => formData.append('technicalSheet', file));
             registrationCertificateFiles.forEach(file => formData.append('registrationCertificate', file));
             otherDocumentFiles.forEach(file => formData.append('otherDocuments', file));
-            
+
             await onAdd(formData);
         } catch (error) {
             setError(error.message || 'Error al añadir el coche.');
@@ -169,9 +169,9 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                             <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                         </button>
                     </div>
-                    
+
                     <form onSubmit={(e) => e.preventDefault()} noValidate className="flex-grow overflow-y-auto p-6 space-y-4">
-                        <AddCarFileUploads 
+                        <AddCarFileUploads
                             imagePreview={imagePreview}
                             handleImageChange={handleImageChange}
                             technicalSheetFiles={technicalSheetFiles}
@@ -180,7 +180,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                             handleFileChange={handleFileChange}
                             handleRemoveFile={handleRemoveFile}
                         />
-                        <AddCarFormFields 
+                        <AddCarFormFields
                             newCar={newCar}
                             fieldErrors={fieldErrors}
                             locations={locationOptions}
@@ -205,9 +205,9 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                     </div>
                 </div>
             </div>
-            
+
             {showInsuranceConfirm && (
-                <InsuranceConfirmationModal 
+                <InsuranceConfirmationModal
                     onConfirm={() => {
                         setShowInsuranceConfirm(false);
                         proceedWithAdd();

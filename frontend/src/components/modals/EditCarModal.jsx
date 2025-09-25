@@ -34,21 +34,21 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     const [serverError, setServerError] = useState('');
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
-    
+
     const [newTechnicalSheetFiles, setNewTechnicalSheetFiles] = useState([]);
     const [newRegistrationCertificateFiles, setNewRegistrationCertificateFiles] = useState([]);
     const [newOtherDocumentFiles, setNewOtherDocumentFiles] = useState([]);
     const [filesToRemove, setFilesToRemove] = useState([]);
-    
+
     const fuelOptions = useMemo(() => [ { id: 'Gasolina', name: 'Gasolina' }, { id: 'Diesel', name: 'Diesel' }, { id: 'Híbrido', name: 'Híbrido' }, { id: 'Eléctrico', name: 'Eléctrico' } ], []);
     const transmissionOptions = useMemo(() => [ { id: 'Manual', name: 'Manual' }, { id: 'Automático', name: 'Automático' } ], []);
     const statusOptions = useMemo(() => [ { id: 'En venta', name: 'En venta' }, { id: 'Vendido', name: 'Vendido' }, { id: 'Reservado', name: 'Reservado' }, { id: 'Taller', name: 'Taller' } ], []);
 
-    const handleChange = (e) => setEditedCar(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const handleChange = (e) => setEditedCar(prev => ({ ...prev, [e.target.name]: typeof e.target.value === 'string' ? e.target.value.toUpperCase() : e.target.value }));
     const handleLocationSelect = (value) => setEditedCar(prev => ({ ...prev, location: value, newLocation: '' }));
-    const handleNewLocationInput = (e) => setEditedCar(prev => ({ ...prev, newLocation: e.target.value, location: '' }));
+    const handleNewLocationInput = (e) => setEditedCar(prev => ({ ...prev, newLocation: e.target.value.toUpperCase(), location: '' }));
     const handleSelectChange = (name, value) => setEditedCar(prev => ({ ...prev, [name]: value }));
-    
+
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -56,7 +56,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             setImagePreview(URL.createObjectURL(file));
         }
     };
-    
+
     const handleFileChange = (e, fileType) => {
         const newFiles = Array.from(e.target.files);
         const setters = {
@@ -78,7 +78,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
         const totalCurrentFiles = currentExistingFiles[fileType].length + currentNewFiles[fileType].length;
 
         if (totalCurrentFiles + newFiles.length > MAX_FILES[fileType]) {
-            setServerError(`Puedes subir un máximo de ${MAX_FILES[fileType]} archivos para esta sección.`);
+            setServerError(`PUEDES SUBIR UN MÁXIMO DE ${MAX_FILES[fileType]} ARCHIVOS PARA ESTA SECCIÓN.`);
             setTimeout(() => setServerError(''), 4000);
             return;
         }
@@ -103,25 +103,26 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             [urlField]: prev[urlField].filter(doc => doc.path !== fileToRemove.path)
         }));
     };
-    
+
     const handleTagKeyDown = (e) => {
         if (e.key === 'Enter' && tagInput) {
             e.preventDefault();
-            if (!editedCar.tags.includes(tagInput.trim()) && tagInput.trim() !== '') {
-                setEditedCar(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
+            const upperCaseTag = tagInput.trim().toUpperCase();
+            if (!editedCar.tags.includes(upperCaseTag) && upperCaseTag !== '') {
+                setEditedCar(prev => ({ ...prev, tags: [...prev.tags, upperCaseTag] }));
             }
             setTagInput('');
         }
     };
-    
+
     const removeTag = (tagToRemove) => setEditedCar(prev => ({...prev, tags: editedCar.tags.filter(tag => tag !== tagToRemove)}));
     const parseNumber = (str) => (typeof str !== 'string' && typeof str !== 'number' || !str) ? String(str) : String(str).replace(/\./g, '').replace(',', '.');
-    
+
     const handleUpdate = async () => {
         try {
             setServerError('');
             const formData = new FormData();
-            
+
             const selectedLocationObject = locations.find(loc => loc.id === editedCar.location);
             const finalLocation = editedCar.newLocation.trim() || (selectedLocationObject ? selectedLocationObject.name : '');
 
@@ -142,7 +143,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             formData.append('keys', editedCar.keys);
             formData.append('hasInsurance', editedCar.hasInsurance);
             formData.append('tags', JSON.stringify(editedCar.tags));
-            
+
             // 2. Añadir imagen principal (si se cambió)
             if (imageFile) {
                 formData.append('image', imageFile);
@@ -155,7 +156,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
 
             // 4. Añadir la lista de ficheros a eliminar
             formData.append('filesToRemove', JSON.stringify(filesToRemove));
-            
+
             await onUpdate(formData);
         } catch (error) {
             setServerError(error.message || 'Error al actualizar el coche.');
@@ -166,15 +167,15 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
             <div className="bg-component-bg rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
                 <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary">EDITAR COCHE</h2>
+                    <h2 className="text-xl font-bold text-text-primary uppercase">EDITAR COCHE</h2>
                     <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
-                
+
                 <form onSubmit={(e) => e.preventDefault()} noValidate className="flex-grow overflow-y-auto p-6 space-y-4">
-                    {serverError && ( <div className="mb-4 p-3 bg-red-accent/10 rounded-lg"><p className="text-sm text-red-accent">{serverError}</p></div> )}
-                    
+                    {serverError && ( <div className="mb-4 p-3 bg-red-accent/10 rounded-lg"><p className="text-sm text-red-accent uppercase">{serverError}</p></div> )}
+
                     <EditCarFileUploads
                         editedCar={editedCar}
                         imagePreview={imagePreview}
@@ -186,7 +187,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                         handleRemoveNewFile={handleRemoveNewFile}
                         handleRemoveExistingFile={handleRemoveExistingFile}
                     />
-                    
+
                     <EditCarFormFields
                         editedCar={editedCar}
                         locations={locations}
@@ -203,10 +204,10 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                         removeTag={removeTag}
                     />
                 </form>
-                
-                <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-border-color"> 
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">CANCELAR</button>
-                    <button onClick={handleUpdate} className="px-4 py-2 rounded-lg shadow-sm transition-opacity bg-blue-accent text-white hover:opacity-90">
+
+                <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-border-color">
+                    <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors uppercase">CANCELAR</button>
+                    <button onClick={handleUpdate} className="px-4 py-2 rounded-lg shadow-sm transition-opacity bg-blue-accent text-white hover:opacity-90 uppercase">
                         GUARDAR CAMBIOS
                     </button>
                 </div>

@@ -67,13 +67,6 @@
 body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    text-transform: uppercase;
-}
-
-input,
-textarea,
-button {
-    text-transform: uppercase;
 }
 
 /* Estilos para el icono del calendario */

@@ -10,7 +10,7 @@ import { AuthContext } from '../../../context/AuthContext'; // <-- Importar el c
 
 export const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, error, required = false, placeholder = '' }) => (
     <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">
+        <label className="block text-sm font-medium text-text-secondary mb-1 uppercase">
             {label}
             {required && <span className="text-red-accent ml-1">*</span>}
         </label>
@@ -27,12 +27,12 @@ export const InputField = ({ label, name, value, onChange, type = 'text', icon, 
                 onChange={onChange}
                 inputMode={inputMode}
                 placeholder={placeholder}
-                className={`w-full px-3 py-2 bg-background border rounded-md focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary ${
+                className={`w-full px-3 py-2 bg-background border rounded-md focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary uppercase ${
                     error ? 'border-red-accent' : 'border-border-color'
                 } ${icon ? 'pl-9' : ''}`}
             />
         </div>
-        {error && <p className="mt-1 text-xs text-red-accent">{error}</p>}
+        {error && <p className="mt-1 text-xs text-red-accent uppercase">{error}</p>}
     </div>
 );
 
@@ -46,14 +46,14 @@ export const TextareaField = ({ label, name, value, onChange, placeholder }) => 
     }, [value]);
     return (
         <div>
-            <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1 uppercase">{label}</label>
             <textarea
                 ref={textareaRef}
                 name={name}
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary resize-none overflow-hidden"
+                className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary resize-none overflow-hidden uppercase"
                 rows="3"
             />
         </div>
@@ -62,7 +62,7 @@ export const TextareaField = ({ label, name, value, onChange, placeholder }) => 
 
 const ToggleSwitch = ({ label, icon, enabled, onChange }) => (
     <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1 uppercase">{label}</label>
         <div className="flex items-center gap-4 mt-2">
             <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
             <button
@@ -72,7 +72,7 @@ const ToggleSwitch = ({ label, icon, enabled, onChange }) => (
             >
                 <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
-            <span className={`font-semibold ${enabled ? 'text-accent' : 'text-text-secondary'}`}>
+            <span className={`font-semibold uppercase ${enabled ? 'text-accent' : 'text-text-secondary'}`}>
                 {enabled ? 'SÍ' : 'NO'}
             </span>
         </div>
@@ -81,7 +81,7 @@ const ToggleSwitch = ({ label, icon, enabled, onChange }) => (
 
 const KeySelector = ({ label, icon, value, onChange }) => (
     <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1 uppercase">{label}</label>
         <div className="flex items-center gap-4 mt-2">
             <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
             <div className="flex items-center rounded-lg bg-background p-1 border border-border-color text-text-secondary">
@@ -90,7 +90,7 @@ const KeySelector = ({ label, icon, value, onChange }) => (
                         key={num}
                         type="button"
                         onClick={() => onChange(num)}
-                        className={`px-4 py-1 text-sm rounded-md transition-colors ${value === num ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}
+                        className={`px-4 py-1 text-sm rounded-md transition-colors uppercase ${value === num ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}
                     >
                         {num}
                     </button>
@@ -166,15 +166,15 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
                 />
             </div>
             <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">ETIQUETAS</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1 uppercase">ETIQUETAS</label>
                 <div className="flex flex-wrap items-center gap-2 w-full px-3 py-2 bg-background border border-border-color rounded-lg focus-within:ring-1 focus-within:ring-blue-accent focus-within:border-blue-accent">
                     {newCar.tags.map(tag => (
-                        <span key={tag} className="flex items-center gap-1 bg-blue-accent/10 text-blue-accent text-sm px-2 py-1 rounded">
+                        <span key={tag} className="flex items-center gap-1 bg-blue-accent/10 text-blue-accent text-sm px-2 py-1 rounded uppercase">
                             {tag}
                             <button onClick={() => removeTag(tag)} className="hover:opacity-75"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
                         </span>
                     ))}
-                    <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="AÑADIR ETIQUETA Y PULSAR ENTER" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px]" />
+                    <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="AÑADIR ETIQUETA Y PULSAR ENTER" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px] uppercase" />
                 </div>
             </div>
             <TextareaField label="ANOTACIONES" name="notes" value={newCar.notes} onChange={handleChange} placeholder="AÑADE CUALQUIER ANOTACIÓN RELEVANTE SOBRE EL COCHE..." />

@@ -1,23 +1,13 @@
 // autogest-app/frontend/src/pages/SalesSummary.jsx
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react'; // --- INICIO DE LA MODIFICACIÓN ---
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faTags, faCar, faCalendarDay, faEuroSign, faWrench } from '@fortawesome/free-solid-svg-icons';
+import jsPDF from 'jspdf'; // --- INICIO DE LA MODIFICACIÓN ---
+import autoTable from 'jspdf-autotable'; // --- INICIO DE LA MODIFICACIÓN ---
 
 const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
-    useEffect(() => {
-        const jspdfScript = document.createElement('script');
-        jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-        jspdfScript.async = true;
-        
-        jspdfScript.onload = () => {
-            const autotableScript = document.createElement('script');
-            autotableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
-            autotableScript.async = true;
-            document.head.appendChild(autotableScript);
-        };
-        document.head.appendChild(jspdfScript);
-    }, []);
+    // --- INICIO DE LA MODIFICACIÓN (SE ELIMINA EL useEffect QUE CARGABA SCRIPTS) ---
 
     const soldCarsWithProfit = useMemo(() => {
         return cars
@@ -36,28 +26,24 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
     }, [cars, expenses]);
 
     const generatePDF = () => {
-        if (window.jspdf && window.jspdf.jsPDF) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.text("Resumen de Ventas", 14, 16);
-            doc.autoTable({
-                startY: 20,
-                head: [['Modelo', 'Matrícula', 'Precio Compra', 'Gastos', 'Precio Venta', 'Beneficio/Pérdida']],
-                body: soldCarsWithProfit.map(car => [
-                    `${car.make} ${car.model}`,
-                    car.licensePlate,
-                    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice),
-                    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.totalExpenses),
-                    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice),
-                    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.profit)
-                ]),
-            });
-            doc.save('resumen_ventas.pdf');
-        } else {
-            console.error("La librería jsPDF no está cargada todavía.");
-            alert("La función para exportar a PDF no está lista, por favor inténtalo de nuevo en unos segundos.");
-        }
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const doc = new jsPDF();
+        
+        doc.text("Resumen de Ventas", 14, 16);
+        autoTable(doc, { // Se cambia la llamada a autoTable
+            startY: 20,
+            head: [['Modelo', 'Matrícula', 'Precio Compra', 'Gastos', 'Precio Venta', 'Beneficio/Pérdida']],
+            body: soldCarsWithProfit.map(car => [
+                `${car.make} ${car.model}`,
+                car.licensePlate,
+                new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice),
+                new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.totalExpenses),
+                new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice),
+                new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.profit)
+            ]),
+        });
+        doc.save('resumen_ventas.pdf');
+        // --- FIN DE LA MODIFICACIÓN ---
     };
     
     const noSoldCars = soldCarsWithProfit.length === 0;

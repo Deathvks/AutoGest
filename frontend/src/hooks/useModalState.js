@@ -28,8 +28,9 @@ export const useModalState = () => {
     const [isBusinessDataModalOpen, setIsBusinessDataModalOpen] = useState(false);
     const [businessDataMessage, setBusinessDataMessage] = useState('');
     const [isSubscriptionSuccessModalOpen, setSubscriptionSuccessModalOpen] = useState(false);
-    // --- INICIO DE LA MODIFICACIÓN ---
     const [isLogoutModalOpen, setLogoutModalOpen] = useState(false);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [carForTestDrive, setCarForTestDrive] = useState(null);
     // --- FIN DE LA MODIFICACIÓN ---
 
     return {
@@ -59,8 +60,9 @@ export const useModalState = () => {
         isBusinessDataModalOpen, setIsBusinessDataModalOpen,
         businessDataMessage, setBusinessDataMessage,
         isSubscriptionSuccessModalOpen, setSubscriptionSuccessModalOpen,
-        // --- INICIO DE LA MODIFICACIÓN ---
         isLogoutModalOpen, setLogoutModalOpen,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        carForTestDrive, setCarForTestDrive,
         // --- FIN DE LA MODIFICACIÓN ---
     };
 };

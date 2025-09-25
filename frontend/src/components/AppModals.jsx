@@ -29,6 +29,7 @@ import GestoriaReturnModal from './modals/GestoriaReturnModal';
 import NotifyClientModal from './modals/NotifyClientModal';
 import SubscriptionSuccessModal from './modals/SubscriptionSuccessModal';
 import LogoutConfirmationModal from './modals/LogoutConfirmationModal';
+import TestDriveModal from './modals/TestDriveModal'; // --- INICIO DE LA MODIFICACIÓN ---
 
 const InputField = ({ label, name, value, onChange, icon, required = false }) => (
     <div>
@@ -244,6 +245,7 @@ const AppModals = ({ appState }) => {
         carToNotify, setCarToNotify, isBusinessDataModalOpen, setIsBusinessDataModalOpen,
         isSubscriptionSuccessModalOpen, setSubscriptionSuccessModalOpen,
         isLogoutModalOpen, setLogoutModalOpen,
+        carForTestDrive, setCarForTestDrive, // --- INICIO DE LA MODIFICACIÓN ---
         handleSaveBusinessData, handleUserAdded, handleUserUpdated,
         handleUserDeleted, handleAddCar, handleUpdateCar,
         handleDeleteCar, handleSellConfirm, handleReserveConfirm,
@@ -277,6 +279,7 @@ const AppModals = ({ appState }) => {
                             onGestoriaPickupClick={(car) => { setCarToView(null); setCarForGestoriaPickup(car); }}
                             onGestoriaReturnClick={(car) => { setCarToView(null); setCarForGestoriaReturn(car); }}
                             onUpdateCar={handleUpdateCar}
+                            onTestDriveClick={(car) => { setCarToView(null); setCarForTestDrive(car); }} // --- INICIO DE LA MODIFICACIÓN ---
                         />
                     </div>
                 </div>
@@ -322,6 +325,9 @@ const AppModals = ({ appState }) => {
                 onClose={() => setLogoutModalOpen(false)}
                 onConfirm={logout}
             />
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            {carForTestDrive && <TestDriveModal car={carForTestDrive} onClose={() => setCarForTestDrive(null)} />}
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
     );
 };

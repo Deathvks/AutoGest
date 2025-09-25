@@ -1,145 +1,166 @@
-// autogest-app/frontend/src/pages/MyCars.jsx
-import React, { useState, useMemo, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+// autogest-app/frontend/src/pages/Profile.jsx
+import React, { useContext, useState, useRef } from 'react';
+import { AuthContext } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSearch, faTimes, faFilter } from '@fortawesome/free-solid-svg-icons';
-import FilterModal from '../components/modals/FilterModal';
-import CarCard from './MyCars/CarCard';
-import FilterSidebar from './MyCars/FilterSidebar';
+import { faCamera, faTrash, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 
-// --- INICIO DE LA MODIFICACIÓN ---
-const MyCars = ({ cars, locations, onAddClick, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance, onAddIncidentClick }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isFilterModalOpen, setFilterModalOpen] = useState(false);
-  // Se añade 'location' al estado de los filtros
-  const [filters, setFilters] = useState({ make: '', status: '', location: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
-  const location = useLocation();
-  // --- FIN DE LA MODIFICACIÓN ---
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
-  useEffect(() => {
-    const carIdToOpen = location.state?.carIdToOpen;
-    if (carIdToOpen) {
-      const carToOpen = cars.find(c => c.id === carIdToOpen);
-      if (carToOpen) {
-        onViewDetailsClick(carToOpen);
-        window.history.replaceState({}, document.title);
-      }
-    }
-  }, [location.state, cars, onViewDetailsClick]);
+const Profile = () => {
+    const { user, updateUserProfile, deleteUserAvatar } = useContext(AuthContext);
 
-  const resetFilters = () => {
-    // --- INICIO DE LA MODIFICACIÓN ---
-    setFilters({ make: '', status: '', location: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
-    // --- FIN DE LA MODIFICACIÓN ---
-    setSearchTerm('');
-  };
-
-  const filteredCars = useMemo(() => {
-    return cars.filter(car => {
-      const searchMatch = `${car.make} ${car.model} ${car.licensePlate}`.toLowerCase().includes(searchTerm.toLowerCase());
-      const makeMatch = filters.make ? car.make === filters.make : true;
-      const statusMatch = filters.status ? car.status === filters.status : true;
-      // --- INICIO DE LA MODIFICACIÓN ---
-      // Se añade la lógica para filtrar por ubicación
-      const locationMatch = filters.location ? car.location === filters.location : true;
-      // --- FIN DE LA MODIFICACIÓN ---
-      const minPriceMatch = filters.minPrice ? car.price >= parseFloat(filters.minPrice) : true;
-      const maxPriceMatch = filters.maxPrice ? car.price <= parseFloat(filters.maxPrice) : true;
-      const minKmMatch = filters.minKm ? car.km >= parseFloat(filters.minKm) : true;
-      const maxKmMatch = filters.maxKm ? car.km <= parseFloat(filters.maxKm) : true;
-      // --- INICIO DE LA MODIFICACIÓN ---
-      return searchMatch && makeMatch && statusMatch && locationMatch && minPriceMatch && maxPriceMatch && minKmMatch && maxKmMatch;
-      // --- FIN DE LA MODIFICACIÓN ---
+    const [isEditing, setIsEditing] = useState(false);
+    const [formData, setFormData] = useState({
+        name: user?.name || '',
+        email: user?.email || '',
     });
-  }, [cars, searchTerm, filters]);
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState(null);
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const avatarInputRef = React.useRef(null);
 
-  return (
-    <>
-      <div className="flex flex-col lg:flex-row gap-8">
-        <aside className="hidden lg:block lg:w-72 xl:w-80 flex-shrink-0">
-          {/* --- INICIO DE LA MODIFICACIÓN --- */}
-          <FilterSidebar cars={cars} locations={locations} filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
-          {/* --- FIN DE LA MODIFICACIÓN --- */}
-        </aside>
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
 
-        <main className="flex-1 space-y-6 min-w-0 max-w-5xl 2xl:max-w-6xl lg:pr-12 xl:pr-16">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="relative w-full sm:flex-grow">
-              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
-              <input
-                type="text"
-                placeholder="Buscar por marca, modelo, matrícula..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 bg-component-bg border border-border-color rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent transition"
-              />
-              {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
-                  <FontAwesomeIcon icon={faTimes} />
-                </button>
-              )}
+    const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                setError('La imagen no puede pesar más de 10MB.');
+                return;
+            }
+            setAvatarFile(file);
+            setAvatarPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleSaveChanges = async () => {
+        setMessage('');
+        setError('');
+        try {
+            const data = new FormData();
+            
+            // Solo añadir los campos que han cambiado
+            if (formData.name !== user.name) {
+                data.append('name', formData.name);
+            }
+            if (formData.email !== user.email) {
+                data.append('email', formData.email);
+            }
+
+            if (avatarFile) {
+                data.append('avatar', avatarFile);
+            }
+
+            // Si no hay cambios, no hacer la llamada a la API
+            if (!data.entries().next().done) {
+                 await updateUserProfile(data);
+            }
+           
+            setMessage('Perfil actualizado con éxito.');
+            setIsEditing(false);
+            setAvatarFile(null);
+            setAvatarPreview(null); // Limpiar preview para que muestre la nueva imagen de `user`
+        } catch (error) {
+            setError(error.message || 'Error al actualizar el perfil.');
+        }
+    };
+    
+    const handleDeleteAvatar = async () => {
+        try {
+            await deleteUserAvatar();
+            setAvatarPreview(null);
+            setMessage('Avatar eliminado con éxito.');
+        } catch (error) {
+            setError(error.message || 'Error al eliminar el avatar.');
+        }
+    };
+
+    const handleCancel = () => {
+        setIsEditing(false);
+        setFormData({
+            name: user?.name || '',
+            email: user?.email || '',
+        });
+        setAvatarFile(null);
+        setAvatarPreview(null);
+        setError('');
+        setMessage('');
+    };
+
+    return (
+        <div className="max-w-xl mx-auto">
+            <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">MI PERFIL</h1>
+            
+            <div className="bg-component-bg p-6 rounded-xl border border-border-color shadow-sm">
+                <div className="flex flex-col items-center gap-6">
+                    <div className="relative">
+                        <img 
+                            src={avatarPreview || (user.avatarUrl ? `${API_BASE_URL}${user.avatarUrl}` : `https://ui-avatars.com/api/?name=${formData.name}&background=B8860B&color=fff&size=128`)} 
+                            alt="Avatar"
+                            className="w-32 h-32 rounded-full object-cover border-4 border-border-color"
+                        />
+                        {isEditing && (
+                            <>
+                                <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
+                                <button onClick={() => avatarInputRef.current.click()} className="absolute bottom-1 right-1 bg-accent text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent-hover transition-colors shadow-md">
+                                    <FontAwesomeIcon icon={faCamera} size="sm" />
+                                </button>
+                                {user.avatarUrl && (
+                                     <button onClick={handleDeleteAvatar} className="absolute top-1 right-1 bg-red-accent text-white w-8 h-8 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity shadow-md">
+                                        <FontAwesomeIcon icon={faTrash} size="sm"/>
+                                    </button>
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    <div className="w-full">
+                        {isEditing ? (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-text-secondary mb-1">Nombre Completo</label>
+                                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-accent" />
+                                </div>
+                                <div>
+                                     <label className="block text-sm font-medium text-text-secondary mb-1">Email</label>
+                                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-accent" />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center">
+                                <h2 className="text-2xl font-bold text-text-primary">{user.name}</h2>
+                                <p className="text-text-secondary">{user.email}</p>
+                                <span className={`mt-2 inline-block text-xs font-bold px-3 py-1 rounded-full ${user.role === 'admin' ? 'bg-red-accent/10 text-red-accent' : 'bg-blue-accent/10 text-blue-accent'}`}>{user.role}</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-border-color flex justify-end gap-4">
+                    {isEditing ? (
+                        <>
+                            <button onClick={handleCancel} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center gap-2">
+                                <FontAwesomeIcon icon={faTimes} />
+                                Cancelar
+                            </button>
+                            <button onClick={handleSaveChanges} className="bg-accent text-white px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2">
+                                <FontAwesomeIcon icon={faSave} />
+                                Guardar Cambios
+                            </button>
+                        </>
+                    ) : (
+                        <button onClick={() => setIsEditing(true)} className="bg-accent text-white px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors">Editar Perfil</button>
+                    )}
+                </div>
+                {message && <p className="text-sm text-center mt-4 text-green-accent">{message}</p>}
+                {error && <p className="text-sm text-center mt-4 text-red-accent">{error}</p>}
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <button
-                onClick={() => setFilterModalOpen(true)}
-                className="w-1/2 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg border border-border-color hover:bg-border-color transition-colors lg:hidden"
-              >
-                <FontAwesomeIcon icon={faFilter} />
-                <span>Filtros</span>
-              </button>
-              <button
-                onClick={onAddClick}
-                className="w-1/2 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors"
-              >
-                <FontAwesomeIcon icon={faPlus} />
-                <span>Añadir</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="pb-4 border-b border-border-color">
-            <h2 className="text-lg font-bold text-text-primary">
-              {filteredCars.length} Vehículos
-              <span className="text-sm font-medium text-text-secondary ml-2">(de {cars.length} en total)</span>
-            </h2>
-          </div>
-
-          <div className="space-y-6">
-            {filteredCars.map(car => (
-              <CarCard
-                key={car.id}
-                car={car}
-                onViewDetailsClick={onViewDetailsClick}
-                onSellClick={onSellClick}
-                onReserveClick={onReserveClick}
-                onCancelReservationClick={onCancelReservationClick}
-                onUpdateInsurance={onUpdateInsurance}
-                onAddIncidentClick={onAddIncidentClick}
-              />
-            ))}
-          </div>
-
-          {filteredCars.length === 0 && (
-            <div className="text-center py-12 bg-component-bg rounded-lg border border-border-color">
-              <p className="text-text-secondary">No se han encontrado coches con los filtros actuales.</p>
-            </div>
-          )}
-        </main>
-      </div>
-
-      <FilterModal
-        isOpen={isFilterModalOpen}
-        onClose={() => setFilterModalOpen(false)}
-        cars={cars}
-        // --- INICIO DE LA MODIFICACIÓN ---
-        locations={locations}
-        // --- FIN DE LA MODIFICACIÓN ---
-        filters={filters}
-        setFilters={setFilters}
-        resetFilters={resetFilters}
-      />
-    </>
-  );
+        </div>
+    );
 };
 
-export default MyCars;
+export default Profile;

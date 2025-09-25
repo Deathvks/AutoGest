@@ -3,24 +3,25 @@ import React, { useContext, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faPencilAlt, faTrashAlt, faFileInvoiceDollar, faBan, faHandHoldingUsd,
-    faBell, faExclamationTriangle, faFileInvoice
+    faBell, faExclamationTriangle, faFileInvoice, faFileSignature
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import GeneratePdfModal from '../GeneratePdfModal';
-import api from '../../../services/api'; // <-- IMPORTADO
+import api from '../../../services/api';
 
 const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
-const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onAddExpenseClick, onAddIncidentClick, onUpdateCar }) => { // <-- onUpdateCar AÑADIDO
+// --- INICIO DE LA MODIFICACIÓN ---
+const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onAddExpenseClick, onAddIncidentClick, onUpdateCar, onTestDriveClick }) => {
+// --- FIN DE LA MODIFICACIÓN ---
     const { user } = useContext(AuthContext);
     const isReservedAndActive = car.status.toUpperCase() === 'RESERVADO' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
     const isLockedForUser = isReservedAndActive && user.role !== 'admin';
 
     const [pdfModalInfo, setPdfModalInfo] = useState({ isOpen: false, type: '', number: 0 });
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleGeneratePdf = async (type, number) => {
         const doc = new jsPDF();
         const today = new Date().toLocaleDateString('es-ES');
@@ -193,7 +194,6 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
         
         setPdfModalInfo({ isOpen: false, type: '', number: 0 });
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const openPdfModal = (type) => {
         const nextNumber = type === 'proforma' ? user.proformaCounter : user.invoiceCounter;
@@ -203,6 +203,14 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
     return (
         <>
             <div className="flex-shrink-0 p-4 border-t border-border-color flex flex-wrap justify-center sm:justify-end gap-3">
+                {(car.status.toUpperCase() === 'EN VENTA') && (
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    <button onClick={() => onTestDriveClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-yellow-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
+                        <FontAwesomeIcon icon={faFileSignature} /> DOCUMENTO PRUEBA
+                    </button>
+                    // --- FIN DE LA MODIFICACIÓN ---
+                )}
+
                 {car.status.toUpperCase() === 'VENDIDO' ? (
                     <button onClick={() => openPdfModal('factura')} className="px-4 py-2 text-sm font-semibold text-white bg-green-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
                         <FontAwesomeIcon icon={faFileInvoice} /> FACTURA
