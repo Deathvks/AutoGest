@@ -19,9 +19,7 @@ exports.getMe = async (req, res) => {
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const { name, email, businessName, dni, cif, address, phone, proformaCounter, invoiceCounter, applyIgic } = req.body;
-        // --- FIN DE LA MODIFICACIÓN ---
         const user = await User.findByPk(req.user.id);
         
         if (!user) {
@@ -47,23 +45,38 @@ exports.updateProfile = async (req, res) => {
         if (phone !== undefined) user.phone = phone;
         if (proformaCounter) user.proformaCounter = proformaCounter;
         if (invoiceCounter) user.invoiceCounter = invoiceCounter;
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (applyIgic !== undefined) user.applyIgic = applyIgic;
-        // --- FIN DE LA MODIFICACIÓN ---
 
-        if (req.file) {
-            const oldAvatarUrl = user.avatarUrl;
-            const newAvatarUrl = `/avatars/${req.file.filename}`;
-            user.avatarUrl = newAvatarUrl;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        if (req.files) {
+            if (req.files.avatar) {
+                const oldAvatarUrl = user.avatarUrl;
+                const newAvatarUrl = `/avatars/${req.files.avatar[0].filename}`;
+                user.avatarUrl = newAvatarUrl;
 
-            if (oldAvatarUrl && oldAvatarUrl !== newAvatarUrl) {
-                const oldAvatarFilename = path.basename(oldAvatarUrl);
-                const oldAvatarFilePath = path.join(__dirname, '..', 'public', 'avatars', oldAvatarFilename);
-                if (fs.existsSync(oldAvatarFilePath)) {
-                    fs.unlinkSync(oldAvatarFilePath);
+                if (oldAvatarUrl && oldAvatarUrl !== newAvatarUrl) {
+                    const oldAvatarFilename = path.basename(oldAvatarUrl);
+                    const oldAvatarFilePath = path.join(__dirname, '..', 'public', 'avatars', oldAvatarFilename);
+                    if (fs.existsSync(oldAvatarFilePath)) {
+                        fs.unlinkSync(oldAvatarFilePath);
+                    }
+                }
+            }
+            if (req.files.logo) {
+                const oldLogoUrl = user.logoUrl;
+                const newLogoUrl = `/avatars/${req.files.logo[0].filename}`;
+                user.logoUrl = newLogoUrl;
+
+                if (oldLogoUrl && oldLogoUrl !== newLogoUrl) {
+                    const oldLogoFilename = path.basename(oldLogoUrl);
+                    const oldLogoFilePath = path.join(__dirname, '..', 'public', 'avatars', oldLogoFilename);
+                    if (fs.existsSync(oldLogoFilePath)) {
+                        fs.unlinkSync(oldLogoFilePath);
+                    }
                 }
             }
         }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         await user.save();
 
@@ -126,6 +139,39 @@ exports.deleteAvatar = async (req, res) => {
         res.status(500).json({ error: 'Error al eliminar el avatar.' });
     }
 };
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Eliminar el logo del usuario (DELETE /api/auth/logo)
+exports.deleteLogo = async (req, res) => {
+    try {
+        const user = await User.findByPk(req.user.id);
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+
+        const logoUrlToDelete = user.logoUrl;
+
+        if (logoUrlToDelete) {
+            const logoFilename = path.basename(logoUrlToDelete);
+            const logoFilePath = path.join(__dirname, '..', 'public', 'avatars', logoFilename);
+            if (fs.existsSync(logoFilePath)) {
+                fs.unlinkSync(logoFilePath);
+            }
+        }
+
+        user.logoUrl = null;
+        await user.save();
+        
+        const userResponse = user.toJSON();
+        delete userResponse.password;
+
+        res.status(200).json(userResponse);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al eliminar el logo.' });
+    }
+};
+// --- FIN DE LA MODIFICACIÓN ---
 
 // Cambiar la contraseña del usuario (PUT /api/auth/update-password)
 exports.updatePassword = async (req, res) => {

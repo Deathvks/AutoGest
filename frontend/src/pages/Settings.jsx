@@ -1,23 +1,62 @@
 // autogest-app/frontend/src/pages/Settings.jsx
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faBuilding, faCreditCard, faPercentage } from '@fortawesome/free-solid-svg-icons';
+import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faBuilding, faCreditCard, faPercentage, faUpload, faTrash, faBuildingCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import Papa from 'papaparse';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import VersionIndicator from '../components/VersionIndicator';
 import { APP_NAME } from '../config/version';
 
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+
 const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDeleteAccountClick, onBusinessDataClick, businessDataMessage, onLogoutClick }) => {
-    const { user, updateUserProfile } = useContext(AuthContext); // <-- Se añade updateUserProfile
+    const { user, updateUserProfile } = useContext(AuthContext);
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
     const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
     const [exportMessage, setExportMessage] = useState('');
-
-    // --- INICIO DE LA MODIFICACIÓN ---
     const [igicEnabled, setIgicEnabled] = useState(user?.applyIgic || false);
     const [igicMessage, setIgicMessage] = useState('');
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [logoFile, setLogoFile] = useState(null);
+    const [logoPreview, setLogoPreview] = useState(user?.logoUrl || '');
+    const [logoMessage, setLogoMessage] = useState('');
+    const logoInputRef = useRef(null);
+
+    useEffect(() => {
+        // Actualiza la previsualización si el logo del usuario cambia (p. ej. después de guardar)
+        setLogoPreview(user?.logoUrl || '');
+    }, [user?.logoUrl]);
+
+
+    const handleLogoChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 10 * 1024 * 1024) {
+                setLogoMessage({ type: 'error', text: 'El logo no puede pesar más de 10MB.' });
+                return;
+            }
+            setLogoFile(file);
+            setLogoPreview(URL.createObjectURL(file));
+            setLogoMessage({ type: 'info', text: 'Logo listo para subir. Guarda los cambios para aplicarlo.' });
+        }
+    };
+
+    const handleDeleteLogo = async () => {
+        setLogoMessage({ type: '', text: '' });
+        try {
+            await api.deleteLogo(); // Llama a la nueva función de la API
+            setLogoFile(null);
+            setLogoPreview('');
+            setLogoMessage({ type: 'success', text: 'Logo eliminado con éxito.' });
+            setTimeout(() => setLogoMessage({ type: '', text: '' }), 3000);
+        } catch (error) {
+            setLogoMessage({ type: 'error', text: 'Error al eliminar el logo.' });
+        }
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleIgicToggle = async () => {
         const newIgicState = !igicEnabled;
@@ -28,11 +67,9 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
             setTimeout(() => setIgicMessage(''), 3000);
         } catch (error) {
             setIgicMessage('Error al guardar');
-            // Revertir el estado si hay un error
             setIgicEnabled(!newIgicState);
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
@@ -78,6 +115,22 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
         document.body.removeChild(link);
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleSaveChanges = async () => {
+        if (!logoFile) return;
+        const formData = new FormData();
+        formData.append('logo', logoFile);
+        try {
+            await updateUserProfile(formData);
+            setLogoFile(null);
+            setLogoMessage({ type: 'success', text: '¡Logo guardado con éxito!' });
+            setTimeout(() => setLogoMessage({ type: '', text: '' }), 3000);
+        } catch (error) {
+            setLogoMessage({ type: 'error', text: 'Error al guardar el logo.' });
+        }
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
+
     return (
         <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">AJUSTES</h1>
@@ -97,7 +150,6 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                     </div>
                 </div>
                 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <div className="p-6 bg-component-bg rounded-xl border border-border-color">
                     <h3 className="text-lg font-bold text-text-primary mb-4">IMPUESTOS</h3>
                     <div className="flex justify-between items-center">
@@ -117,7 +169,6 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                         </div>
                     </div>
                 </div>
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                 <div className="p-6 bg-component-bg rounded-xl border border-border-color">
                     <h3 className="text-lg font-bold text-text-primary mb-4">DATOS DE EMPRESA</h3>
@@ -133,6 +184,43 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                             </span>
                         )}
                     </div>
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <hr className="border-border-color my-6" />
+                    <h4 className="font-semibold text-text-primary mb-2">LOGO DE LA EMPRESA</h4>
+                    <p className="text-sm text-text-secondary mb-3">SUBE EL LOGO DE TU EMPRESA PARA QUE APAREZCA EN TUS FACTURAS. (MÁX 10MB)</p>
+                    <div className="flex items-center gap-4">
+                        <div className="w-20 h-20 rounded-lg bg-background flex items-center justify-center overflow-hidden border border-border-color flex-shrink-0">
+                            {logoPreview ? (
+                                <img src={logoPreview.startsWith('blob:') ? logoPreview : `${API_BASE_URL}${logoPreview}`} alt="Logo" className="h-full w-full object-contain" />
+                            ) : (
+                                <FontAwesomeIcon icon={faBuildingCircleCheck} className="text-3xl text-text-secondary" />
+                            )}
+                        </div>
+                        <div className="flex flex-col gap-2 w-full">
+                            <input type="file" ref={logoInputRef} onChange={handleLogoChange} className="hidden" accept="image/*" />
+                            <button type="button" onClick={() => logoInputRef.current.click()} className="w-full bg-component-bg-hover text-text-secondary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-border-color">
+                                <FontAwesomeIcon icon={faUpload} /> CAMBIAR LOGO
+                            </button>
+                            {user.logoUrl && (
+                                <button type="button" onClick={handleDeleteLogo} className="w-full bg-red-accent/10 text-red-accent px-3 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-transparent">
+                                    <FontAwesomeIcon icon={faTrash} /> ELIMINAR LOGO
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    {logoFile && (
+                        <div className="mt-4 flex justify-end">
+                             <button onClick={handleSaveChanges} className="bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity text-sm font-medium">
+                                GUARDAR CAMBIOS
+                            </button>
+                        </div>
+                    )}
+                    {logoMessage.text && (
+                        <p className={`text-sm text-center mt-3 ${logoMessage.type === 'success' ? 'text-green-accent' : (logoMessage.type === 'error' ? 'text-red-accent' : 'text-text-secondary')}`}>
+                            {logoMessage.text}
+                        </p>
+                    )}
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
 
                 <div className="p-6 bg-component-bg rounded-xl border border-border-color">

@@ -10,6 +10,10 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import GeneratePdfModal from '../GeneratePdfModal'; 
 
+// --- INICIO DE LA MODIFICACIÓN ---
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+// --- FIN DE LA MODIFICACIÓN ---
+
 const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onAddExpenseClick, onAddIncidentClick }) => {
     const { user } = useContext(AuthContext);
     const isReservedAndActive = car.status.toUpperCase() === 'RESERVADO' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
@@ -17,9 +21,54 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
 
     const [pdfModalInfo, setPdfModalInfo] = useState({ isOpen: false, type: '', number: 0 });
 
-    const handleGeneratePdf = (type, number) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleGeneratePdf = async (type, number) => {
         const doc = new jsPDF();
         const today = new Date().toLocaleDateString('es-ES');
+        let currentY = 20;
+
+        // Función auxiliar para cargar la imagen del logo
+        const getImageAsBase64 = async (url) => {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) return null;
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (error) {
+                console.error("Error al cargar la imagen para el PDF:", error);
+                return null;
+            }
+        };
+
+        // Si el usuario tiene un logo, lo añadimos al PDF
+        if (user.logoUrl) {
+            const logoUrl = `${API_BASE_URL}${user.logoUrl}`;
+            const logoData = await getImageAsBase64(logoUrl);
+            if (logoData) {
+                const img = new Image();
+                img.src = logoData;
+                await new Promise(resolve => { img.onload = resolve; });
+
+                const maxW = 50;
+                const maxH = 25;
+                const aspectRatio = img.width / img.height;
+                let imgWidth = maxW;
+                let imgHeight = imgWidth / aspectRatio;
+
+                if (imgHeight > maxH) {
+                    imgHeight = maxH;
+                    imgWidth = imgHeight * aspectRatio;
+                }
+                doc.addImage(logoData, 'PNG', 14, 15, imgWidth, imgHeight);
+                currentY = 15 + imgHeight + 15; // Ajustamos la posición vertical del siguiente elemento
+            }
+        }
+
         let buyer = {};
         if (car.buyerDetails) {
             try {
@@ -30,7 +79,6 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
         }
         
         const lightGreenColor = [219, 237, 213];
-        let currentY = 20;
 
         doc.setFontSize(24);
         doc.text(type.toUpperCase(), 14, currentY);
@@ -41,7 +89,7 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
         
         currentY += 25;
 
-        // Datos del Cliente y Vendedor (común para ambos)
+        // El resto del código usa la variable `currentY` actualizada para posicionarse correctamente
         doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
         doc.rect(14, currentY - 5, 85, 7, 'F');
         doc.setFontSize(11);
@@ -76,7 +124,6 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
         
         const price = parseFloat(type === 'factura' ? car.salePrice : car.price);
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (type === 'factura' && user.applyIgic) {
             const basePrice = price / 1.07;
             const igicAmount = price - basePrice;
@@ -110,7 +157,6 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
             doc.text('TOTAL:', 145, finalYTable + 25);
             doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`, 193, finalYTable + 25, { align: 'right' });
         } else {
-            // Lógica para Proforma o Factura sin IGIC
             autoTable(doc, {
                 startY: currentY,
                 head: [['Descripción', 'TOTAL']],
@@ -138,11 +184,11 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
             doc.setFontSize(8);
             doc.text("ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL.", 105, doc.internal.pageSize.height - 10, { align: 'center' });
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         doc.save(`${type}_${number}_${car.licensePlate}.pdf`);
         setPdfModalInfo({ isOpen: false, type: '', number: 0 });
     };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const openPdfModal = (type) => {
         const nextNumber = type === 'proforma' ? user.proformaCounter : user.invoiceCounter;

@@ -27,6 +27,12 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    logoUrl: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
     businessName: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -82,7 +88,6 @@ const User = sequelize.define('User', {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     resetPasswordToken: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -91,7 +96,6 @@ const User = sequelize.define('User', {
         type: DataTypes.DATE,
         allowNull: true,
     },
-    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
     indexes: [
