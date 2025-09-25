@@ -7,11 +7,14 @@ import FilterModal from '../components/modals/FilterModal';
 import CarCard from './MyCars/CarCard';
 import FilterSidebar from './MyCars/FilterSidebar';
 
+// --- INICIO DE LA MODIFICACIÓN ---
 const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance, onAddIncidentClick }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setFilterModalOpen] = useState(false);
-  const [filters, setFilters] = useState({ make: '', status: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
+  // Se mantiene 'location' en el estado de los filtros
+  const [filters, setFilters] = useState({ make: '', status: '', location: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
   const location = useLocation();
+  // --- FIN DE LA MODIFICACIÓN ---
 
   useEffect(() => {
     const carIdToOpen = location.state?.carIdToOpen;
@@ -25,7 +28,9 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
   }, [location.state, cars, onViewDetailsClick]);
 
   const resetFilters = () => {
-    setFilters({ make: '', status: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
+    // --- INICIO DE LA MODIFICACIÓN ---
+    setFilters({ make: '', status: '', location: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
+    // --- FIN DE LA MODIFICACIÓN ---
     setSearchTerm('');
   };
 
@@ -34,11 +39,17 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
       const searchMatch = `${car.make} ${car.model} ${car.licensePlate}`.toLowerCase().includes(searchTerm.toLowerCase());
       const makeMatch = filters.make ? car.make === filters.make : true;
       const statusMatch = filters.status ? car.status === filters.status : true;
+      // --- INICIO DE LA MODIFICACIÓN ---
+      // La lógica para filtrar por ubicación se mantiene
+      const locationMatch = filters.location ? car.location === filters.location : true;
+      // --- FIN DE LA MODIFICACIÓN ---
       const minPriceMatch = filters.minPrice ? car.price >= parseFloat(filters.minPrice) : true;
       const maxPriceMatch = filters.maxPrice ? car.price <= parseFloat(filters.maxPrice) : true;
       const minKmMatch = filters.minKm ? car.km >= parseFloat(filters.minKm) : true;
       const maxKmMatch = filters.maxKm ? car.km <= parseFloat(filters.maxKm) : true;
-      return searchMatch && makeMatch && statusMatch && minPriceMatch && maxPriceMatch && minKmMatch && maxKmMatch;
+      // --- INICIO DE LA MODIFICACIÓN ---
+      return searchMatch && makeMatch && statusMatch && locationMatch && minPriceMatch && maxPriceMatch && minKmMatch && maxKmMatch;
+      // --- FIN DE LA MODIFICACIÓN ---
     });
   }, [cars, searchTerm, filters]);
 
@@ -46,7 +57,10 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
     <>
       <div className="flex flex-col lg:flex-row gap-8">
         <aside className="hidden lg:block lg:w-72 xl:w-80 flex-shrink-0">
+          {/* --- INICIO DE LA MODIFICACIÓN --- */}
+          {/* Ya no pasamos 'locations', se derivará de 'cars' dentro del componente */}
           <FilterSidebar cars={cars} filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
+          {/* --- FIN DE LA MODIFICACIÓN --- */}
         </aside>
 
         <main className="flex-1 space-y-6 min-w-0 max-w-5xl 2xl:max-w-6xl lg:pr-12 xl:pr-16">

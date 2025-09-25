@@ -1,215 +1,145 @@
-// autogest-app/frontend/src/pages/Profile.jsx
-import React, { useState, useRef, useContext, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+// autogest-app/frontend/src/pages/MyCars.jsx
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faTrash, faUserCircle, faCog } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSearch, faTimes, faFilter } from '@fortawesome/free-solid-svg-icons';
+import FilterModal from '../components/modals/FilterModal';
+import CarCard from './MyCars/CarCard';
+import FilterSidebar from './MyCars/FilterSidebar';
 
-const API_BASE_URL = import.meta.env.PROD ? 'https://auto-gest.es' : 'http://localhost:3001';
+// --- INICIO DE LA MODIFICACIÓN ---
+const MyCars = ({ cars, locations, onAddClick, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance, onAddIncidentClick }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isFilterModalOpen, setFilterModalOpen] = useState(false);
+  // Se añade 'location' al estado de los filtros
+  const [filters, setFilters] = useState({ make: '', status: '', location: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
+  const location = useLocation();
+  // --- FIN DE LA MODIFICACIÓN ---
 
-const Profile = () => {
-    const { user, updateUserProfile, deleteUserAvatar } = useContext(AuthContext);
-    
-    const [formData, setFormData] = useState({ name: '', email: '' });
-    const [avatarFile, setAvatarFile] = useState(null);
-    const [avatarPreview, setAvatarPreview] = useState('');
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
-    const [isInitialized, setIsInitialized] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const fileInputRef = useRef(null);
-
-    useEffect(() => {
-        if (user && user.name && user.email && !isInitialized && !isSubmitting) {
-            setFormData({ name: user.name, email: user.email });
-            setIsInitialized(true);
-        }
-    }, [user, isInitialized, isSubmitting]);
-    
-    if (!user) {
-        return <div>CARGANDO PERFIL...</div>;
+  useEffect(() => {
+    const carIdToOpen = location.state?.carIdToOpen;
+    if (carIdToOpen) {
+      const carToOpen = cars.find(c => c.id === carIdToOpen);
+      if (carToOpen) {
+        onViewDetailsClick(carToOpen);
+        window.history.replaceState({}, document.title);
+      }
     }
+  }, [location.state, cars, onViewDetailsClick]);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
+  const resetFilters = () => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    setFilters({ make: '', status: '', location: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
+    // --- FIN DE LA MODIFICACIÓN ---
+    setSearchTerm('');
+  };
 
-    const handleAvatarChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const maxSize = 10 * 1024 * 1024;
-            if (file.size > maxSize) {
-                setError('EL ARCHIVO ES DEMASIADO GRANDE. EL TAMAÑO MÁXIMO PERMITIDO ES 10MB.');
-                setTimeout(() => setError(''), 5000);
-                return;
-            }
-            
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-            if (!allowedTypes.includes(file.type)) {
-                setError('TIPO DE ARCHIVO NO PERMITIDO. SOLO SE ACEPTAN IMÁGENES JPEG, JPG, PNG O WEBP.');
-                setTimeout(() => setError(''), 5000);
-                return;
-            }
-            
-            setAvatarFile(file);
-            setAvatarPreview(URL.createObjectURL(file));
-            setMessage('IMAGEN SELECCIONADA. HAZ CLIC EN "GUARDAR CAMBIOS" PARA CONFIRMAR.');
-            setError('');
-            
-            setTimeout(() => {
-                setMessage('');
-            }, 3000);
-        }
-    };
+  const filteredCars = useMemo(() => {
+    return cars.filter(car => {
+      const searchMatch = `${car.make} ${car.model} ${car.licensePlate}`.toLowerCase().includes(searchTerm.toLowerCase());
+      const makeMatch = filters.make ? car.make === filters.make : true;
+      const statusMatch = filters.status ? car.status === filters.status : true;
+      // --- INICIO DE LA MODIFICACIÓN ---
+      // Se añade la lógica para filtrar por ubicación
+      const locationMatch = filters.location ? car.location === filters.location : true;
+      // --- FIN DE LA MODIFICACIÓN ---
+      const minPriceMatch = filters.minPrice ? car.price >= parseFloat(filters.minPrice) : true;
+      const maxPriceMatch = filters.maxPrice ? car.price <= parseFloat(filters.maxPrice) : true;
+      const minKmMatch = filters.minKm ? car.km >= parseFloat(filters.minKm) : true;
+      const maxKmMatch = filters.maxKm ? car.km <= parseFloat(filters.maxKm) : true;
+      // --- INICIO DE LA MODIFICACIÓN ---
+      return searchMatch && makeMatch && statusMatch && locationMatch && minPriceMatch && maxPriceMatch && minKmMatch && maxKmMatch;
+      // --- FIN DE LA MODIFICACIÓN ---
+    });
+  }, [cars, searchTerm, filters]);
 
-    const handleDeleteAvatar = async () => {
-        setMessage('');
-        setError('');
-        setIsSubmitting(true);
-        try {
-            await deleteUserAvatar();
-            setAvatarFile(null);
-            setAvatarPreview('');
-            setMessage('FOTO DE PERFIL ELIMINADA.');
-            setTimeout(() => {
-                setMessage('');
-                setIsSubmitting(false);
-            }, 3000);
-        } catch (err) {
-            setError('ERROR AL ELIMINAR LA FOTO.');
-            setTimeout(() => {
-                setError('');
-                setIsSubmitting(false);
-            }, 3000);
-        }
-    };
-    
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setMessage('');
-        setError('');
-        setIsSubmitting(true);
-    
-        const data = new FormData();
-        data.append('name', formData.name);
-        data.append('email', formData.email);
-        if (avatarFile) {
-            data.append('avatar', avatarFile);
-        }
-    
-        try {
-            const hadAvatar = !!avatarFile;
-            await updateUserProfile(data);
-            
-            setAvatarFile(null);
-            setAvatarPreview('');
-            
-            const successMessage = hadAvatar ? '¡PERFIL Y FOTO GUARDADOS CON ÉXITO!' : '¡PERFIL ACTUALIZADO CON ÉXITO!';
-            setMessage(successMessage);
-            
-            setTimeout(() => {
-                setMessage('');
-                setIsSubmitting(false);
-            }, 5000);
-            
-        } catch (err) {
-            let errorMessage = 'ERROR DESCONOCIDO';
-            if (err.message) {
-                if (err.message.includes('demasiado grande')) {
-                    errorMessage = 'EL ARCHIVO ES DEMASIADO GRANDE. MÁXIMO 10MB PERMITIDO.';
-                } else if (err.message.includes('Tipo de archivo')) {
-                    errorMessage = 'SOLO SE PERMITEN IMÁGENES (JPEG, JPG, PNG, WEBP).';
-                } else {
-                    errorMessage = err.message;
-                }
-            }
-            
-            setError(`ERROR AL ACTUALIZAR EL PERFIL: ${errorMessage}`);
-            setTimeout(() => {
-                setError('');
-                setIsSubmitting(false);
-            }, 5000);
-        }
-    };
+  return (
+    <>
+      <div className="flex flex-col lg:flex-row gap-8">
+        <aside className="hidden lg:block lg:w-72 xl:w-80 flex-shrink-0">
+          {/* --- INICIO DE LA MODIFICACIÓN --- */}
+          <FilterSidebar cars={cars} locations={locations} filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
+          {/* --- FIN DE LA MODIFICACIÓN --- */}
+        </aside>
 
-    const getDisplayAvatarUrl = () => {
-        if (avatarPreview) {
-            return avatarPreview;
-        }
-        if (user?.avatarUrl) {
-            const baseUrl = user.avatarUrl.startsWith('http') ? user.avatarUrl : `${API_BASE_URL}${user.avatarUrl}`;
-            return `${baseUrl}?t=${Date.now()}`;
-        }
-        return null;
-    };
-
-    const displayAvatarUrl = getDisplayAvatarUrl();
-
-    return (
-        <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">PERFIL</h1>
-            
-            <div className="p-6 bg-component-bg rounded-xl border border-border-color">
-                <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
-                    <div className="flex flex-col items-center w-24 flex-shrink-0">
-                        <div className="w-24 h-24 rounded-full bg-background flex items-center justify-center overflow-hidden">
-                            {displayAvatarUrl ? (
-                                <img src={displayAvatarUrl} alt="AVATAR" className="h-full w-full object-cover" />
-                            ) : (
-                                <FontAwesomeIcon icon={faUserCircle} className="text-6xl text-zinc-500 dark:text-zinc-700" />
-                            )}
-                        </div>
-                        <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
-                        <div className="flex items-center gap-2 mt-2">
-                            <button onClick={() => fileInputRef.current.click()} className="bg-component-bg-hover text-text-secondary rounded-full p-2 hover:bg-border-color transition-colors w-9 h-9 flex items-center justify-center" aria-label="CAMBIAR AVATAR" title="CAMBIAR FOTO">
-                                <FontAwesomeIcon icon={faCamera} className="w-4 h-4" />
-                            </button>
-                            {displayAvatarUrl && (
-                                <button onClick={handleDeleteAvatar} className="bg-red-accent/10 text-red-accent rounded-full p-2 hover:bg-red-accent/20 transition-colors w-9 h-9 flex items-center justify-center" aria-label="ELIMINAR AVATAR" title="ELIMINAR FOTO">
-                                    <FontAwesomeIcon icon={faTrash} className="w-4 h-4" />
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    <div className="flex-1 text-center sm:text-left">
-                        <h2 className="text-xl font-bold text-text-primary">{user.name}</h2>
-                        <p className="text-sm text-text-secondary">{user.email}</p>
-                        <p className="mt-2 text-xs font-semibold uppercase text-blue-accent">{user.role}</p>
-                    </div>
-                </div>
-                <form onSubmit={handleSubmit} className="space-y-4 mt-6 border-t border-border-color pt-6">
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-text-secondary mb-1">NOMBRE</label>
-                        <input id="name" type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary" />
-                    </div>
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-1">EMAIL</label>
-                        <input id="email" type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary" />
-                    </div>
-                    <div className="flex justify-end items-center gap-4 min-h-[2rem]">
-                        {message && <p className="text-sm text-green-accent font-medium">{message}</p>}
-                        {error && <p className="text-sm text-red-accent font-medium">{error}</p>}
-                        <button type="submit" className="bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
-                            GUARDAR CAMBIOS
-                        </button>
-                    </div>
-                </form>
+        <main className="flex-1 space-y-6 min-w-0 max-w-5xl 2xl:max-w-6xl lg:pr-12 xl:pr-16">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="relative w-full sm:flex-grow">
+              <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+              <input
+                type="text"
+                placeholder="Buscar por marca, modelo, matrícula..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 bg-component-bg border border-border-color rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent transition"
+              />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+              )}
             </div>
-
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
-            <div className="mt-8 lg:hidden">
-                <Link
-                    to="/settings"
-                    className="w-full flex items-center justify-center gap-3 bg-component-bg text-text-primary font-bold py-3 px-4 rounded-xl border border-border-color hover:bg-component-bg-hover transition-colors"
-                >
-                    <FontAwesomeIcon icon={faCog} />
-                    <span>AJUSTES</span>
-                </Link>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => setFilterModalOpen(true)}
+                className="w-1/2 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg border border-border-color hover:bg-border-color transition-colors lg:hidden"
+              >
+                <FontAwesomeIcon icon={faFilter} />
+                <span>Filtros</span>
+              </button>
+              <button
+                onClick={onAddClick}
+                className="w-1/2 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-accent text-white font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+                <span>Añadir</span>
+              </button>
             </div>
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
-        </div>
-    );
+          </div>
+
+          <div className="pb-4 border-b border-border-color">
+            <h2 className="text-lg font-bold text-text-primary">
+              {filteredCars.length} Vehículos
+              <span className="text-sm font-medium text-text-secondary ml-2">(de {cars.length} en total)</span>
+            </h2>
+          </div>
+
+          <div className="space-y-6">
+            {filteredCars.map(car => (
+              <CarCard
+                key={car.id}
+                car={car}
+                onViewDetailsClick={onViewDetailsClick}
+                onSellClick={onSellClick}
+                onReserveClick={onReserveClick}
+                onCancelReservationClick={onCancelReservationClick}
+                onUpdateInsurance={onUpdateInsurance}
+                onAddIncidentClick={onAddIncidentClick}
+              />
+            ))}
+          </div>
+
+          {filteredCars.length === 0 && (
+            <div className="text-center py-12 bg-component-bg rounded-lg border border-border-color">
+              <p className="text-text-secondary">No se han encontrado coches con los filtros actuales.</p>
+            </div>
+          )}
+        </main>
+      </div>
+
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setFilterModalOpen(false)}
+        cars={cars}
+        // --- INICIO DE LA MODIFICACIÓN ---
+        locations={locations}
+        // --- FIN DE LA MODIFICACIÓN ---
+        filters={filters}
+        setFilters={setFilters}
+        resetFilters={resetFilters}
+      />
+    </>
+  );
 };
 
-export default Profile;
+export default MyCars;

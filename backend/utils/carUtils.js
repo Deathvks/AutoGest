@@ -42,16 +42,21 @@ const deleteFile = (fileUrlData) => {
 };
 
 /**
- * Parsea de forma segura una cadena JSON a un array.
- * @param {string} jsonString - La cadena JSON a parsear.
+ * Parsea de forma segura una cadena JSON a un array, o devuelve el array si ya está parseado.
+ * @param {string|Array} jsonData - La cadena JSON o un array ya parseado.
  * @returns {Array} Un array, vacío si hay un error o la entrada es nula.
  */
-const safeJsonParse = (jsonString) => {
-    if (!jsonString) return [];
+const safeJsonParse = (jsonData) => {
+    if (!jsonData) return [];
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Si ya es un array, lo devolvemos directamente.
+    if (Array.isArray(jsonData)) return jsonData; 
+    // --- FIN DE LA MODIFICACIÓN ---
     try {
-        const parsed = JSON.parse(jsonString);
+        const parsed = JSON.parse(jsonData);
         return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
+        // Si el parseo falla, es posible que sea una cadena simple que no es JSON.
         return [];
     }
 };

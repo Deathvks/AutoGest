@@ -1,8 +1,8 @@
-// AutoGest/frontend/src/hooks/useCarHandlers.js
+// autogest-app/frontend/src/hooks/useCarHandlers.js
 import { useState, useRef } from 'react';
 import api from '../services/api';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 
 export const useCarHandlers = (
     cars,
@@ -30,7 +30,7 @@ export const useCarHandlers = (
         doc.text("DATOS DEL VEHÍCULO", 14, 80);
         doc.line(14, 82, 196, 82);
         
-        autoTable(doc, {
+        doc.autoTable({
             startY: 85, theme: 'grid', headStyles: { fillColor: [41, 128, 185] },
             body: [
                 ['Marca', car.make], ['Modelo', car.model], ['Matrícula', car.licensePlate],
@@ -67,20 +67,17 @@ export const useCarHandlers = (
         } catch (error) { console.error("Error al añadir coche:", error); throw error; }
     };
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleUpdateCar = async (carId, formData) => {
         try {
             const updatedCar = await api.updateCar(carId, formData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
             
-            // Si el modal de detalles está abierto para este coche, lo actualizamos también
             if (modalState.carToView && modalState.carToView.id === updatedCar.id) {
                 modalState.setCarToView(updatedCar);
             }
             
-            await fetchLocations(); // Actualizamos las ubicaciones por si se ha creado una nueva
+            await fetchLocations();
             
-            // Solo cerramos el modal de edición si está abierto
             if (modalState.carToEdit && modalState.carToEdit.id === carId) {
                 modalState.setCarToEdit(null);
             }
@@ -89,7 +86,6 @@ export const useCarHandlers = (
             throw error; 
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const confirmDelete = async (carId) => {
         try {
@@ -247,7 +243,7 @@ export const useCarHandlers = (
                 modalState.setCarToView(updatedCar);
             }
             modalState.setCarForGestoriaReturn(null);
-            modalState.setCarToNotify(updatedCar); // Abrir el siguiente modal
+            modalState.setCarToNotify(updatedCar);
         } catch (error) {
             console.error("Error al registrar la entrega de la gestoría:", error);
         }

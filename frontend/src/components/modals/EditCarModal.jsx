@@ -25,9 +25,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             registrationCertificateUrl: safeParse(car.registrationCertificateUrl),
             otherDocumentsUrls: safeParse(car.otherDocumentsUrls),
             location: currentLocation ? currentLocation.id : '',
-            // --- INICIO DE LA MODIFICACIÓN ---
-            keys: car.keys || 1, // Aseguramos que el campo keys tenga un valor
-            // --- FIN DE LA MODIFICACIÓN ---
+            keys: car.keys || 1,
             newLocation: ''
         };
     });
@@ -123,34 +121,39 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
         try {
             setServerError('');
             const formData = new FormData();
-            const ignoredFields = ['id', 'createdAt', 'updatedAt', 'userId', 'notes', 'newLocation', 'technicalSheetUrl', 'registrationCertificateUrl', 'otherDocumentsUrls'];
+            
+            const selectedLocationObject = locations.find(loc => loc.id === editedCar.location);
+            const finalLocation = editedCar.newLocation.trim() || (selectedLocationObject ? selectedLocationObject.name : '');
 
-            const selectedLocation = locations.find(loc => loc.id === editedCar.location);
-            const finalLocation = editedCar.newLocation.trim() || (selectedLocation ? selectedLocation.name : '');
+            // 1. Añadir campos de texto y numéricos
+            formData.append('make', editedCar.make);
+            formData.append('model', editedCar.model);
+            formData.append('licensePlate', editedCar.licensePlate);
+            formData.append('vin', editedCar.vin || '');
+            formData.append('registrationDate', editedCar.registrationDate || '');
+            formData.append('purchasePrice', parseNumber(editedCar.purchasePrice));
+            formData.append('price', parseNumber(editedCar.price));
+            formData.append('km', parseNumber(editedCar.km));
+            formData.append('horsepower', parseNumber(editedCar.horsepower));
+            formData.append('location', finalLocation);
+            formData.append('fuel', editedCar.fuel);
+            formData.append('transmission', editedCar.transmission);
+            formData.append('status', editedCar.status);
+            formData.append('keys', editedCar.keys);
+            formData.append('hasInsurance', editedCar.hasInsurance);
+            formData.append('tags', JSON.stringify(editedCar.tags));
+            
+            // 2. Añadir imagen principal (si se cambió)
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
 
-            const finalCarData = { 
-                ...editedCar,
-                location: finalLocation,
-                price: parseNumber(editedCar.price),
-                purchasePrice: parseNumber(editedCar.purchasePrice),
-                salePrice: parseNumber(editedCar.salePrice),
-                reservationDeposit: parseNumber(editedCar.reservationDeposit),
-                km: parseNumber(editedCar.km),
-                horsepower: parseNumber(editedCar.horsepower),
-            };
-
-            Object.keys(finalCarData).forEach(key => {
-                if (!ignoredFields.includes(key)) {
-                    const value = finalCarData[key];
-                    if (key === 'tags') formData.append(key, JSON.stringify(value));
-                    else if (value !== null && value !== undefined) formData.append(key, value);
-                }
-            });
-
-            if (imageFile) formData.append('image', imageFile);
+            // 3. Añadir nuevos ficheros
             newTechnicalSheetFiles.forEach(file => formData.append('technicalSheet', file));
             newRegistrationCertificateFiles.forEach(file => formData.append('registrationCertificate', file));
             newOtherDocumentFiles.forEach(file => formData.append('otherDocuments', file));
+
+            // 4. Añadir la lista de ficheros a eliminar
             formData.append('filesToRemove', JSON.stringify(filesToRemove));
             
             await onUpdate(formData);

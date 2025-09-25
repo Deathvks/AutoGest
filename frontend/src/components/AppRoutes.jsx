@@ -44,13 +44,11 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => { 
         setSubscriptionSuccessModalOpen,
     } = appState;
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     if (!user) {
         return null; // No renderizar nada si el usuario aún no está cargado
     }
 
     const userHomePath = user.role === 'user' ? '/cars' : '/';
-    // --- FIN DE LA MODIFICACIÓN ---
 
     return (
         <Routes>
@@ -74,6 +72,9 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => { 
                 path="/cars" 
                 element={<MyCars 
                     cars={cars} 
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    // Se elimina la prop 'locations' que ya no es necesaria
+                    // --- FIN DE LA MODIFICACIÓN ---
                     onSellClick={setCarToSell} 
                     onAddClick={() => setAddCarModalOpen(true)} 
                     onViewDetailsClick={setCarToView} 

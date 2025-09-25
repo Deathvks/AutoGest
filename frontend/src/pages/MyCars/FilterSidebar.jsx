@@ -1,12 +1,10 @@
 // autogest-app/frontend/src/pages/MyCars/FilterSidebar.jsx
 import React, { useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
 import Select from '../../components/Select';
 
 const FilterSidebar = ({ cars, filters, setFilters, resetFilters }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // La lógica para generar las opciones ahora vive dentro de este componente.
     const makeOptions = useMemo(() => {
         const uniqueMakes = cars.reduce((acc, car) => {
             if (car.make) {
@@ -29,6 +27,26 @@ const FilterSidebar = ({ cars, filters, setFilters, resetFilters }) => {
             .sort()
             .map(status => ({ id: status, name: status })), 
     [cars]);
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se utiliza una lógica más robusta para obtener ubicaciones únicas,
+    // insensible a mayúsculas/minúsculas y espacios extra.
+    const locationOptions = useMemo(() => {
+        const uniqueLocations = cars.reduce((acc, car) => {
+            if (car.location) {
+                const trimmedLocation = car.location.trim();
+                const lowerCaseLocation = trimmedLocation.toLowerCase();
+                if (trimmedLocation && !acc.has(lowerCaseLocation)) {
+                    acc.set(lowerCaseLocation, trimmedLocation);
+                }
+            }
+            return acc;
+        }, new Map());
+        
+        return [...uniqueLocations.values()]
+            .sort((a, b) => a.localeCompare(b))
+            .map(location => ({ id: location, name: location }));
+    }, [cars]);
     // --- FIN DE LA MODIFICACIÓN ---
 
     const handleInputChange = (e) => {
@@ -46,6 +64,24 @@ const FilterSidebar = ({ cars, filters, setFilters, resetFilters }) => {
             <div className="space-y-4">
                 <Select label="Marca" value={filters.make} onChange={(value) => handleSelectChange('make', value)} options={[{ id: '', name: 'Todas' }, ...makeOptions]} />
                 <Select label="Estado" value={filters.status} onChange={(value) => handleSelectChange('status', value)} options={[{ id: '', name: 'Todos' }, ...statusOptions]} />
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {locationOptions.length > 0 ? (
+                    <Select
+                        label="Ubicación"
+                        value={filters.location}
+                        onChange={(value) => handleSelectChange('location', value)}
+                        options={[{ id: '', name: 'Todas' }, ...locationOptions]}
+                        icon={faMapMarkerAlt}
+                    />
+                ) : (
+                    <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Ubicación</label>
+                        <div className="text-xs text-text-secondary bg-background p-2 rounded-md border border-border-color">
+                            Añade un coche con una ubicación para poder filtrar.
+                        </div>
+                    </div>
+                )}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <div className="grid grid-cols-2 gap-2">
                     <div>
                         <label htmlFor="minPriceDesktop" className="block text-sm font-medium text-text-secondary mb-1">Precio Mín.</label>

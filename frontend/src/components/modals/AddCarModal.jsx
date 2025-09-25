@@ -103,12 +103,9 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         if (!newCar.make.trim()) errors.make = 'La marca es obligatoria';
         if (!newCar.model.trim()) errors.model = 'El modelo es obligatorio';
         if (!newCar.licensePlate.trim()) errors.licensePlate = 'La matrícula es obligatoria';
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // La validación del precio de compra solo se aplica a admin y técnicos
         if ((user.role === 'admin' || user.role === 'technician') && !newCar.purchasePrice.trim()) {
             errors.purchasePrice = 'El precio de compra es obligatorio';
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         if (!newCar.price.trim()) errors.price = 'El precio de venta es obligatorio';
         
         setFieldErrors(errors);
@@ -139,12 +136,9 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
             Object.keys(finalCarData).forEach(key => {
                 const value = finalCarData[key];
                 if (key === 'tags') formData.append(key, JSON.stringify(value));
-                // --- INICIO DE LA MODIFICACIÓN ---
-                // Si el precio de compra está vacío, no lo añadimos al FormData
                 else if (key === 'purchasePrice' && !value) {
                     // No hacer nada
                 }
-                // --- FIN DE LA MODIFICACIÓN ---
                 else if (value !== null && value !== undefined && value !== '') formData.append(key, value);
             });
             
