@@ -21,7 +21,8 @@ const storage = multer.diskStorage({
             'technicalSheet', 
             'registrationCertificate', 
             'otherDocuments', 
-            'reservationPdf'
+            'reservationPdf',
+            'invoicePdf' // <-- AÑADIDO
         ].includes(file.fieldname)) {
             dest = 'public/documents/';
         } else {
@@ -57,12 +58,14 @@ const fileFilter = (req, file, cb) => {
         } else {
             cb(new Error('¡Los documentos solo pueden ser una imagen o un PDF!'), false);
         }
-    } else if (file.fieldname === 'reservationPdf') {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    } else if (['reservationPdf', 'invoicePdf'].includes(file.fieldname)) {
         if (file.mimetype === 'application/pdf') {
             cb(null, true);
         } else {
-            cb(new Error('¡El archivo de reserva solo puede ser un PDF!'), false);
+            cb(new Error('¡Este tipo de archivo solo puede ser un PDF!'), false);
         }
+    // --- FIN DE LA MODIFICACIÓN ---
     } else {
         cb(null, false);
     }
@@ -74,13 +77,14 @@ const upload = multer({
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB por archivo
 });
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Se actualiza el maxCount de otherDocuments a 6
 module.exports = upload.fields([
     { name: 'image', maxCount: 1 },
     { name: 'technicalSheet', maxCount: 2 },
     { name: 'registrationCertificate', maxCount: 2 },
-    { name: 'otherDocuments', maxCount: 6 }, // <-- LÍNEA CORREGIDA
-    { name: 'reservationPdf', maxCount: 1 }
+    { name: 'otherDocuments', maxCount: 6 },
+    { name: 'reservationPdf', maxCount: 1 },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    { name: 'invoicePdf', maxCount: 1 } // Se añade el nuevo campo para facturas/proformas
+    // --- FIN DE LA MODIFICACIÓN ---
 ]);
-// --- FIN DE LA MODIFICACIÓN ---

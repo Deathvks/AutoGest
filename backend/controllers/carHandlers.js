@@ -232,6 +232,18 @@ exports.updateCar = async (req, res) => {
                     updateData[urlField] = [...existingDocs, ...newDocs];
                 }
             });
+
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Nueva lógica para manejar la subida de facturas/proformas
+            if (req.files.invoicePdf) {
+                const existingOtherDocs = updateData.otherDocumentsUrls || safeJsonParse(car.otherDocumentsUrls);
+                const newInvoiceDoc = {
+                    path: `/documents/${req.files.invoicePdf[0].filename}`,
+                    originalname: sanitizeFilename(req.files.invoicePdf[0].originalname)
+                };
+                updateData.otherDocumentsUrls = [...existingOtherDocs, newInvoiceDoc];
+            }
+            // --- FIN DE LA MODIFICACIÓN ---
         }
         
         await car.update(updateData);

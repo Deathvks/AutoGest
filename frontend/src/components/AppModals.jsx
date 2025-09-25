@@ -50,7 +50,6 @@ const InputField = ({ label, name, value, onChange, icon, required = false }) =>
     </div>
 );
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
     const { user } = useContext(AuthContext);
     const [formData, setFormData] = useState({});
@@ -226,8 +225,6 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
         </div>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
-
 const AppModals = ({ appState }) => {
     const { logout } = useContext(AuthContext);
 
@@ -279,13 +276,14 @@ const AppModals = ({ appState }) => {
                             onAddIncidentClick={(car) => { setCarToView(null); setCarForIncident(car); }}
                             onGestoriaPickupClick={(car) => { setCarToView(null); setCarForGestoriaPickup(car); }}
                             onGestoriaReturnClick={(car) => { setCarToView(null); setCarForGestoriaReturn(car); }}
+                            onUpdateCar={handleUpdateCar}
                         />
                     </div>
                 </div>
             )}
             
             {isAddCarModalOpen && <AddCarModal onClose={() => setAddCarModalOpen(false)} onAdd={handleAddCar} locations={locations} />}
-            {carToEdit && <EditCarModal car={carToEdit} onClose={() => setCarToEdit(null)} onUpdate={handleUpdateCar} locations={locations} />}
+            {carToEdit && <EditCarModal car={carToEdit} onClose={() => setCarToEdit(null)} onUpdate={(formData) => handleUpdateCar(carToEdit.id, formData)} locations={locations} />}
             {carToSell && <SellCarModal car={carToSell} onClose={() => setCarToSell(null)} onConfirm={handleSellConfirm} />}
             {carForIncident && <AddIncidentModal car={carForIncident} onClose={() => setCarForIncident(null)} onConfirm={handleAddIncident} />}
             {carToDelete && <DeleteCarConfirmationModal car={carToDelete} onClose={() => setCarToDelete(null)} onConfirm={handleDeleteCar} />}

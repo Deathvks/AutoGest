@@ -67,15 +67,29 @@ export const useCarHandlers = (
         } catch (error) { console.error("Error al añadir coche:", error); throw error; }
     };
     
-    const handleUpdateCar = async (formData) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleUpdateCar = async (carId, formData) => {
         try {
-            const carId = modalState.carToEdit.id;
             const updatedCar = await api.updateCar(carId, formData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
-            await fetchLocations();
-            modalState.setCarToEdit(null);
-        } catch (error) { console.error("Error al actualizar coche:", error); throw error; }
+            
+            // Si el modal de detalles está abierto para este coche, lo actualizamos también
+            if (modalState.carToView && modalState.carToView.id === updatedCar.id) {
+                modalState.setCarToView(updatedCar);
+            }
+            
+            await fetchLocations(); // Actualizamos las ubicaciones por si se ha creado una nueva
+            
+            // Solo cerramos el modal de edición si está abierto
+            if (modalState.carToEdit && modalState.carToEdit.id === carId) {
+                modalState.setCarToEdit(null);
+            }
+        } catch (error) { 
+            console.error("Error al actualizar coche:", error); 
+            throw error; 
+        }
     };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const confirmDelete = async (carId) => {
         try {
@@ -127,9 +141,7 @@ export const useCarHandlers = (
         } catch (error) { console.error("Error al vender el coche:", error); }
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleReserveConfirm = async (carToUpdate, newNoteContent, depositAmount, reservationDurationInHours, buyerDetails) => {
-    // --- FIN DE LA MODIFICACIÓN ---
         try {
             const pdfBlob = generateReservationPDF(carToUpdate, depositAmount);
             if (!pdfBlob) return;
@@ -154,9 +166,7 @@ export const useCarHandlers = (
             formData.append('reservationDeposit', depositAmount);
             formData.append('reservationDuration', reservationDurationInHours);
             formData.append('reservationPdf', pdfBlob, `Reserva_${carToUpdate.licensePlate}.pdf`);
-            // --- INICIO DE LA MODIFICACIÓN ---
             formData.append('buyerDetails', JSON.stringify(buyerDetails));
-            // --- FIN DE LA MODIFICACIÓN ---
 
             const updatedCar = await api.updateCar(carToUpdate.id, formData);
             setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));

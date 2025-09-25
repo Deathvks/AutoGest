@@ -8,13 +8,12 @@ import {
 import { AuthContext } from '../../../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import GeneratePdfModal from '../GeneratePdfModal'; 
+import GeneratePdfModal from '../GeneratePdfModal';
+import api from '../../../services/api'; // <-- IMPORTADO
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-// --- FIN DE LA MODIFICACIÓN ---
 
-const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onAddExpenseClick, onAddIncidentClick }) => {
+const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onAddExpenseClick, onAddIncidentClick, onUpdateCar }) => { // <-- onUpdateCar AÑADIDO
     const { user } = useContext(AuthContext);
     const isReservedAndActive = car.status.toUpperCase() === 'RESERVADO' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
     const isLockedForUser = isReservedAndActive && user.role !== 'admin';
@@ -27,7 +26,6 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
         const today = new Date().toLocaleDateString('es-ES');
         let currentY = 20;
 
-        // Función auxiliar para cargar la imagen del logo
         const getImageAsBase64 = async (url) => {
             try {
                 const response = await fetch(url);
@@ -45,7 +43,6 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
             }
         };
 
-        // Si el usuario tiene un logo, lo añadimos al PDF
         if (user.logoUrl) {
             const logoUrl = `${API_BASE_URL}${user.logoUrl}`;
             const logoData = await getImageAsBase64(logoUrl);
@@ -65,7 +62,7 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
                     imgWidth = imgHeight * aspectRatio;
                 }
                 doc.addImage(logoData, 'PNG', 14, 15, imgWidth, imgHeight);
-                currentY = 15 + imgHeight + 15; // Ajustamos la posición vertical del siguiente elemento
+                currentY = 15 + imgHeight + 15;
             }
         }
 
@@ -89,7 +86,6 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
         
         currentY += 25;
 
-        // El resto del código usa la variable `currentY` actualizada para posicionarse correctamente
         doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
         doc.rect(14, currentY - 5, 85, 7, 'F');
         doc.setFontSize(11);
@@ -184,8 +180,17 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
             doc.setFontSize(8);
             doc.text("ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL.", 105, doc.internal.pageSize.height - 10, { align: 'center' });
         }
+        
+        const fileName = `${type}_${number}_${car.licensePlate}.pdf`;
+        doc.save(fileName);
+        
+        const pdfBlob = doc.output('blob');
+        const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        const formData = new FormData();
+        formData.append('invoicePdf', pdfFile);
 
-        doc.save(`${type}_${number}_${car.licensePlate}.pdf`);
+        await onUpdateCar(car.id, formData);
+        
         setPdfModalInfo({ isOpen: false, type: '', number: 0 });
     };
     // --- FIN DE LA MODIFICACIÓN ---
