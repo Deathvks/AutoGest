@@ -1,23 +1,44 @@
 // autogest-app/backend/utils/emailUtils.js
 const nodemailer = require('nodemailer');
 
-// 1. Configurar el transportador de correo usando las credenciales SMTP genéricas del .env
-const transporter = nodemailer.createTransport({
+// --- INICIO DE LA MODIFICACIÓN ---
+// 1. Log para verificar que las variables de entorno se están leyendo al inicio
+console.log('[EMAIL_CONFIG] Cargando configuración de email...');
+console.log(`[EMAIL_CONFIG] HOST: ${process.env.EMAIL_HOST}`);
+console.log(`[EMAIL_CONFIG] PORT: ${process.env.EMAIL_PORT}`);
+console.log(`[EMAIL_CONFIG] USER: ${process.env.EMAIL_USER ? 'Definido' : 'NO DEFINIDO'}`);
+console.log(`[EMAIL_CONFIG] PASS: ${process.env.EMAIL_PASS ? 'Definido' : 'NO DEFINIDO'}`);
+console.log(`[EMAIL_CONFIG] FROM: ${process.env.FROM_EMAIL}`);
+
+// 2. Definimos la configuración del transportador en un objeto para poder registrarla
+const transporterConfig = {
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
-    secure: process.env.EMAIL_PORT === 465, // true para 465, false para otros puertos como 587
+    secure: process.env.EMAIL_PORT === 465,
     auth: {
-        user: process.env.EMAIL_USER, // Tu email de login de Brevo
-        pass: process.env.EMAIL_PASS, // Tu clave SMTP de Brevo
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
     },
-});
+    // Añadimos más logs para depuración de la conexión
+    logger: true,
+    debug: true
+};
 
-// 2. Función para enviar el correo de verificación
+console.log('[EMAIL_CONFIG] Configuración del transportador de Nodemailer:', JSON.stringify({
+    ...transporterConfig,
+    auth: { // Ocultamos la contraseña en el log por seguridad
+        user: transporterConfig.auth.user,
+        pass: transporterConfig.auth.pass ? '******' : 'NO DEFINIDO'
+    }
+}, null, 2));
+
+const transporter = nodemailer.createTransport(transporterConfig);
+// --- FIN DE LA MODIFICACIÓN ---
+
+
 exports.sendVerificationEmail = async (toEmail, code) => {
     const mailOptions = {
-        // --- INICIO DE LA MODIFICACIÓN ---
-        from: `"AutoGest" <${process.env.FROM_EMAIL}>`, // Usamos la nueva variable FROM_EMAIL
-        // --- FIN DE LA MODIFICACIÓN ---
+        from: `"AutoGest" <${process.env.FROM_EMAIL}>`,
         to: toEmail,
         subject: 'Código de Verificación - AutoGest',
         html: `
@@ -34,22 +55,24 @@ exports.sendVerificationEmail = async (toEmail, code) => {
     };
 
     try {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        console.log(`[EMAIL_SEND] Intentando enviar correo de verificación a ${toEmail}...`);
         await transporter.sendMail(mailOptions);
-        console.log(`Correo de verificación enviado a ${toEmail}`);
+        console.log(`[EMAIL_SUCCESS] Correo de verificación enviado con éxito a ${toEmail}`);
+        // --- FIN DE LA MODIFICACIÓN ---
     } catch (error) {
-        console.error(`Error al enviar correo a ${toEmail}:`, error);
+        // --- INICIO DE LA MODIFICACIÓN ---
+        console.error(`[EMAIL_ERROR] Error detallado al enviar correo a ${toEmail}:`, error);
+        // --- FIN DE LA MODIFICACIÓN ---
         throw new Error('No se pudo enviar el correo de verificación.');
     }
 };
 
-// 3. Función para enviar el correo de restablecimiento de contraseña
 exports.sendPasswordResetEmail = async (toEmail, token) => {
     const resetUrl = `https://www.auto-gest.es/reset-password/${token}`;
 
     const mailOptions = {
-        // --- INICIO DE LA MODIFICACIÓN ---
-        from: `"AutoGest" <${process.env.FROM_EMAIL}>`, // Usamos la nueva variable FROM_EMAIL
-        // --- FIN DE LA MODIFICACIÓN ---
+        from: `"AutoGest" <${process.env.FROM_EMAIL}>`,
         to: toEmail,
         subject: 'Restablecimiento de Contraseña - AutoGest',
         html: `
@@ -71,10 +94,15 @@ exports.sendPasswordResetEmail = async (toEmail, token) => {
     };
 
     try {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        console.log(`[EMAIL_SEND] Intentando enviar correo de restablecimiento a ${toEmail}...`);
         await transporter.sendMail(mailOptions);
-        console.log(`Correo de restablecimiento de contraseña enviado a ${toEmail}`);
+        console.log(`[EMAIL_SUCCESS] Correo de restablecimiento enviado con éxito a ${toEmail}`);
+        // --- FIN DE LA MODIFICACIÓN ---
     } catch (error) {
-        console.error(`Error al enviar correo de restablecimiento a ${toEmail}:`, error);
+        // --- INICIO DE LA MODIFICACIÓN ---
+        console.error(`[EMAIL_ERROR] Error detallado al enviar correo de restablecimiento a ${toEmail}:`, error);
+        // --- FIN DE LA MODIFICACIÓN ---
         throw new Error('No se pudo enviar el correo de restablecimiento.');
     }
 };
