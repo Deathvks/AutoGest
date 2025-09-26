@@ -2,19 +2,21 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
-// --- INICIO DE LA MODIFICACIÓN ---
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailUtils');
-// --- FIN DE LA MODIFICACIÓN ---
 const crypto = require('crypto');
 
 // Registrar un nuevo usuario (POST /api/auth/register)
 exports.register = async (req, res) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    console.log('[REGISTER] Iniciando proceso de registro...');
+    // --- FIN DE LA MODIFICACIÓN ---
     try {
         const { name, email, password } = req.body;
+        console.log(`[REGISTER] Datos recibidos: ${name}, ${email}`);
 
         const existingUser = await User.findOne({ where: { email } });
-
         if (existingUser && existingUser.isVerified) {
+            console.log('[REGISTER] Error: El email ya está en uso.');
             return res.status(400).json({ error: 'El email ya está en uso.' });
         }
         
@@ -25,56 +27,47 @@ exports.register = async (req, res) => {
         let userToVerify;
 
         if (existingUser && !existingUser.isVerified) {
-            await existingUser.update({
-                name,
-                password: hashedPassword,
-                verificationCode,
-            });
+            await existingUser.update({ name, password: hashedPassword, verificationCode });
             userToVerify = existingUser;
         } else {
-            userToVerify = await User.create({
-                name,
-                email,
-                password: hashedPassword,
-                verificationCode,
-                isVerified: false, 
-            });
+            userToVerify = await User.create({ name, email, password: hashedPassword, verificationCode, isVerified: false });
         }
         
+        // --- INICIO DE LA MODIFICACIÓN ---
+        console.log('[REGISTER] Usuario creado/actualizado en BBDD. Procediendo a enviar email...');
         await sendVerificationEmail(email, verificationCode);
+        console.log('[REGISTER] La función sendVerificationEmail se completó.');
+        // --- FIN DE LA MODIFICACIÓN ---
 
         res.status(201).json({ 
             message: 'Se ha enviado un código de verificación a tu correo. Por favor, úsalo para activar tu cuenta.'
         });
 
     } catch (error) {
-        console.error("Error en el registro:", error);
+        // --- INICIO DE LA MODIFICACIÓN ---
+        console.error("--- ERROR DETALLADO EN REGISTRO ---");
+        console.error(error);
+        console.error("------------------------------------");
+        // --- FIN DE LA MODIFICACIÓN ---
         res.status(500).json({ error: 'Error en el registro de usuario.' });
     }
 };
+
+// ... (el resto del fichero no necesita cambios, pero lo incluyo para que sea completo)
 
 // Verificar el email del usuario (POST /api/auth/verify)
 exports.verifyEmail = async (req, res) => {
     try {
         const { email, code, newEmail } = req.body;
-
         const user = await User.findOne({ where: { email } });
 
-        if (!user) {
-            return res.status(404).json({ error: 'Usuario no encontrado o código incorrecto.' });
-        }
-        if (user.isVerified) {
-            return res.status(400).json({ error: 'Esta cuenta ya ha sido verificada.' });
-        }
-        if (user.verificationCode !== code.toUpperCase()) {
-            return res.status(400).json({ error: 'El código de verificación es incorrecto.' });
-        }
+        if (!user) return res.status(404).json({ error: 'Usuario no encontrado o código incorrecto.' });
+        if (user.isVerified) return res.status(400).json({ error: 'Esta cuenta ya ha sido verificada.' });
+        if (user.verificationCode !== code.toUpperCase()) return res.status(400).json({ error: 'El código de verificación es incorrecto.' });
         
         if (newEmail && newEmail !== email) {
             const isNewEmailInUse = await User.findOne({ where: { email: newEmail } });
-            if (isNewEmailInUse) {
-                return res.status(400).json({ error: 'La nueva dirección de correo ya está en uso.' });
-            }
+            if (isNewEmailInUse) return res.status(400).json({ error: 'La nueva dirección de correo ya está en uso.' });
             user.email = newEmail;
         }
 
@@ -90,16 +83,12 @@ exports.verifyEmail = async (req, res) => {
     }
 };
 
-
 // Iniciar sesión (POST /api/auth/login)
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
-
         const user = await User.findOne({ where: { email } });
-        if (!user) {
-            return res.status(401).json({ error: 'No existe una cuenta con este email.' });
-        }
+        if (!user) return res.status(401).json({ error: 'No existe una cuenta con este email.' });
         
         if (!user.isVerified) {
             return res.status(401).json({ 
@@ -110,20 +99,10 @@ exports.login = async (req, res) => {
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ error: 'La contraseña es incorrecta.' });
-        }
+        if (!isMatch) return res.status(401).json({ error: 'La contraseña es incorrecta.' });
 
-        const payload = {
-            id: user.id,
-            role: user.role,
-        };
-
-        const token = jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: '8h' }
-        );
+        const payload = { id: user.id, role: user.role };
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
 
         res.status(200).json({ token });
 
@@ -139,12 +118,8 @@ exports.resendVerificationCode = async (req, res) => {
         const { email } = req.body;
         const user = await User.findOne({ where: { email } });
 
-        if (!user) {
-            return res.status(404).json({ error: 'No se encontró una cuenta con ese email.' });
-        }
-        if (user.isVerified) {
-            return res.status(400).json({ error: 'Esta cuenta ya está verificada.' });
-        }
+        if (!user) return res.status(404).json({ error: 'No se encontró una cuenta con ese email.' });
+        if (user.isVerified) return res.status(400).json({ error: 'Esta cuenta ya está verificada.' });
         
         const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
         user.verificationCode = verificationCode;
@@ -162,29 +137,26 @@ exports.resendVerificationCode = async (req, res) => {
 
 // Forzar verificación para usuarios existentes no verificados
 exports.forceVerification = async (req, res) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
-    console.log('[LOG] Se ha llamado a forceVerification.');
+    console.log('[FORCE_VERIFY] Iniciando proceso de forzar verificación...');
     try {
         const { currentEmail, newEmail } = req.body;
-        console.log(`[LOG] Datos recibidos: currentEmail=${currentEmail}, newEmail=${newEmail}`);
+        console.log(`[FORCE_VERIFY] Datos recibidos: currentEmail=${currentEmail}, newEmail=${newEmail}`);
         
         const emailToSend = newEmail || currentEmail;
-
         const user = await User.findOne({ where: { email: currentEmail } });
 
         if (!user) {
-            console.log(`[LOG] Usuario no encontrado para el email: ${currentEmail}`);
+            console.log(`[FORCE_VERIFY] Usuario no encontrado para el email: ${currentEmail}`);
             return res.status(404).json({ error: 'No se encontró una cuenta con ese email.' });
         }
         if (user.isVerified) {
-            console.log(`[LOG] La cuenta para ${currentEmail} ya está verificada.`);
+            console.log(`[FORCE_VERIFY] La cuenta para ${currentEmail} ya está verificada.`);
             return res.status(400).json({ error: 'Esta cuenta ya está verificada.' });
         }
-
         if (newEmail && newEmail !== currentEmail) {
             const existingVerifiedUser = await User.findOne({ where: { email: newEmail, isVerified: true } });
             if (existingVerifiedUser) {
-                console.log(`[LOG] El nuevo email ${newEmail} ya está en uso.`);
+                console.log(`[FORCE_VERIFY] El nuevo email ${newEmail} ya está en uso.`);
                 return res.status(400).json({ error: 'La nueva dirección de correo ya está en uso.' });
             }
         }
@@ -192,21 +164,22 @@ exports.forceVerification = async (req, res) => {
         const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
         user.verificationCode = verificationCode;
         await user.save();
-        console.log(`[LOG] Nuevo código de verificación generado: ${verificationCode}`);
+        console.log(`[FORCE_VERIFY] Nuevo código de verificación generado: ${verificationCode}`);
 
-        console.log(`[LOG] Intentando enviar email a: ${emailToSend}`);
+        console.log(`[FORCE_VERIFY] Procediendo a enviar email a: ${emailToSend}`);
         await sendVerificationEmail(emailToSend, verificationCode);
+        console.log(`[FORCE_VERIFY] La función sendVerificationEmail se completó.`);
 
-        res.status(200).json({ 
-            message: `Se ha enviado un código de verificación a ${emailToSend}.`
-        });
+        res.status(200).json({ message: `Se ha enviado un código de verificación a ${emailToSend}.` });
 
     } catch (error) {
-        console.error("[ERROR] Fallo en forceVerification:", error);
+        console.error("--- ERROR DETALLADO EN FORCE_VERIFY ---");
+        console.error(error);
+        console.error("---------------------------------------");
         res.status(500).json({ error: 'Error al enviar el código de verificación.' });
     }
-    // --- FIN DE LA MODIFICACIÓN ---
 };
+
 
 // @desc    Solicitar restablecimiento de contraseña
 // @route   POST /api/auth/forgot-password
@@ -216,22 +189,15 @@ exports.forgotPassword = async (req, res) => {
         const user = await User.findOne({ where: { email } });
 
         if (!user) {
-            // Nota: No revelamos si el email existe o no por seguridad.
             return res.status(200).json({ message: 'Si existe una cuenta con ese correo, se ha enviado un enlace para restablecer la contraseña.' });
         }
 
-        // Generar token
         const resetToken = crypto.randomBytes(20).toString('hex');
-
-        // Guardar el token hasheado y la fecha de expiración en la BBDD
         user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-        user.resetPasswordExpires = Date.now() + 3600000; // 1 hora de validez
-
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hora
         await user.save();
 
-        // Enviar email
         await sendPasswordResetEmail(user.email, resetToken);
-
         res.status(200).json({ message: 'Si existe una cuenta con ese correo, se ha enviado un enlace para restablecer la contraseña.' });
 
     } catch (error) {
@@ -247,7 +213,6 @@ exports.resetPassword = async (req, res) => {
         const { token } = req.params;
         const { password } = req.body;
 
-        // Buscar usuario por el token hasheado y verificar que no haya expirado
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
         const user = await User.findOne({
@@ -260,19 +225,15 @@ exports.resetPassword = async (req, res) => {
         if (!user) {
             return res.status(400).json({ error: 'El enlace para restablecer la contraseña es inválido o ha expirado.' });
         }
-
-        // Validar nueva contraseña
         if (!password || password.length < 6) {
             return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres.' });
         }
 
-        // Establecer la nueva contraseña
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
         user.resetPasswordToken = null;
         user.resetPasswordExpires = null;
-        user.isVerified = true; // Verificamos la cuenta si estaba pendiente
-
+        user.isVerified = true;
         await user.save();
 
         res.status(200).json({ message: '¡Contraseña actualizada con éxito! Ya puedes iniciar sesión.' });
