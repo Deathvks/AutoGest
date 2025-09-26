@@ -3,6 +3,15 @@
 const express = require('express');
 const cors = require('cors');
 
+// --- INICIO DE LA MODIFICACIÓN ---
+// Log de diagnóstico para verificar las variables de entorno al arrancar
+console.log('--- INICIANDO APLICACIÓN ---');
+console.log(`[ENV] NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`[ENV] EMAIL_HOST: ${process.env.EMAIL_HOST}`);
+console.log(`[ENV] EMAIL_PORT: ${process.env.EMAIL_PORT}`);
+console.log('---------------------------');
+// --- FIN DE LA MODIFICACIÓN ---
+
 // Solo cargar dotenv si NO estamos en producción.
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
@@ -27,11 +36,7 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// 1. Ruta de Webhook de Stripe. Se define ANTES de CUALQUIER OTRO middleware
-// que pueda parsear el body, incluyendo cors y express.json().
 app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), subscriptionController.handleWebhook);
-// --- FIN DE LA MODIFICACIÓN ---
 
 // Lista de orígenes permitidos
 const allowedOrigins = [
@@ -53,12 +58,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// 2. Se aplica el middleware express.json() DESPUÉS de la ruta del webhook.
-// De esta forma, solo las rutas definidas a continuación procesarán el body como JSON.
 app.use(express.json());
 app.use(express.static('public'));
 
-// --- Rutas de la API (ahora usarán express.json()) ---
+// --- Rutas de la API ---
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/cars', require('./routes/carRoutes'));
 app.use('/api/expenses', require('./routes/expenseRoutes'));
