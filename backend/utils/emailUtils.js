@@ -1,24 +1,23 @@
 // autogest-app/backend/utils/emailUtils.js
 const nodemailer = require('nodemailer');
 
-// 1. Configurar el transportador de correo usando las credenciales de Gmail del .env
+// 1. Configurar el transportador de correo usando las credenciales SMTP genéricas del .env
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    secure: process.env.EMAIL_PORT === 465, // true para 465, false para otros puertos como 587
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER, // Tu email de login de Brevo
+        pass: process.env.EMAIL_PASS, // Tu clave SMTP de Brevo
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Activamos el modo debug para obtener un log detallado de la conexión SMTP
-    debug: true, // Muestra la conexión en la consola
-    logger: true // Registra la información
-    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 // 2. Función para enviar el correo de verificación
 exports.sendVerificationEmail = async (toEmail, code) => {
     const mailOptions = {
-        from: `"AutoGest" <${process.env.EMAIL_USER}>`,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        from: `"AutoGest" <${process.env.FROM_EMAIL}>`, // Usamos la nueva variable FROM_EMAIL
+        // --- FIN DE LA MODIFICACIÓN ---
         to: toEmail,
         subject: 'Código de Verificación - AutoGest',
         html: `
@@ -39,18 +38,18 @@ exports.sendVerificationEmail = async (toEmail, code) => {
         console.log(`Correo de verificación enviado a ${toEmail}`);
     } catch (error) {
         console.error(`Error al enviar correo a ${toEmail}:`, error);
-        // Lanzamos el error para que pueda ser capturado en el controlador
         throw new Error('No se pudo enviar el correo de verificación.');
     }
 };
 
-// 3. Función para enviar el correo de restablecimiento de contraseña (CON BOTÓN)
+// 3. Función para enviar el correo de restablecimiento de contraseña
 exports.sendPasswordResetEmail = async (toEmail, token) => {
-    // La URL debe apuntar a tu frontend, a la página de restablecimiento de contraseña
     const resetUrl = `https://www.auto-gest.es/reset-password/${token}`;
 
     const mailOptions = {
-        from: `"AutoGest" <${process.env.EMAIL_USER}>`,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        from: `"AutoGest" <${process.env.FROM_EMAIL}>`, // Usamos la nueva variable FROM_EMAIL
+        // --- FIN DE LA MODIFICACIÓN ---
         to: toEmail,
         subject: 'Restablecimiento de Contraseña - AutoGest',
         html: `
