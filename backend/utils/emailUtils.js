@@ -1,7 +1,6 @@
 // autogest-app/backend/utils/emailUtils.js
 const nodemailer = require('nodemailer');
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // 1. Log para verificar que las variables de entorno se están leyendo al inicio
 console.log('[EMAIL_CONFIG] Cargando configuración de email...');
 console.log(`[EMAIL_CONFIG] HOST: ${process.env.EMAIL_HOST}`);
@@ -14,14 +13,14 @@ console.log(`[EMAIL_CONFIG] FROM: ${process.env.FROM_EMAIL}`);
 const transporterConfig = {
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
-    secure: process.env.EMAIL_PORT === 465,
+    secure: process.env.EMAIL_PORT === '465', // Asegurarse de que la comparación sea con una cadena
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
     // Añadimos más logs para depuración de la conexión
     logger: true,
-    debug: true
+    debug: false // Se puede poner a true para ver aún más detalle
 };
 
 console.log('[EMAIL_CONFIG] Configuración del transportador de Nodemailer:', JSON.stringify({
@@ -33,7 +32,6 @@ console.log('[EMAIL_CONFIG] Configuración del transportador de Nodemailer:', JS
 }, null, 2));
 
 const transporter = nodemailer.createTransport(transporterConfig);
-// --- FIN DE LA MODIFICACIÓN ---
 
 
 exports.sendVerificationEmail = async (toEmail, code) => {
@@ -55,21 +53,21 @@ exports.sendVerificationEmail = async (toEmail, code) => {
     };
 
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         console.log(`[EMAIL_SEND] Intentando enviar correo de verificación a ${toEmail}...`);
         await transporter.sendMail(mailOptions);
         console.log(`[EMAIL_SUCCESS] Correo de verificación enviado con éxito a ${toEmail}`);
-        // --- FIN DE LA MODIFICACIÓN ---
     } catch (error) {
-        // --- INICIO DE LA MODIFICACIÓN ---
         console.error(`[EMAIL_ERROR] Error detallado al enviar correo a ${toEmail}:`, error);
-        // --- FIN DE LA MODIFICACIÓN ---
         throw new Error('No se pudo enviar el correo de verificación.');
     }
 };
 
 exports.sendPasswordResetEmail = async (toEmail, token) => {
-    const resetUrl = `https://www.auto-gest.es/reset-password/${token}`;
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Usamos la variable de entorno para construir la URL base.
+    const baseUrl = process.env.FRONTEND_URL || 'https://www.auto-gest.es';
+    const resetUrl = `${baseUrl}/reset-password/${token}`;
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const mailOptions = {
         from: `"AutoGest" <${process.env.FROM_EMAIL}>`,
@@ -94,15 +92,11 @@ exports.sendPasswordResetEmail = async (toEmail, token) => {
     };
 
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         console.log(`[EMAIL_SEND] Intentando enviar correo de restablecimiento a ${toEmail}...`);
         await transporter.sendMail(mailOptions);
         console.log(`[EMAIL_SUCCESS] Correo de restablecimiento enviado con éxito a ${toEmail}`);
-        // --- FIN DE LA MODIFICACIÓN ---
     } catch (error) {
-        // --- INICIO DE LA MODIFICACIÓN ---
         console.error(`[EMAIL_ERROR] Error detallado al enviar correo de restablecimiento a ${toEmail}:`, error);
-        // --- FIN DE LA MODIFICACIÓN ---
         throw new Error('No se pudo enviar el correo de restablecimiento.');
     }
 };

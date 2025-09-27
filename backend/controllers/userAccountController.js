@@ -7,9 +7,7 @@ const crypto = require('crypto');
 
 // Registrar un nuevo usuario (POST /api/auth/register)
 exports.register = async (req, res) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
     console.log('[REGISTER] Iniciando proceso de registro...');
-    // --- FIN DE LA MODIFICACIÓN ---
     try {
         const { name, email, password } = req.body;
         console.log(`[REGISTER] Datos recibidos: ${name}, ${email}`);
@@ -33,27 +31,21 @@ exports.register = async (req, res) => {
             userToVerify = await User.create({ name, email, password: hashedPassword, verificationCode, isVerified: false });
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         console.log('[REGISTER] Usuario creado/actualizado en BBDD. Procediendo a enviar email...');
         await sendVerificationEmail(email, verificationCode);
         console.log('[REGISTER] La función sendVerificationEmail se completó.');
-        // --- FIN DE LA MODIFICACIÓN ---
 
         res.status(201).json({ 
             message: 'Se ha enviado un código de verificación a tu correo. Por favor, úsalo para activar tu cuenta.'
         });
 
     } catch (error) {
-        // --- INICIO DE LA MODIFICACIÓN ---
         console.error("--- ERROR DETALLADO EN REGISTRO ---");
         console.error(error);
         console.error("------------------------------------");
-        // --- FIN DE LA MODIFICACIÓN ---
         res.status(500).json({ error: 'Error en el registro de usuario.' });
     }
 };
-
-// ... (el resto del fichero no necesita cambios, pero lo incluyo para que sea completo)
 
 // Verificar el email del usuario (POST /api/auth/verify)
 exports.verifyEmail = async (req, res) => {
@@ -88,8 +80,14 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ where: { email } });
-        if (!user) return res.status(401).json({ error: 'No existe una cuenta con este email.' });
-        
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // 1. Si no hay usuario o la contraseña no coincide, se da un error genérico.
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ error: 'Email o contraseña incorrectos.' });
+        }
+
+        // 2. Si las credenciales son correctas, AHORA se comprueba si está verificado.
         if (!user.isVerified) {
             return res.status(401).json({ 
                 error: 'Tu cuenta no ha sido verificada. Por favor, revisa tu correo electrónico.',
@@ -98,13 +96,12 @@ exports.login = async (req, res) => {
             });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(401).json({ error: 'La contraseña es incorrecta.' });
-
+        // 3. Si todo es correcto (credenciales y verificación), se genera el token.
         const payload = { id: user.id, role: user.role };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
 
         res.status(200).json({ token });
+        // --- FIN DE LA MODIFICACIÓN ---
 
     } catch (error) {
         console.error(error);
@@ -179,7 +176,6 @@ exports.forceVerification = async (req, res) => {
         res.status(500).json({ error: 'Error al enviar el código de verificación.' });
     }
 };
-
 
 // @desc    Solicitar restablecimiento de contraseña
 // @route   POST /api/auth/forgot-password
