@@ -15,9 +15,7 @@ import VersionIndicator from '../components/VersionIndicator';
 
 const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     const appState = useAppState();
-    // --- INICIO DE LA MODIFICACIÓN ---
     const { isDataLoading, toast, handleUndoDelete, setToast, setLogoutModalOpen } = appState;
-    // --- FIN DE LA MODIFICACIÓN ---
     const { user, subscriptionStatus, isRefreshing } = useContext(AuthContext);
     const location = useLocation();
 
@@ -49,12 +47,18 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
     }
 
     const isExempt = user && (user.role === 'admin' || user.role === 'technician');
-    const hasActiveSubscription = subscriptionStatus === 'active';
+    
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Comprueba si la suscripción está activa o si, estando cancelada, aún no ha expirado.
+    const hasValidSubscription = subscriptionStatus === 'active' || 
+        (subscriptionStatus === 'cancelled' && user && new Date(user.subscriptionExpiry) > new Date());
+    
     const isAllowedPath = ['/subscription', '/settings', '/profile'].includes(location.pathname);
 
-    if (user && !isExempt && !hasActiveSubscription && !isAllowedPath) {
+    if (user && !isExempt && !hasValidSubscription && !isAllowedPath) {
         return <Navigate to="/subscription" replace />;
     }
+    // --- FIN DE LA MODIFICACIÓN ---
     
     if (isDataLoading) {
         return <div className="flex h-screen w-full items-center justify-center bg-background text-text-primary">Cargando datos...</div>;
@@ -62,21 +66,17 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
 
     return (
         <div className="flex h-screen bg-background font-sans text-text-secondary">
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <Sidebar onLogoutClick={() => setLogoutModalOpen(true)} />
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
             <div className="flex flex-col flex-1 min-w-0">
                 <Header />
                 <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
                     <Suspense fallback={<div className="flex h-full w-full items-center justify-center">Cargando página...</div>}>
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         <AppRoutes 
                             appState={appState} 
                             isDarkMode={isDarkMode} 
                             setIsDarkMode={setIsDarkMode} 
                             onLogoutClick={() => setLogoutModalOpen(true)} 
                         />
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </Suspense>
                 </main>
             </div>

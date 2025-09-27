@@ -69,6 +69,10 @@ const VerificationForm = ({ email }) => {
         setIsLoading(true);
         try {
             await api.verifyEmail({ email, code: verificationCode });
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Limpia el localStorage al verificar con éxito
+            localStorage.removeItem('emailToVerify');
+            // --- FIN DE LA MODIFICACIÓN ---
             setSuccess('¡Cuenta verificada! Serás redirigido al login.');
             setTimeout(() => {
                 navigate('/login');

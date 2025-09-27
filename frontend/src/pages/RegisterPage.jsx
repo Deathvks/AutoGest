@@ -1,18 +1,31 @@
 // autogest-app/frontend/src/pages/RegisterPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar } from '@fortawesome/free-solid-svg-icons';
 import RegisterForm from './RegisterPage/RegisterForm';
 import VerificationForm from './RegisterPage/VerificationForm';
 
 const RegisterPage = () => {
-    const [step, setStep] = useState('register'); // 'register' o 'verify'
+    const [step, setStep] = useState('register');
     const [email, setEmail] = useState('');
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    useEffect(() => {
+        // Al cargar la página, comprueba si hay un email pendiente de verificar
+        const emailToVerify = localStorage.getItem('emailToVerify');
+        if (emailToVerify) {
+            setEmail(emailToVerify);
+            setStep('verify');
+        }
+    }, []);
+
     const handleRegistrationSuccess = (registeredEmail) => {
+        // Guarda el email en localStorage para persistir el estado
+        localStorage.setItem('emailToVerify', registeredEmail);
         setEmail(registeredEmail);
         setStep('verify');
     };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-background">

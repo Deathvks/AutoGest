@@ -163,9 +163,7 @@ const ForceVerificationModal = ({ isOpen, currentEmail, onClose, onVerified }) =
                         </>
                     ) : (
                         <>
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                             <p className="text-text-secondary mt-4">Introduce el código de 6 dígitos enviado a <span className="font-semibold text-text-primary break-words">{emailToSend}</span>.</p>
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                             <form onSubmit={handleVerificationSubmit} noValidate>
                                 <div className="flex justify-center gap-2 my-6" onPaste={handlePaste}>
                                     {code.map((digit, index) => (
@@ -186,6 +184,14 @@ const ForceVerificationModal = ({ isOpen, currentEmail, onClose, onVerified }) =
                             </div>
                         </>
                     )}
+
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <div className="mt-6 text-sm">
+                        <button onClick={onClose} className="font-medium text-accent hover:opacity-80">
+                            Volver a Iniciar Sesión
+                        </button>
+                    </div>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                     {error && <p className="text-sm text-red-accent text-center mt-4">{error}</p>}
                     {success && <p className="text-sm text-green-accent text-center mt-4">{success}</p>}
