@@ -19,14 +19,12 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
     const [igicEnabled, setIgicEnabled] = useState(user?.applyIgic || false);
     const [igicMessage, setIgicMessage] = useState('');
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const [logoFile, setLogoFile] = useState(null);
     const [logoPreview, setLogoPreview] = useState(user?.logoUrl || '');
     const [logoMessage, setLogoMessage] = useState('');
     const logoInputRef = useRef(null);
 
     useEffect(() => {
-        // Actualiza la previsualización si el logo del usuario cambia (p. ej. después de guardar)
         setLogoPreview(user?.logoUrl || '');
     }, [user?.logoUrl]);
 
@@ -47,7 +45,7 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
     const handleDeleteLogo = async () => {
         setLogoMessage({ type: '', text: '' });
         try {
-            await api.deleteLogo(); // Llama a la nueva función de la API
+            await api.deleteLogo();
             setLogoFile(null);
             setLogoPreview('');
             setLogoMessage({ type: 'success', text: 'Logo eliminado con éxito.' });
@@ -56,7 +54,6 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
             setLogoMessage({ type: 'error', text: 'Error al eliminar el logo.' });
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleIgicToggle = async () => {
         const newIgicState = !igicEnabled;
@@ -115,7 +112,6 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
         document.body.removeChild(link);
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleSaveChanges = async () => {
         if (!logoFile) return;
         const formData = new FormData();
@@ -129,7 +125,6 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
             setLogoMessage({ type: 'error', text: 'Error al guardar el logo.' });
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -184,7 +179,6 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                             </span>
                         )}
                     </div>
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <hr className="border-border-color my-6" />
                     <h4 className="font-semibold text-text-primary mb-2">LOGO DE LA EMPRESA</h4>
                     <p className="text-sm text-text-secondary mb-3">SUBE EL LOGO DE TU EMPRESA PARA QUE APAREZCA EN TUS FACTURAS. (MÁX 10MB)</p>
@@ -220,7 +214,6 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                             {logoMessage.text}
                         </p>
                     )}
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
 
                 <div className="p-6 bg-component-bg rounded-xl border border-border-color">
@@ -268,12 +261,13 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                             {exportMessage && <p className="text-sm text-yellow-accent mt-3">{exportMessage}</p>}
                         </div>
 
-                        {user && (user.role === 'user') && (
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        {user && (
                             <div className="lg:hidden">
                                 <hr className="border-border-color" />
                                 <div className="mt-6">
                                     <h4 className="font-semibold text-text-primary mb-2">SUSCRIPCIÓN</h4>
-                                    <p className="text-sm text-text-secondary mb-3">GESTIONA TU PLAN DE SUSCRIPCIÓN, FACTURACIÓN Y MÉTODOS DE PAGO.</p>
+                                    <p className="text-sm text-text-secondary mb-3">GESTIONA O REVISA EL PLAN DE SUSCRIPCIÓN.</p>
                                     <Link to="/subscription" className="inline-flex items-center justify-center gap-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
                                         <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
                                         GESTIONAR SUSCRIPCIÓN
@@ -281,6 +275,7 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                                 </div>
                             </div>
                         )}
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                         {user && user.role === 'admin' && (
                             <div className="lg:hidden">
