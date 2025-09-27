@@ -98,9 +98,7 @@ const api = {
         }).then(handleProtectedResponse);
     },
     deleteAvatar: () => fetch(`${BASE_URL}/auth/avatar`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
-    // --- INICIO DE LA MODIFICACIÓN ---
     deleteLogo: () => fetch(`${BASE_URL}/auth/logo`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
-    // --- FIN DE LA MODIFICACIÓN ---
     updatePassword: (passwordData) => fetch(`${BASE_URL}/auth/update-password`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(passwordData) }).then(handleProtectedResponse),
     deleteAccount: () => fetch(`${BASE_URL}/auth/me`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
 
@@ -161,6 +159,9 @@ const api = {
         createSubscription: (paymentMethodId) => fetch(`${BASE_URL}/subscriptions/create-subscription`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ paymentMethodId }) }).then(handleProtectedResponse),
         getSubscriptionStatus: () => fetch(`${BASE_URL}/subscriptions/status`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
         cancelSubscription: () => fetch(`${BASE_URL}/subscriptions/cancel-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
+        // --- INICIO DE LA MODIFICACIÓN ---
+        reactivateSubscription: () => fetch(`${BASE_URL}/subscriptions/reactivate-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
+        // --- FIN DE LA MODIFICACIÓN ---
         syncSubscription: () => fetch(`${BASE_URL}/subscriptions/sync`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse)
     }
 };

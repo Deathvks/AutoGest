@@ -1,29 +1,52 @@
 // autogest-app/frontend/src/pages/Subscription/SubscriptionStatus.jsx
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react'; // --- INICIO DE LA MODIFICACIÓN ---
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faExclamationTriangle, faTimesCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import CancelSubscriptionModal from '../../components/modals/CancelSubscriptionModal'; // Importamos el nuevo modal
+import { faCheckCircle, faExclamationTriangle, faTimesCircle, faSpinner, faUndo } from '@fortawesome/free-solid-svg-icons';
+import CancelSubscriptionModal from '../../components/modals/CancelSubscriptionModal';
+import api from '../../services/api'; // --- INICIO DE LA MODIFICACIÓN ---
+import { AuthContext } from '../../context/AuthContext'; // --- INICIO DE LA MODIFICACIÓN ---
 
 const SubscriptionStatus = ({ status, expiry, onCancel }) => {
+    const { refreshSubscriptionStatus } = useContext(AuthContext); // --- INICIO DE LA MODIFICACIÓN ---
     const [isCancelling, setIsCancelling] = useState(false);
+    const [isCancelModalOpen, setCancelModalOpen] = useState(false);
+    const [cancelError, setCancelError] = useState('');
     // --- INICIO DE LA MODIFICACIÓN ---
-    const [isCancelModalOpen, setCancelModalOpen] = useState(false); // Nuevo estado para controlar el modal
+    const [isReactivating, setIsReactivating] = useState(false); 
+    const [reactivateError, setReactivateError] = useState('');
+    // --- FIN DE LA MODIFICACIÓN ---
 
-    // Esta función ahora solo abre el modal de confirmación
     const handleCancelClick = () => {
+        setCancelError('');
         setCancelModalOpen(true);
     };
 
-    // Esta función se ejecuta cuando el usuario confirma la cancelación en el modal
     const confirmCancellation = async () => {
-        setCancelModalOpen(false); // Cerramos el modal
+        setCancelModalOpen(false);
         setIsCancelling(true);
+        setCancelError('');
         try {
             await onCancel();
         } catch (error) {
-            alert(error.message);
+            setCancelError(error.message || 'No se pudo cancelar la suscripción. Inténtalo de nuevo.');
+            setTimeout(() => setCancelError(''), 5000);
         } finally {
             setIsCancelling(false);
+        }
+    };
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleReactivate = async () => {
+        setIsReactivating(true);
+        setReactivateError('');
+        try {
+            await api.subscriptions.reactivateSubscription();
+            await refreshSubscriptionStatus(); // Refresca el estado para que la UI se actualice
+        } catch (error) {
+            setReactivateError(error.message || 'No se pudo reactivar la suscripción.');
+            setTimeout(() => setReactivateError(''), 5000);
+        } finally {
+            setIsReactivating(false);
         }
     };
     // --- FIN DE LA MODIFICACIÓN ---
@@ -56,27 +79,44 @@ const SubscriptionStatus = ({ status, expiry, onCancel }) => {
                 >
                     {currentStatus.message}
                 </p>
-                {status === 'active' && (
-                     <button
-                        // --- INICIO DE LA MODIFICACIÓN ---
-                        onClick={handleCancelClick} // Cambiado para abrir el modal
-                        // --- FIN DE LA MODIFICACIÓN ---
-                        disabled={isCancelling}
-                        className="mt-6 bg-red-accent/10 text-red-accent font-semibold py-2 px-6 rounded-lg hover:bg-red-accent/20 transition-colors disabled:opacity-50 animate-fade-in-up"
-                        style={{ animationDelay: '450ms', opacity: 0 }}
-                    >
-                        {isCancelling ? <FontAwesomeIcon icon={faSpinner} spin /> : 'CANCELAR SUSCRIPCIÓN'}
-                    </button>
-                )}
+                <div className="mt-6 animate-fade-in-up" style={{ animationDelay: '450ms', opacity: 0 }}>
+                    {status === 'active' && (
+                        <>
+                            <button
+                                onClick={handleCancelClick}
+                                disabled={isCancelling}
+                                className="bg-red-accent/10 text-red-accent font-semibold py-2 px-6 rounded-lg hover:bg-red-accent/20 transition-colors disabled:opacity-50"
+                            >
+                                {isCancelling ? <FontAwesomeIcon icon={faSpinner} spin /> : 'CANCELAR SUSCRIPCIÓN'}
+                            </button>
+                            {cancelError && (
+                                <p className="text-red-accent text-sm mt-3">{cancelError}</p>
+                            )}
+                        </>
+                    )}
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    {status === 'cancelled' && (
+                         <>
+                            <button
+                                onClick={handleReactivate}
+                                disabled={isReactivating}
+                                className="bg-green-accent/10 text-green-accent font-semibold py-2 px-6 rounded-lg hover:bg-green-accent/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
+                            >
+                                {isReactivating ? <FontAwesomeIcon icon={faSpinner} spin /> : <><FontAwesomeIcon icon={faUndo} /> REACTIVAR SUSCRIPCIÓN</>}
+                            </button>
+                            {reactivateError && (
+                                <p className="text-red-accent text-sm mt-3">{reactivateError}</p>
+                            )}
+                        </>
+                    )}
+                     {/* --- FIN DE LA MODIFICACIÓN --- */}
+                </div>
             </div>
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
-            {/* Renderizamos el modal aquí */}
             <CancelSubscriptionModal 
                 isOpen={isCancelModalOpen}
                 onClose={() => setCancelModalOpen(false)}
                 onConfirm={confirmCancellation}
             />
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
     );
 };

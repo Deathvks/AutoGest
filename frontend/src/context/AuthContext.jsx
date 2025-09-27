@@ -27,16 +27,18 @@ const AuthProvider = ({ children }) => {
         }
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
     const refreshSubscriptionStatus = async () => {
         setIsRefreshing(true);
         try {
+            // Se asegura de que la obtención de datos se complete antes de continuar
             await fetchUserAndSubscription();
         } finally {
             setIsRefreshing(false);
         }
     };
+    // --- FIN DE LA MODIFICACIÓN ---
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const refreshUser = async () => {
         if (token) {
             try {
@@ -48,7 +50,6 @@ const AuthProvider = ({ children }) => {
             }
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         fetchUserAndSubscription();

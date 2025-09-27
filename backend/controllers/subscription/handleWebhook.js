@@ -1,6 +1,7 @@
 // autogest-app/backend/controllers/subscription/handleWebhook.js
 const { User } = require('../../models');
 const { stripe, getStripeConfig } = require('./stripeConfig');
+const { sendSubscriptionInvoiceEmail } = require('../../utils/emailUtils');
 
 exports.handleWebhook = async (req, res) => {
     const sig = req.headers['stripe-signature'];
@@ -38,6 +39,25 @@ exports.handleWebhook = async (req, res) => {
 
         switch (event.type) {
             case 'invoice.payment_succeeded':
+                console.log('[Webhook] Datos de la factura:', {
+                    status: dataObject.status,
+                    invoice_pdf: dataObject.invoice_pdf ? 'Presente' : 'Ausente',
+                    customer_email: dataObject.customer_email,
+                    customer_name: dataObject.customer_name,
+                    number: dataObject.number
+                });
+
+                if (dataObject.status === 'paid' && dataObject.invoice_pdf && dataObject.customer_email) {
+                    await sendSubscriptionInvoiceEmail(
+                        dataObject.customer_email,
+                        dataObject.customer_name || user.name,
+                        dataObject.invoice_pdf,
+                        dataObject.number
+                    );
+                } else {
+                    console.warn('[Webhook] No se pudo enviar la factura por email. Faltan datos clave o el estado no es "paid".');
+                }
+            
                 if (dataObject.subscription) {
                     console.log(`[Webhook] Procesando pago exitoso de factura para suscripción: ${dataObject.subscription}`);
                     
@@ -207,25 +227,10 @@ exports.handleWebhook = async (req, res) => {
                     await user.update({ subscriptionStatus: 'cancelled' });
                     console.log(`[Webhook] Suscripción del usuario ${user.id} marcada para cancelación.`);
                 } else if (dataObject.status === 'active' || dataObject.status === 'trialing') {
-                    if (dataObject.current_period_end && !isNaN(dataObject.current_period_end)) {
-                        const expiryDate = new Date(dataObject.current_period_end * 1000);
-                        
-                        if (!isNaN(expiryDate.getTime())) {
-                            await user.update({
-                                subscriptionStatus: 'active',
-                                subscriptionExpiry: expiryDate,
-                            });
-                            console.log(`✅ [Webhook] Suscripción del usuario ${user.id} reactivada. Expira: ${expiryDate.toISOString()}`);
-                        } else {
-                            console.error(`[Webhook] Fecha de expiración inválida en subscription.updated`);
-                            await user.update({ subscriptionStatus: 'active' });
-                            console.log(`⚠️ [Webhook] Usuario ${user.id} reactivado sin fecha de expiración`);
-                        }
-                    } else {
-                        console.log(`[Webhook] current_period_end no disponible en subscription.updated`);
-                        await user.update({ subscriptionStatus: 'active' });
-                        console.log(`⚠️ [Webhook] Usuario ${user.id} reactivado sin fecha de expiración`);
-                    }
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    await user.update({ subscriptionStatus: 'active' });
+                    console.log(`✅ [Webhook] Usuario ${user.id} reactivado. La fecha de expiración no cambia.`);
+                    // --- FIN DE LA MODIFICACIÓN ---
                 } else if (dataObject.status === 'past_due') {
                     await user.update({ subscriptionStatus: 'past_due' });
                     console.log(`[Webhook] Suscripción del usuario ${user.id} marcada como past_due.`);

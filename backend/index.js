@@ -1,21 +1,24 @@
 // autogest-app/backend/index.js
 
+// --- INICIO DE LA MODIFICACIÓN ---
+// Mover la carga de dotenv al principio de todo.
+// Solo cargar dotenv si NO estamos en producción.
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+// --- FIN DE LA MODIFICACIÓN ---
+
 const express = require('express');
 const cors = require('cors');
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Log de diagnóstico para verificar las variables de entorno al arrancar
 console.log('--- INICIANDO APLICACIÓN ---');
 console.log(`[ENV] NODE_ENV: ${process.env.NODE_ENV}`);
 console.log(`[ENV] EMAIL_HOST: ${process.env.EMAIL_HOST}`);
 console.log(`[ENV] EMAIL_PORT: ${process.env.EMAIL_PORT}`);
 console.log('---------------------------');
-// --- FIN DE LA MODIFICACIÓN ---
 
-// Solo cargar dotenv si NO estamos en producción.
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
-}
+// El require('dotenv').config() que estaba aquí se ha movido arriba.
 
 const db = require('./models');
 const subscriptionController = require('./controllers/subscriptionController');
@@ -80,7 +83,6 @@ const PORT = process.env.PORT || 3001;
 
 db.sequelize.sync({ alter: true })
   .then(() => {
-    console.log('✅ Conexión a la base de datos establecida correctamente.');
     app.listen(PORT, () => {
         console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
     });

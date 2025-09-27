@@ -1,7 +1,8 @@
 // autogest-app/backend/utils/emailUtils.js
 const nodemailer = require('nodemailer');
+const https = require('https');
 
-// 1. Log para verificar que las variables de entorno se están leyendo al inicio
+// Log para verificar que las variables de entorno se están leyendo al inicio
 console.log('[EMAIL_CONFIG] Cargando configuración de email...');
 console.log(`[EMAIL_CONFIG] HOST: ${process.env.EMAIL_HOST}`);
 console.log(`[EMAIL_CONFIG] PORT: ${process.env.EMAIL_PORT}`);
@@ -9,30 +10,27 @@ console.log(`[EMAIL_CONFIG] USER: ${process.env.EMAIL_USER ? 'Definido' : 'NO DE
 console.log(`[EMAIL_CONFIG] PASS: ${process.env.EMAIL_PASS ? 'Definido' : 'NO DEFINIDO'}`);
 console.log(`[EMAIL_CONFIG] FROM: ${process.env.FROM_EMAIL}`);
 
-// 2. Definimos la configuración del transportador en un objeto para poder registrarla
 const transporterConfig = {
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
-    secure: process.env.EMAIL_PORT === '465', // Asegurarse de que la comparación sea con una cadena
+    secure: process.env.EMAIL_PORT === '465',
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
-    // Añadimos más logs para depuración de la conexión
     logger: true,
-    debug: false // Se puede poner a true para ver aún más detalle
+    debug: false
 };
 
 console.log('[EMAIL_CONFIG] Configuración del transportador de Nodemailer:', JSON.stringify({
     ...transporterConfig,
-    auth: { // Ocultamos la contraseña en el log por seguridad
+    auth: {
         user: transporterConfig.auth.user,
         pass: transporterConfig.auth.pass ? '******' : 'NO DEFINIDO'
     }
 }, null, 2));
 
 const transporter = nodemailer.createTransport(transporterConfig);
-
 
 exports.sendVerificationEmail = async (toEmail, code) => {
     const mailOptions = {
@@ -63,11 +61,8 @@ exports.sendVerificationEmail = async (toEmail, code) => {
 };
 
 exports.sendPasswordResetEmail = async (toEmail, token) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Usamos la variable de entorno para construir la URL base.
     const baseUrl = process.env.FRONTEND_URL || 'https://www.auto-gest.es';
     const resetUrl = `${baseUrl}/reset-password/${token}`;
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const mailOptions = {
         from: `"AutoGest" <${process.env.FROM_EMAIL}>`,
@@ -98,5 +93,62 @@ exports.sendPasswordResetEmail = async (toEmail, token) => {
     } catch (error) {
         console.error(`[EMAIL_ERROR] Error detallado al enviar correo de restablecimiento a ${toEmail}:`, error);
         throw new Error('No se pudo enviar el correo de restablecimiento.');
+    }
+};
+
+// --- INICIO DE LA MODIFICACIÓN ---
+const downloadPdf = (url) => {
+    return new Promise((resolve, reject) => {
+        const request = (urlToFetch) => {
+            https.get(urlToFetch, (res) => {
+                if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                    // Si es una redirección, llamamos a la función de nuevo con la nueva URL.
+                    request(res.headers.location);
+                } else if (res.statusCode !== 200) {
+                    reject(new Error(`Fallo al descargar el PDF. Código de estado: ${res.statusCode}`));
+                } else {
+                    const data = [];
+                    res.on('data', (chunk) => data.push(chunk));
+                    res.on('end', () => resolve(Buffer.concat(data)));
+                }
+            }).on('error', (err) => reject(err));
+        };
+        request(url);
+    });
+};
+// --- FIN DE LA MODIFICACIÓN ---
+
+exports.sendSubscriptionInvoiceEmail = async (toEmail, customerName, invoicePdfUrl, invoiceNumber) => {
+    try {
+        console.log(`[INVOICE_EMAIL] Descargando factura desde: ${invoicePdfUrl}`);
+        const pdfBuffer = await downloadPdf(invoicePdfUrl);
+        console.log(`[INVOICE_EMAIL] Factura descargada, tamaño: ${pdfBuffer.length} bytes.`);
+
+        const mailOptions = {
+            from: `"AutoGest" <${process.env.FROM_EMAIL}>`,
+            to: toEmail,
+            subject: `Tu factura de AutoGest #${invoiceNumber}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                    <h2 style="color: #B8860B;">Gracias por tu suscripción a AutoGest</h2>
+                    <p>Hola ${customerName},</p>
+                    <p>Adjuntamos la factura correspondiente a tu suscripción. Apreciamos tu confianza en nosotros.</p>
+                    <p>Si tienes cualquier pregunta, no dudes en contactarnos.</p>
+                    <p>Atentamente,<br>El equipo de AutoGest</p>
+                </div>
+            `,
+            attachments: [{
+                filename: `factura_autogest_${invoiceNumber}.pdf`,
+                content: pdfBuffer,
+                contentType: 'application/pdf',
+            }],
+        };
+
+        console.log(`[INVOICE_EMAIL] Intentando enviar factura a ${toEmail}...`);
+        await transporter.sendMail(mailOptions);
+        console.log(`[INVOICE_SUCCESS] Factura enviada con éxito a ${toEmail}`);
+
+    } catch (error) {
+        console.error(`[INVOICE_ERROR] Error detallado al enviar factura a ${toEmail}:`, error);
     }
 };

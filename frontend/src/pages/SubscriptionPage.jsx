@@ -13,20 +13,19 @@ import SubscriptionBenefits from './Subscription/SubscriptionBenefits';
 import CheckoutForm from './Subscription/CheckoutForm';
 import SubscriptionStatus from './Subscription/SubscriptionStatus';
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Carga la clave correcta dependiendo del entorno (desarrollo o producción)
 const stripePublishableKey = import.meta.env.PROD 
     ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE 
     : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST;
 
 const stripePromise = loadStripe(stripePublishableKey);
-// --- FIN DE LA MODIFICACIÓN ---
 
 const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
     const { user, subscriptionStatus, refreshSubscriptionStatus } = useContext(AuthContext);
 
     const [isLoading, setIsLoading] = useState(true);
-    const [localExpiry, setLocalExpiry] = useState(null);
+    // --- INICIO DE LA MODIFICACIÓN (SE ELIMINA EL ESTADO LOCAL) ---
+    // const [localExpiry, setLocalExpiry] = useState(null);
+    // --- FIN DE LA MODIFICACIÓN ---
     const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
     const [verificationError, setVerificationError] = useState('');
 
@@ -83,12 +82,13 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
         await refreshSubscriptionStatus();
     };
 
+    // --- INICIO DE LA MODIFICACIÓN (SE SIMPLIFICA EL useEffect) ---
     useEffect(() => {
         if (user) {
-            setLocalExpiry(user.subscriptionExpiry);
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }, [user]);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     if (user.role === 'admin' || user.role === 'technician') {
         return (
@@ -114,7 +114,9 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
                     <p className="mt-2 text-lg text-text-secondary">Gestiona el estado de tu plan y revisa los beneficios incluidos.</p>
                 </div>
 
-                <SubscriptionStatus status={subscriptionStatus} expiry={localExpiry} onCancel={handleCancel} />
+                {/* --- INICIO DE LA MODIFICACIÓN (SE USA DIRECTAMENTE user.subscriptionExpiry) --- */}
+                <SubscriptionStatus status={subscriptionStatus} expiry={user.subscriptionExpiry} onCancel={handleCancel} />
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                 <div>
                     <h2 className="text-2xl font-semibold text-text-primary mb-6">Beneficios de tu Plan</h2>

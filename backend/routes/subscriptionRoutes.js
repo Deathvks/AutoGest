@@ -15,4 +15,9 @@ router.get('/status', protect, subscriptionController.getSubscriptionStatus);
 // Cancelar la suscripción del usuario actual
 router.post('/cancel-subscription', protect, subscriptionController.cancelSubscription);
 
+// --- INICIO DE LA MODIFICACIÓN ---
+// Reactivar una suscripción cancelada
+router.post('/reactivate-subscription', protect, subscriptionController.reactivateSubscription);
+// --- FIN DE LA MODIFICACIÓN ---
+
 module.exports = router;

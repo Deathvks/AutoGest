@@ -4,6 +4,7 @@ const { getSubscriptionStatus } = require('./subscription/getSubscriptionStatus'
 const { cancelSubscription } = require('./subscription/cancelSubscription');
 const { handleWebhook } = require('./subscription/handleWebhook');
 const { syncSubscription } = require('./subscription/syncSubscription');
+const { reactivateSubscription } = require('./subscription/reactivateSubscription'); // --- INICIO DE LA MODIFICACIÓN ---
 
 module.exports = {
     createSubscription,
@@ -11,4 +12,5 @@ module.exports = {
     cancelSubscription,
     handleWebhook,
     syncSubscription,
+    reactivateSubscription, // --- INICIO DE LA MODIFICACIÓN ---
 };
