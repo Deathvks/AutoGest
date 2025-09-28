@@ -52,13 +52,11 @@ const Header = () => {
                         className="w-9 h-9 rounded-full object-cover border-2 border-component-bg"
                     />
                     
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     {!isExempt && (
-                        <span className={`absolute -bottom-0.5 -right-0.5 block text-white text-[8px] font-bold px-1 py-0 rounded-md border-1 border-component-bg ${hasValidSubscription ? 'bg-accent' : 'bg-text-secondary'}`}>
+                        <span className={`absolute -bottom-0.5 -right-0.5 block text-white text-[8px] font-bold px-1 py-0 rounded-md border border-component-bg ${hasValidSubscription ? 'bg-accent' : 'bg-text-secondary'}`}>
                             {hasValidSubscription ? 'PRO' : 'FREE'}
                         </span>
                     )}
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </Link>
             )}
         </header>

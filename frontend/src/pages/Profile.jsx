@@ -7,7 +7,7 @@ import { faCamera, faTrash, faSave, faTimes } from '@fortawesome/free-solid-svg-
 const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 const Profile = () => {
-    const { user, updateUserProfile, deleteUserAvatar } = useContext(AuthContext);
+    const { user, updateUserProfile, deleteUserAvatar, subscriptionStatus } = useContext(AuthContext);
 
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
@@ -88,6 +88,10 @@ const Profile = () => {
         setError('');
         setMessage('');
     };
+    
+    const isExempt = user && (user.role === 'admin' || user.role === 'technician');
+    const hasValidSubscription = subscriptionStatus === 'active' || 
+        (subscriptionStatus === 'cancelled' && user && new Date(user.subscriptionExpiry) > new Date());
 
     return (
         <div className="max-w-xl mx-auto">
@@ -114,6 +118,14 @@ const Profile = () => {
                                 )}
                             </>
                         )}
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        {/* La insignia solo se muestra si NO estamos editando */}
+                        {!isEditing && !isExempt && (
+                            <span className={`absolute -bottom-1 -right-1 block text-white text-xs font-bold px-2 py-0.5 rounded-full border-2 border-component-bg ${hasValidSubscription ? 'bg-accent' : 'bg-text-secondary'}`}>
+                                {hasValidSubscription ? 'PRO' : 'FREE'}
+                            </span>
+                        )}
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </div>
 
                     <div className="w-full">
@@ -151,11 +163,7 @@ const Profile = () => {
                             </button>
                         </>
                     ) : (
-                        // --- INICIO DE LA MODIFICACIÓN ---
-                        // Se elimina el Link a /settings y se deja solo el botón de Editar Perfil,
-                        // que se centrará automáticamente por el `justify-center` del div padre.
                         <button onClick={() => setIsEditing(true)} className="bg-accent text-white px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors">Editar Perfil</button>
-                        // --- FIN DE LA MODIFICACIÓN ---
                     )}
                 </div>
                 {message && <p className="text-sm text-center mt-4 text-green-accent">{message}</p>}
