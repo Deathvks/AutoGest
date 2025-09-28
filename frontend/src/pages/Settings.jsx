@@ -1,318 +1,49 @@
 // autogest-app/frontend/src/pages/Settings.jsx
-import React, { useState, useContext, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon, faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faBuilding, faCreditCard, faPercentage, faUpload, faTrash, faBuildingCircleCheck } from '@fortawesome/free-solid-svg-icons';
-import Papa from 'papaparse';
-import api from '../services/api';
-import { AuthContext } from '../context/AuthContext';
+import React from 'react';
 import VersionIndicator from '../components/VersionIndicator';
 import { APP_NAME } from '../config/version';
 
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+// Importar los nuevos componentes modularizados
+import AppearanceSettings from './Settings/AppearanceSettings';
+import TaxSettings from './Settings/TaxSettings';
+import BusinessDataSettings from './Settings/BusinessDataSettings';
+import AccountDataSettings from './Settings/AccountDataSettings';
 
-const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDeleteAccountClick, onBusinessDataClick, businessDataMessage, onLogoutClick }) => {
-    const { user, updateUserProfile } = useContext(AuthContext);
-    const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
-    const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
-    const [exportMessage, setExportMessage] = useState('');
-    const [igicEnabled, setIgicEnabled] = useState(user?.applyIgic || false);
-    const [igicMessage, setIgicMessage] = useState('');
-
-    const [logoFile, setLogoFile] = useState(null);
-    const [logoPreview, setLogoPreview] = useState(user?.logoUrl || '');
-    const [logoMessage, setLogoMessage] = useState('');
-    const logoInputRef = useRef(null);
-
-    useEffect(() => {
-        setLogoPreview(user?.logoUrl || '');
-    }, [user?.logoUrl]);
-
-
-    const handleLogoChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            if (file.size > 10 * 1024 * 1024) {
-                setLogoMessage({ type: 'error', text: 'El logo no puede pesar más de 10MB.' });
-                return;
-            }
-            setLogoFile(file);
-            setLogoPreview(URL.createObjectURL(file));
-            setLogoMessage({ type: 'info', text: 'Logo listo para subir. Guarda los cambios para aplicarlo.' });
-        }
-    };
-
-    const handleDeleteLogo = async () => {
-        setLogoMessage({ type: '', text: '' });
-        try {
-            await api.deleteLogo();
-            setLogoFile(null);
-            setLogoPreview('');
-            setLogoMessage({ type: 'success', text: 'Logo eliminado con éxito.' });
-            setTimeout(() => setLogoMessage({ type: '', text: '' }), 3000);
-        } catch (error) {
-            setLogoMessage({ type: 'error', text: 'Error al eliminar el logo.' });
-        }
-    };
-
-    const handleIgicToggle = async () => {
-        const newIgicState = !igicEnabled;
-        setIgicEnabled(newIgicState);
-        try {
-            await updateUserProfile({ applyIgic: newIgicState });
-            setIgicMessage('¡GUARDADO!');
-            setTimeout(() => setIgicMessage(''), 3000);
-        } catch (error) {
-            setIgicMessage('Error al guardar');
-            setIgicEnabled(!newIgicState);
-        }
-    };
-
-    const handlePasswordChange = (e) => {
-        const { name, value } = e.target;
-        setPasswordData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handlePasswordSubmit = async (e) => {
-        e.preventDefault();
-        setPasswordMessage({ type: '', text: '' });
-
-        if (!passwordData.currentPassword || !passwordData.newPassword) {
-            return setPasswordMessage({ type: 'error', text: 'Ambos campos son obligatorios.' });
-        }
-        if (passwordData.newPassword.length < 6) {
-            return setPasswordMessage({ type: 'error', text: 'La nueva contraseña debe tener al menos 6 caracteres.' });
-        }
-
-        try {
-            const response = await api.updatePassword(passwordData);
-            setPasswordMessage({ type: 'success', text: response.message });
-            setPasswordData({ currentPassword: '', newPassword: '' });
-        } catch (error) {
-            setPasswordMessage({ type: 'error', text: error.message });
-        }
-    };
-
-    const handleExport = (data, filename, dataType) => {
-        if (!data || data.length === 0) {
-            setExportMessage(`No hay ${dataType} para exportar.`);
-            setTimeout(() => setExportMessage(''), 3000);
-            return;
-        }
-        
-        const csv = Papa.unparse(data);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const handleSaveChanges = async () => {
-        if (!logoFile) return;
-        const formData = new FormData();
-        formData.append('logo', logoFile);
-        try {
-            await updateUserProfile(formData);
-            setLogoFile(null);
-            setLogoMessage({ type: 'success', text: '¡Logo guardado con éxito!' });
-            setTimeout(() => setLogoMessage({ type: '', text: '' }), 3000);
-        } catch (error) {
-            setLogoMessage({ type: 'error', text: 'Error al guardar el logo.' });
-        }
-    };
-
+const Settings = ({ 
+    isDarkMode, 
+    setIsDarkMode, 
+    cars, 
+    expenses, 
+    incidents, 
+    onDeleteAccountClick, 
+    onBusinessDataClick, 
+    businessDataMessage, 
+    onLogoutClick 
+}) => {
     return (
         <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">AJUSTES</h1>
 
             <div className="space-y-8">
-
-                <div className="p-6 bg-component-bg rounded-xl border border-border-color">
-                    <h3 className="text-lg font-bold text-text-primary mb-4">APARIENCIA</h3>
-                    <div className="flex justify-between items-center">
-                        <span className="font-medium text-text-primary">MODO OSCURO</span>
-                        <button
-                            onClick={() => setIsDarkMode(!isDarkMode)}
-                            className="p-2 rounded-full text-text-secondary transition-colors"
-                        >
-                            <FontAwesomeIcon icon={isDarkMode ? faSun : faMoon} />
-                        </button>
-                    </div>
-                </div>
+                <AppearanceSettings 
+                    isDarkMode={isDarkMode} 
+                    setIsDarkMode={setIsDarkMode} 
+                />
                 
-                <div className="p-6 bg-component-bg rounded-xl border border-border-color">
-                    <h3 className="text-lg font-bold text-text-primary mb-4">IMPUESTOS</h3>
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <span className="font-medium text-text-primary">APLICAR IGIC (7%) EN FACTURAS</span>
-                            <p className="text-xs text-text-secondary">Si se activa, se desglosará un 7% de IGIC en las facturas.</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            {igicMessage && <span className="text-sm text-green-accent font-medium">{igicMessage}</span>}
-                            <button
-                                type="button"
-                                onClick={handleIgicToggle}
-                                className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent ${igicEnabled ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'}`}
-                            >
-                                <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${igicEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <TaxSettings />
 
-                <div className="p-6 bg-component-bg rounded-xl border border-border-color">
-                    <h3 className="text-lg font-bold text-text-primary mb-4">DATOS DE EMPRESA</h3>
-                    <p className="text-sm text-text-secondary mb-3">EDITA LOS DATOS DE TU EMPRESA QUE APARECERÁN EN LAS FACTURAS Y PROFORMAS.</p>
-                    <div className="flex items-center gap-4">
-                        <button onClick={onBusinessDataClick} className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                            <FontAwesomeIcon icon={faBuilding} className="mr-2" />
-                            EDITAR DATOS DE EMPRESA
-                        </button>
-                        {businessDataMessage && (
-                            <span className="text-sm text-green-accent font-medium">
-                                {businessDataMessage}
-                            </span>
-                        )}
-                    </div>
-                    <hr className="border-border-color my-6" />
-                    <h4 className="font-semibold text-text-primary mb-2">LOGO DE LA EMPRESA</h4>
-                    <p className="text-sm text-text-secondary mb-3">SUBE EL LOGO DE TU EMPRESA PARA QUE APAREZCA EN TUS FACTURAS. (MÁX 10MB)</p>
-                    <div className="flex items-center gap-4">
-                        <div className="w-20 h-20 rounded-lg bg-background flex items-center justify-center overflow-hidden border border-border-color flex-shrink-0">
-                            {logoPreview ? (
-                                <img src={logoPreview.startsWith('blob:') ? logoPreview : `${API_BASE_URL}${logoPreview}`} alt="Logo" className="h-full w-full object-contain" />
-                            ) : (
-                                <FontAwesomeIcon icon={faBuildingCircleCheck} className="text-3xl text-text-secondary" />
-                            )}
-                        </div>
-                        <div className="flex flex-col gap-2 w-full">
-                            <input type="file" ref={logoInputRef} onChange={handleLogoChange} className="hidden" accept="image/*" />
-                            <button type="button" onClick={() => logoInputRef.current.click()} className="w-full bg-component-bg-hover text-text-secondary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-border-color">
-                                <FontAwesomeIcon icon={faUpload} /> CAMBIAR LOGO
-                            </button>
-                            {user.logoUrl && (
-                                <button type="button" onClick={handleDeleteLogo} className="w-full bg-red-accent/10 text-red-accent px-3 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-medium flex items-center justify-center gap-2 border border-transparent">
-                                    <FontAwesomeIcon icon={faTrash} /> ELIMINAR LOGO
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    {logoFile && (
-                        <div className="mt-4 flex justify-end">
-                             <button onClick={handleSaveChanges} className="bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity text-sm font-medium">
-                                GUARDAR CAMBIOS
-                            </button>
-                        </div>
-                    )}
-                    {logoMessage.text && (
-                        <p className={`text-sm text-center mt-3 ${logoMessage.type === 'success' ? 'text-green-accent' : (logoMessage.type === 'error' ? 'text-red-accent' : 'text-text-secondary')}`}>
-                            {logoMessage.text}
-                        </p>
-                    )}
-                </div>
+                <BusinessDataSettings 
+                    onBusinessDataClick={onBusinessDataClick} 
+                    businessDataMessage={businessDataMessage} 
+                />
 
-                <div className="p-6 bg-component-bg rounded-xl border border-border-color">
-                    <h3 className="text-lg font-bold text-text-primary mb-4">CUENTA Y DATOS</h3>
-                    <div className="space-y-6">
-
-                        <form onSubmit={handlePasswordSubmit}>
-                            <h4 className="font-semibold text-text-primary mb-2">CAMBIAR CONTRASEÑA</h4>
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <input name="currentPassword" type="password" placeholder="CONTRASEÑA ACTUAL" value={passwordData.currentPassword} onChange={handlePasswordChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary" />
-                                <input name="newPassword" type="password" placeholder="NUEVA CONTRASEÑA" value={passwordData.newPassword} onChange={handlePasswordChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary" />
-                            </div>
-                            <div className="mt-3 flex items-center gap-4">
-                                <button type="submit" className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                                    <FontAwesomeIcon icon={faKey} className="mr-2" />
-                                    ACTUALIZAR CONTRASEÑA
-                                </button>
-                                {passwordMessage.text && (
-                                    <span className={`text-sm ${passwordMessage.type === 'success' ? 'text-green-accent' : 'text-red-accent'}`}>
-                                        {passwordMessage.text}
-                                    </span>
-                                )}
-                            </div>
-                        </form>
-
-                        <hr className="border-border-color" />
-
-                        <div>
-                            <h4 className="font-semibold text-text-primary mb-2">EXPORTAR DATOS</h4>
-                            <p className="text-sm text-text-secondary mb-3">DESCARGA UNA COPIA DE SEGURIDAD DE TUS DATOS EN FORMATO CSV.</p>
-                            <div className="flex flex-wrap gap-2">
-                                <button onClick={() => handleExport(cars, 'coches.csv', 'coches')} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                                    <FontAwesomeIcon icon={faFileExport} className="mr-2" />
-                                    EXPORTAR COCHES
-                                </button>
-                                <button onClick={() => handleExport(expenses, 'gastos.csv', 'gastos')} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                                    <FontAwesomeIcon icon={faFileExport} className="mr-2" />
-                                    EXPORTAR GASTOS
-                                </button>
-                                <button onClick={() => handleExport(incidents, 'incidencias.csv', 'incidencias')} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                                    <FontAwesomeIcon icon={faFileExport} className="mr-2" />
-                                    EXPORTAR INCIDENCIAS
-                                </button>
-                            </div>
-                            {exportMessage && <p className="text-sm text-yellow-accent mt-3">{exportMessage}</p>}
-                        </div>
-
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                        {user && (
-                            <div className="lg:hidden">
-                                <hr className="border-border-color" />
-                                <div className="mt-6">
-                                    <h4 className="font-semibold text-text-primary mb-2">SUSCRIPCIÓN</h4>
-                                    <p className="text-sm text-text-secondary mb-3">GESTIONA O REVISA EL PLAN DE SUSCRIPCIÓN.</p>
-                                    <Link to="/subscription" className="inline-flex items-center justify-center gap-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                                        <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
-                                        GESTIONAR SUSCRIPCIÓN
-                                    </Link>
-                                </div>
-                            </div>
-                        )}
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
-
-                        {user && user.role === 'admin' && (
-                            <div className="lg:hidden">
-                                <hr className="border-border-color" />
-                                <div className="mt-6">
-                                    <h4 className="font-semibold text-text-primary mb-2">ADMINISTRACIÓN</h4>
-                                    <Link to="/admin" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                                        <FontAwesomeIcon icon={faUserShield} className="mr-2" />
-                                        GESTIONAR USUARIOS
-                                    </Link>
-                                </div>
-                            </div>
-                        )}
-                        
-                        <hr className="border-border-color" />
-                        
-                        <div>
-                            <h4 className="font-semibold text-text-primary mb-2">SESIÓN</h4>
-                             <button onClick={onLogoutClick} className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                                <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-                                CERRAR SESIÓN
-                            </button>
-                        </div>
-
-                        <hr className="border-border-color" />
-
-                        <div>
-                            <h4 className="font-semibold text-red-accent mb-2">ZONA DE PELIGRO</h4>
-                            <p className="text-sm text-text-secondary mb-3">LA ELIMINACIÓN DE TU CUENTA ES PERMANENTE Y NO SE PUEDE DESHACER.</p>
-                            <button onClick={onDeleteAccountClick} className="w-full sm:w-auto bg-red-accent/10 text-red-accent px-4 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-medium">
-                                <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2" />
-                                ELIMINAR MI CUENTA
-                            </button>
-                        </div>
-                        
-                    </div>
-                </div>
+                <AccountDataSettings 
+                    cars={cars}
+                    expenses={expenses}
+                    incidents={incidents}
+                    onLogoutClick={onLogoutClick}
+                    onDeleteAccountClick={onDeleteAccountClick}
+                />
 
                 <div className="p-6 bg-component-bg rounded-xl border border-border-color lg:hidden">
                     <h3 className="text-lg font-bold text-text-primary mb-4">ACERCA DE</h3>
@@ -321,7 +52,6 @@ const Settings = ({ isDarkMode, setIsDarkMode, cars, expenses, incidents, onDele
                         <VersionIndicator />
                     </div>
                 </div>
-
             </div>
         </div>
     );
