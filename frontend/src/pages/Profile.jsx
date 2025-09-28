@@ -1,9 +1,8 @@
 // autogest-app/frontend/src/pages/Profile.jsx
 import React, { useContext, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faTrash, faSave, faTimes, faCog } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faTrash, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
@@ -133,15 +132,13 @@ const Profile = () => {
                             <div className="text-center">
                                 <h2 className="text-2xl font-bold text-text-primary">{user.name}</h2>
                                 <p className="text-text-secondary">{user.email}</p>
-                                <span className={`mt-2 inline-block text-xs font-bold px-3 py-1 rounded-full ${user.role === 'admin' ? 'bg-red-accent/10 text-red-accent' : 'bg-blue-accent/10 text-blue-accent'}`}>{user.role}</span>
+                                <span className={`mt-2 inline-block text-xs font-bold px-3 py-1 rounded-full ${user.role === 'admin' ? 'bg-red-accent/10 text-red-accent' : (user.role === 'technician' ? 'bg-green-accent/10 text-green-accent' : 'bg-blue-accent/10 text-blue-accent')}`}>{user.role}</span>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <div className="mt-8 pt-6 border-t border-border-color flex justify-center gap-4">
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
                     {isEditing ? (
                         <>
                             <button onClick={handleCancel} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center gap-2">
@@ -154,15 +151,11 @@ const Profile = () => {
                             </button>
                         </>
                     ) : (
-                        <>
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                            <Link to="/settings" className="lg:hidden bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center gap-2">
-                                <FontAwesomeIcon icon={faCog} />
-                                Ajustes
-                            </Link>
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
-                            <button onClick={() => setIsEditing(true)} className="bg-accent text-white px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors">Editar Perfil</button>
-                        </>
+                        // --- INICIO DE LA MODIFICACIÓN ---
+                        // Se elimina el Link a /settings y se deja solo el botón de Editar Perfil,
+                        // que se centrará automáticamente por el `justify-center` del div padre.
+                        <button onClick={() => setIsEditing(true)} className="bg-accent text-white px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors">Editar Perfil</button>
+                        // --- FIN DE LA MODIFICACIÓN ---
                     )}
                 </div>
                 {message && <p className="text-sm text-center mt-4 text-green-accent">{message}</p>}

@@ -4,26 +4,25 @@ import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
-    faUser 
+    faCog // Se importa el nuevo icono
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
 const BottomNav = () => {
     const { user } = useContext(AuthContext);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Añadimos una comprobación para asegurarnos de que `user` no sea nulo
     if (!user) {
         return null;
     }
 
-    // Filtramos los elementos de navegación basándonos en el rol del usuario
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se reemplaza 'Perfil' por 'Ajustes' en la lista de ítems de navegación
     const navItems = [
         (user.role === 'admin' || user.role === 'technician') && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
         { icon: faCar, text: 'Coches', path: '/cars' },
         { icon: faChartLine, text: 'Ventas', path: '/sales' },
         { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
-        { icon: faUser, text: 'Perfil', path: '/profile' },
+        { icon: faCog, text: 'Ajustes', path: '/settings' }, // Se cambia faUser por faCog y el texto/path
     ].filter(Boolean);
     // --- FIN DE LA MODIFICACIÓN ---
 
