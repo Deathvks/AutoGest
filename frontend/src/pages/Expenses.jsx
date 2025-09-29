@@ -1,47 +1,28 @@
 // autogest-app/frontend/src/pages/Expenses.jsx
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faPlusCircle, faCar, faTrash, faCalendarDay, faTag, faEuroSign, faPaperclip, faEdit } from '@fortawesome/free-solid-svg-icons';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) => {
     const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
-    useEffect(() => {
-        // Carga de scripts para PDF
-        const jspdfScript = document.createElement('script');
-        jspdfScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-        jspdfScript.async = true;
-        
-        jspdfScript.onload = () => {
-            const autotableScript = document.createElement('script');
-            autotableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
-            autotableScript.async = true;
-            document.head.appendChild(autotableScript);
-        };
-        document.head.appendChild(jspdfScript);
-    }, []);
-
     const generatePDF = () => {
-        if (window.jspdf && window.jspdf.jsPDF) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("Resumen de Gastos Generales", 14, 16);
-            doc.autoTable({
-                startY: 20,
-                head: [['Fecha', 'Categoría', 'Importe', 'Descripción']],
-                body: expenses.map(exp => [
-                    new Date(exp.date).toLocaleDateString('es-ES'), 
-                    exp.category,
-                    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(exp.amount),
-                    exp.description
-                ]),
-            });
-            doc.save('resumen_gastos_generales.pdf');
-        } else {
-            console.error("La librería jsPDF no está cargada todavía.");
-            alert("La función para exportar a PDF no está lista, por favor inténtalo de nuevo en unos segundos.");
-        }
+        const doc = new jsPDF();
+        doc.text("Resumen de Gastos Generales", 14, 16);
+        autoTable(doc, {
+            startY: 20,
+            head: [['Fecha', 'Categoría', 'Importe', 'Descripción']],
+            body: expenses.map(exp => [
+                new Date(exp.date).toLocaleDateString('es-ES'),
+                exp.category,
+                new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(exp.amount),
+                exp.description
+            ]),
+        });
+        doc.save('resumen_gastos_generales.pdf');
     };
 
     return (
@@ -49,14 +30,14 @@ const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) =>
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold text-text-primary tracking-tight">Gastos Generales</h1>
                 <div className="flex gap-4">
-                    <button 
+                    <button
                         onClick={onAddExpense}
                         className="bg-blue-accent text-white w-12 h-12 flex items-center justify-center rounded-xl shadow-sm hover:opacity-90 transition-opacity"
                         title="Añadir nuevo gasto general"
                     >
                         <FontAwesomeIcon icon={faPlusCircle} className="w-6 h-6" />
                     </button>
-                    <button 
+                    <button
                         onClick={generatePDF}
                         disabled={expenses.length === 0}
                         className="bg-component-bg text-text-secondary w-12 h-12 flex items-center justify-center rounded-xl hover:bg-component-bg-hover transition-colors border border-border-color disabled:opacity-50 disabled:cursor-not-allowed"
@@ -80,13 +61,13 @@ const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) =>
                                     </div>
                                     <p className="font-bold text-text-primary text-xl">€ {new Intl.NumberFormat('es-ES').format(expense.amount)}</p>
                                 </div>
-                                
+
                                 {expense.description && <p className="text-sm text-text-primary pt-3 border-t border-border-color">{expense.description}</p>}
 
                                 <div className="flex justify-between items-end pt-3 border-t border-border-color">
                                     <div className="flex items-center gap-2">
                                         {expense.attachments && expense.attachments.map((fileUrl, index) => (
-                                            <a href={`${API_BASE_URL}${fileUrl}`} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={`Ver adjunto ${index + 1}`}>
+                                            <a href={`${API_BASE_URL}${fileUrl.path}`} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={fileUrl.originalname || `Ver adjunto ${index + 1}`}>
                                                 <FontAwesomeIcon icon={faPaperclip} />
                                             </a>
                                         ))}
@@ -127,8 +108,8 @@ const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) =>
                                             <td className="px-6 py-4">{expense.description}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    {expense.attachments && expense.attachments.map((fileUrl, index) => (
-                                                        <a href={`${API_BASE_URL}${fileUrl}`} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={`Ver adjunto ${index + 1}`}>
+                                                    {expense.attachments && expense.attachments.map((file, index) => (
+                                                        <a href={`${API_BASE_URL}${file.path}`} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={file.originalname || `Ver adjunto ${index + 1}`}>
                                                             <FontAwesomeIcon icon={faPaperclip} />
                                                         </a>
                                                     ))}

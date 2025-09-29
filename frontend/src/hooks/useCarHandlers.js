@@ -1,8 +1,8 @@
-// autogest-app/frontend/src/hooks/useCarHandlers.js
+// AutoGest/frontend/src/hooks/useCarHandlers.js
 import { useState, useRef } from 'react';
 import api from '../services/api';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export const useCarHandlers = (
     cars,
@@ -30,7 +30,7 @@ export const useCarHandlers = (
         doc.text("DATOS DEL VEHÍCULO", 14, 80);
         doc.line(14, 82, 196, 82);
         
-        doc.autoTable({
+        autoTable(doc, {
             startY: 85, theme: 'grid', headStyles: { fillColor: [41, 128, 185] },
             body: [
                 ['Marca', car.make], ['Modelo', car.model], ['Matrícula', car.licensePlate],

@@ -1,17 +1,15 @@
 // autogest-app/frontend/src/components/modals/AddCarModal.jsx
-import React, { useState, useMemo, useContext } from 'react'; // <-- Importar useContext
+import React, { useState, useMemo, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { AuthContext } from '../../context/AuthContext'; // <-- Importar el contexto
+import { AuthContext } from '../../context/AuthContext';
 
 import InsuranceConfirmationModal from './InsuranceConfirmationModal';
 import AddCarFormFields from './AddCar/AddCarFormFields';
 import AddCarFileUploads from './AddCar/AddCarFileUploads';
 
 const AddCarModal = ({ onClose, onAdd, locations }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
-    const { user } = useContext(AuthContext); // Obtenemos el usuario del contexto
-    // --- FIN DE LA MODIFICACIÓN ---
+    const { user } = useContext(AuthContext);
 
     const [newCar, setNewCar] = useState({
         make: '', model: '', licensePlate: '', vin: '', registrationDate: new Date().toISOString().split('T')[0],
@@ -39,7 +37,10 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setNewCar(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value.toUpperCase() }));
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const finalValue = type === 'checkbox' ? checked : (typeof value === 'string' ? value.toUpperCase() : value);
+        setNewCar(prev => ({ ...prev, [name]: finalValue }));
+        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     const handleImageChange = (e) => {

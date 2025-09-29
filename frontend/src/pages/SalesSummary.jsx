@@ -1,13 +1,12 @@
 // autogest-app/frontend/src/pages/SalesSummary.jsx
-import React, { useMemo } from 'react'; // --- INICIO DE LA MODIFICACIÓN ---
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faTags, faCar, faCalendarDay, faEuroSign, faWrench } from '@fortawesome/free-solid-svg-icons';
-import jsPDF from 'jspdf'; // --- INICIO DE LA MODIFICACIÓN ---
-import autoTable from 'jspdf-autotable'; // --- INICIO DE LA MODIFICACIÓN ---
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
-    // --- INICIO DE LA MODIFICACIÓN (SE ELIMINA EL useEffect QUE CARGABA SCRIPTS) ---
 
     const soldCarsWithProfit = useMemo(() => {
         return cars
@@ -26,11 +25,10 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
     }, [cars, expenses]);
 
     const generatePDF = () => {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const doc = new jsPDF();
         
         doc.text("Resumen de Ventas", 14, 16);
-        autoTable(doc, { // Se cambia la llamada a autoTable
+        autoTable(doc, {
             startY: 20,
             head: [['Modelo', 'Matrícula', 'Precio Compra', 'Gastos', 'Precio Venta', 'Beneficio/Pérdida']],
             body: soldCarsWithProfit.map(car => [
@@ -43,7 +41,6 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
             ]),
         });
         doc.save('resumen_ventas.pdf');
-        // --- FIN DE LA MODIFICACIÓN ---
     };
     
     const noSoldCars = soldCarsWithProfit.length === 0;
@@ -74,7 +71,7 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center gap-3">
                                         <img 
-                                            src={car.imageUrl || `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`} 
+                                            src={car.imageUrl ? `${import.meta.env.PROD ? '' : 'http://localhost:3001'}${car.imageUrl}` : `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`} 
                                             className="w-16 h-12 object-cover rounded-md flex-shrink-0" 
                                             alt={`${car.make} ${car.model}`} 
                                         />
@@ -136,7 +133,7 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-4">
                                                     <img 
-                                                        src={car.imageUrl || `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`} 
+                                                        src={car.imageUrl ? `${import.meta.env.PROD ? '' : 'http://localhost:3001'}${car.imageUrl}` : `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`} 
                                                         className="w-16 h-10 object-cover rounded-md" 
                                                         alt={`${car.make} ${car.model}`} 
                                                     />
