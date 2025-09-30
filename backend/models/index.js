@@ -62,9 +62,7 @@ User.hasMany(Expense, { foreignKey: 'userId', onDelete: 'CASCADE' });
 Expense.belongsTo(User, { foreignKey: 'userId' });
 
 // Un usuario tiene muchas ubicaciones
-// --- INICIO DE LA MODIFICACIÓN ---
-User.hasMany(Location, { foreignKey: 'userId', onDelete: 'CASCADE' }); // Corregido hasmany -> hasMany
-// --- FIN DE LA MODIFICACIÓN ---
+User.hasMany(Location, { foreignKey: 'userId', onDelete: 'CASCADE' });
 Location.belongsTo(User, { foreignKey: 'userId' });
 
 // Un coche tiene muchos gastos (relacionados por matrícula)
