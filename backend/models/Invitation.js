@@ -16,9 +16,7 @@ const Invitation = sequelize.define('Invitation', {
         allowNull: false,
         comment: 'Token único para la URL de invitación.'
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se eliminan los bloques 'references'. Las columnas se definen como simples enteros.
-    // Las relaciones y claves foráneas se gestionarán exclusivamente en el fichero 'models/index.js'.
+    // Las columnas se definen como simples enteros. Las relaciones se gestionarán en 'models/index.js'.
     companyId: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -27,7 +25,6 @@ const Invitation = sequelize.define('Invitation', {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
-    // --- FIN DE LA MODIFICACIÓN ---
     status: {
         type: DataTypes.ENUM('pending', 'accepted', 'expired'),
         defaultValue: 'pending',
@@ -38,13 +35,25 @@ const Invitation = sequelize.define('Invitation', {
     }
 }, {
     timestamps: true,
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se definen explícitamente TODOS los índices para esta tabla en un solo lugar.
+    // Esto incluye los índices para las claves foráneas (companyId, inviterId) y el token único.
     indexes: [
         {
             unique: true,
             fields: ['token'],
-            name: 'invitations_token_unique_idx'
+            name: 'invitations_token_unique_idx' // Índice para asegurar que el token sea único.
+        },
+        {
+            fields: ['companyId'],
+            name: 'invitations_company_id_fk_idx' // Índice para la clave foránea de companyId.
+        },
+        {
+            fields: ['inviterId'],
+            name: 'invitations_inviter_id_fk_idx' // Índice para la clave foránea de inviterId.
         }
     ]
+    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 module.exports = Invitation;
