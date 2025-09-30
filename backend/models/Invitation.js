@@ -36,21 +36,12 @@ const Invitation = sequelize.define('Invitation', {
 }, {
     timestamps: true,
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Se definen explícitamente TODOS los índices para esta tabla en un solo lugar.
-    // Esto incluye los índices para las claves foráneas (companyId, inviterId) y el token único.
+    // Se elimina la definición explícita de los índices para las claves foráneas.
+    // Sequelize los creará automáticamente. Solo mantenemos el índice único para 'token'.
     indexes: [
         {
             unique: true,
-            fields: ['token'],
-            name: 'invitations_token_unique_idx' // Índice para asegurar que el token sea único.
-        },
-        {
-            fields: ['companyId'],
-            name: 'invitations_company_id_fk_idx' // Índice para la clave foránea de companyId.
-        },
-        {
-            fields: ['inviterId'],
-            name: 'invitations_inviter_id_fk_idx' // Índice para la clave foránea de inviterId.
+            fields: ['token']
         }
     ]
     // --- FIN DE LA MODIFICACIÓN ---

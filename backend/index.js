@@ -49,15 +49,10 @@ app.use('/api/company', companyRoutes);
 const PORT = process.env.PORT || 3001;
 
 // --- INICIO DE LA MODIFICACIÓN ---
-// Sincronización controlada de la base de datos para resolver dependencias circulares.
-const syncDatabase = async () => {
+// Sincronización de la base de datos y arranque del servidor.
+const startServer = async () => {
     try {
-        // 1. Sincroniza el modelo 'Company' primero, ya que 'User' depende de él.
-        await db.Company.sync({ alter: true });
-        console.log('✅ Modelo Company sincronizado.');
-
-        // 2. Sincroniza todos los demás modelos.
-        // Sequelize es lo suficientemente inteligente para no volver a sincronizar 'Company'.
+        // Sincroniza todos los modelos a la vez. Sequelize gestionará el orden correcto.
         await db.sequelize.sync({ alter: true });
         console.log('✅ Todos los modelos han sido sincronizados correctamente.');
 
@@ -70,5 +65,5 @@ const syncDatabase = async () => {
     }
 };
 
-syncDatabase();
+startServer();
 // --- FIN DE LA MODIFICACIÓN ---
