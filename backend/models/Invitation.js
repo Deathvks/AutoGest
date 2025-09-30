@@ -11,20 +11,21 @@ const Invitation = sequelize.define('Invitation', {
         },
         comment: 'Email del usuario invitado.'
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se elimina la restricción 'unique: true' de la definición de la columna.
     token: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
         comment: 'Token único para la URL de invitación.'
     },
+    // --- FIN DE LA MODIFICACIÓN ---
     companyId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
             model: 'Companies',
             key: 'id',
-        },
-        onDelete: 'CASCADE',
+        }
     },
     inviterId: {
         type: DataTypes.INTEGER,
@@ -32,21 +33,29 @@ const Invitation = sequelize.define('Invitation', {
         references: {
             model: 'Users',
             key: 'id',
-        },
-        onDelete: 'CASCADE',
+        }
     },
     status: {
-        type: DataTypes.ENUM('pending', 'accepted'),
+        type: DataTypes.ENUM('pending', 'accepted', 'expired'),
         defaultValue: 'pending',
-        allowNull: false,
     },
     expiresAt: {
         type: DataTypes.DATE,
         allowNull: false,
-        comment: 'Fecha y hora en la que expira el token de invitación.'
-    },
+    }
 }, {
     timestamps: true,
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se define el índice de unicidad de forma explícita en las opciones del modelo.
+    // Esto proporciona un mejor control y evita la creación de índices redundantes.
+    indexes: [
+        {
+            unique: true,
+            fields: ['token'],
+            name: 'invitations_token_unique_idx' // Se le da un nombre explícito
+        }
+    ]
+    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 module.exports = Invitation;
