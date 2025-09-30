@@ -11,30 +11,23 @@ const Invitation = sequelize.define('Invitation', {
         },
         comment: 'Email del usuario invitado.'
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se elimina la restricción 'unique: true' de la definición de la columna.
     token: {
         type: DataTypes.STRING,
         allowNull: false,
         comment: 'Token único para la URL de invitación.'
     },
-    // --- FIN DE LA MODIFICACIÓN ---
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se eliminan los bloques 'references'. Las columnas se definen como simples enteros.
+    // Las relaciones y claves foráneas se gestionarán exclusivamente en el fichero 'models/index.js'.
     companyId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: 'Companies',
-            key: 'id',
-        }
     },
     inviterId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: 'Users',
-            key: 'id',
-        }
     },
+    // --- FIN DE LA MODIFICACIÓN ---
     status: {
         type: DataTypes.ENUM('pending', 'accepted', 'expired'),
         defaultValue: 'pending',
@@ -45,17 +38,13 @@ const Invitation = sequelize.define('Invitation', {
     }
 }, {
     timestamps: true,
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se define el índice de unicidad de forma explícita en las opciones del modelo.
-    // Esto proporciona un mejor control y evita la creación de índices redundantes.
     indexes: [
         {
             unique: true,
             fields: ['token'],
-            name: 'invitations_token_unique_idx' // Se le da un nombre explícito
+            name: 'invitations_token_unique_idx'
         }
     ]
-    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 module.exports = Invitation;
