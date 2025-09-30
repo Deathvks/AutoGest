@@ -4,8 +4,11 @@ const router = express.Router();
 const adminController = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
 
-// Todas las rutas en este fichero están protegidas y requieren rol de 'admin'
-router.use(protect, authorize('admin'));
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se vuelve a añadir el rol 'technician' a la lista de roles autorizados.
+// Ahora, admin, technician y technician_subscribed pueden acceder a estas rutas.
+router.use(protect, authorize('admin', 'technician', 'technician_subscribed'));
+// --- FIN DE LA MODIFICACIÓN ---
 
 // GET /api/admin/users -> Obtener todos los usuarios
 router.get('/users', adminController.getAllUsers);

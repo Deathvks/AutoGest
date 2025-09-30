@@ -6,9 +6,10 @@ import { AuthContext } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import MainLayout from './layouts/MainLayout';
-// --- INICIO DE LA MODIFICACIÓN ---
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+// --- INICIO DE LA MODIFICACIÓN ---
+import AcceptInvitationPage from './pages/AcceptInvitationPage';
 // --- FIN DE LA MODIFICACIÓN ---
 
 const App = () => {
@@ -39,9 +40,10 @@ const App = () => {
                     <>
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/register" element={<RegisterPage />} />
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
                         {/* --- FIN DE LA MODIFICACIÓN --- */}
                         <Route path="*" element={<Navigate to="/login" replace />} />
                     </>

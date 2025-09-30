@@ -40,7 +40,7 @@ export const useAppState = () => {
         incidents, setIncidents, modalState
     );
     
-    const { handleUserAdded, handleUserUpdated, handleUserDeleted } = useUserHandlers(setUsers, modalState);
+    const { handleUserAdded, handleUserUpdated, handleUserDeleted, handleExpelUser } = useUserHandlers(setUsers, modalState);
     
     // Handler específico que necesita acceso al AuthContext
     const handleSaveBusinessData = async (formData) => {
@@ -78,6 +78,7 @@ export const useAppState = () => {
         handleUserAdded,
         handleUserUpdated,
         handleUserDeleted,
+        handleExpelUser,
         handleAddCar,
         handleUpdateCar,
         handleDeleteCar,

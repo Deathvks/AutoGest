@@ -8,13 +8,22 @@ const { sanitizeFilename, deleteFile, safeJsonParse } = require('../../utils/car
  */
 exports.updateCar = async (req, res) => {
     try {
-        const car = await Car.findOne({ where: { id: req.params.id, userId: req.user.id } });
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const whereClause = { id: req.params.id };
+        if (req.user.companyId) {
+            whereClause.companyId = req.user.companyId;
+        } else {
+            whereClause.userId = req.user.id;
+        }
+        const car = await Car.findOne({ where: whereClause });
+        // --- FIN DE LA MODIFICACIÓN ---
+
         if (!car) {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para editarlo.' });
         }
         
         const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
-        const isUserTryingToModifyLockedCar = isReservedAndActive && req.user.role !== 'admin';
+        const isUserTryingToModifyLockedCar = isReservedAndActive && user.role !== 'admin';
 
         if (isUserTryingToModifyLockedCar) {
             const isCancellingReservation = req.body.status && req.body.status !== 'Reservado';
@@ -151,11 +160,9 @@ exports.updateCar = async (req, res) => {
         res.status(200).json(car);
     } catch (error) {
         console.error(`[ERROR] Fallo en updateCar para el coche ID: ${req.params.id}. Error:`, error);
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (error.message && error.message.includes('¡Los documentos solo pueden ser una imagen o un PDF!')) {
             return res.status(400).json({ error: '¡Error! Los documentos solo pueden ser imágenes (JPG, PNG, WEBP) o archivos PDF.' });
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         if (error.name === 'SequelizeUniqueConstraintError') {
             const field = error.errors[0]?.path;
             const value = error.errors[0]?.value;

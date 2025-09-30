@@ -96,13 +96,85 @@ exports.sendPasswordResetEmail = async (toEmail, token) => {
     }
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
+exports.sendInvitationEmail = async (toEmail, token, companyName, inviterName) => {
+    const baseUrl = process.env.FRONTEND_URL || 'https://www.auto-gest.es';
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // El enlace ahora lleva a la página de registro si el usuario no existe, 
+    // o a la de aceptación si ya tiene cuenta.
+    const invitationUrl = `${baseUrl}/accept-invitation/${token}`;
+    const registerUrl = `${baseUrl}/register`;
+
+    const mailOptions = {
+        from: `"AutoGest" <${process.env.FROM_EMAIL}>`,
+        to: toEmail,
+        subject: `Invitación para unirte a ${companyName} en AutoGest`,
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                <h2 style="color: #B8860B;">¡Has sido invitado!</h2>
+                <p>Hola,</p>
+                <p><b>${inviterName}</b> te ha invitado a unirte a su equipo <b>${companyName}</b> en AutoGest, la plataforma para la gestión de compraventas de vehículos.</p>
+                <p>Para aceptar la invitación, primero necesitas una cuenta en AutoGest. Si ya tienes una, haz clic en el botón de abajo. Si no, <a href="${registerUrl}" style="color: #B8860B; font-weight: bold;">regístrate primero</a> y luego vuelve a este correo para aceptar.</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${invitationUrl}" style="background-color: #B8860B; color: #ffffff; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                        ACEPTAR INVITACIÓN
+                    </a>
+                </div>
+                <p>El enlace de invitación es válido durante 72 horas.</p>
+                <p style="margin-top: 20px;">Si no esperabas esta invitación, puedes ignorar este correo.</p>
+                <p>El equipo de AutoGest</p>
+            </div>
+        `,
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
+
+    try {
+        console.log(`[EMAIL_SEND] Intentando enviar correo de invitación a ${toEmail}...`);
+        await transporter.sendMail(mailOptions);
+        console.log(`[EMAIL_SUCCESS] Correo de invitación enviado con éxito a ${toEmail}`);
+    } catch (error) {
+        console.error(`[EMAIL_ERROR] Error detallado al enviar correo de invitación a ${toEmail}:`, error);
+        throw new Error('No se pudo enviar el correo de invitación.');
+    }
+};
+
+exports.sendSubscriptionPromptEmail = async (toEmail, inviterName) => {
+    const baseUrl = process.env.FRONTEND_URL || 'https://www.auto-gest.es';
+    const subscriptionUrl = `${baseUrl}/subscription`;
+
+    const mailOptions = {
+        from: `"AutoGest" <${process.env.FROM_EMAIL}>`,
+        to: toEmail,
+        subject: `Acción requerida para unirte a un equipo en AutoGest`,
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                <h2 style="color: #B8860B;">Invitación a un equipo en AutoGest</h2>
+                <p>Hola,</p>
+                <p><b>${inviterName}</b> te ha invitado a unirte a su equipo, pero para poder hacerlo necesitas una suscripción activa.</p>
+                <p>Por favor, haz clic en el siguiente botón para ir a la página de suscripción, activa tu plan y, una vez hecho, pide que te envíen la invitación de nuevo.</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${subscriptionUrl}" style="background-color: #B8860B; color: #ffffff; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                        IR A LA PÁGINA DE SUSCRIPCIÓN
+                    </a>
+                </div>
+                <p>El equipo de AutoGest</p>
+            </div>
+        `,
+    };
+
+    try {
+        console.log(`[EMAIL_SEND] Intentando enviar correo de aviso de suscripción a ${toEmail}...`);
+        await transporter.sendMail(mailOptions);
+        console.log(`[EMAIL_SUCCESS] Correo de aviso de suscripción enviado con éxito a ${toEmail}`);
+    } catch (error) {
+        console.error(`[EMAIL_ERROR] Error detallado al enviar correo de aviso de suscripción a ${toEmail}:`, error);
+    }
+};
+
 const downloadPdf = (url) => {
     return new Promise((resolve, reject) => {
         const request = (urlToFetch) => {
             https.get(urlToFetch, (res) => {
                 if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-                    // Si es una redirección, llamamos a la función de nuevo con la nueva URL.
                     request(res.headers.location);
                 } else if (res.statusCode !== 200) {
                     reject(new Error(`Fallo al descargar el PDF. Código de estado: ${res.statusCode}`));
@@ -116,7 +188,6 @@ const downloadPdf = (url) => {
         request(url);
     });
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 exports.sendSubscriptionInvoiceEmail = async (toEmail, customerName, invoicePdfUrl, invoiceNumber) => {
     try {

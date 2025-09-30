@@ -2,15 +2,24 @@
 const { Car } = require('../../models');
 
 /**
- * Obtiene todos los coches del usuario logueado.
+ * Obtiene todos los coches del usuario logueado o de su empresa.
  * También actualiza el estado de los coches reservados cuya reserva ha expirado.
  */
 exports.getAllCars = async (req, res) => {
     try {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const whereClause = {};
+        if (req.user.companyId) {
+            whereClause.companyId = req.user.companyId;
+        } else {
+            whereClause.userId = req.user.id;
+        }
+
         let cars = await Car.findAll({
-            where: { userId: req.user.id },
+            where: whereClause,
             order: [['createdAt', 'DESC']]
         });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         const now = new Date();
         const promises = cars.map(car => {
@@ -50,9 +59,17 @@ exports.getAllCars = async (req, res) => {
  */
 exports.getCarById = async (req, res) => {
     try {
-        const car = await Car.findOne({
-            where: { id: req.params.id, userId: req.user.id }
-        });
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const whereClause = { id: req.params.id };
+        if (req.user.companyId) {
+            whereClause.companyId = req.user.companyId;
+        } else {
+            whereClause.userId = req.user.id;
+        }
+
+        const car = await Car.findOne({ where: whereClause });
+        // --- FIN DE LA MODIFICACIÓN ---
+
         if (car) {
             const carJson = car.toJSON();
              // Si el usuario no es admin/técnico, se oculta el precio de compra.

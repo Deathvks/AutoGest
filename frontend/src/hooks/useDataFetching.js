@@ -15,6 +15,11 @@ export const useDataFetching = () => {
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!user) {
+                setIsDataLoading(false);
+                return;
+            };
+
             setIsDataLoading(true);
             try {
                 const dataPromises = [
@@ -24,9 +29,17 @@ export const useDataFetching = () => {
                     api.getIncidents(),
                     api.getLocations(),
                 ];
-                if (user && user.role === 'admin') {
+                
+                // --- INICIO DE LA MODIFICACIÓN ---
+                // Se pide la lista de usuarios para todos los roles de gestión
+                if (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') {
                     dataPromises.push(api.admin.getAllUsers());
+                } else {
+                    // Para un usuario normal, la lista de "usuarios" es solo él mismo.
+                    dataPromises.push(Promise.resolve([user]));
                 }
+                // --- FIN DE LA MODIFICACIÓN ---
+
                 const [carsData, expensesData, allExpensesData, incidentsData, locationsData, usersData] = await Promise.all(dataPromises);
                 
                 setCars(carsData);
@@ -35,6 +48,7 @@ export const useDataFetching = () => {
                 setIncidents(incidentsData);
                 setLocations(locationsData);
                 if (usersData) setUsers(usersData);
+
             } catch (error) {
                 console.error("Error al cargar datos:", error);
             } finally {

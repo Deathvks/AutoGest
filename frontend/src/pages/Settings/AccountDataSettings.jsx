@@ -116,7 +116,8 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                     </div>
                 )}
 
-                {user && user.role === 'admin' && (
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {user && (user.role === 'admin' || user.role === 'technician') && (
                     <div className="lg:hidden">
                         <hr className="border-border-color" />
                         <div className="mt-6">
@@ -128,6 +129,7 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                         </div>
                     </div>
                 )}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 
                 <hr className="border-border-color" />
                 

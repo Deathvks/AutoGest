@@ -12,8 +12,9 @@ const Profile = lazy(() => import('../pages/Profile'));
 const Settings = lazy(() => import('../pages/Settings'));
 const ManageUsersPage = lazy(() => import('../pages/ManageUsersPage'));
 const SubscriptionPage = lazy(() => import('../pages/SubscriptionPage'));
+const AcceptInvitationPage = lazy(() => import('../pages/AcceptInvitationPage')); // <-- Asegurarse de que esté importado
 
-const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => { // <-- Recibimos onLogoutClick
+const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => {
     const { user } = useContext(AuthContext);
 
     const {
@@ -42,20 +43,23 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => { 
         setIsBusinessDataModalOpen,
         businessDataMessage,
         setSubscriptionSuccessModalOpen,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setUserToExpel,
+        // --- FIN DE LA MODIFICACIÓN ---
     } = appState;
 
     if (!user) {
         return null; // No renderizar nada si el usuario aún no está cargado
     }
 
-    const userHomePath = user.role === 'user' ? '/cars' : '/';
+    const userHomePath = (user.role === 'user' || user.role === 'technician_subscribed') ? '/cars' : '/';
 
     return (
         <Routes>
             <Route 
                 path="/" 
                 element={
-                    (user.role === 'admin' || user.role === 'technician') ? (
+                    (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') ? (
                         <Dashboard 
                             cars={cars} 
                             expenses={allExpenses} 
@@ -72,9 +76,6 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => { 
                 path="/cars" 
                 element={<MyCars 
                     cars={cars} 
-                    // --- INICIO DE LA MODIFICACIÓN ---
-                    // Se elimina la prop 'locations' que ya no es necesaria
-                    // --- FIN DE LA MODIFICACIÓN ---
                     onSellClick={setCarToSell} 
                     onAddClick={() => setAddCarModalOpen(true)} 
                     onViewDetailsClick={setCarToView} 
@@ -113,17 +114,20 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => { 
                     onDeleteAccountClick={() => setIsDeleteAccountModalOpen(true)}
                     onBusinessDataClick={() => setIsBusinessDataModalOpen(true)}
                     businessDataMessage={businessDataMessage}
-                    onLogoutClick={onLogoutClick} // <-- Pasamos la función a Settings
+                    onLogoutClick={onLogoutClick}
                 />} 
             />
             <Route 
                 path="/admin" 
-                element={user && user.role === 'admin' 
+                element={(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed')
                     ? <ManageUsersPage 
                         users={users} 
                         onAddUser={() => setAddUserModalOpen(true)} 
                         onEditUser={setUserToEdit} 
-                        onDeleteUser={setUserToDelete} 
+                        onDeleteUser={setUserToDelete}
+                        // --- INICIO DE LA MODIFICACIÓN ---
+                        onExpelUser={setUserToExpel}
+                        // --- FIN DE LA MODIFICACIÓN ---
                       /> 
                     : <Navigate to={userHomePath} replace />} 
             />
@@ -131,6 +135,7 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => { 
                 path="/subscription" 
                 element={<SubscriptionPage setSubscriptionSuccessModalOpen={setSubscriptionSuccessModalOpen} />} 
             />
+            <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
             <Route path="*" element={<Navigate to={userHomePath} replace />} />
         </Routes>
     );

@@ -19,20 +19,29 @@ const User = sequelize.define('User', {
         allowNull: false,
     },
     role: {
-        type: DataTypes.ENUM('user', 'admin', 'technician'),
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se reintroduce el rol 'technician' para usuarios con acceso completo sin suscripción.
+        type: DataTypes.ENUM('user', 'admin', 'technician', 'technician_subscribed'),
+        // --- FIN DE LA MODIFICACIÓN ---
         allowNull: false,
         defaultValue: 'user',
+    },
+    previousRole: {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        type: DataTypes.ENUM('user', 'admin', 'technician', 'technician_subscribed'),
+        // --- FIN DE LA MODIFICACIÓN ---
+        allowNull: true,
+        defaultValue: null,
+        comment: 'Almacena el rol del usuario antes de unirse a una compañía.'
     },
     avatarUrl: {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     logoUrl: {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // --- FIN DE LA MODIFICACIÓN ---
     businessName: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -95,6 +104,26 @@ const User = sequelize.define('User', {
     resetPasswordExpires: {
         type: DataTypes.DATE,
         allowNull: true,
+    },
+    canManageRoles: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+    },
+    canExpelUsers: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+        comment: 'Permite a un técnico expulsar a otros miembros del equipo.'
+    },
+    companyId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'Companies',
+            key: 'id',
+        },
+        onDelete: 'SET NULL',
     },
 }, {
     timestamps: true,

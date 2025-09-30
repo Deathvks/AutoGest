@@ -1,3 +1,4 @@
+// autogest-app/backend/models/Location.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -15,6 +16,17 @@ const Location = sequelize.define('Location', {
             key: 'id',
         },
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    companyId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'Companies',
+            key: 'id',
+        },
+        onDelete: 'CASCADE',
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
     // Evita que un mismo usuario tenga la misma ubicación duplicada

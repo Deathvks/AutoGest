@@ -4,16 +4,24 @@ const { Op } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
 
-// Obtener todos los gastos GENERALES (sin coche) del usuario
+// Obtener todos los gastos GENERALES (sin coche) del usuario o de su empresa
 exports.getAllExpenses = async (req, res) => {
     try {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const whereClause = {
+            carLicensePlate: { [Op.is]: null }
+        };
+        if (req.user.companyId) {
+            whereClause.companyId = req.user.companyId;
+        } else {
+            whereClause.userId = req.user.id;
+        }
+
         const expenses = await Expense.findAll({
-            where: { 
-                userId: req.user.id,
-                carLicensePlate: { [Op.is]: null }
-            },
+            where: whereClause,
             order: [['date', 'DESC']]
         });
+        // --- FIN DE LA MODIFICACIÓN ---
         res.status(200).json(expenses);
     } catch (error) {
         console.error(error);
@@ -21,15 +29,22 @@ exports.getAllExpenses = async (req, res) => {
     }
 };
 
-// Obtener TODOS los gastos del usuario (generales + específicos de coches)
+// Obtener TODOS los gastos del usuario (generales + específicos de coches) o de su empresa
 exports.getAllUserExpenses = async (req, res) => {
     try {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const whereClause = {};
+        if (req.user.companyId) {
+            whereClause.companyId = req.user.companyId;
+        } else {
+            whereClause.userId = req.user.id;
+        }
+        
         const expenses = await Expense.findAll({
-            where: { 
-                userId: req.user.id
-            },
+            where: whereClause,
             order: [['date', 'DESC']]
         });
+        // --- FIN DE LA MODIFICACIÓN ---
         res.status(200).json(expenses);
     } catch (error) {
         console.error(error);
@@ -47,22 +62,33 @@ exports.createExpense = async (req, res) => {
             userId: req.user.id
         };
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        if (req.user.companyId) {
+            dataToCreate.companyId = req.user.companyId;
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
+
         if (carLicensePlate) {
-            const normalizedLicensePlate = carLicensePlate.replace(/\s/g, '').toUpperCase();
-            const car = await Car.findOne({
-                where: {
-                    [Op.and]: [
-                        sequelize.where(
-                            sequelize.fn('REPLACE', sequelize.col('licensePlate'), ' ', ''),
-                            normalizedLicensePlate
-                        ),
-                        { userId: req.user.id }
-                    ]
-                }
-            });
+            // --- INICIO DE LA MODIFICACIÓN ---
+            const carWhereClause = {
+                [Op.and]: [
+                    sequelize.where(
+                        sequelize.fn('REPLACE', sequelize.col('licensePlate'), ' ', ''),
+                        carLicensePlate.replace(/\s/g, '').toUpperCase()
+                    )
+                ]
+            };
+            if (req.user.companyId) {
+                carWhereClause.companyId = req.user.companyId;
+            } else {
+                carWhereClause.userId = req.user.id;
+            }
+            
+            const car = await Car.findOne({ where: carWhereClause });
+            // --- FIN DE LA MODIFICACIÓN ---
             
             if (!car) {
-                return res.status(403).json({ error: 'Permiso denegado. El coche no existe o no pertenece a este usuario.' });
+                return res.status(403).json({ error: 'Permiso denegado. El coche no existe o no pertenece a este usuario/equipo.' });
             }
             
             dataToCreate.carLicensePlate = car.licensePlate;
@@ -70,11 +96,9 @@ exports.createExpense = async (req, res) => {
             dataToCreate.carLicensePlate = null;
         }
         
-        // --- NUEVA LÓGICA PARA ARCHIVOS ---
         if (req.files && req.files.length > 0) {
             dataToCreate.attachments = req.files.map(file => `/expenses/${file.filename}`);
         }
-        // --- FIN ---
 
         const newExpense = await Expense.create(dataToCreate);
         res.status(201).json(newExpense);
@@ -87,12 +111,15 @@ exports.createExpense = async (req, res) => {
 // Actualizar un gasto
 exports.updateExpense = async (req, res) => {
     try {
-        const expense = await Expense.findOne({
-            where: {
-                id: req.params.id,
-                userId: req.user.id
-            }
-        });
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const whereClause = { id: req.params.id };
+        if (req.user.companyId) {
+            whereClause.companyId = req.user.companyId;
+        } else {
+            whereClause.userId = req.user.id;
+        }
+        const expense = await Expense.findOne({ where: whereClause });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (!expense) {
             return res.status(404).json({ error: 'Gasto no encontrado o no tienes permiso para editarlo.' });
@@ -101,13 +128,10 @@ exports.updateExpense = async (req, res) => {
         const { date, category, amount, description } = req.body;
         const updateData = { date, category, amount, description };
 
-        // --- NUEVA LÓGICA PARA ARCHIVOS ---
         if (req.files && req.files.length > 0) {
             const newAttachments = req.files.map(file => `/expenses/${file.filename}`);
-            // Aquí podrías combinar con los antiguos si quisieras, pero por ahora reemplazamos
             updateData.attachments = newAttachments; 
         }
-        // --- FIN ---
 
         await expense.update(updateData);
 
@@ -121,18 +145,20 @@ exports.updateExpense = async (req, res) => {
 // Eliminar un gasto
 exports.deleteExpense = async (req, res) => {
     try {
-        const expense = await Expense.findOne({
-            where: {
-                id: req.params.id,
-                userId: req.user.id
-            }
-        });
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const whereClause = { id: req.params.id };
+        if (req.user.companyId) {
+            whereClause.companyId = req.user.companyId;
+        } else {
+            whereClause.userId = req.user.id;
+        }
+        const expense = await Expense.findOne({ where: whereClause });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (!expense) {
             return res.status(404).json({ error: 'Gasto no encontrado o no tienes permiso para eliminarlo.' });
         }
         
-        // --- NUEVA LÓGICA PARA BORRAR ARCHIVOS ---
         if (expense.attachments && expense.attachments.length > 0) {
             expense.attachments.forEach(fileUrl => {
                 const filename = path.basename(fileUrl);
@@ -142,7 +168,6 @@ exports.deleteExpense = async (req, res) => {
                 }
             });
         }
-        // --- FIN ---
 
         await expense.destroy();
         res.status(200).json({ message: 'Gasto eliminado correctamente' });
@@ -158,17 +183,23 @@ exports.getExpensesByCarLicensePlate = async (req, res) => {
         const { licensePlate } = req.params;
         const normalizedLicensePlate = licensePlate.replace(/\s/g, '').toUpperCase();
 
-        const car = await Car.findOne({
-            where: {
-                [Op.and]: [
-                    sequelize.where(
-                        sequelize.fn('REPLACE', sequelize.col('licensePlate'), ' ', ''),
-                        normalizedLicensePlate
-                    ),
-                    { userId: req.user.id }
-                ]
-            }
-        });
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const carWhereClause = {
+            [Op.and]: [
+                sequelize.where(
+                    sequelize.fn('REPLACE', sequelize.col('licensePlate'), ' ', ''),
+                    normalizedLicensePlate
+                )
+            ]
+        };
+        if (req.user.companyId) {
+            carWhereClause.companyId = req.user.companyId;
+        } else {
+            carWhereClause.userId = req.user.id;
+        }
+
+        const car = await Car.findOne({ where: carWhereClause });
+        // --- FIN DE LA MODIFICACIÓN ---
         
         if (!car) {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para ver sus gastos.' });

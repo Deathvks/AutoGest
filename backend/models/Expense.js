@@ -40,6 +40,17 @@ const Expense = sequelize.define('Expense', {
         type: DataTypes.JSON,
         allowNull: true,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    companyId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'Companies',
+            key: 'id',
+        },
+        onDelete: 'CASCADE',
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
 });

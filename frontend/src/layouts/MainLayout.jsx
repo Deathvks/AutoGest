@@ -3,6 +3,8 @@ import React, { useEffect, Suspense, useContext } from 'react';
 import { useLocation, Navigate } from 'react-router-dom';
 import { useAppState } from '../hooks/useAppState';
 import { AuthContext } from '../context/AuthContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUsers } from '@fortawesome/free-solid-svg-icons';
 
 // Componentes
 import Sidebar from '../components/Sidebar';
@@ -46,20 +48,45 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
         return <div className="flex h-screen w-full items-center justify-center bg-background text-text-primary">Actualizando estado de la suscripción...</div>;
     }
 
-    const isExempt = user && (user.role === 'admin' || user.role === 'technician');
-    
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Comprueba si la suscripción está activa o si, estando cancelada, aún no ha expirado.
+    // El rol 'technician' NO está en esta lista, por lo que no se le pedirá suscripción.
+    const rolesRequiringSubscription = ['technician_subscribed'];
+    // --- FIN DE LA MODIFICACIÓN ---
+    
     const hasValidSubscription = subscriptionStatus === 'active' || 
         (subscriptionStatus === 'cancelled' && user && new Date(user.subscriptionExpiry) > new Date());
     
-    const isAllowedPath = ['/subscription', '/settings', '/profile'].includes(location.pathname);
+    const isAllowedPath = ['/subscription', '/settings', '/profile'].includes(location.pathname) || location.pathname.startsWith('/accept-invitation');
 
-    if (user && !isExempt && !hasValidSubscription && !isAllowedPath) {
+    if (user && rolesRequiringSubscription.includes(user.role) && !hasValidSubscription && !isAllowedPath) {
         return <Navigate to="/subscription" replace />;
     }
-    // --- FIN DE LA MODIFICACIÓN ---
     
+    const isUnassignedUser = user && user.role === 'user' && !user.companyId;
+    const isAllowedUnassignedPath = ['/profile', '/settings', '/subscription'].includes(location.pathname) || location.pathname.startsWith('/accept-invitation');
+
+    if (isUnassignedUser && !isAllowedUnassignedPath) {
+        return (
+            <div className="flex h-screen bg-background font-sans text-text-secondary">
+                <Sidebar onLogoutClick={() => setLogoutModalOpen(true)} />
+                <div className="flex flex-col flex-1 min-w-0">
+                    <Header />
+                    <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex items-center justify-center">
+                        <div className="text-center bg-component-bg p-8 rounded-xl border border-border-color shadow-sm max-w-lg">
+                            <FontAwesomeIcon icon={faUsers} className="text-5xl text-accent mb-4" />
+                            <h2 className="text-2xl font-bold text-text-primary">Acción Requerida</h2>
+                            <p className="mt-2 text-text-secondary">
+                                Para poder usar la aplicación, necesitas unirte a un equipo o tener una suscripción activa.
+                            </p>
+                        </div>
+                    </main>
+                </div>
+                <BottomNav />
+                <AppModals appState={appState} />
+            </div>
+        );
+    }
+
     if (isDataLoading) {
         return <div className="flex h-screen w-full items-center justify-center bg-background text-text-primary">Cargando datos...</div>;
     }

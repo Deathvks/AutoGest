@@ -10,6 +10,13 @@ exports.createCar = async (req, res) => {
     try {
         const carData = { ...req.body, userId: req.user.id };
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Si el usuario pertenece a una empresa, se asocia el coche y la ubicación a ella.
+        if (req.user.companyId) {
+            carData.companyId = req.user.companyId;
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
+
         // Si el usuario no es admin/técnico, no se le permite establecer un precio de compra.
         if (req.user.role === 'user') {
             delete carData.purchasePrice;
@@ -22,9 +29,16 @@ exports.createCar = async (req, res) => {
 
         // Si se proporciona una nueva ubicación, se crea si no existe.
         if (carData.location && carData.location.trim() !== '') {
-            await Location.findOrCreate({
-                where: { name: carData.location.trim(), userId: req.user.id }
-            });
+            // --- INICIO DE LA MODIFICACIÓN ---
+            const locationData = {
+                where: { name: carData.location.trim(), userId: req.user.id },
+                defaults: {}
+            };
+            if (req.user.companyId) {
+                locationData.where.companyId = req.user.companyId;
+            }
+            await Location.findOrCreate(locationData);
+            // --- FIN DE LA MODIFICACIÓN ---
         }
         
         // Asocia los ficheros subidos solo si existen.
@@ -48,11 +62,9 @@ exports.createCar = async (req, res) => {
         res.status(201).json(newCar);
     } catch (error) {
         console.error('Error al crear coche:', error);
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (error.message && error.message.includes('¡Los documentos solo pueden ser una imagen o un PDF!')) {
             return res.status(400).json({ error: '¡Error! Los documentos solo pueden ser imágenes (JPG, PNG, WEBP) o archivos PDF.' });
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         // Manejo de errores específicos, como matrículas o VIN duplicados.
         if (error.name === 'SequelizeUniqueConstraintError') {
             const field = error.errors[0]?.path;

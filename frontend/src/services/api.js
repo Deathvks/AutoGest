@@ -71,7 +71,6 @@ const api = {
 
         if (!response.ok) {
             const error = new Error(data.error || 'Error en el inicio de sesión');
-            // Adjuntamos datos adicionales al objeto de error para que la UI pueda manejarlos
             if (data.needsVerification) {
                 error.needsVerification = true;
                 error.email = data.email;
@@ -159,11 +158,18 @@ const api = {
         createSubscription: (paymentMethodId) => fetch(`${BASE_URL}/subscriptions/create-subscription`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ paymentMethodId }) }).then(handleProtectedResponse),
         getSubscriptionStatus: () => fetch(`${BASE_URL}/subscriptions/status`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
         cancelSubscription: () => fetch(`${BASE_URL}/subscriptions/cancel-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
-        // --- INICIO DE LA MODIFICACIÓN ---
         reactivateSubscription: () => fetch(`${BASE_URL}/subscriptions/reactivate-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
-        // --- FIN DE LA MODIFICACIÓN ---
         syncSubscription: () => fetch(`${BASE_URL}/subscriptions/sync`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse)
-    }
+    },
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    company: {
+        inviteUser: (inviteData) => fetch(`${BASE_URL}/company/invite`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(inviteData) }).then(handleProtectedResponse),
+        verifyInvitation: (token) => fetch(`${BASE_URL}/company/invitations/verify/${token}`, { method: 'GET' }).then(handlePublicResponse),
+        acceptInvitation: (data) => fetch(`${BASE_URL}/company/invitations/accept`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+        expelUser: (userId) => fetch(`${BASE_URL}/company/users/${userId}/expel`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
 };
 
 export default api;

@@ -1,6 +1,6 @@
 // autogest-app/frontend/src/pages/LoginPage/LoginForm.jsx
 import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom'; // --- INICIO DE LA MODIFICACIÓN ---
 import { AuthContext } from '../../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar } from '@fortawesome/free-solid-svg-icons';
@@ -22,6 +22,7 @@ const LoginForm = ({ onNeedsVerification }) => {
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation(); // --- INICIO DE LA MODIFICACIÓN ---
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
@@ -31,7 +32,11 @@ const LoginForm = ({ onNeedsVerification }) => {
         setIsLoading(true);
         try {
             await login(email, password);
-            navigate('/');
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Redirige al usuario a la página de invitación si viene de allí, si no, a la raíz.
+            const from = location.state?.from?.pathname || '/';
+            navigate(from, { replace: true });
+            // --- FIN DE LA MODIFICACIÓN ---
         } catch (err) {
             if (err.needsVerification) {
                 onNeedsVerification(err.email);
@@ -59,7 +64,6 @@ const LoginForm = ({ onNeedsVerification }) => {
                         <InputField name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" />
                     </div>
 
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <div className="flex items-center justify-end">
                         <div className="text-sm">
                             <Link to="/forgot-password" className="font-medium text-accent hover:opacity-80">
@@ -67,7 +71,6 @@ const LoginForm = ({ onNeedsVerification }) => {
                             </Link>
                         </div>
                     </div>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     
                     {error && <p className="text-sm text-red-accent text-center">{error}</p>}
                     <div>

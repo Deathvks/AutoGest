@@ -13,7 +13,9 @@ const normalizeSum = (value) => {
 exports.getDashboardStats = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
-        const userId = req.user.id;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const userScope = req.user.companyId ? { companyId: req.user.companyId } : { userId: req.user.id };
+        // --- FIN DE LA MODIFICACIÓN ---
         const isMonthlyView = !!(startDate || endDate);
 
         let totalInvestment = 0;
@@ -33,8 +35,10 @@ exports.getDashboardStats = async (req, res) => {
             }
         }
         
-        const allUserCars = await Car.findAll({ where: { userId } });
-        const allUserExpenses = await Expense.findAll({ where: { userId } });
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const allUserCars = await Car.findAll({ where: userScope });
+        const allUserExpenses = await Expense.findAll({ where: userScope });
+        // --- FIN DE LA MODIFICACIÓN ---
         
         const carsInPeriod = isMonthlyView ? allUserCars.filter(c => {
             const createdAt = new Date(c.createdAt);
@@ -64,11 +68,8 @@ exports.getDashboardStats = async (req, res) => {
             const costOfSoldCarsInPeriod = soldCarsInPeriod.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
             totalInvestment = purchasePriceInPeriod + totalExpenses - costOfSoldCarsInPeriod;
         } else {
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Se suma el total de gastos a la inversión total en la vista general.
             const totalPurchasePriceOfStock = carsInStock.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
             totalInvestment = totalPurchasePriceOfStock + totalExpenses;
-            // --- FIN DE LA MODIFICACIÓN ---
         }
         
         let totalProfit = 0;
@@ -99,16 +100,20 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.getActivityHistory = async (req, res) => {
     try {
-        const userId = req.user.id;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const userScope = req.user.companyId ? { companyId: req.user.companyId } : { userId: req.user.id };
+        // --- FIN DE LA MODIFICACIÓN ---
         const page = parseInt(req.query.page, 10) || 1;
         const limit = 10;
         const offset = (page - 1) * limit;
 
+        // --- INICIO DE LA MODIFICACIÓN ---
         const cars = await Car.findAll({
-            where: { userId },
+            where: userScope,
             attributes: ['id', 'make', 'model', 'licensePlate', 'status', 'createdAt', 'updatedAt', 'saleDate', 'reservationExpiry'],
             order: [['updatedAt', 'DESC']],
         });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         let activities = [];
 
@@ -139,10 +144,12 @@ exports.getActivityHistory = async (req, res) => {
             }
         });
 
+        // --- INICIO DE LA MODIFICACIÓN ---
         const expenses = await Expense.findAll({
-            where: { userId },
+            where: userScope,
             order: [['date', 'DESC']],
         });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         expenses.forEach(expense => {
             const car = expense.carLicensePlate ? cars.find(c => c.licensePlate === expense.carLicensePlate) : null;

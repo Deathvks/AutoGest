@@ -70,11 +70,18 @@ exports.handleWebhook = async (req, res) => {
                                 const expiryDate = new Date(subscription.current_period_end * 1000);
                                 
                                 if (!isNaN(expiryDate.getTime())) {
-                                    await user.update({
+                                    // --- INICIO DE LA MODIFICACIÓN ---
+                                    // Al pagar, si el rol es 'user', se actualiza a 'technician_subscribed'.
+                                    const updatePayload = {
                                         subscriptionStatus: 'active',
                                         subscriptionExpiry: expiryDate,
-                                    });
-                                    console.log(`✅ [Webhook] Suscripción activada para el usuario ${user.id}. Estado: ${subscription.status}, Expira: ${expiryDate.toISOString()}`);
+                                    };
+                                    if (user.role === 'user') {
+                                        updatePayload.role = 'technician_subscribed';
+                                    }
+                                    await user.update(updatePayload);
+                                    console.log(`✅ [Webhook] Suscripción activada para el usuario ${user.id}. Rol: ${user.role}, Expira: ${expiryDate.toISOString()}`);
+                                    // --- FIN DE LA MODIFICACIÓN ---
                                 } else {
                                     console.error(`[Webhook] Fecha de expiración inválida en invoice.payment_succeeded`);
                                     await user.update({ subscriptionStatus: 'active' });
@@ -202,11 +209,17 @@ exports.handleWebhook = async (req, res) => {
                         const expiryDate = new Date(dataObject.current_period_end * 1000);
                         
                         if (!isNaN(expiryDate.getTime())) {
-                            await user.update({
+                             // --- INICIO DE LA MODIFICACIÓN ---
+                            const updatePayload = {
                                 subscriptionStatus: 'active',
                                 subscriptionExpiry: expiryDate,
-                            });
-                            console.log(`✅ [Webhook] Usuario ${user.id} activado por nueva suscripción. Expira: ${expiryDate.toISOString()}`);
+                            };
+                            if (user.role === 'user') {
+                                updatePayload.role = 'technician_subscribed';
+                            }
+                            await user.update(updatePayload);
+                            console.log(`✅ [Webhook] Usuario ${user.id} activado por nueva suscripción. Rol: ${user.role}, Expira: ${expiryDate.toISOString()}`);
+                            // --- FIN DE LA MODIFICACIÓN ---
                         } else {
                             console.error(`[Webhook] Fecha de expiración inválida para suscripción ${dataObject.id}`);
                             await user.update({ subscriptionStatus: 'active' });
@@ -227,10 +240,8 @@ exports.handleWebhook = async (req, res) => {
                     await user.update({ subscriptionStatus: 'cancelled' });
                     console.log(`[Webhook] Suscripción del usuario ${user.id} marcada para cancelación.`);
                 } else if (dataObject.status === 'active' || dataObject.status === 'trialing') {
-                    // --- INICIO DE LA MODIFICACIÓN ---
                     await user.update({ subscriptionStatus: 'active' });
                     console.log(`✅ [Webhook] Usuario ${user.id} reactivado. La fecha de expiración no cambia.`);
-                    // --- FIN DE LA MODIFICACIÓN ---
                 } else if (dataObject.status === 'past_due') {
                     await user.update({ subscriptionStatus: 'past_due' });
                     console.log(`[Webhook] Suscripción del usuario ${user.id} marcada como past_due.`);
@@ -238,8 +249,11 @@ exports.handleWebhook = async (req, res) => {
                 break;
             
             case 'customer.subscription.deleted':
-                await user.update({ subscriptionStatus: 'inactive', subscriptionExpiry: null });
-                console.log(`[Webhook] Suscripción del usuario ${user.id} eliminada y marcada como inactiva.`);
+                // --- INICIO DE LA MODIFICACIÓN ---
+                // Al eliminarse la suscripción, el rol vuelve a ser 'user'.
+                await user.update({ subscriptionStatus: 'inactive', subscriptionExpiry: null, role: 'user' });
+                console.log(`[Webhook] Suscripción del usuario ${user.id} eliminada. Rol revertido a 'user'.`);
+                // --- FIN DE LA MODIFICACIÓN ---
                 break;
 
             case 'invoice.payment_failed':

@@ -112,7 +112,6 @@ const Car = sequelize.define('Car', {
         type: DataTypes.DATEONLY,
         allowNull: true,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     invoiceNumber: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -120,6 +119,16 @@ const Car = sequelize.define('Car', {
     proformaNumber: {
         type: DataTypes.INTEGER,
         allowNull: true,
+    },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    companyId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'Companies',
+            key: 'id',
+        },
+        onDelete: 'CASCADE',
     },
     // --- FIN DE LA MODIFICACIÓN ---
 }, {

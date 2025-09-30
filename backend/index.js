@@ -73,6 +73,7 @@ app.use('/api/locations', require('./routes/locationRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/subscriptions', require('./routes/subscriptionRoutes'));
+app.use('/api/company', require('./routes/companyRoutes')); // --- INICIO DE LA MODIFICACIÓN ---
 
 // Ruta raíz
 app.get('/', (req, res) => {

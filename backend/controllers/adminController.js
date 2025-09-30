@@ -1,14 +1,27 @@
 // autogest-app/backend/controllers/adminController.js
-const { User } = require('../models');
+const { User, Company } = require('../models');
 const bcrypt = require('bcryptjs');
 
 // Obtener todos los usuarios (GET /api/admin/users)
 exports.getAllUsers = async (req, res) => {
     try {
+        let whereClause = {};
+        const requester = req.user;
+
+        if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
+            if (!requester.companyId) {
+                whereClause = { id: requester.id };
+            } else {
+                whereClause = { companyId: requester.companyId };
+            }
+        }
+
         const users = await User.findAll({
-            attributes: { exclude: ['password'] }, // Nunca devolver la contraseña
+            where: whereClause,
+            attributes: { exclude: ['password'] },
             order: [['createdAt', 'DESC']],
         });
+
         res.status(200).json(users);
     } catch (error) {
         console.error(error);
@@ -20,9 +33,10 @@ exports.getAllUsers = async (req, res) => {
 exports.createUser = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
+        const requester = req.user;
 
-        if (!name || !email || !password || !role) {
-            return res.status(400).json({ error: 'Todos los campos son obligatorios.' });
+        if (!name || !email || !password) {
+            return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios.' });
         }
 
         const existingUser = await User.findOne({ where: { email } });
@@ -30,6 +44,24 @@ exports.createUser = async (req, res) => {
             return res.status(400).json({ error: 'El email ya está en uso.' });
         }
 
+        let assignedRole = 'user';
+        let assignedCompanyId = null;
+
+        if (requester.role === 'admin' && role) {
+            assignedRole = role;
+        } else if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
+            const allowedRolesForTechnician = ['user', 'technician_subscribed'];
+            if (requester.role === 'technician') {
+                allowedRolesForTechnician.push('technician');
+            }
+
+            if (role && !allowedRolesForTechnician.includes(role)) {
+                return res.status(403).json({ error: 'No tienes permiso para asignar este rol.' });
+            }
+            assignedRole = role || 'user';
+            assignedCompanyId = requester.companyId;
+        }
+        
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -37,19 +69,16 @@ exports.createUser = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            role,
-            isVerified: true, // Los usuarios creados por un admin se marcan como verificados
+            role: assignedRole,
+            companyId: assignedCompanyId,
+            isVerified: true,
         });
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se devuelve el objeto de usuario completo para mantener la consistencia en el frontend
         const userResponse = newUser.toJSON();
         delete userResponse.password;
-        // --- FIN DE LA MODIFICACIÓN ---
 
         res.status(201).json(userResponse);
-    } catch (error)
-        {
+    } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al crear el usuario.' });
     }
@@ -58,37 +87,84 @@ exports.createUser = async (req, res) => {
 // Actualizar un usuario (PUT /api/admin/users/:id)
 exports.updateUser = async (req, res) => {
     try {
-        const { name, email, role, password } = req.body;
-        const user = await User.findByPk(req.params.id);
+        const { name, email, role, password, canManageRoles, canExpelUsers } = req.body;
+        const userToUpdate = await User.findByPk(req.params.id);
+        const requester = req.user;
 
-        if (!user) {
+        if (!userToUpdate) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
+        
+        if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
+            if (userToUpdate.id === requester.id) {
+                return res.status(403).json({ error: 'Edita tu propio perfil desde la sección "Mi Perfil".' });
+            }
 
-        // No permitir que un admin se quite el rol a sí mismo si es el último
-        if (user.id === req.user.id && user.role === 'admin' && role !== 'admin') {
+            if (userToUpdate.companyId !== requester.companyId) {
+                return res.status(403).json({ error: 'No puedes editar usuarios que no pertenecen a tu equipo.' });
+            }
+
+            const company = await Company.findOne({ where: { id: requester.companyId } });
+            if (company && userToUpdate.id === company.ownerId) {
+                 return res.status(403).json({ error: 'No puedes editar al propietario del equipo.' });
+            }
+            
+            if (!requester.canManageRoles) {
+                return res.status(403).json({ error: 'No tienes permiso para editar usuarios.' });
+            }
+
+            if (name || email || password) {
+                return res.status(403).json({ error: 'Solo puedes modificar el rol y los permisos de un usuario.' });
+            }
+
+            const isOriginalTechnician = userToUpdate.previousRole === 'technician' || userToUpdate.previousRole === 'technician_subscribed';
+            if (isOriginalTechnician && role === 'user') {
+                return res.status(403).json({ error: 'No se puede quitar el rol de técnico a un usuario que ya lo era.' });
+            }
+
+            const allowedRolesToAssign = ['user', 'technician_subscribed'];
+            if (requester.role === 'technician') {
+                allowedRolesToAssign.push('technician');
+            }
+            if (role && !allowedRolesToAssign.includes(role)) {
+                return res.status(403).json({ error: 'No puedes asignar el rol seleccionado.' });
+            }
+        }
+        
+        if (requester.role === 'admin') {
+            userToUpdate.name = name !== undefined ? name : userToUpdate.name;
+            userToUpdate.email = email !== undefined ? email : userToUpdate.email;
+            if (password) {
+                const salt = await bcrypt.genSalt(10);
+                userToUpdate.password = await bcrypt.hash(password, salt);
+            }
+        }
+
+        if (userToUpdate.id === requester.id && userToUpdate.role === 'admin' && role !== 'admin') {
             const adminCount = await User.count({ where: { role: 'admin' } });
             if (adminCount <= 1) {
                 return res.status(400).json({ error: 'No puedes eliminar el rol del último administrador.' });
             }
         }
-
-        user.name = name || user.name;
-        user.email = email || user.email;
-        user.role = role || user.role;
-
-        if (password) {
-            const salt = await bcrypt.genSalt(10);
-            user.password = await bcrypt.hash(password, salt);
+        
+        if (role !== undefined) {
+            userToUpdate.role = role;
         }
-
-        await user.save();
         
         // --- INICIO DE LA MODIFICACIÓN ---
-        // Se devuelve el objeto de usuario completo para mantener la consistencia en el frontend
-        const userResponse = user.toJSON();
-        delete userResponse.password;
+        // Se aplican los permisos directamente si se reciben en la petición, sin importar el rol.
+        if (canManageRoles !== undefined) {
+            userToUpdate.canManageRoles = canManageRoles;
+        }
+        if (canExpelUsers !== undefined) {
+            userToUpdate.canExpelUsers = canExpelUsers;
+        }
         // --- FIN DE LA MODIFICACIÓN ---
+
+        await userToUpdate.save();
+        
+        const userResponse = userToUpdate.toJSON();
+        delete userResponse.password;
 
         res.status(200).json(userResponse);
     } catch (error) {
@@ -100,17 +176,28 @@ exports.updateUser = async (req, res) => {
 // Eliminar un usuario (DELETE /api/admin/users/:id)
 exports.deleteUser = async (req, res) => {
     try {
-        const user = await User.findByPk(req.params.id);
+        const userToDelete = await User.findByPk(req.params.id);
+        const requester = req.user;
 
-        if (!user) {
+        if (!userToDelete) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
 
-        if (user.id === req.user.id) {
-            return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta desde el panel de administración.' });
+        if (userToDelete.id === requester.id) {
+            return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta.' });
+        }
+        
+        if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
+            if (userToDelete.companyId !== requester.companyId) {
+                return res.status(403).json({ error: 'No puedes eliminar usuarios que no pertenecen a tu empresa.' });
+            }
+            const company = await Company.findOne({ where: { id: requester.companyId } });
+            if (company && userToDelete.id === company.ownerId) {
+                 return res.status(403).json({ error: 'No puedes eliminar al propietario de la empresa.' });
+            }
         }
 
-        await user.destroy();
+        await userToDelete.destroy();
         res.status(200).json({ message: 'Usuario eliminado correctamente.' });
     } catch (error) {
         console.error(error);

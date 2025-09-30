@@ -1,26 +1,28 @@
 // frontend/src/components/Sidebar.jsx
 import React, { useContext } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
     faUser, faCog, faSignOutAlt, faUsersCog,
-    faCreditCard
+    faCreditCard,
+    faBuilding
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
-// --- INICIO DE LA MODIFICACIÓN ---
-const Sidebar = ({ onLogoutClick }) => { // 1. Recibimos la función como prop
-    const { user } = useContext(AuthContext); // 2. Ya no necesitamos `logout` aquí
-    const navigate = useNavigate();
-    // --- FIN DE LA MODIFICACIÓN ---
+const Sidebar = ({ onLogoutClick }) => {
+    const { user } = useContext(AuthContext);
 
     if (!user) {
         return null;
     }
+    
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se vuelve a añadir 'technician' a la lista de roles con acceso a vistas de gestión.
+    const technicianRoles = ['admin', 'technician', 'technician_subscribed'];
 
     const navItems = [
-        (user.role === 'admin' || user.role === 'technician') && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
+        technicianRoles.includes(user.role) && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
         { icon: faCar, text: 'Mis Coches', path: '/cars' },
         { icon: faChartLine, text: 'Ventas', path: '/sales' },
         { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
@@ -28,8 +30,10 @@ const Sidebar = ({ onLogoutClick }) => { // 1. Recibimos la función como prop
         { icon: faCreditCard, text: 'Suscripción', path: '/subscription' },
     ].filter(Boolean); 
 
-    const adminNav = user && user.role === 'admin' ? 
+    // Se muestra el enlace de Gestión si el usuario es 'admin' o cualquier tipo de 'technician'.
+    const adminNav = user && technicianRoles.includes(user.role) ? 
         { icon: faUsersCog, text: 'Gestión', path: '/admin' } : null;
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const bottomItems = [
         { icon: faCog, text: 'Configuración', path: '/settings' },
@@ -54,9 +58,19 @@ const Sidebar = ({ onLogoutClick }) => { // 1. Recibimos la función como prop
 
     return (
         <aside className="hidden lg:flex lg:flex-col w-64 bg-component-bg p-4 border-r border-border-color">
-            <div className="flex items-center mb-8 px-4">
+            <div className="flex items-center mb-2 px-4">
                 <h1 className="text-2xl font-bold text-text-primary">AutoGest</h1>
             </div>
+
+            {user.businessName && (
+                <div className="px-4 mb-6">
+                    <div className="flex items-center gap-2 text-xs text-text-secondary border-t border-border-color pt-2">
+                        <FontAwesomeIcon icon={faBuilding} />
+                        <span className="font-semibold truncate">{user.businessName}</span>
+                    </div>
+                </div>
+            )}
+
             <nav className="flex-1 space-y-2">
                 {navItems.map(item => <NavItem key={item.text} {...item} />)}
                 {adminNav && <NavItem {...adminNav} />}
@@ -64,9 +78,7 @@ const Sidebar = ({ onLogoutClick }) => { // 1. Recibimos la función como prop
             <div className="space-y-2">
                 {bottomItems.map(item => <NavItem key={item.text} {...item} />)}
                 <button 
-                    // --- INICIO DE LA MODIFICACIÓN ---
-                    onClick={onLogoutClick} // 3. Usamos la prop para abrir el modal
-                    // --- FIN DE LA MODIFICACIÓN ---
+                    onClick={onLogoutClick}
                     className="flex items-center w-full px-4 py-3 text-sm font-medium text-text-secondary rounded-lg hover:bg-red-accent/10 hover:text-red-accent transition-colors duration-200"
                 >
                     <FontAwesomeIcon icon={faSignOutAlt} className="w-5 h-5 mr-3" />

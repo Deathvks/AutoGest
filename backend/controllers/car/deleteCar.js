@@ -9,10 +9,19 @@ const { deleteFile, safeJsonParse } = require('../../utils/carUtils');
 exports.deleteCar = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const whereClause = { id: req.params.id };
+        if (req.user.companyId) {
+            whereClause.companyId = req.user.companyId;
+        } else {
+            whereClause.userId = req.user.id;
+        }
+
         const car = await Car.findOne({ 
-            where: { id: req.params.id, userId: req.user.id },
+            where: whereClause,
             transaction 
         });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (!car) {
             await transaction.rollback();

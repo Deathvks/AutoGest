@@ -30,7 +30,11 @@ const Header = () => {
 
     const { title, icon } = getPageInfo(location.pathname);
 
-    const isExempt = user && (user.role === 'admin' || user.role === 'technician');
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const rolesExemptFromSubscription = ['admin', 'technician'];
+    const isExempt = user && rolesExemptFromSubscription.includes(user.role);
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const hasValidSubscription = subscriptionStatus === 'active' || 
         (subscriptionStatus === 'cancelled' && user && new Date(user.subscriptionExpiry) > new Date());
 

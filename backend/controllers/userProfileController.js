@@ -3,17 +3,59 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
-const { User, Car, Expense, Incident, Location, sequelize } = require('../models');
+const { User, Car, Expense, Incident, Location, sequelize, Company } = require('../models');
 const { isValidDniNie, isValidCif } = require('../utils/validation');
 
 // Obtener el perfil del usuario actual (GET /api/auth/me)
 exports.getMe = async (req, res) => {
-    // Se vuelve a buscar al usuario en la base de datos para asegurar
-    // que se obtienen los datos más recientes, incluyendo el estado de la suscripción.
-    const user = await User.findByPk(req.user.id, {
-        attributes: { exclude: ['password'] }
-    });
-    res.status(200).json(user);
+    try {
+        const user = await User.findByPk(req.user.id, {
+            attributes: { exclude: ['password'] }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+
+        const userJson = user.toJSON();
+
+        if (user.companyId) {
+            const company = await Company.findByPk(user.companyId, {
+                include: [{
+                    model: User,
+                    as: 'owner',
+                    attributes: ['businessName', 'cif', 'dni', 'address', 'phone', 'logoUrl', 'applyIgic', 'invoiceCounter', 'proformaCounter']
+                }]
+            });
+
+            if (company && company.owner) {
+                const isOwner = user.id === company.ownerId;
+                userJson.isOwner = isOwner;
+
+                // Si el usuario NO es el propietario, se sobreescriben sus datos de facturación con los del propietario.
+                if (!isOwner) {
+                    userJson.businessName = company.owner.businessName;
+                    userJson.cif = company.owner.cif;
+                    userJson.dni = company.owner.dni;
+                    userJson.address = company.owner.address;
+                    userJson.phone = company.owner.phone;
+                    userJson.logoUrl = company.owner.logoUrl;
+                    userJson.applyIgic = company.owner.applyIgic;
+                    userJson.invoiceCounter = company.owner.invoiceCounter;
+                    userJson.proformaCounter = company.owner.proformaCounter;
+                }
+                return res.status(200).json(userJson);
+            }
+        }
+        
+        // Si no pertenece a una empresa, se considera "propietario" de sus propios datos.
+        userJson.isOwner = !user.companyId;
+        res.status(200).json(userJson);
+
+    } catch (error) {
+        console.error('Error en getMe:', error);
+        res.status(500).json({ error: 'Error interno del servidor al obtener el perfil.' });
+    }
 };
 
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
@@ -47,7 +89,6 @@ exports.updateProfile = async (req, res) => {
         if (invoiceCounter) user.invoiceCounter = invoiceCounter;
         if (applyIgic !== undefined) user.applyIgic = applyIgic;
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (req.files) {
             if (req.files.avatar) {
                 const oldAvatarUrl = user.avatarUrl;
@@ -76,7 +117,6 @@ exports.updateProfile = async (req, res) => {
                 }
             }
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         await user.save();
 
@@ -140,7 +180,6 @@ exports.deleteAvatar = async (req, res) => {
     }
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Eliminar el logo del usuario (DELETE /api/auth/logo)
 exports.deleteLogo = async (req, res) => {
     try {
@@ -171,7 +210,6 @@ exports.deleteLogo = async (req, res) => {
         res.status(500).json({ error: 'Error al eliminar el logo.' });
     }
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 // Cambiar la contraseña del usuario (PUT /api/auth/update-password)
 exports.updatePassword = async (req, res) => {

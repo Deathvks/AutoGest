@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faSpinner, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faSpinner, faExclamationTriangle, faUsersCog } from '@fortawesome/free-solid-svg-icons';
 
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
@@ -23,9 +23,6 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
     const { user, subscriptionStatus, refreshSubscriptionStatus } = useContext(AuthContext);
 
     const [isLoading, setIsLoading] = useState(true);
-    // --- INICIO DE LA MODIFICACIÓN (SE ELIMINA EL ESTADO LOCAL) ---
-    // const [localExpiry, setLocalExpiry] = useState(null);
-    // --- FIN DE LA MODIFICACIÓN ---
     const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
     const [verificationError, setVerificationError] = useState('');
 
@@ -82,20 +79,33 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
         await refreshSubscriptionStatus();
     };
 
-    // --- INICIO DE LA MODIFICACIÓN (SE SIMPLIFICA EL useEffect) ---
     useEffect(() => {
         if (user) {
             setIsLoading(false);
         }
     }, [user]);
-    // --- FIN DE LA MODIFICACIÓN ---
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se añade 'technician' a los roles que no requieren suscripción de pago.
     if (user.role === 'admin' || user.role === 'technician') {
+    // --- FIN DE LA MODIFICACIÓN ---
         return (
             <div className="p-8 bg-component-bg rounded-xl border border-border-color text-center animated-premium-background">
                 <FontAwesomeIcon icon={faCheckCircle} className="w-16 h-16 mx-auto mb-4 text-green-accent" />
                 <h3 className="text-xl font-bold text-green-accent">CUENTA DE ACCESO COMPLETO</h3>
                 <p className="text-text-secondary mt-2">TU ROL DE {user.role.toUpperCase()} NO REQUIERE UNA SUSCRIPCIÓN DE PAGO.</p>
+            </div>
+        );
+    }
+    
+    if (user.role === 'user' && user.companyId) {
+        return (
+            <div className="p-8 bg-component-bg rounded-xl border border-border-color text-center animated-premium-background">
+                <FontAwesomeIcon icon={faUsersCog} className="w-16 h-16 mx-auto mb-4 text-blue-accent" />
+                <h3 className="text-xl font-bold text-blue-accent">SUSCRIPCIÓN GESTIONADA</h3>
+                <p className="text-text-secondary mt-2">
+                    LA SUSCRIPCIÓN DE ESTA CUENTA ES GESTIONADA POR LA ORGANIZACIÓN A LA QUE PERTENECES.
+                </p>
             </div>
         );
     }
@@ -113,11 +123,7 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
                     <h1 className="text-3xl lg:text-4xl font-bold text-text-primary tracking-tight">Tu Suscripción</h1>
                     <p className="mt-2 text-lg text-text-secondary">Gestiona el estado de tu plan y revisa los beneficios incluidos.</p>
                 </div>
-
-                {/* --- INICIO DE LA MODIFICACIÓN (SE USA DIRECTAMENTE user.subscriptionExpiry) --- */}
                 <SubscriptionStatus status={subscriptionStatus} expiry={user.subscriptionExpiry} onCancel={handleCancel} />
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
-
                 <div>
                     <h2 className="text-2xl font-semibold text-text-primary mb-6">Beneficios de tu Plan</h2>
                     <SubscriptionBenefits />
