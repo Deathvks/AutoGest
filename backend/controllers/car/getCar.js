@@ -1,5 +1,9 @@
 // autogest-app/backend/controllers/car/getCar.js
 const { Car } = require('../../models');
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se importa la función 'deleteFile' que faltaba.
+const { deleteFile } = require('../../utils/carUtils');
+// --- FIN DE LA MODIFICACIÓN ---
 
 /**
  * Obtiene todos los coches del usuario logueado o de su empresa.
@@ -7,7 +11,6 @@ const { Car } = require('../../models');
  */
 exports.getAllCars = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const whereClause = {};
         if (req.user.companyId) {
             whereClause.companyId = req.user.companyId;
@@ -19,7 +22,6 @@ exports.getAllCars = async (req, res) => {
             where: whereClause,
             order: [['createdAt', 'DESC']]
         });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         const now = new Date();
         const promises = cars.map(car => {
@@ -59,7 +61,6 @@ exports.getAllCars = async (req, res) => {
  */
 exports.getCarById = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const whereClause = { id: req.params.id };
         if (req.user.companyId) {
             whereClause.companyId = req.user.companyId;
@@ -68,11 +69,10 @@ exports.getCarById = async (req, res) => {
         }
 
         const car = await Car.findOne({ where: whereClause });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (car) {
             const carJson = car.toJSON();
-             // Si el usuario no es admin/técnico, se oculta el precio de compra.
+              // Si el usuario no es admin/técnico, se oculta el precio de compra.
             if (req.user.role === 'user') {
                 delete carJson.purchasePrice;
             }
