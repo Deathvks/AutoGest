@@ -13,6 +13,13 @@ const sequelize = new Sequelize(
         host: process.env.DB_HOST,
         dialect: process.env.DB_DIALECT,
         logging: false,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se añade una opción global para forzar el motor InnoDB en todas las tablas.
+        // Esto es crucial para asegurar que las claves foráneas (relaciones) funcionen correctamente en MySQL.
+        define: {
+            engine: 'InnoDB'
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
     }
 );
 
