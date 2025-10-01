@@ -8,26 +8,35 @@ exports.getAllUsers = async (req, res) => {
         let whereClause = {};
         const requester = req.user;
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Si el solicitante es un técnico, tiene suscripción, o tiene permiso para expulsar,
-        // se le mostrarán los usuarios de su compañía.
         if (requester.role === 'technician' || requester.role === 'technician_subscribed' || requester.canExpelUsers) {
             if (!requester.companyId) {
-                // Si no tiene compañía (por alguna razón), solo se ve a sí mismo.
                 whereClause = { id: requester.id };
             } else {
-                // Muestra todos los usuarios de la misma compañía.
                 whereClause = { companyId: requester.companyId };
             }
         }
-        // El admin (sin 'whereClause') ve a todos los usuarios.
-        // --- FIN DE LA MODIFICACIÓN ---
 
-        const users = await User.findAll({
+        let users = await User.findAll({
             where: whereClause,
             attributes: { exclude: ['password'] },
             order: [['createdAt', 'DESC']],
         });
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Si el solicitante pertenece a una compañía, identificamos al propietario.
+        if (requester.companyId) {
+            const company = await Company.findByPk(requester.companyId);
+            if (company) {
+                const ownerId = company.ownerId;
+                // Convertimos los usuarios a objetos JSON para poder añadir la propiedad 'isOwner'.
+                users = users.map(user => {
+                    const userJson = user.toJSON();
+                    userJson.isOwner = (userJson.id === ownerId);
+                    return userJson;
+                });
+            }
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         res.status(200).json(users);
     } catch (error) {
@@ -102,8 +111,6 @@ exports.updateUser = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Lógica de permisos para técnicos y usuarios con permiso de expulsión
         if (requester.role === 'technician' || requester.role === 'technician_subscribed' || requester.canExpelUsers) {
             if (userToUpdate.id === requester.id) {
                 return res.status(403).json({ error: 'Edita tu propio perfil desde la sección "Mi Perfil".' });
@@ -118,17 +125,14 @@ exports.updateUser = async (req, res) => {
                  return res.status(403).json({ error: 'No puedes editar al propietario del equipo.' });
             }
             
-            // Un técnico o un usuario solo pueden editar permisos si son propietarios o tienen el permiso de gestionar roles
             if (!requester.isOwner && !requester.canManageRoles) {
                 return res.status(403).json({ error: 'No tienes permiso para editar usuarios.' });
             }
 
-            // No pueden cambiar datos personales ni contraseña
             if (name || email || password) {
                 return res.status(403).json({ error: 'Solo puedes modificar los permisos de un usuario.' });
             }
 
-            // Solo el propietario puede cambiar el rol o el permiso de gestionar roles.
             if (!requester.isOwner && (role !== undefined || canManageRoles !== undefined)) {
                 return res.status(403).json({ error: 'Solo el propietario del equipo puede cambiar roles o asignar permisos de gestión.' });
             }
@@ -146,7 +150,6 @@ exports.updateUser = async (req, res) => {
                 return res.status(403).json({ error: 'No puedes asignar el rol seleccionado.' });
             }
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         
         if (requester.role === 'admin') {
             userToUpdate.name = name !== undefined ? name : userToUpdate.name;

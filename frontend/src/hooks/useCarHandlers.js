@@ -11,9 +11,10 @@ export const useCarHandlers = (
     setLocations,
     modalState
 ) => {
-    const [carPendingDeletion, setCarPendingDeletion] = useState(null);
-    const [toast, setToast] = useState(null);
-    const deleteTimeoutRef = useRef(null);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se elimina el estado y la referencia relacionados con el borrado pendiente y el toast.
+    const [toast, setToast] = useState(null); // Aunque se mantiene por si se usa en otro lado, su lógica de borrado se va.
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const generateReservationPDF = (car, depositAmount) => {
         const doc = new jsPDF();
@@ -87,46 +88,20 @@ export const useCarHandlers = (
         }
     };
 
-    const confirmDelete = async (carId) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se simplifica la función para que el borrado sea inmediato.
+    const handleDeleteCar = async (carId) => {
         try {
             await api.deleteCar(carId);
-            setCarPendingDeletion(null);
+            setCars(prev => prev.filter(c => c.id !== carId));
+            modalState.setCarToDelete(null);
+            modalState.setCarToView(null);
         } catch (error) {
             console.error("Error al eliminar coche:", error);
-            if (carPendingDeletion) {
-                setCars(prev => [carPendingDeletion, ...prev].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-            }
+            // Opcional: Mostrar un error al usuario si el borrado falla.
         }
     };
-    
-    const handleDeleteCar = (carId) => {
-        const car = cars.find(c => c.id === carId);
-        if (!car) return;
-        if (deleteTimeoutRef.current) clearTimeout(deleteTimeoutRef.current);
-        if (carPendingDeletion) confirmDelete(carPendingDeletion.id);
-        setCars(prev => prev.filter(c => c.id !== carId));
-        setCarPendingDeletion(car);
-        modalState.setCarToDelete(null);
-        modalState.setCarToView(null);
-        setToast({ message: 'Coche eliminado.' });
-        deleteTimeoutRef.current = setTimeout(() => {
-            confirmDelete(carId);
-            setToast(null);
-            deleteTimeoutRef.current = null;
-        }, 5000);
-    };
-
-    const handleUndoDelete = () => {
-        if (deleteTimeoutRef.current) {
-            clearTimeout(deleteTimeoutRef.current);
-            deleteTimeoutRef.current = null;
-        }
-        if (carPendingDeletion) {
-            setCars(prev => [carPendingDeletion, ...prev].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-            setCarPendingDeletion(null);
-        }
-        setToast(null);
-    };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleSellConfirm = async (carId, salePrice, saleDate, buyerDetails) => {
         try {
@@ -253,9 +228,11 @@ export const useCarHandlers = (
         handleAddCar,
         handleUpdateCar,
         handleDeleteCar,
-        handleUndoDelete,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se elimina handleUndoDelete
         toast,
         setToast,
+        // --- FIN DE LA MODIFICACIÓN ---
         handleSellConfirm,
         handleReserveConfirm,
         handleConfirmCancelReservation,

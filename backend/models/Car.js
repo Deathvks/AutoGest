@@ -120,7 +120,6 @@ const Car = sequelize.define('Car', {
         type: DataTypes.INTEGER,
         allowNull: true,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     companyId: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -130,28 +129,26 @@ const Car = sequelize.define('Car', {
         },
         onDelete: 'CASCADE',
     },
-    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
-    paranoid: true, 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se elimina 'paranoid: true' para desactivar el borrado lógico.
+    // Ahora, los borrados serán permanentes.
     indexes: [
         {
-            name: 'unique_licensePlate_not_deleted',
+            name: 'unique_licensePlate', // Se cambia el nombre del índice
             unique: true,
             fields: ['licensePlate'],
-            where: {
-                deletedAt: null
-            }
+            // Se elimina la condición 'where' para que la matrícula sea siempre única.
         },
         {
-            name: 'unique_vin_not_deleted',
+            name: 'unique_vin', // Se cambia el nombre del índice
             unique: true,
             fields: ['vin'],
-            where: {
-                deletedAt: null
-            }
+            // Se elimina la condición 'where' para que el VIN sea siempre único.
         }
     ]
+    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 module.exports = Car;

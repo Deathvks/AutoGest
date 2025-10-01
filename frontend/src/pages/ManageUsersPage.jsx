@@ -11,26 +11,32 @@ import { AuthContext } from '../context/AuthContext';
 // --- Componente para la vista de Técnico (Estilo Netflix) ---
 const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser }) => {
 
+    // --- INICIO DE LA MODIFICACIÓN ---
     const ProfileCard = ({ user, onEdit, onExpel, isCurrentUser }) => (
         <div className="group w-32 sm:w-40 cursor-pointer flex flex-col items-center gap-2 text-center">
             <div
-                onClick={() => onEdit(user)}
-                className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden transition-all duration-200 group-hover:ring-4 ring-white ring-offset-2 ring-offset-transparent"
+                // Un usuario no puede editar al propietario
+                onClick={() => !user.isOwner && onEdit(user)}
+                className={`relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden transition-all duration-200 group-hover:ring-4 ${user.isOwner ? 'ring-2 ring-accent' : ''} group-hover:ring-accent`}
             >
                 <img
                     src={user.avatarUrl ? user.avatarUrl : `https://ui-avatars.com/api/?name=${user.name}&background=3A3A3A&color=EAEAEA&size=160`}
                     alt={user.name}
                     className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <FontAwesomeIcon icon={faPencilAlt} className="text-white text-3xl" />
-                </div>
+                {!user.isOwner && (
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <FontAwesomeIcon icon={faPencilAlt} className="text-white text-3xl" />
+                    </div>
+                )}
             </div>
-            <span className="text-text-secondary group-hover:text-text-primary transition-colors truncate w-full">
+            <span className="text-text-primary group-hover:text-accent font-semibold transition-colors truncate w-full">
                 {user.name} {isCurrentUser && '(Tú)'}
             </span>
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
-            {(currentUser.isOwner || currentUser.canExpelUsers) && !isCurrentUser && (
+            {user.isOwner && (
+                <span className="text-xs font-bold text-accent uppercase tracking-wider">Líder del Equipo</span>
+            )}
+            {(currentUser.isOwner || currentUser.canExpelUsers) && !user.isOwner && (
                  <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -41,9 +47,9 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
                     Expulsar del equipo
                 </button>
             )}
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </div>
     );
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const AddProfileCard = ({ onAdd }) => (
         <div
@@ -73,8 +79,8 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
         );
     }
 
-    const teamOwner = users.find(u => u.id === currentUser.id);
-    const teamMembers = users.filter(u => u.id !== currentUser.id && u.companyId === currentUser.companyId);
+    const teamOwner = users.find(u => u.isOwner);
+    const teamMembers = users.filter(u => !u.isOwner);
 
     return (
         <div className="flex flex-col items-center">
@@ -85,11 +91,11 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
                 </p>
             </div>
             <div className="flex flex-wrap justify-center items-start gap-x-4 gap-y-8 sm:gap-x-8">
-                {teamOwner && <ProfileCard key={teamOwner.id} user={teamOwner} onEdit={onEditUser} onExpel={onExpelUser} currentUser={currentUser} isCurrentUser={true} />}
+                {teamOwner && <ProfileCard key={teamOwner.id} user={teamOwner} onEdit={onEditUser} onExpel={onExpelUser} currentUser={currentUser} isCurrentUser={teamOwner.id === currentUser.id} />}
                 {teamMembers.map(user => (
-                    <ProfileCard key={user.id} user={user} onEdit={onEditUser} onExpel={onExpelUser} currentUser={currentUser} isCurrentUser={false} />
+                    <ProfileCard key={user.id} user={user} onEdit={onEditUser} onExpel={onExpelUser} currentUser={currentUser} isCurrentUser={user.id === currentUser.id} />
                 ))}
-                {teamOwner && (teamOwner.isOwner || teamOwner.canManageRoles) && (
+                {(currentUser.isOwner || currentUser.canManageRoles) && (
                     <AddProfileCard onAdd={onAddUser} />
                 )}
             </div>
@@ -143,7 +149,6 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
 
             {users.length > 0 ? (
                 <>
-                    {/* Tarjetas para móvil */}
                     <div className="space-y-4 md:hidden">
                         {users.map(user => (
                             <div key={user.id} className="bg-component-bg rounded-xl border border-border-color p-4">
@@ -185,7 +190,6 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                         ))}
                     </div>
 
-                    {/* Tabla para escritorio */}
                     <div className="hidden md:block bg-component-bg rounded-xl border border-border-color overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left text-text-secondary">
@@ -246,7 +250,7 @@ const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser, onExpelUs
         return <AdminView users={users} onAddUser={onAddUser} onEditUser={onEditUser} onDeleteUser={onDeleteUser} currentUser={currentUser} />;
     }
 
-    if (currentUser.role === 'technician' || currentUser.role === 'technician_subscribed') {
+    if (currentUser.role === 'technician' || currentUser.role === 'technician_subscribed' || (currentUser.role === 'user' && currentUser.canExpelUsers)) {
         return <TechnicianView users={users} onAddUser={onAddUser} onEditUser={onEditUser} onExpelUser={onExpelUser} currentUser={currentUser} />;
     }
 

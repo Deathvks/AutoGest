@@ -31,11 +31,11 @@ export const useDataFetching = () => {
                 ];
                 
                 // --- INICIO DE LA MODIFICACIÓN ---
-                // Se pide la lista de usuarios para todos los roles de gestión
-                if (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') {
+                // Se pide la lista de usuarios para roles de gestión O si el usuario tiene permiso para expulsar.
+                if (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed' || user.canExpelUsers) {
                     dataPromises.push(api.admin.getAllUsers());
                 } else {
-                    // Para un usuario normal, la lista de "usuarios" es solo él mismo.
+                    // Para un usuario normal sin permisos, la lista de "usuarios" es solo él mismo.
                     dataPromises.push(Promise.resolve([user]));
                 }
                 // --- FIN DE LA MODIFICACIÓN ---

@@ -12,12 +12,17 @@ import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import AppRoutes from '../components/AppRoutes';
 import AppModals from '../components/AppModals';
-import Toast from '../components/Toast';
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se elimina la importación del componente Toast.
+// --- FIN DE LA MODIFICACIÓN ---
 import VersionIndicator from '../components/VersionIndicator';
 
 const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se eliminan 'toast', 'handleUndoDelete' y 'setToast' de la desestructuración.
     const appState = useAppState();
-    const { isDataLoading, toast, handleUndoDelete, setToast, setLogoutModalOpen } = appState;
+    const { isDataLoading, setLogoutModalOpen } = appState;
+    // --- FIN DE LA MODIFICACIÓN ---
     const { user, subscriptionStatus, isRefreshing } = useContext(AuthContext);
     const location = useLocation();
 
@@ -48,7 +53,6 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
         return <div className="flex h-screen w-full items-center justify-center bg-background text-text-primary">Actualizando estado de la suscripción...</div>;
     }
 
-    // El rol 'technician' NO está en esta lista, por lo que no se le pedirá suscripción.
     const rolesRequiringSubscription = ['technician_subscribed'];
     
     const hasValidSubscription = subscriptionStatus === 'active' || 
@@ -109,7 +113,10 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
 
             {/* Componentes superpuestos */}
             <VersionIndicator className="hidden lg:block fixed bottom-6 right-6 bg-component-bg px-2 py-1 rounded border border-border-color" />
-            {toast && (<Toast message={toast.message} onUndo={handleUndoDelete} onClose={() => setToast(null)} />)}
+            
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            {/* Se elimina el componente Toast de la renderización */}
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
             
             {/* Contenedor de todos los modales */}
             <AppModals appState={appState} />

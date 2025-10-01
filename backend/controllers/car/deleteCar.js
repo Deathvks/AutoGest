@@ -7,9 +7,9 @@ const { deleteFile, safeJsonParse } = require('../../utils/carUtils');
  * Esto incluye imágenes, documentos, gastos e incidencias.
  */
 exports.deleteCar = async (req, res) => {
-    const transaction = await sequelize.transaction();
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se elimina la transacción, ya que el borrado en cascada lo simplifica.
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const whereClause = { id: req.params.id };
         if (req.user.companyId) {
             whereClause.companyId = req.user.companyId;
@@ -17,14 +17,9 @@ exports.deleteCar = async (req, res) => {
             whereClause.userId = req.user.id;
         }
 
-        const car = await Car.findOne({ 
-            where: whereClause,
-            transaction 
-        });
-        // --- FIN DE LA MODIFICACIÓN ---
+        const car = await Car.findOne({ where: whereClause });
 
         if (!car) {
-            await transaction.rollback();
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para eliminarlo' });
         }
         
@@ -35,23 +30,19 @@ exports.deleteCar = async (req, res) => {
         const documentFields = ['technicalSheetUrl', 'registrationCertificateUrl', 'otherDocumentsUrls'];
         documentFields.forEach(field => {
             const docs = safeJsonParse(car[field]);
-            docs.forEach(doc => deleteFile(doc.path)); // Se corrige para usar doc.path
+            docs.forEach(doc => deleteFile(doc.path));
         });
 
-        // Elimina los registros asociados en otras tablas.
-        await Incident.destroy({ where: { carId: car.id }, transaction });
-        await Expense.destroy({ where: { carLicensePlate: car.licensePlate }, transaction });
-        
-        // Finalmente, elimina el coche.
-        await car.destroy({ transaction });
-        
-        await transaction.commit();
+        // Elimina el coche de la base de datos.
+        // Gracias a 'onDelete: CASCADE' en los modelos, los gastos e incidencias
+        // asociados se eliminarán automáticamente.
+        await car.destroy();
         
         res.status(200).json({ message: 'Coche eliminado correctamente' });
 
     } catch (error) {
-        await transaction.rollback();
         console.error("Error al eliminar coche:", error);
         res.status(500).json({ error: 'Error al eliminar el coche' });
     }
+    // --- FIN DE LA MODIFICACIÓN ---
 };

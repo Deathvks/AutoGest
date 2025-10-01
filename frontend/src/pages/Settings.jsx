@@ -7,6 +7,9 @@ import { APP_NAME } from '../config/version';
 import AppearanceSettings from './Settings/AppearanceSettings';
 import BusinessDataSettings from './Settings/BusinessDataSettings';
 import AccountDataSettings from './Settings/AccountDataSettings';
+// --- INICIO DE LA MODIFICACIÓN ---
+import ContactSettings from './Settings/ContactSettings';
+// --- FIN DE LA MODIFICACIÓN ---
 
 const Settings = ({ 
     isDarkMode, 
@@ -29,10 +32,6 @@ const Settings = ({
                     setIsDarkMode={setIsDarkMode} 
                 />
                 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                {/* Se elimina el componente TaxSettings */}
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
-
                 <BusinessDataSettings 
                     onBusinessDataClick={onBusinessDataClick} 
                     businessDataMessage={businessDataMessage} 
@@ -45,6 +44,10 @@ const Settings = ({
                     onLogoutClick={onLogoutClick}
                     onDeleteAccountClick={onDeleteAccountClick}
                 />
+
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <ContactSettings />
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                 <div className="p-6 bg-component-bg rounded-xl border border-border-color lg:hidden">
                     <h3 className="text-lg font-bold text-text-primary mb-4">ACERCA DE</h3>

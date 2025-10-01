@@ -70,9 +70,7 @@ const Header = () => {
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95"
                     >
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-border-color rounded-md bg-component-bg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                             <div className="px-1 py-1 ">
                                 <Menu.Item>
                                     {({ active }) => (
@@ -92,7 +90,8 @@ const Header = () => {
                                         )}
                                     </Menu.Item>
                                 )}
-                                {user.role === 'user' && user.companyId && !user.isOwner && (
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                {user.role === 'user' && user.companyId && !user.isOwner && user.canExpelUsers && (
                                      <Menu.Item>
                                         {({ active }) => (
                                             <Link to="/admin" className={`${active ? 'bg-component-bg-hover text-text-primary' : 'text-text-secondary'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>
@@ -102,6 +101,7 @@ const Header = () => {
                                         )}
                                     </Menu.Item>
                                 )}
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         </Menu.Items>
                     </Transition>

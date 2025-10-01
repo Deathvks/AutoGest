@@ -117,7 +117,8 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                 )}
 
                 {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                {user && (user.role === 'admin' || user.role === 'technician' || user.canExpelUsers) && (
+                {/* Ahora solo se muestra para el rol 'admin', ya que los demás acceden desde el header */}
+                {user && user.role === 'admin' && (
                     <div className="lg:hidden">
                         <hr className="border-border-color" />
                         <div className="mt-6">

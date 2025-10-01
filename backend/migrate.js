@@ -12,18 +12,9 @@ const runMigration = async () => {
             const carsDescription = await queryInterface.describeTable('Cars');
 
             // --- INICIO DE LA MODIFICACIÓN ---
-            // Añadir la columna deletedAt si no existe para el borrado lógico
-            if (!carsDescription.deletedAt) {
-                console.log('-> Añadiendo columna "deletedAt" a Cars para el borrado lógico...');
-                await queryInterface.addColumn('Cars', 'deletedAt', {
-                    type: sequelize.Sequelize.DATE,
-                    allowNull: true,
-                });
-                console.log('✅ Columna "deletedAt" añadida.');
-            }
+            // Se elimina la lógica que añadía la columna 'deletedAt'.
             // --- FIN DE LA MODIFICACIÓN ---
 
-            // (El resto de las migraciones se mantienen por si son necesarias en el futuro)
             if (!carsDescription.saleDate) {
                 console.log('-> Añadiendo columna "saleDate" a Cars...');
                 await queryInterface.addColumn('Cars', 'saleDate', { type: sequelize.Sequelize.DATEONLY, allowNull: true });
