@@ -17,6 +17,10 @@ exports.handleWebhook = async (req, res) => {
 
     const dataObject = event.data.object;
     console.log(`[Webhook] Evento recibido: ${event.type}`);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Log detallado del objeto de datos completo del evento
+    console.log(`[Webhook] Datos del evento (${event.type}):`, JSON.stringify(dataObject, null, 2));
+    // --- FIN DE LA MODIFICACIÓN ---
 
     try {
         let customerId;
@@ -66,13 +70,10 @@ exports.handleWebhook = async (req, res) => {
                         console.log(`[Webhook] Estado de suscripción obtenido: ${subscription.status}`);
                         
                         if (subscription.status === 'active' || subscription.status === 'trialing') {
-                            // --- INICIO DE LA MODIFICACIÓN ---
-                            // Se prioriza la fecha de fin de prueba (trial_end) si existe.
                             const expiryTimestamp = subscription.trial_end || subscription.current_period_end;
 
                             if (expiryTimestamp && !isNaN(expiryTimestamp)) {
                                 const expiryDate = new Date(expiryTimestamp * 1000);
-                            // --- FIN DE LA MODIFICACIÓN ---
                                 
                                 if (!isNaN(expiryDate.getTime())) {
                                     const updatePayload = {
@@ -207,11 +208,9 @@ exports.handleWebhook = async (req, res) => {
                 console.log(`[Webhook] current_period_end: ${dataObject.current_period_end}`);
                 
                 if (dataObject.status === 'active' || dataObject.status === 'trialing') {
-                    // --- INICIO DE LA MODIFICACIÓN ---
                     const expiryTimestamp = dataObject.trial_end || dataObject.current_period_end;
                     if (expiryTimestamp && !isNaN(expiryTimestamp)) {
                         const expiryDate = new Date(expiryTimestamp * 1000);
-                    // --- FIN DE LA MODIFICACIÓN ---
                         
                         if (!isNaN(expiryDate.getTime())) {
                             const updatePayload = {

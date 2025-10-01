@@ -37,9 +37,6 @@ exports.createSubscription = async (req, res) => {
         
         console.log(`[CREATE_SUB] Creando suscripción para customer ${customerId} con price ${priceId}...`);
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se establece 'payment_behavior' a 'default_incomplete' para que la suscripción
-        // se cree con estado 'incomplete' si se requiere autenticación, en lugar de lanzar un error.
         const subscription = await stripe.subscriptions.create({
             customer: customerId,
             items: [{ price: priceId }],
@@ -47,18 +44,20 @@ exports.createSubscription = async (req, res) => {
             payment_settings: { save_default_payment_method: 'on_subscription' },
             expand: ['latest_invoice.payment_intent'],
         });
+        
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se añade un log detallado del objeto de suscripción completo que devuelve Stripe.
+        console.log('[CREATE_SUB] Objeto de suscripción devuelto por Stripe:', JSON.stringify(subscription, null, 2));
+        // --- FIN DE LA MODIFICACIÓN ---
 
         console.log(`[CREATE_SUB] Suscripción creada con ID: ${subscription.id} y estado: ${subscription.status}`);
 
-        // La respuesta siempre será un JSON con el clientSecret si es necesario, o null si no lo es.
         res.json({
             subscriptionId: subscription.id,
             clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
         });
-        // --- FIN DE LA MODIFICACIÓN ---
 
     } catch (error) {
-        // Este bloque catch ahora solo se ejecutará para errores inesperados, no para flujos de 3D Secure.
         console.error('--- ERROR DETALLADO EN CREATE_SUB ---');
         console.error('Mensaje:', error.message);
         console.error('Tipo:', error.type);
