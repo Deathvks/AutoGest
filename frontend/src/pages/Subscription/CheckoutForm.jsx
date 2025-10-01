@@ -91,20 +91,29 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
         }
 
         try {
-            const { clientSecret } = await api.subscriptions.createSubscription(paymentMethod.id);
+            // --- INICIO DE LA MODIFICACIÓN ---
+            console.log('[CheckoutForm] Creando suscripción con paymentMethodId:', paymentMethod.id);
+            const { clientSecret, subscriptionId } = await api.subscriptions.createSubscription(paymentMethod.id);
+            console.log('[CheckoutForm] Respuesta del backend:', { clientSecret, subscriptionId });
             
             if (clientSecret) {
+                console.log('[CheckoutForm] Se encontró un clientSecret. Procediendo a confirmar el pago con la tarjeta.');
                 const { error: confirmError } = await stripe.confirmCardPayment(clientSecret);
                 if (confirmError) {
+                    console.error('[CheckoutForm] Error al confirmar el pago:', confirmError);
                     setError(confirmError.message);
                 } else {
+                    console.log('[CheckoutForm] Pago confirmado con éxito. Llamando a onSuccessfulPayment.');
                     onSuccessfulPayment();
                 }
             } else {
+                console.log('[CheckoutForm] No se recibió clientSecret. Asumiendo pago exitoso y llamando a onSuccessfulPayment.');
                 onSuccessfulPayment();
             }
+            // --- FIN DE LA MODIFICACIÓN ---
 
         } catch (apiError) {
+            console.error('[CheckoutForm] Error en la llamada a la API del backend:', apiError);
             setError(apiError.message);
         }
 
@@ -138,7 +147,6 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                         {error}
                     </div>
                 )}
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <button
                     type="submit"
                     disabled={!stripe || processing}
@@ -147,7 +155,6 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                 >
                     {processing ? <FontAwesomeIcon icon={faSpinner} spin /> : 'SUSCRIBIRME AHORA (1,00€/MES)'}
                 </button>
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </form>
         </div>
     );
