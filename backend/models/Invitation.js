@@ -35,6 +35,16 @@ const Invitation = sequelize.define('Invitation', {
     }
 }, {
     timestamps: true,
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se añade un nombre explícito al índice para evitar duplicados.
+    indexes: [
+        {
+            name: 'invitations_token_unique',
+            unique: true,
+            fields: ['token']
+        }
+    ]
+    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 module.exports = Invitation;

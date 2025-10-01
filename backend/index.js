@@ -28,11 +28,9 @@ app.use(cors(corsOptions));
 app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), require('./controllers/subscription/handleWebhook').handleWebhook);
 app.use(express.json());
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Servir todos los archivos estáticos desde la carpeta 'public'
 // Esto hará que /uploads/*, /avatars/*, etc., sean accesibles públicamente.
 app.use(express.static(path.join(__dirname, 'public')));
-// --- FIN DE LA MODIFICACIÓN ---
 
 app.get('/', (req, res) => {
     res.send('AutoGest API is running...');
@@ -51,8 +49,11 @@ app.use('/api/company', companyRoutes);
 
 const PORT = process.env.PORT || 3001;
 
-// backend/index.js
-async function syncDatabase() {
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se asegura de que la base de datos esté sincronizada ANTES de iniciar el servidor.
+// En producción, usa sync() para evitar cambios destructivos.
+// En desarrollo, usa sync({ alter: true }) para facilitar el desarrollo.
+const syncDatabaseAndStartServer = async () => {
   try {
     if (process.env.NODE_ENV === 'development') {
       await db.sequelize.sync({ alter: true });
@@ -61,9 +62,16 @@ async function syncDatabase() {
       await db.sequelize.sync();
       console.log('✅ Base de datos sincronizada en producción (sin alter).');
     }
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
+    });
+
   } catch (error) {
     console.error('❌ Error al sincronizar la base de datos:', error);
+    process.exit(1); // Detiene la aplicación si la BBDD no puede sincronizarse
   }
 }
 
-syncDatabase();
+syncDatabaseAndStartServer();
+// --- FIN DE LA MODIFICACIÓN ---
