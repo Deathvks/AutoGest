@@ -14,9 +14,9 @@ const Invitation = sequelize.define('Invitation', {
     token: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: true,
         comment: 'Token único para la URL de invitación.'
     },
-    // Las columnas se definen como simples enteros. Las relaciones se gestionarán en 'models/index.js'.
     companyId: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -35,16 +35,6 @@ const Invitation = sequelize.define('Invitation', {
     }
 }, {
     timestamps: true,
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se elimina la definición explícita de los índices para las claves foráneas.
-    // Sequelize los creará automáticamente. Solo mantenemos el índice único para 'token'.
-    indexes: [
-        {
-            unique: true,
-            fields: ['token']
-        }
-    ]
-    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 module.exports = Invitation;
