@@ -1,3 +1,7 @@
+// autogest-app/backend/seed.js
+// --- INICIO DE LA MODIFICACIÓN ---
+require('dotenv').config();
+// --- FIN DE LA MODIFICACIÓN ---
 const bcrypt = require('bcryptjs');
 const db = require('./models');
 

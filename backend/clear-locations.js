@@ -1,4 +1,7 @@
 // autogest-app/backend/clear-locations.js
+// --- INICIO DE LA MODIFICACIÓN ---
+require('dotenv').config();
+// --- FIN DE LA MODIFICACIÓN ---
 const { Location, Car } = require('./models');
 
 const clearLocations = async () => {

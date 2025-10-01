@@ -1,3 +1,7 @@
+// autogest-app/backend/clear.js
+// --- INICIO DE LA MODIFICACIÓN ---
+require('dotenv').config();
+// --- FIN DE LA MODIFICACIÓN ---
 const db = require('./models');
 
 const clearDatabase = async () => {

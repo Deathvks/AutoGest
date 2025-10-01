@@ -7,7 +7,8 @@
     "dev": "nodemon -r dotenv/config index.js",
     "seed": "node seed.js",
     "clear": "node clear.js",
-    "clear-locations": "node clear-locations.js"
+    "clear-locations": "node clear-locations.js",
+    "clear-invitations": "node clear-invitations.js"
   },
   "keywords": [],
   "author": "",
