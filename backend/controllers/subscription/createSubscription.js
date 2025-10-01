@@ -3,7 +3,7 @@ const { User } = require('../../models');
 const { stripe, getStripeConfig } = require('./stripeConfig');
 
 exports.createSubscription = async (req, res) => {
-    console.log('[CREATE_SUB] Iniciando proceso de creación de suscripción (v4)...');
+    console.log('[CREATE_SUB] Iniciando proceso de creación de suscripción (v5)...');
     try {
         const { paymentMethodId } = req.body;
         const userId = req.user.id;
@@ -37,30 +37,28 @@ exports.createSubscription = async (req, res) => {
         
         console.log(`[CREATE_SUB] Creando suscripción para customer ${customerId} con price ${priceId}...`);
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se establece 'payment_behavior' a 'default_incomplete' para que la suscripción
+        // se cree con estado 'incomplete' si se requiere autenticación, en lugar de lanzar un error.
         const subscription = await stripe.subscriptions.create({
             customer: customerId,
             items: [{ price: priceId }],
-            payment_behavior: 'error_if_incomplete',
+            payment_behavior: 'default_incomplete',
             payment_settings: { save_default_payment_method: 'on_subscription' },
             expand: ['latest_invoice.payment_intent'],
         });
 
+        console.log(`[CREATE_SUB] Suscripción creada con ID: ${subscription.id} y estado: ${subscription.status}`);
+
+        // La respuesta siempre será un JSON con el clientSecret si es necesario, o null si no lo es.
         res.json({
             subscriptionId: subscription.id,
             clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
         });
-
-    } catch (error) {
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // La clave es buscar el client_secret dentro de `error.raw.latest_invoice.payment_intent.client_secret`.
-        if (error.code === 'subscription_payment_intent_requires_action' && error.raw?.latest_invoice?.payment_intent?.client_secret) {
-            console.log('[CREATE_SUB] Se requiere acción del cliente. Enviando client_secret desde error.raw.latest_invoice.payment_intent...');
-            return res.json({
-                clientSecret: error.raw.latest_invoice.payment_intent.client_secret,
-            });
-        }
         // --- FIN DE LA MODIFICACIÓN ---
 
+    } catch (error) {
+        // Este bloque catch ahora solo se ejecutará para errores inesperados, no para flujos de 3D Secure.
         console.error('--- ERROR DETALLADO EN CREATE_SUB ---');
         console.error('Mensaje:', error.message);
         console.error('Tipo:', error.type);
