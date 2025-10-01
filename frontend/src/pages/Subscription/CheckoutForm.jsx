@@ -1,44 +1,81 @@
 // autogest-app/frontend/src/pages/Subscription/CheckoutForm.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faExclamationTriangle, faSpinner, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
 
-const CheckoutForm = ({ onSubscriptionSuccess }) => {
+const CheckoutForm = ({ onSuccessfulPayment }) => {
     const stripe = useStripe();
     const elements = useElements();
-    const { syncSubscriptionStatus } = useAuth();
     const [error, setError] = useState(null);
     const [processing, setProcessing] = useState(false);
+    const [adBlockerDetected, setAdBlockerDetected] = useState(false);
+    const [isBraveBrowser, setIsBraveBrowser] = useState(false);
+    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
-    const cardElementOptions = {
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            const newTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+            setTheme(newTheme);
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+        return () => observer.disconnect();
+    }, []);
+
+    const cardElementOptions = useMemo(() => ({
+        hidePostalCode: true,
         style: {
             base: {
-                color: "#32325d",
-                fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-                fontSmoothing: "antialiased",
-                fontSize: "16px",
-                "::placeholder": {
-                    color: "#aab7c4"
-                }
+                color: theme === 'dark' ? '#EAEAEA' : '#111827',
+                fontFamily: 'Inter, sans-serif',
+                fontSmoothing: 'antialiased',
+                fontSize: '16px',
+                '::placeholder': {
+                    color: theme === 'dark' ? '#888888' : '#6b7280',
+                },
             },
             invalid: {
-                color: "#fa755a",
-                iconColor: "#fa755a"
+                color: '#dc2626',
+                iconColor: '#dc2626',
+            },
+        },
+    }), [theme]);
+
+    useEffect(() => {
+        const detectAdBlocker = async () => {
+            if (navigator.brave && await navigator.brave.isBrave()) {
+                setIsBraveBrowser(true);
+                setAdBlockerDetected(true);
+                return;
             }
-        }
-    };
+
+            const bait = document.createElement('div');
+            bait.innerHTML = '&nbsp;';
+            bait.className = 'ad-banner';
+            Object.assign(bait.style, {
+                position: 'absolute', height: '1px', width: '1px', top: '-1px', left: '-1px',
+            });
+            document.body.appendChild(bait);
+
+            setTimeout(() => {
+                if (bait.offsetHeight === 0) {
+                    setAdBlockerDetected(true);
+                }
+                document.body.removeChild(bait);
+            }, 100);
+        };
+        detectAdBlocker();
+    }, []);
+
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        if (!stripe || !elements) return;
+
         setProcessing(true);
         setError(null);
-
-        if (!stripe || !elements) {
-            setError("Stripe.js no se ha cargado correctamente.");
-            setProcessing(false);
-            return;
-        }
 
         const cardElement = elements.getElement(CardElement);
 
@@ -54,75 +91,65 @@ const CheckoutForm = ({ onSubscriptionSuccess }) => {
         }
 
         try {
-            const { data } = await api.post('/subscriptions/create-subscription', {
-                paymentMethodId: paymentMethod.id,
-            });
-
-            if (data.status === 'active') {
-                // --- Caso 1: Pago directo exitoso (sin 3D Secure) ---
-                console.log("Suscripción activada directamente.");
-                await syncSubscriptionStatus();
-                onSubscriptionSuccess();
-            } else {
-                // --- Caso 2: Se necesita confirmación del pago (3D Secure) ---
-                console.log("Se necesita confirmación del pago. Client Secret:", data.clientSecret);
-                const { error: confirmError } = await stripe.confirmCardPayment(data.clientSecret);
-
-                if (confirmError) {
-                    throw new Error(confirmError.message);
-                }
-                
-                console.log("Confirmación de pago exitosa.");
-                await syncSubscriptionStatus();
-                onSubscriptionSuccess();
-            }
-
-        } catch (err) {
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Manejo de errores, incluyendo el caso 'requires_action'
-            const errData = err.response?.data;
-            if (errData && errData.error === 'requires_action') {
-                // --- Caso 3: El backend pide explícitamente la acción del usuario ---
-                console.log("El backend requiere acción. Confirmando con el nuevo client secret...");
-                const { error: confirmError } = await stripe.confirmCardPayment(errData.paymentIntentClientSecret);
-
+            const { clientSecret } = await api.subscriptions.createSubscription(paymentMethod.id);
+            
+            if (clientSecret) {
+                const { error: confirmError } = await stripe.confirmCardPayment(clientSecret);
                 if (confirmError) {
                     setError(confirmError.message);
                 } else {
-                    console.log("Confirmación de pago tras 'requires_action' exitosa.");
-                    await syncSubscriptionStatus();
-                    onSubscriptionSuccess();
+                    onSuccessfulPayment();
                 }
             } else {
-                // --- Otros errores ---
-                const errorMessage = errData?.error || err.message || "Ocurrió un error inesperado.";
-                setError(errorMessage);
+                onSuccessfulPayment();
             }
-            // --- FIN DE LA MODIFICACIÓN ---
-        } finally {
-            setProcessing(false);
+
+        } catch (apiError) {
+            setError(apiError.message);
         }
+
+        setProcessing(false);
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Datos de la tarjeta
-                </label>
-                <div className="p-3 border border-gray-300 rounded-md">
-                    <CardElement options={cardElementOptions} />
+        <div className="p-8 bg-component-bg rounded-xl border border-border-color shadow-lg h-full flex flex-col animated-premium-background">
+            <h3 className="text-xl font-bold text-text-primary mb-2 animate-fade-in-down">COMPLETA TU SUSCRIPCIÓN</h3>
+            <p className="text-text-secondary mb-6 animate-fade-in-down" style={{ animationDelay: '150ms' }}>Acceso completo a todas las herramientas por un único pago mensual.</p>
+            <form onSubmit={handleSubmit} className="space-y-6 flex-grow flex flex-col">
+                <div className="flex-grow animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+                    {adBlockerDetected && (
+                        <div className="bg-yellow-accent/10 text-yellow-accent p-3 rounded-lg border border-border-color flex items-center gap-3 mb-4">
+                            <FontAwesomeIcon icon={faShieldAlt} className="w-5 h-5 flex-shrink-0" />
+                            <p className="text-sm font-medium">
+                                {isBraveBrowser
+                                    ? '¿USAS BRAVE? SU BLOQUEADOR PUEDE OCULTAR OPCIONES DE PAGO COMO "LINK". PARA VER TODAS LAS OPCIONES, DESACTIVA LOS ESCUDOS.'
+                                    : '¡ATENCIÓN! HEMOS DETECTADO UN BLOQUEADOR. PARA ASEGURAR QUE EL PAGO FUNCIONE, DESACTÍVALO TEMPORALMENTE.'}
+                            </p>
+                        </div>
+                    )}
+                    <label className="block text-sm font-medium text-text-secondary mb-2">DATOS DE LA TARJETA</label>
+                    <div className="p-4 bg-background rounded-lg border border-border-color shadow-inner">
+                        <CardElement key={theme} options={cardElementOptions} />
+                    </div>
                 </div>
-            </div>
-            {error && <div className="text-red-500 text-sm">{error}</div>}
-            <button
-                type="submit"
-                disabled={!stripe || processing}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
-            >
-                {processing ? 'Procesando...' : 'Suscribirse (9,99€/mes)'}
-            </button>
-        </form>
+                {error && (
+                    <div className="text-red-accent text-sm flex items-center gap-2">
+                        <FontAwesomeIcon icon={faExclamationTriangle} />
+                        {error}
+                    </div>
+                )}
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <button
+                    type="submit"
+                    disabled={!stripe || processing}
+                    className="w-full bg-accent text-white font-semibold py-3 rounded-lg shadow-[0_5px_20px_-5px_rgba(var(--color-accent-rgb),0.5)] hover:shadow-[0_8px_25px_-8px_rgba(var(--color-accent-rgb),0.8)] transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-wait animate-fade-in-up"
+                    style={{ animationDelay: '450ms' }}
+                >
+                    {processing ? <FontAwesomeIcon icon={faSpinner} spin /> : 'SUSCRIBIRME AHORA (1,00€/MES)'}
+                </button>
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
+            </form>
+        </div>
     );
 };
 
