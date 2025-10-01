@@ -162,14 +162,14 @@ const api = {
         syncSubscription: () => fetch(`${BASE_URL}/subscriptions/sync`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse)
     },
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     company: {
         inviteUser: (inviteData) => fetch(`${BASE_URL}/company/invite`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(inviteData) }).then(handleProtectedResponse),
         verifyInvitation: (token) => fetch(`${BASE_URL}/company/invitations/verify/${token}`, { method: 'GET' }).then(handlePublicResponse),
-        acceptInvitation: (data) => fetch(`${BASE_URL}/company/invitations/accept`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
+        // --- INICIO DE LA MODIFICACIÓN ---
+        acceptInvitation: (data) => fetch(`${BASE_URL}/company/invitations/accept`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) }).then(handleProtectedResponse),
+        // --- FIN DE LA MODIFICACIÓN ---
         expelUser: (userId) => fetch(`${BASE_URL}/company/users/${userId}/expel`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
     },
-    // --- FIN DE LA MODIFICACIÓN ---
 };
 
 export default api;

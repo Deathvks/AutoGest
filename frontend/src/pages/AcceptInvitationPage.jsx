@@ -10,7 +10,7 @@ const AcceptInvitationPage = () => {
     const { token } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useContext(AuthContext);
+    const { user, logout } = useContext(AuthContext);
 
     const [invitationDetails, setInvitationDetails] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +54,7 @@ const AcceptInvitationPage = () => {
             setStatus('success');
             setTimeout(() => {
                 navigate('/cars');
+                window.location.reload();
             }, 3000);
         } catch (err) {
             setError(err.message || 'No se pudo completar la acción.');
@@ -67,16 +68,39 @@ const AcceptInvitationPage = () => {
         navigate('/login', { state: { from: location } });
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleLogoutAndSetRedirect = () => {
+        // Guarda la URL de invitación actual en el almacenamiento local.
+        localStorage.setItem('loginRedirect', location.pathname);
+        // Llama a la función de logout original, que te llevará a /login.
+        logout();
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const renderContent = () => {
         if (status === 'verifying' || isLoading) {
             return <div className="text-center text-text-secondary"><FontAwesomeIcon icon={faSpinner} spin size="2x" /></div>;
         }
         if (status === 'error') {
+            const isWrongUserError = error.includes('cierra sesión');
             return (
                 <div className="text-center text-red-accent bg-red-accent/10 p-4 rounded-lg">
                     <FontAwesomeIcon icon={faExclamationTriangle} className="mb-2 text-2xl" />
                     <p className="font-semibold">{error}</p>
-                    <Link to="/login" className="text-sm mt-2 underline hover:opacity-80">Volver a iniciar sesión</Link>
+                    <div className="mt-4">
+                        {isWrongUserError ? (
+                            <button
+                                onClick={handleLogoutAndSetRedirect}
+                                className="bg-accent text-white font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors"
+                            >
+                                Cerrar sesión para continuar
+                            </button>
+                        ) : (
+                            <Link to="/login" className="inline-block bg-accent text-white font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors">
+                                Ir a Iniciar Sesión
+                            </Link>
+                        )}
+                    </div>
                 </div>
             );
         }
@@ -98,7 +122,6 @@ const AcceptInvitationPage = () => {
                         Por favor, inicia sesión en tu cuenta <span className="font-bold text-text-primary">{invitationDetails.email}</span> para aceptar.
                     </p>
                     <div className="mt-8">
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         <button 
                             onClick={handleLogin} 
                             className="group relative flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
@@ -106,7 +129,6 @@ const AcceptInvitationPage = () => {
                             <FontAwesomeIcon icon={faSignInAlt} />
                             <span>Iniciar Sesión para Aceptar</span>
                         </button>
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </div>
                 </>
             );

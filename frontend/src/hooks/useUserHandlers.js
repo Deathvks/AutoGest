@@ -28,9 +28,9 @@ export const useUserHandlers = (
     // --- INICIO DE LA MODIFICACIÓN ---
     const handleExpelUser = async (userId) => {
         try {
-            const updatedUser = await api.company.expelUser(userId);
-            // Actualizamos el usuario en el estado para reflejar su nuevo rol y la ausencia de companyId
-            setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
+            await api.company.expelUser(userId);
+            // Se filtra el usuario expulsado de la lista local para que desaparezca de la UI.
+            setUsers(prev => prev.filter(u => u.id !== userId));
             modalState.setUserToExpel(null);
         } catch (error) {
             console.error("Error al expulsar usuario:", error);
@@ -42,6 +42,6 @@ export const useUserHandlers = (
         handleUserAdded,
         handleUserUpdated,
         handleUserDeleted,
-        handleExpelUser, // <-- Se exporta la nueva función
+        handleExpelUser,
     };
 };

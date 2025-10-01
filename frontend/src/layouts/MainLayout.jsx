@@ -1,10 +1,10 @@
 // autogest-app/frontend/src/layouts/MainLayout.jsx
 import React, { useEffect, Suspense, useContext } from 'react';
-import { useLocation, Navigate } from 'react-router-dom';
+import { useLocation, Navigate, Link } from 'react-router-dom';
 import { useAppState } from '../hooks/useAppState';
 import { AuthContext } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faCreditCard } from '@fortawesome/free-solid-svg-icons';
 
 // Componentes
 import Sidebar from '../components/Sidebar';
@@ -12,17 +12,11 @@ import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import AppRoutes from '../components/AppRoutes';
 import AppModals from '../components/AppModals';
-// --- INICIO DE LA MODIFICACIÓN ---
-// Se elimina la importación del componente Toast.
-// --- FIN DE LA MODIFICACIÓN ---
 import VersionIndicator from '../components/VersionIndicator';
 
 const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se eliminan 'toast', 'handleUndoDelete' y 'setToast' de la desestructuración.
     const appState = useAppState();
     const { isDataLoading, setLogoutModalOpen } = appState;
-    // --- FIN DE LA MODIFICACIÓN ---
     const { user, subscriptionStatus, isRefreshing } = useContext(AuthContext);
     const location = useLocation();
 
@@ -80,6 +74,17 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
                             <p className="mt-2 text-text-secondary">
                                 Para poder usar la aplicación, necesitas unirte a un equipo o tener una suscripción activa.
                             </p>
+                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                            <div className="mt-6">
+                                <Link 
+                                    to="/subscription" 
+                                    className="inline-flex items-center justify-center gap-2 bg-accent text-white font-semibold px-6 py-3 rounded-lg shadow-sm hover:bg-accent-hover transition-colors w-full sm:w-auto"
+                                >
+                                    <FontAwesomeIcon icon={faCreditCard} />
+                                    <span>Ver Planes de Suscripción</span>
+                                </Link>
+                            </div>
+                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
                     </main>
                 </div>
@@ -110,15 +115,7 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
                 </main>
             </div>
             <BottomNav />
-
-            {/* Componentes superpuestos */}
             <VersionIndicator className="hidden lg:block fixed bottom-6 right-6 bg-component-bg px-2 py-1 rounded border border-border-color" />
-            
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
-            {/* Se elimina el componente Toast de la renderización */}
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
-            
-            {/* Contenedor de todos los modales */}
             <AppModals appState={appState} />
         </div>
     );

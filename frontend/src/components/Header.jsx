@@ -1,10 +1,10 @@
 // autogest-app/frontend/src/components/Header.jsx
-import React, { useContext, useState, Fragment } from 'react';
+import React, { useContext, Fragment } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
-    faUser, faCog, faUsersCog, faCreditCard, faChevronDown
+    faUser, faCog, faUsersCog, faCreditCard
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 import { Menu, Transition } from '@headlessui/react';
@@ -80,7 +80,18 @@ const Header = () => {
                                         </Link>
                                     )}
                                 </Menu.Item>
-                                {user.isOwner && (
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                {user.role === 'admin' && (
+                                     <Menu.Item>
+                                        {({ active }) => (
+                                            <Link to="/admin" className={`${active ? 'bg-component-bg-hover text-text-primary' : 'text-text-secondary'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>
+                                                <FontAwesomeIcon icon={faUsersCog} className="mr-2 h-4 w-4" />
+                                                Gestión
+                                            </Link>
+                                        )}
+                                    </Menu.Item>
+                                )}
+                                {user.isOwner && user.role !== 'admin' && (
                                      <Menu.Item>
                                         {({ active }) => (
                                             <Link to="/admin" className={`${active ? 'bg-component-bg-hover text-text-primary' : 'text-text-secondary'} group flex w-full items-center rounded-md px-2 py-2 text-sm`}>
@@ -90,7 +101,6 @@ const Header = () => {
                                         )}
                                     </Menu.Item>
                                 )}
-                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                 {user.role === 'user' && user.companyId && !user.isOwner && user.canExpelUsers && (
                                      <Menu.Item>
                                         {({ active }) => (

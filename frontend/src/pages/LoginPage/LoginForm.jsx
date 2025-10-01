@@ -1,6 +1,6 @@
 // autogest-app/frontend/src/pages/LoginPage/LoginForm.jsx
 import React, { useState, useContext } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom'; // --- INICIO DE LA MODIFICACIÓN ---
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar } from '@fortawesome/free-solid-svg-icons';
@@ -22,7 +22,7 @@ const LoginForm = ({ onNeedsVerification }) => {
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useContext(AuthContext);
     const navigate = useNavigate();
-    const location = useLocation(); // --- INICIO DE LA MODIFICACIÓN ---
+    const location = useLocation();
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
@@ -32,11 +32,20 @@ const LoginForm = ({ onNeedsVerification }) => {
         setIsLoading(true);
         try {
             await login(email, password);
+            
             // --- INICIO DE LA MODIFICACIÓN ---
-            // Redirige al usuario a la página de invitación si viene de allí, si no, a la raíz.
-            const from = location.state?.from?.pathname || '/';
-            navigate(from, { replace: true });
+            // Comprueba si hay una URL de redirección guardada (desde la página de invitación).
+            const loginRedirect = localStorage.getItem('loginRedirect');
+            if (loginRedirect) {
+                localStorage.removeItem('loginRedirect'); // Limpia la redirección guardada
+                navigate(loginRedirect, { replace: true }); // Redirige a la página de invitación
+            } else {
+                // Si no, usa la lógica normal de redirección.
+                const from = location.state?.from?.pathname || '/';
+                navigate(from, { replace: true });
+            }
             // --- FIN DE LA MODIFICACIÓN ---
+            
         } catch (err) {
             if (err.needsVerification) {
                 onNeedsVerification(err.email);
