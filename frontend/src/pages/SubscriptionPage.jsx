@@ -38,7 +38,10 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
         const pollForStatus = async () => {
             if (attempts >= maxAttempts) {
                 try {
-                    await api.syncSubscription();
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    // Se corrige la llamada a la función de la API.
+                    await api.subscriptions.syncSubscription();
+                    // --- FIN DE LA MODIFICACIÓN ---
                     const freshUser = await api.getMe();
                     if (freshUser.subscriptionStatus === 'active') {
                         await refreshSubscriptionStatus();
@@ -85,10 +88,8 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
         }
     }, [user]);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     // Se añade 'technician' a los roles que no requieren suscripción de pago.
     if (user.role === 'admin' || user.role === 'technician') {
-    // --- FIN DE LA MODIFICACIÓN ---
         return (
             <div className="p-8 bg-component-bg rounded-xl border border-border-color text-center animated-premium-background">
                 <FontAwesomeIcon icon={faCheckCircle} className="w-16 h-16 mx-auto mb-4 text-green-accent" />
