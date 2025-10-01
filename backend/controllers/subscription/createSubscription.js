@@ -3,7 +3,7 @@ const { User } = require('../../models');
 const { stripe, getStripeConfig } = require('./stripeConfig');
 
 exports.createSubscription = async (req, res) => {
-    console.log('[CREATE_SUB] Iniciando proceso de creación de suscripción (v2)...');
+    console.log('[CREATE_SUB] Iniciando proceso de creación de suscripción (v3)...');
     try {
         const { paymentMethodId } = req.body;
         const userId = req.user.id;
@@ -34,62 +34,40 @@ exports.createSubscription = async (req, res) => {
                 invoice_settings: { default_payment_method: paymentMethodId },
             });
         }
-
-        console.log(`[CREATE_SUB] Creando suscripción para customer ${customerId} con price ${priceId}...`);
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Modificamos el 'payment_behavior' para que no falle si se necesita autenticación.
-        // La suscripción se creará en estado 'incomplete'.
+        console.log(`[CREATE_SUB] Creando suscripción para customer ${customerId} con price ${priceId}...`);
+
         const subscription = await stripe.subscriptions.create({
             customer: customerId,
             items: [{ price: priceId }],
-            payment_behavior: 'default_incomplete', // CAMBIO CLAVE
+            payment_behavior: 'error_if_incomplete', // Volvemos a la estrategia original que es más explícita
             payment_settings: { save_default_payment_method: 'on_subscription' },
             expand: ['latest_invoice.payment_intent'],
         });
-        
-        console.log(`[CREATE_SUB] Suscripción creada con ID: ${subscription.id} y estado: ${subscription.status}`);
 
-        const paymentIntent = subscription.latest_invoice.payment_intent;
+        res.json({
+            subscriptionId: subscription.id,
+            clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+        });
 
-        // Si el pago requiere acción del usuario, enviamos el client_secret.
-        if (paymentIntent && paymentIntent.status === 'requires_action') {
-            console.log(`[CREATE_SUB] El pago requiere acción. Enviando client_secret.`);
-            res.json({
-                subscriptionId: subscription.id,
-                clientSecret: paymentIntent.client_secret,
+    } catch (error) {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // La clave es buscar el payment_intent dentro de `error.raw`.
+        if (error.code === 'subscription_payment_intent_requires_action' && error.raw?.payment_intent) {
+            console.log('[CREATE_SUB] Se requiere acción del cliente. Enviando client_secret desde error.raw...');
+            return res.json({
+                clientSecret: error.raw.payment_intent.client_secret,
             });
-        } 
-        // Si el pago se ha completado con éxito directamente.
-        else if (paymentIntent && paymentIntent.status === 'succeeded') {
-            console.log('[CREATE_SUB] El pago se completó con éxito sin acción adicional.');
-            res.json({
-                subscriptionId: subscription.id,
-                clientSecret: null, // No se necesita acción.
-            });
-        } 
-        // Si la suscripción no requiere pago inmediato (ej. prueba gratuita).
-        else if (subscription.status === 'active' || subscription.status === 'trialing') {
-             console.log('[CREATE_SUB] La suscripción está activa y no requiere pago inmediato.');
-             res.json({
-                subscriptionId: subscription.id,
-                clientSecret: null,
-            });
-        }
-        else {
-            // Manejar otros estados inesperados
-            console.error(`[CREATE_SUB] Estado inesperado de la suscripción o PaymentIntent: sub=${subscription.status}, pi=${paymentIntent?.status}`);
-            throw new Error('Estado inesperado de la suscripción.');
         }
         // --- FIN DE LA MODIFICACIÓN ---
 
-    } catch (error) {
         console.error('--- ERROR DETALLADO EN CREATE_SUB ---');
         console.error('Mensaje:', error.message);
         console.error('Tipo:', error.type);
         console.error('Código:', error.code);
+        if (error.raw) console.error('Error Raw:', JSON.stringify(error.raw, null, 2)); // Log adicional
         console.error('Stack:', error.stack);
         console.error("------------------------------------");
-        res.status(500).json({ error: error.message || 'Error al procesar la suscripción.' });
+        res.status(500).json({ error: error.message || 'Error al crear la suscripción. Por favor, revisa los logs del servidor.' });
     }
 };
