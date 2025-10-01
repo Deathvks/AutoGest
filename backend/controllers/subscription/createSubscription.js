@@ -66,10 +66,11 @@ exports.createSubscription = async (req, res) => {
 
     } catch (error) {
         // --- INICIO DE LA MODIFICACIÓN ---
-        if (error.code === 'subscription_payment_intent_requires_action' && error.raw && error.raw.payment_intent) {
+        // Captura el error específico y extrae el client_secret del lugar correcto.
+        if (error.code === 'subscription_payment_intent_requires_action' && error.payment_intent) {
             console.log('[CREATE_SUB] Se requiere acción del cliente. Enviando client_secret al frontend...');
             return res.json({
-                clientSecret: error.raw.payment_intent.client_secret,
+                clientSecret: error.payment_intent.client_secret,
             });
         }
         // --- FIN DE LA MODIFICACIÓN ---
