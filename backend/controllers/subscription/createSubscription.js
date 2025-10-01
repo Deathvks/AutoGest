@@ -66,12 +66,10 @@ exports.createSubscription = async (req, res) => {
 
     } catch (error) {
         // --- INICIO DE LA MODIFICACIÓN ---
-        // Captura específicamente el error que requiere acción del cliente (3D Secure).
-        if (error.code === 'subscription_payment_intent_requires_action') {
+        if (error.code === 'subscription_payment_intent_requires_action' && error.raw && error.raw.payment_intent) {
             console.log('[CREATE_SUB] Se requiere acción del cliente. Enviando client_secret al frontend...');
-            // Extrae el client_secret del error y lo envía al frontend para que pueda confirmar el pago.
             return res.json({
-                clientSecret: error.raw.latest_invoice.payment_intent.client_secret,
+                clientSecret: error.raw.payment_intent.client_secret,
             });
         }
         // --- FIN DE LA MODIFICACIÓN ---
