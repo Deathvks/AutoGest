@@ -51,21 +51,19 @@ app.use('/api/company', companyRoutes);
 
 const PORT = process.env.PORT || 3001;
 
-const syncDatabase = async () => {
-    try {
-        await db.Company.sync({ alter: true });
-        console.log('✅ Modelo Company sincronizado.');
-
-        await db.sequelize.sync({ alter: true });
-        console.log('✅ Todos los modelos han sido sincronizados correctamente.');
-
-        app.listen(PORT, () => {
-            console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
-        });
-
-    } catch (error) {
-        console.error('❌ Error al sincronizar la base de datos:', error);
+// backend/index.js
+async function syncDatabase() {
+  try {
+    if (process.env.NODE_ENV === 'development') {
+      await db.sequelize.sync({ alter: true });
+      console.log('✅ Base de datos sincronizada en modo desarrollo (alter).');
+    } else {
+      await db.sequelize.sync();
+      console.log('✅ Base de datos sincronizada en producción (sin alter).');
     }
-};
+  } catch (error) {
+    console.error('❌ Error al sincronizar la base de datos:', error);
+  }
+}
 
 syncDatabase();
