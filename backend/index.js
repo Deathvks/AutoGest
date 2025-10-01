@@ -1,7 +1,7 @@
 // autogest-app/backend/index.js
 // La carga de variables de entorno es gestionada por el script 'dev' o por PM2.
 const express = require('express');
-const cors = require('cors'); // <-- CORRECCIÓN: Se ha corregido la errata.
+const cors = require('cors');
 const path = require('path');
 const db = require('./models');
 
@@ -38,7 +38,7 @@ const corsOptions = {
     optionsSuccessStatus: 204
 };
 
-app.use(cors(corsOptions)); // <-- CORRECCIÓN: Se utiliza la variable 'cors' correcta.
+app.use(cors(corsOptions));
 
 app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), require('./controllers/subscription/handleWebhook').handleWebhook);
 app.use(express.json());
@@ -84,3 +84,11 @@ const syncDatabaseAndStartServer = async () => {
 }
 
 syncDatabaseAndStartServer();
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se añade un intervalo vacío para forzar que el proceso de Node.js se mantenga activo.
+// Esto previene que el script termine su ejecución y sea reiniciado por PM2 en un bucle.
+setInterval(() => {
+  // Este bloque se mantiene vacío a propósito. Su única función es mantener el proceso vivo.
+}, 1000 * 60 * 60); // Se ejecuta cada hora para un impacto mínimo.
+// --- FIN DE LA MODIFICACIÓN ---
