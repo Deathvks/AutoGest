@@ -1,10 +1,8 @@
 // autogest-app/backend/index.js
 // --- INICIO DE LA MODIFICACIÓN ---
-// Carga las variables de entorno desde .env solo si no estamos en producción.
-// En producción, PM2 se encargará de inyectarlas desde ecosystem.config.js.
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
-}
+// Se elimina por completo la línea require('dotenv').config().
+// La carga de variables de entorno ahora es gestionada exclusivamente
+// por el script 'dev' en package.json (para desarrollo) o por PM2 (para producción).
 // --- FIN DE LA MODIFICACIÓN ---
 const express = require('express');
 const cors = require('cors');
