@@ -12,10 +12,7 @@ exports.inviteUser = async (req, res) => {
         const { email: invitedEmail, businessName } = req.body;
         const inviter = req.user;
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se vuelve a añadir 'technician' a los roles que pueden invitar.
         const isAllowedRole = inviter.role === 'technician' || inviter.role === 'technician_subscribed' || inviter.role === 'admin';
-        // --- FIN DE LA MODIFICACIÓN ---
         if (!isAllowedRole) {
             await transaction.rollback();
             return res.status(403).json({ error: 'Tu rol de usuario no permite crear equipos.' });
@@ -77,8 +74,8 @@ exports.inviteUser = async (req, res) => {
             token,
             companyId: company.id,
             inviterId: inviter.id,
+            status: 'pending',
             expiresAt,
-            status: 'pending'
         }, { transaction });
 
         await sendInvitationEmail(invitedEmail, token, company.name, inviter.name);
@@ -200,6 +197,14 @@ exports.expelUser = async (req, res) => {
             await transaction.rollback();
             return res.status(400).json({ error: 'No puedes expulsarte a ti mismo.' });
         }
+        
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se añade una comprobación para evitar que se pueda expulsar al propietario del equipo.
+        if (userToExpel.id === company.ownerId) {
+            await transaction.rollback();
+            return res.status(403).json({ error: 'No se puede expulsar al propietario del equipo.' });
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
         
         userToExpel.companyId = null;
         userToExpel.canManageRoles = false;

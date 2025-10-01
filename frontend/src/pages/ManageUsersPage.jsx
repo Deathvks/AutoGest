@@ -11,45 +11,35 @@ import { AuthContext } from '../context/AuthContext';
 // --- Componente para la vista de Técnico (Estilo Netflix) ---
 const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser }) => {
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const ProfileCard = ({ user, onEdit, onExpel, isCurrentUser }) => (
         <div className="group w-32 sm:w-40 cursor-pointer flex flex-col items-center gap-2 text-center">
             <div
-                // Un usuario no puede editar al propietario
-                onClick={() => !user.isOwner && onEdit(user)}
-                className={`relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden transition-all duration-200 group-hover:ring-4 ${user.isOwner ? 'ring-2 ring-accent' : ''} group-hover:ring-accent`}
+                // Un usuario no puede editar al propietario ni a sí mismo desde aquí
+                onClick={() => !user.isOwner && !isCurrentUser && onEdit(user)}
+                className={`relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden transition-all duration-200 ${user.isOwner ? 'ring-2 ring-accent' : ''} ${!user.isOwner && !isCurrentUser ? 'group-hover:ring-4 group-hover:ring-accent' : ''}`}
             >
                 <img
                     src={user.avatarUrl ? user.avatarUrl : `https://ui-avatars.com/api/?name=${user.name}&background=3A3A3A&color=EAEAEA&size=160`}
                     alt={user.name}
                     className="w-full h-full object-cover"
                 />
-                {!user.isOwner && (
+                {!user.isOwner && !isCurrentUser && (
                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <FontAwesomeIcon icon={faPencilAlt} className="text-white text-3xl" />
                     </div>
                 )}
             </div>
-            <span className="text-text-primary group-hover:text-accent font-semibold transition-colors truncate w-full">
+            <span className={`font-semibold truncate w-full transition-colors ${!user.isOwner && !isCurrentUser ? 'text-text-primary group-hover:text-accent' : 'text-text-primary'}`}>
                 {user.name} {isCurrentUser && '(Tú)'}
             </span>
             {user.isOwner && (
                 <span className="text-xs font-bold text-accent uppercase tracking-wider">Líder del Equipo</span>
             )}
-            {(currentUser.isOwner || currentUser.canExpelUsers) && !user.isOwner && (
-                 <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onExpel(user);
-                    }}
-                    className="text-xs text-red-accent/70 hover:text-red-accent hover:underline transition-colors"
-                >
-                    Expulsar del equipo
-                </button>
-            )}
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            {/* Se elimina el botón de expulsar de esta vista principal. */}
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </div>
     );
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const AddProfileCard = ({ onAdd }) => (
         <div
