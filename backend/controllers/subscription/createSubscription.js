@@ -3,7 +3,6 @@ const { User } = require('../../models');
 const { stripe, getStripeConfig } = require('./stripeConfig');
 
 exports.createSubscription = async (req, res) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
     console.log('[CREATE_SUB] Iniciando proceso de creación de suscripción...');
     try {
         const { paymentMethodId } = req.body;
@@ -72,7 +71,9 @@ exports.createSubscription = async (req, res) => {
         console.error('Código:', error.code);
         console.error('Stack:', error.stack);
         console.error("------------------------------------");
-        res.status(500).json({ error: 'Error al crear la suscripción. Por favor, revisa los logs del servidor.' });
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Ahora se envía el mensaje de error específico al frontend.
+        res.status(500).json({ error: error.message || 'Error al crear la suscripción. Por favor, revisa los logs del servidor.' });
+        // --- FIN DE LA MODIFICACIÓN ---
     }
-    // --- FIN DE LA MODIFICACIÓN ---
 };
