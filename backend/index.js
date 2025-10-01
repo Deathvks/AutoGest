@@ -1,5 +1,11 @@
 // autogest-app/backend/index.js
-require('dotenv').config();
+// --- INICIO DE LA MODIFICACIÓN ---
+// Carga las variables de entorno desde .env solo si no estamos en producción.
+// En producción, PM2 se encargará de inyectarlas desde ecosystem.config.js.
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+// --- FIN DE LA MODIFICACIÓN ---
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -29,7 +35,6 @@ app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' })
 app.use(express.json());
 
 // Servir todos los archivos estáticos desde la carpeta 'public'
-// Esto hará que /uploads/*, /avatars/*, etc., sean accesibles públicamente.
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
@@ -49,7 +54,6 @@ app.use('/api/company', companyRoutes);
 
 const PORT = process.env.PORT || 3001;
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Se asegura de que la base de datos esté sincronizada ANTES de iniciar el servidor.
 // En producción, usa sync() para evitar cambios destructivos.
 // En desarrollo, usa sync({ alter: true }) para facilitar el desarrollo.
@@ -74,4 +78,3 @@ const syncDatabaseAndStartServer = async () => {
 }
 
 syncDatabaseAndStartServer();
-// --- FIN DE LA MODIFICACIÓN ---
