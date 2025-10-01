@@ -1,13 +1,28 @@
 // autogest-app/backend/index.js
-// --- INICIO DE LA MODIFICACIÓN ---
-// Se elimina por completo la línea require('dotenv').config().
-// La carga de variables de entorno ahora es gestionada exclusivamente
-// por el script 'dev' en package.json (para desarrollo) o por PM2 (para producción).
-// --- FIN DE LA MODIFICACIÓN ---
+// La carga de variables de entorno es gestionada por el script 'dev' o por PM2.
 const express = require('express');
-const cors = require('cors');
+const cors = 'cors';
 const path = require('path');
 const db = require('./models');
+
+// --- INICIO DE LA MODIFICACIÓN: CAPTURA DE ERRORES Y SALIDAS ---
+console.log('[DEBUG] Registrando listeners de proceso...');
+process.on('exit', (code) => {
+  console.log(`[EXIT] El proceso está a punto de terminar con código: ${code}`);
+});
+
+process.on('uncaughtException', (err, origin) => {
+  console.error('[UNCAUGHT_EXCEPTION] Error no capturado:', err);
+  console.error('[UNCAUGHT_EXCEPTION] Origen:', origin);
+  process.exit(1); // Es crucial salir después de una excepción no capturada
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[UNHANDLED_REJECTION] Rechazo de promesa no manejado en:', promise);
+  console.error('[UNHANDLED_REJECTION] Razón:', reason);
+});
+console.log('[DEBUG] Listeners de proceso registrados.');
+// --- FIN DE LA MODIFICACIÓN ---
 
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -19,6 +34,8 @@ const locationRoutes = require('./routes/locationRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 
+console.log('[DEBUG] Módulos de rutas cargados.');
+
 const app = express();
 
 const corsOptions = {
@@ -28,9 +45,12 @@ const corsOptions = {
     optionsSuccessStatus: 204
 };
 
-app.use(cors(corsOptions));
+app.use(require('cors')(corsOptions));
+console.log('[DEBUG] CORS configurado.');
+
 app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), require('./controllers/subscription/handleWebhook').handleWebhook);
 app.use(express.json());
+console.log('[DEBUG] Middlewares de Express configurados.');
 
 // Servir todos los archivos estáticos desde la carpeta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
@@ -49,14 +69,13 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/company', companyRoutes);
+console.log('[DEBUG] Rutas de la API registradas.');
 
 const PORT = process.env.PORT || 3001;
 
-// Se asegura de que la base de datos esté sincronizada ANTES de iniciar el servidor.
-// En producción, usa sync() para evitar cambios destructivos.
-// En desarrollo, usa sync({ alter: true }) para facilitar el desarrollo.
 const syncDatabaseAndStartServer = async () => {
   try {
+    console.log('[DEBUG] Iniciando sincronización de la base de datos...');
     if (process.env.NODE_ENV === 'development') {
       await db.sequelize.sync({ alter: true });
       console.log('✅ Base de datos sincronizada en modo desarrollo (alter).');
@@ -71,7 +90,7 @@ const syncDatabaseAndStartServer = async () => {
 
   } catch (error) {
     console.error('❌ Error al sincronizar la base de datos:', error);
-    process.exit(1); // Detiene la aplicación si la BBDD no puede sincronizarse
+    process.exit(1);
   }
 }
 
