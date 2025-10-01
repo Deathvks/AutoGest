@@ -10,11 +10,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Se define la URL base del API para construir correctamente las rutas de las imágenes.
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-// --- FIN DE LA MODIFICACIÓN ---
-
 const Sidebar = ({ onLogoutClick }) => {
     const { user } = useContext(AuthContext);
 
@@ -33,8 +28,11 @@ const Sidebar = ({ onLogoutClick }) => {
         { icon: faCreditCard, text: 'Suscripción', path: '/subscription' },
     ].filter(Boolean); 
 
-    const adminNav = user && technicianRoles.includes(user.role) ? 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se muestra el enlace si el usuario tiene un rol de técnico o si tiene el permiso explícito para expulsar.
+    const adminNav = user && (technicianRoles.includes(user.role) || user.canExpelUsers) ? 
         { icon: faUsersCog, text: 'Gestión', path: '/admin' } : null;
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const bottomItems = [
         { icon: faCog, text: 'Configuración', path: '/settings' },
@@ -60,12 +58,9 @@ const Sidebar = ({ onLogoutClick }) => {
     return (
         <aside className="hidden lg:flex lg:flex-col w-64 bg-component-bg p-4 border-r border-border-color">
             <div className="flex items-center mb-2 px-4">
-                 {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                 {/* Se corrige la ruta de la imagen del logo */}
                 {user.logoUrl && (
-                    <img src={`${API_BASE_URL}${user.logoUrl}`} alt="Logo" className="h-8 w-auto mr-3" />
+                    <img src={user.logoUrl} alt="Logo" className="h-8 w-auto mr-3" />
                 )}
-                 {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <h1 className="text-2xl font-bold text-text-primary">AutoGest</h1>
             </div>
 

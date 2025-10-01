@@ -70,11 +70,13 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                             >
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center gap-3">
+                                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                         <img 
-                                            src={car.imageUrl ? `${import.meta.env.PROD ? '' : 'http://localhost:3001'}${car.imageUrl}` : `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`} 
+                                            src={car.imageUrl ? car.imageUrl : `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`} 
                                             className="w-16 h-12 object-cover rounded-md flex-shrink-0" 
                                             alt={`${car.make} ${car.model}`} 
                                         />
+                                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                                         <div>
                                             <p className="font-semibold text-text-primary">{car.make} {car.model}</p>
                                             <p className="text-sm text-text-secondary flex items-center gap-1">
@@ -132,11 +134,13 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                         >
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-4">
+                                                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                                     <img 
-                                                        src={car.imageUrl ? `${import.meta.env.PROD ? '' : 'http://localhost:3001'}${car.imageUrl}` : `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`} 
+                                                        src={car.imageUrl ? car.imageUrl : `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`} 
                                                         className="w-16 h-10 object-cover rounded-md" 
                                                         alt={`${car.make} ${car.model}`} 
                                                     />
+                                                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                                                     <div>
                                                         <p className="font-medium text-text-primary">{car.make} {car.model}</p>
                                                         <p className="text-xs text-text-secondary">{new Date(car.registrationDate).getFullYear()}</p>

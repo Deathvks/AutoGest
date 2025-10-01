@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
-    faCog // Se importa el nuevo icono
+    faCog
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
@@ -15,14 +15,16 @@ const BottomNav = () => {
         return null;
     }
 
+    const technicianRoles = ['admin', 'technician', 'technician_subscribed'];
+
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Se reemplaza 'Perfil' por 'Ajustes' en la lista de ítems de navegación
+    // Se elimina el enlace a "Gestión" para despejar la barra de navegación.
     const navItems = [
-        (user.role === 'admin' || user.role === 'technician') && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
+        technicianRoles.includes(user.role) && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
         { icon: faCar, text: 'Coches', path: '/cars' },
         { icon: faChartLine, text: 'Ventas', path: '/sales' },
         { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
-        { icon: faCog, text: 'Ajustes', path: '/settings' }, // Se cambia faUser por faCog y el texto/path
+        { icon: faCog, text: 'Ajustes', path: '/settings' },
     ].filter(Boolean);
     // --- FIN DE LA MODIFICACIÓN ---
 

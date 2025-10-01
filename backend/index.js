@@ -28,8 +28,11 @@ app.use(cors(corsOptions));
 app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), require('./controllers/subscription/handleWebhook').handleWebhook);
 app.use(express.json());
 
-// Servir archivos estáticos (fotos de coches, avatares, etc.)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// --- INICIO DE LA MODIFICACIÓN ---
+// Servir todos los archivos estáticos desde la carpeta 'public'
+// Esto hará que /uploads/*, /avatars/*, etc., sean accesibles públicamente.
+app.use(express.static(path.join(__dirname, 'public')));
+// --- FIN DE LA MODIFICACIÓN ---
 
 app.get('/', (req, res) => {
     res.send('AutoGest API is running...');
@@ -48,17 +51,11 @@ app.use('/api/company', companyRoutes);
 
 const PORT = process.env.PORT || 3001;
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Sincronización controlada de la base de datos para resolver dependencias.
 const syncDatabase = async () => {
     try {
-        // 1. Sincroniza el modelo 'Company' primero, ya que 'User' depende de él.
-        // Esto ayuda a Sequelize a resolver el orden de creación de tablas y relaciones.
         await db.Company.sync({ alter: true });
         console.log('✅ Modelo Company sincronizado.');
 
-        // 2. Sincroniza todos los demás modelos.
-        // Sequelize es lo suficientemente inteligente para no volver a sincronizar 'Company'.
         await db.sequelize.sync({ alter: true });
         console.log('✅ Todos los modelos han sido sincronizados correctamente.');
 
@@ -72,4 +69,3 @@ const syncDatabase = async () => {
 };
 
 syncDatabase();
-// --- FIN DE LA MODIFICACIÓN ---

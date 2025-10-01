@@ -8,13 +8,20 @@ exports.getAllUsers = async (req, res) => {
         let whereClause = {};
         const requester = req.user;
 
-        if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Si el solicitante es un técnico, tiene suscripción, o tiene permiso para expulsar,
+        // se le mostrarán los usuarios de su compañía.
+        if (requester.role === 'technician' || requester.role === 'technician_subscribed' || requester.canExpelUsers) {
             if (!requester.companyId) {
+                // Si no tiene compañía (por alguna razón), solo se ve a sí mismo.
                 whereClause = { id: requester.id };
             } else {
+                // Muestra todos los usuarios de la misma compañía.
                 whereClause = { companyId: requester.companyId };
             }
         }
+        // El admin (sin 'whereClause') ve a todos los usuarios.
+        // --- FIN DE LA MODIFICACIÓN ---
 
         const users = await User.findAll({
             where: whereClause,
@@ -95,7 +102,9 @@ exports.updateUser = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
         
-        if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Lógica de permisos para técnicos y usuarios con permiso de expulsión
+        if (requester.role === 'technician' || requester.role === 'technician_subscribed' || requester.canExpelUsers) {
             if (userToUpdate.id === requester.id) {
                 return res.status(403).json({ error: 'Edita tu propio perfil desde la sección "Mi Perfil".' });
             }
@@ -109,12 +118,19 @@ exports.updateUser = async (req, res) => {
                  return res.status(403).json({ error: 'No puedes editar al propietario del equipo.' });
             }
             
-            if (!requester.canManageRoles) {
+            // Un técnico o un usuario solo pueden editar permisos si son propietarios o tienen el permiso de gestionar roles
+            if (!requester.isOwner && !requester.canManageRoles) {
                 return res.status(403).json({ error: 'No tienes permiso para editar usuarios.' });
             }
 
+            // No pueden cambiar datos personales ni contraseña
             if (name || email || password) {
-                return res.status(403).json({ error: 'Solo puedes modificar el rol y los permisos de un usuario.' });
+                return res.status(403).json({ error: 'Solo puedes modificar los permisos de un usuario.' });
+            }
+
+            // Solo el propietario puede cambiar el rol o el permiso de gestionar roles.
+            if (!requester.isOwner && (role !== undefined || canManageRoles !== undefined)) {
+                return res.status(403).json({ error: 'Solo el propietario del equipo puede cambiar roles o asignar permisos de gestión.' });
             }
 
             const isOriginalTechnician = userToUpdate.previousRole === 'technician' || userToUpdate.previousRole === 'technician_subscribed';
@@ -130,6 +146,7 @@ exports.updateUser = async (req, res) => {
                 return res.status(403).json({ error: 'No puedes asignar el rol seleccionado.' });
             }
         }
+        // --- FIN DE LA MODIFICACIÓN ---
         
         if (requester.role === 'admin') {
             userToUpdate.name = name !== undefined ? name : userToUpdate.name;
@@ -151,15 +168,12 @@ exports.updateUser = async (req, res) => {
             userToUpdate.role = role;
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se aplican los permisos directamente si se reciben en la petición, sin importar el rol.
         if (canManageRoles !== undefined) {
             userToUpdate.canManageRoles = canManageRoles;
         }
         if (canExpelUsers !== undefined) {
             userToUpdate.canExpelUsers = canExpelUsers;
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         await userToUpdate.save();
         

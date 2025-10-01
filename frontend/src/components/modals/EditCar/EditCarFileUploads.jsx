@@ -3,10 +3,7 @@ import React, { useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar, faUpload, faCamera, faFileLines, faXmark } from '@fortawesome/free-solid-svg-icons';
 
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-
 const FileUploadSection = ({ label, existingFiles = [], newFiles = [], onFileChange, onRemoveNewFile, onRemoveExistingFile, fileType, maxFiles }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
     const fileInputRef = useRef(null);
     const totalFiles = (existingFiles?.length || 0) + newFiles.length;
 
@@ -18,7 +15,6 @@ const FileUploadSection = ({ label, existingFiles = [], newFiles = [], onFileCha
             }
 
             if (isCamera) {
-                // Comprueba si el navegador es Brave y muestra un aviso específico
                 if (navigator.brave && (await navigator.brave.isBrave())) {
                     alert('Parece que estás usando Brave. Si la cámara no se abre, por favor, desactiva los escudos de Brave (el icono del león en la barra de direcciones) para este sitio y vuelve a intentarlo.');
                 }
@@ -39,7 +35,6 @@ const FileUploadSection = ({ label, existingFiles = [], newFiles = [], onFileCha
             alert(`Error al activar la función: ${error.message}`);
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     return (
         <div>
@@ -49,7 +44,9 @@ const FileUploadSection = ({ label, existingFiles = [], newFiles = [], onFileCha
                 {existingFiles && existingFiles.map((file, index) => (
                     <div key={`existing-${index}`} className="flex items-center gap-2 text-sm bg-background p-2 rounded-md border border-border-color">
                         <FontAwesomeIcon icon={faFileLines} className="text-text-secondary flex-shrink-0" />
-                        <a href={`${API_BASE_URL}${file.path}`} target="_blank" rel="noopener noreferrer" className="flex-1 truncate hover:underline" title={file.originalname}>{file.originalname}</a>
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        <a href={file.path} target="_blank" rel="noopener noreferrer" className="flex-1 truncate hover:underline" title={file.originalname}>{file.originalname}</a>
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                         <button type="button" onClick={() => onRemoveExistingFile(file, fileType)} className="text-red-accent hover:opacity-75 flex-shrink-0">
                             <FontAwesomeIcon icon={faXmark} />
                         </button>
@@ -103,7 +100,9 @@ const EditCarFileUploads = (props) => {
                 <label className="block text-sm font-medium text-text-secondary mb-2">Imagen Principal</label>
                 <div className="flex items-center gap-4">
                     <div className="w-24 h-24 rounded-lg bg-background flex items-center justify-center overflow-hidden border border-border-color flex-shrink-0">
-                        <img src={imagePreview || (editedCar.imageUrl ? `${API_BASE_URL}${editedCar.imageUrl}` : `https://placehold.co/400x300/e2e8f0/1e293b?text=${editedCar.make}`)} alt="Vista previa" className="h-full w-full object-cover" />
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        <img src={imagePreview || (editedCar.imageUrl ? editedCar.imageUrl : `https://placehold.co/400x300/e2e8f0/1e293b?text=${editedCar.make}`)} alt="Vista previa" className="h-full w-full object-cover" />
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </div>
                     <div className="flex flex-col gap-2 w-full">
                         <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} className="hidden" />

@@ -1,26 +1,24 @@
 // autogest-app/frontend/src/pages/ManageUsersPage.jsx
 import React, { useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-    faPlusCircle, faEdit, faTrash, faUserShield, faUser, 
+import {
+    faPlusCircle, faEdit, faTrash, faUserShield, faUser,
     faEnvelope, faCalendarDay, faCheckCircle, faExclamationTriangle,
     faPencilAlt, faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
-
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 // --- Componente para la vista de Técnico (Estilo Netflix) ---
 const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser }) => {
 
     const ProfileCard = ({ user, onEdit, onExpel, isCurrentUser }) => (
         <div className="group w-32 sm:w-40 cursor-pointer flex flex-col items-center gap-2 text-center">
-            <div 
+            <div
                 onClick={() => onEdit(user)}
                 className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden transition-all duration-200 group-hover:ring-4 ring-white ring-offset-2 ring-offset-transparent"
             >
-                <img 
-                    src={user.avatarUrl ? `${API_BASE_URL}${user.avatarUrl}` : `https://ui-avatars.com/api/?name=${user.name}&background=3A3A3A&color=EAEAEA&size=160`} 
+                <img
+                    src={user.avatarUrl ? user.avatarUrl : `https://ui-avatars.com/api/?name=${user.name}&background=3A3A3A&color=EAEAEA&size=160`}
                     alt={user.name}
                     className="w-full h-full object-cover"
                 />
@@ -31,10 +29,11 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
             <span className="text-text-secondary group-hover:text-text-primary transition-colors truncate w-full">
                 {user.name} {isCurrentUser && '(Tú)'}
             </span>
-            {currentUser.canExpelUsers && currentUser.id !== user.id && (
-                 <button 
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            {(currentUser.isOwner || currentUser.canExpelUsers) && !isCurrentUser && (
+                 <button
                     onClick={(e) => {
-                        e.stopPropagation(); 
+                        e.stopPropagation();
                         onExpel(user);
                     }}
                     className="text-xs text-red-accent/70 hover:text-red-accent hover:underline transition-colors"
@@ -42,11 +41,12 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
                     Expulsar del equipo
                 </button>
             )}
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </div>
     );
 
     const AddProfileCard = ({ onAdd }) => (
-        <div 
+        <div
             onClick={onAdd}
             className="group w-32 sm:w-40 cursor-pointer flex flex-col items-center gap-2 text-center"
         >
@@ -56,7 +56,7 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
             <span className="text-text-secondary group-hover:text-text-primary transition-colors">Invitar Empleado</span>
         </div>
     );
-    
+
     if (!currentUser.companyId) {
         return (
             <div className="flex flex-col items-center">
@@ -72,7 +72,7 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
             </div>
         );
     }
-    
+
     const teamOwner = users.find(u => u.id === currentUser.id);
     const teamMembers = users.filter(u => u.id !== currentUser.id && u.companyId === currentUser.companyId);
 
@@ -89,7 +89,7 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
                 {teamMembers.map(user => (
                     <ProfileCard key={user.id} user={user} onEdit={onEditUser} onExpel={onExpelUser} currentUser={currentUser} isCurrentUser={false} />
                 ))}
-                {teamOwner && teamOwner.canManageRoles && (
+                {teamOwner && (teamOwner.isOwner || teamOwner.canManageRoles) && (
                     <AddProfileCard onAdd={onAddUser} />
                 )}
             </div>
@@ -100,15 +100,12 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
 
 // --- Componente para la vista de Administrador (Tabla) ---
 const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) => {
-    
+
     const RoleBadge = ({ role }) => {
         const roleStyles = {
             admin: 'bg-red-accent/10 text-red-accent',
             user: 'bg-blue-accent/10 text-blue-accent',
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Se vuelve a añadir el estilo para el rol 'technician'.
             technician: 'bg-green-accent/10 text-green-accent',
-            // --- FIN DE LA MODIFICACIÓN ---
             technician_subscribed: 'bg-purple-500/10 text-purple-400'
         };
         return (
@@ -130,7 +127,7 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
             </span>
         );
     };
-    
+
     return (
         <div>
             <div className="flex justify-between items-center mb-8">
@@ -248,14 +245,11 @@ const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser, onExpelUs
     if (currentUser.role === 'admin') {
         return <AdminView users={users} onAddUser={onAddUser} onEditUser={onEditUser} onDeleteUser={onDeleteUser} currentUser={currentUser} />;
     }
-    
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se vuelve a incluir 'technician' en la condición.
+
     if (currentUser.role === 'technician' || currentUser.role === 'technician_subscribed') {
         return <TechnicianView users={users} onAddUser={onAddUser} onEditUser={onEditUser} onExpelUser={onExpelUser} currentUser={currentUser} />;
     }
-    // --- FIN DE LA MODIFICACIÓN ---
-    
+
     return (
         <div className="text-center text-red-accent">No tienes permiso para ver esta página.</div>
     );

@@ -120,13 +120,11 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                     {adBlockerDetected && (
                         <div className="bg-yellow-accent/10 text-yellow-accent p-3 rounded-lg border border-border-color flex items-center gap-3 mb-4">
                             <FontAwesomeIcon icon={faShieldAlt} className="w-5 h-5 flex-shrink-0" />
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                             <p className="text-sm font-medium">
                                 {isBraveBrowser
                                     ? '¿USAS BRAVE? SU BLOQUEADOR PUEDE OCULTAR OPCIONES DE PAGO COMO "LINK". PARA VER TODAS LAS OPCIONES, DESACTIVA LOS ESCUDOS.'
                                     : '¡ATENCIÓN! HEMOS DETECTADO UN BLOQUEADOR. PARA ASEGURAR QUE EL PAGO FUNCIONE, DESACTÍVALO TEMPORALMENTE.'}
                             </p>
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
                     )}
                     <label className="block text-sm font-medium text-text-secondary mb-2">DATOS DE LA TARJETA</label>
@@ -140,14 +138,16 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                         {error}
                     </div>
                 )}
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <button
                     type="submit"
                     disabled={!stripe || processing}
                     className="w-full bg-accent text-white font-semibold py-3 rounded-lg shadow-[0_5px_20px_-5px_rgba(var(--color-accent-rgb),0.5)] hover:shadow-[0_8px_25px_-8px_rgba(var(--color-accent-rgb),0.8)] transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-wait animate-fade-in-up"
                     style={{ animationDelay: '450ms' }}
                 >
-                    {processing ? <FontAwesomeIcon icon={faSpinner} spin /> : 'SUSCRIBIRME AHORA (59,90€/MES)'}
+                    {processing ? <FontAwesomeIcon icon={faSpinner} spin /> : 'SUSCRIBIRME AHORA (1,00€/MES)'}
                 </button>
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </form>
         </div>
     );

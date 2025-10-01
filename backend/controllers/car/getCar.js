@@ -40,14 +40,17 @@ exports.getAllCars = async (req, res) => {
 
         await Promise.all(promises);
 
-        // Si el usuario no es admin/técnico, se oculta el precio de compra.
-        if (req.user.role === 'user') {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se oculta el precio de compra para roles no autorizados.
+        const allowedRoles = ['admin', 'technician', 'technician_subscribed'];
+        if (!allowedRoles.includes(req.user.role)) {
             cars = cars.map(car => {
                 const carJson = car.toJSON();
                 delete carJson.purchasePrice;
                 return carJson;
             });
         }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         res.status(200).json(cars);
     } catch (error) {
@@ -72,10 +75,13 @@ exports.getCarById = async (req, res) => {
 
         if (car) {
             const carJson = car.toJSON();
-              // Si el usuario no es admin/técnico, se oculta el precio de compra.
-            if (req.user.role === 'user') {
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Se oculta el precio de compra para roles no autorizados.
+            const allowedRoles = ['admin', 'technician', 'technician_subscribed'];
+            if (!allowedRoles.includes(req.user.role)) {
                 delete carJson.purchasePrice;
             }
+            // --- FIN DE LA MODIFICACIÓN ---
             res.status(200).json(carJson);
         } else {
             res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para verlo' });

@@ -48,10 +48,8 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
         return <div className="flex h-screen w-full items-center justify-center bg-background text-text-primary">Actualizando estado de la suscripción...</div>;
     }
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     // El rol 'technician' NO está en esta lista, por lo que no se le pedirá suscripción.
     const rolesRequiringSubscription = ['technician_subscribed'];
-    // --- FIN DE LA MODIFICACIÓN ---
     
     const hasValidSubscription = subscriptionStatus === 'active' || 
         (subscriptionStatus === 'cancelled' && user && new Date(user.subscriptionExpiry) > new Date());

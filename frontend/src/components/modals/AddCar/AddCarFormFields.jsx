@@ -101,9 +101,7 @@ const KeySelector = ({ label, icon, value, onChange }) => (
 );
 
 const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmissionOptions, handleChange, handleLocationSelect, handleNewLocationInput, handleSelectChange, handleTagKeyDown, tagInput, setTagInput, removeTag }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
-    const { user } = useContext(AuthContext); // Obtenemos el usuario del contexto
-    // --- FIN DE LA MODIFICACIÓN ---
+    const { user } = useContext(AuthContext); 
     return(
         <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -117,8 +115,8 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <InputField label="FECHA DE MATRICULACIÓN" name="registrationDate" type="date" value={newCar.registrationDate} onChange={handleChange} icon={faCalendarDay} />
                 {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                {/* Solo mostramos este campo si el usuario es admin o técnico */}
-                {(user.role === 'admin' || user.role === 'technician') && (
+                {/* Ahora también se muestra para el rol 'technician_subscribed' */}
+                {(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && (
                     <InputField label="PRECIO DE COMPRA (€)" name="purchasePrice" type="text" inputMode="decimal" value={newCar.purchasePrice} onChange={handleChange} icon={faEuroSign} error={fieldErrors.purchasePrice} required={true} />
                 )}
                 {/* --- FIN DE LA MODIFICACIÓN --- */}

@@ -4,8 +4,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClock } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../../context/AuthContext'; // <-- Importar el contexto
 
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-
 const getStatusChipClass = (status) => {
     switch (status) {
         case 'Vendido': return 'bg-green-accent/10 text-green-accent';
@@ -16,12 +14,13 @@ const getStatusChipClass = (status) => {
 };
 
 const CarDetailsInfo = ({ car }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
     const { user } = useContext(AuthContext); // Obtenemos el usuario del contexto
-    // --- FIN DE LA MODIFICACIÓN ---
     const [remainingTime, setRemainingTime] = useState('');
     const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
-    const imageUrl = car.imageUrl ? `${API_BASE_URL}${car.imageUrl}` : `https://placehold.co/600x400/f1f3f5/6c757d?text=${car.make}+${car.model}`;
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se elimina la URL base para que el proxy de Vite funcione en desarrollo
+    const imageUrl = car.imageUrl ? car.imageUrl : `https://placehold.co/600x400/f1f3f5/6c757d?text=${car.make}+${car.model}`;
+    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         if (!isReservedAndActive) return;
@@ -65,14 +64,11 @@ const CarDetailsInfo = ({ car }) => {
                     <p className="text-4xl font-extrabold text-accent">
                         {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice || car.price)}
                     </p>
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    {/* Solo mostramos el precio de compra si el usuario es admin o técnico */}
-                    {(user.role === 'admin' || user.role === 'technician') && (
+                    {(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && (
                         <p className="text-sm text-text-secondary mt-1 uppercase">
                             Compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
                         </p>
                     )}
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     {car.status === 'Reservado' && car.reservationDeposit > 0 && (
                         <p className="text-sm font-semibold text-yellow-accent mt-1 uppercase">
                             Reserva: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}

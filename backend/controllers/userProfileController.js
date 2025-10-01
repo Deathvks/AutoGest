@@ -24,7 +24,9 @@ exports.getMe = async (req, res) => {
                 include: [{
                     model: User,
                     as: 'owner',
-                    attributes: ['businessName', 'cif', 'dni', 'address', 'phone', 'logoUrl', 'applyIgic', 'invoiceCounter', 'proformaCounter']
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    attributes: ['businessName', 'cif', 'dni', 'address', 'phone', 'logoUrl', 'invoiceCounter', 'proformaCounter']
+                    // --- FIN DE LA MODIFICACIÓN ---
                 }]
             });
 
@@ -32,7 +34,6 @@ exports.getMe = async (req, res) => {
                 const isOwner = user.id === company.ownerId;
                 userJson.isOwner = isOwner;
 
-                // Si el usuario NO es el propietario, se sobreescriben sus datos de facturación con los del propietario.
                 if (!isOwner) {
                     userJson.businessName = company.owner.businessName;
                     userJson.cif = company.owner.cif;
@@ -40,7 +41,9 @@ exports.getMe = async (req, res) => {
                     userJson.address = company.owner.address;
                     userJson.phone = company.owner.phone;
                     userJson.logoUrl = company.owner.logoUrl;
-                    userJson.applyIgic = company.owner.applyIgic;
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    // Se elimina la sobreescritura de applyIgic
+                    // --- FIN DE LA MODIFICACIÓN ---
                     userJson.invoiceCounter = company.owner.invoiceCounter;
                     userJson.proformaCounter = company.owner.proformaCounter;
                 }
@@ -48,7 +51,6 @@ exports.getMe = async (req, res) => {
             }
         }
         
-        // Si no pertenece a una empresa, se considera "propietario" de sus propios datos.
         userJson.isOwner = !user.companyId;
         res.status(200).json(userJson);
 
@@ -61,7 +63,9 @@ exports.getMe = async (req, res) => {
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {
     try {
-        const { name, email, businessName, dni, cif, address, phone, proformaCounter, invoiceCounter, applyIgic } = req.body;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const { name, email, businessName, dni, cif, address, phone, proformaCounter, invoiceCounter } = req.body;
+        // --- FIN DE LA MODIFICACIÓN ---
         const user = await User.findByPk(req.user.id);
         
         if (!user) {
@@ -87,7 +91,9 @@ exports.updateProfile = async (req, res) => {
         if (phone !== undefined) user.phone = phone;
         if (proformaCounter) user.proformaCounter = proformaCounter;
         if (invoiceCounter) user.invoiceCounter = invoiceCounter;
-        if (applyIgic !== undefined) user.applyIgic = applyIgic;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se elimina la actualización de applyIgic
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (req.files) {
             if (req.files.avatar) {

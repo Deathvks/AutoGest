@@ -1,14 +1,26 @@
 // autogest-app/frontend/src/components/modals/GeneratePdfModal.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faFileInvoice } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faFileInvoice, faPercentage } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
+import Select from '../Select';
 
 const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car }) => {
     const { refreshUser } = useContext(AuthContext);
     const [number, setNumber] = useState(defaultNumber);
     const [error, setError] = useState('');
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [igicRate, setIgicRate] = useState('7'); // El IGIC por defecto
+    
+    const igicOptions = [
+        { id: '0', name: '0% (Exento)' },
+        { id: '3', name: '3% (Reducido)' },
+        { id: '7', name: '7% (General)' },
+        { id: '9.5', name: '9.5% (Incrementado)' },
+        { id: '13.5', name: '13.5% (Especial)' },
+    ];
+    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         setNumber(defaultNumber);
@@ -25,16 +37,16 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             const fieldToUpdate = type === 'proforma' ? 'proformaCounter' : 'invoiceCounter';
             const numberField = type === 'proforma' ? 'proformaNumber' : 'invoiceNumber';
 
-            // Actualizar el coche con el número de factura/proforma
             await api.updateCar(car.id, { [numberField]: num });
             
-            // Actualizar el contador del usuario al siguiente número
             await api.updateProfile({ [fieldToUpdate]: num + 1 });
             
-            // Refrescar los datos del usuario en toda la app para obtener el nuevo contador
             await refreshUser();
             
-            onConfirm(type, num);
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Se pasa el IGIC seleccionado a la función de confirmación
+            onConfirm(type, num, parseFloat(igicRate));
+            // --- FIN DE LA MODIFICACIÓN ---
         } catch (err) {
             setError(err.message || 'Error al actualizar los datos.');
         }
@@ -71,6 +83,17 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                             className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary"
                         />
                     </div>
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    {type === 'factura' && (
+                        <Select
+                            label="Porcentaje de IGIC a aplicar"
+                            value={igicRate}
+                            onChange={(value) => setIgicRate(value)}
+                            options={igicOptions}
+                            icon={faPercentage}
+                        />
+                    )}
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                      {error && <p className="mt-2 text-sm text-red-accent text-center">{error}</p>}
                 </div>
 

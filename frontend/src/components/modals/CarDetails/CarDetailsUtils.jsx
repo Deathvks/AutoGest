@@ -3,8 +3,6 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperclip, faFileLines } from '@fortawesome/free-solid-svg-icons';
 
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-
 export const DetailItem = ({ icon, label, value }) => (
     <div className="flex flex-col">
         <div className="flex items-center text-sm text-text-secondary mb-1 uppercase">
@@ -17,7 +15,9 @@ export const DetailItem = ({ icon, label, value }) => (
 
 const handleDownload = async (url, filename) => {
     try {
-        const response = await fetch(`${API_BASE_URL}${url}`);
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const response = await fetch(url);
+        // --- FIN DE LA MODIFICACIÓN ---
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');

@@ -5,7 +5,6 @@ import { APP_NAME } from '../config/version';
 
 // Importar los nuevos componentes modularizados
 import AppearanceSettings from './Settings/AppearanceSettings';
-import TaxSettings from './Settings/TaxSettings';
 import BusinessDataSettings from './Settings/BusinessDataSettings';
 import AccountDataSettings from './Settings/AccountDataSettings';
 
@@ -30,7 +29,9 @@ const Settings = ({
                     setIsDarkMode={setIsDarkMode} 
                 />
                 
-                <TaxSettings />
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {/* Se elimina el componente TaxSettings */}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                 <BusinessDataSettings 
                     onBusinessDataClick={onBusinessDataClick} 

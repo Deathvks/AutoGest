@@ -1,12 +1,12 @@
 // autogest-app/frontend/src/components/modals/EditCar/EditCarFormFields.jsx
-import React, { useMemo, useContext } from 'react'; // <-- Importar useContext
+import React, { useMemo, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faCar, faStar, faIdCard, faFingerprint, faCalendarDay, faRoad, faEuroSign,
     faMapMarkerAlt, faBolt, faXmark, faKey
 } from '@fortawesome/free-solid-svg-icons';
 import Select from '../../Select';
-import { AuthContext } from '../../../context/AuthContext'; // <-- Importar el contexto de autenticación
+import { AuthContext } from '../../../context/AuthContext';
 
 export const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, required = false, placeholder = '' }) => (
     <div>
@@ -64,9 +64,7 @@ const EditCarFormFields = ({
     handleTagKeyDown,
     removeTag
 }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
-    const { user } = useContext(AuthContext); // Obtenemos el usuario del contexto
-    // --- FIN DE LA MODIFICACIÓN ---
+    const { user } = useContext(AuthContext);
 
     const locationOptions = useMemo(() => {
         const sortedLocations = [...locations].sort((a, b) => a.name.localeCompare(b.name));
@@ -85,8 +83,8 @@ const EditCarFormFields = ({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                {/* Solo mostramos este campo si el usuario es admin o técnico */}
-                {(user.role === 'admin' || user.role === 'technician') && (
+                {/* Ahora también se muestra para el rol 'technician_subscribed' */}
+                {(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && (
                     <InputField label="PRECIO DE COMPRA (€)" name="purchasePrice" type="text" inputMode="decimal" value={editedCar.purchasePrice} onChange={handleChange} icon={faEuroSign} required />
                 )}
                 {/* --- FIN DE LA MODIFICACIÓN --- */}

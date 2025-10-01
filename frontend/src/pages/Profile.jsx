@@ -4,8 +4,6 @@ import { AuthContext } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faTrash, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-
 const Profile = () => {
     const { user, updateUserProfile, deleteUserAvatar, subscriptionStatus } = useContext(AuthContext);
 
@@ -100,11 +98,14 @@ const Profile = () => {
             <div className="bg-component-bg p-6 rounded-xl border border-border-color shadow-sm">
                 <div className="flex flex-col items-center gap-6">
                     <div className="relative">
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        {/* Se elimina la URL base para que el proxy de Vite funcione en desarrollo */}
                         <img 
-                            src={avatarPreview || (user.avatarUrl ? `${API_BASE_URL}${user.avatarUrl}` : `https://ui-avatars.com/api/?name=${formData.name}&background=B8860B&color=fff&size=128`)} 
+                            src={avatarPreview || (user.avatarUrl ? user.avatarUrl : `https://ui-avatars.com/api/?name=${formData.name}&background=B8860B&color=fff&size=128`)} 
                             alt="Avatar"
                             className="w-32 h-32 rounded-full object-cover border-4 border-border-color"
                         />
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                         {isEditing && (
                             <>
                                 <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
@@ -118,14 +119,11 @@ const Profile = () => {
                                 )}
                             </>
                         )}
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                        {/* La insignia solo se muestra si NO estamos editando */}
                         {!isEditing && !isExempt && (
                             <span className={`absolute -bottom-1 -right-1 block text-white text-xs font-bold px-2 py-0.5 rounded-full border-2 border-component-bg ${hasValidSubscription ? 'bg-accent' : 'bg-text-secondary'}`}>
                                 {hasValidSubscription ? 'PRO' : 'FREE'}
                             </span>
                         )}
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </div>
 
                     <div className="w-full">

@@ -11,18 +11,16 @@ import autoTable from 'jspdf-autotable';
 import GeneratePdfModal from '../GeneratePdfModal';
 import api from '../../../services/api';
 
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-
-// --- INICIO DE LA MODIFICACIÓN ---
 const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onAddExpenseClick, onAddIncidentClick, onUpdateCar, onTestDriveClick }) => {
-// --- FIN DE LA MODIFICACIÓN ---
     const { user } = useContext(AuthContext);
     const isReservedAndActive = car.status.toUpperCase() === 'RESERVADO' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
     const isLockedForUser = isReservedAndActive && user.role !== 'admin';
 
     const [pdfModalInfo, setPdfModalInfo] = useState({ isOpen: false, type: '', number: 0 });
 
-    const handleGeneratePdf = async (type, number) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleGeneratePdf = async (type, number, igicRate) => {
+    // --- FIN DE LA MODIFICACIÓN ---
         const doc = new jsPDF();
         const today = new Date().toLocaleDateString('es-ES');
         let currentY = 20;
@@ -45,7 +43,7 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
         };
 
         if (user.logoUrl) {
-            const logoUrl = `${API_BASE_URL}${user.logoUrl}`;
+            const logoUrl = user.logoUrl;
             const logoData = await getImageAsBase64(logoUrl);
             if (logoData) {
                 const img = new Image();
@@ -121,13 +119,14 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
         
         const price = parseFloat(type === 'factura' ? car.salePrice : car.price);
 
-        if (type === 'factura' && user.applyIgic) {
-            const basePrice = price / 1.07;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        if (type === 'factura' && igicRate > 0) {
+            const basePrice = price / (1 + igicRate / 100);
             const igicAmount = price - basePrice;
 
             autoTable(doc, {
                 startY: currentY,
-                head: [['Descripción', 'Base Imponible', 'IGIC (7%)', 'TOTAL']],
+                head: [['Descripción', 'Base Imponible', `IGIC (${igicRate}%)`, 'TOTAL']],
                 body: [[
                     `VEHÍCULO: ${car.make} ${car.model} (${car.licensePlate})`,
                     `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(basePrice)} €`,
@@ -144,7 +143,7 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
             doc.setFontSize(10);
             doc.text('SUBTOTAL:', 150, finalYTable + 10, { align: 'right' });
             doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(basePrice)} €`, 190, finalYTable + 10, { align: 'right' });
-            doc.text('IGIC (7%):', 150, finalYTable + 15, { align: 'right' });
+            doc.text(`IGIC (${igicRate}%):`, 150, finalYTable + 15, { align: 'right' });
             doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(igicAmount)} €`, 190, finalYTable + 15, { align: 'right' });
 
             doc.setFontSize(12);
@@ -154,6 +153,7 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
             doc.text('TOTAL:', 145, finalYTable + 25);
             doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`, 193, finalYTable + 25, { align: 'right' });
         } else {
+        // --- FIN DE LA MODIFICACIÓN ---
             autoTable(doc, {
                 startY: currentY,
                 head: [['Descripción', 'TOTAL']],
@@ -204,11 +204,9 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
         <>
             <div className="flex-shrink-0 p-4 border-t border-border-color flex flex-wrap justify-center sm:justify-end gap-3">
                 {(car.status.toUpperCase() === 'EN VENTA') && (
-                    // --- INICIO DE LA MODIFICACIÓN ---
                     <button onClick={() => onTestDriveClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-yellow-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
                         <FontAwesomeIcon icon={faFileSignature} /> DOCUMENTO PRUEBA
                     </button>
-                    // --- FIN DE LA MODIFICACIÓN ---
                 )}
 
                 {car.status.toUpperCase() === 'VENDIDO' ? (

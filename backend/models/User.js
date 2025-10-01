@@ -19,17 +19,12 @@ const User = sequelize.define('User', {
         allowNull: false,
     },
     role: {
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se reintroduce el rol 'technician' para usuarios con acceso completo sin suscripción.
         type: DataTypes.ENUM('user', 'admin', 'technician', 'technician_subscribed'),
-        // --- FIN DE LA MODIFICACIÓN ---
         allowNull: false,
         defaultValue: 'user',
     },
     previousRole: {
-        // --- INICIO DE LA MODIFICACIÓN ---
         type: DataTypes.ENUM('user', 'admin', 'technician', 'technician_subscribed'),
-        // --- FIN DE LA MODIFICACIÓN ---
         allowNull: true,
         defaultValue: null,
         comment: 'Almacena el rol del usuario antes de unirse a una compañía.'
@@ -93,10 +88,9 @@ const User = sequelize.define('User', {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     },
-    applyIgic: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-    },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se elimina el campo applyIgic
+    // --- FIN DE LA MODIFICACIÓN ---
     resetPasswordToken: {
         type: DataTypes.STRING,
         allowNull: true,

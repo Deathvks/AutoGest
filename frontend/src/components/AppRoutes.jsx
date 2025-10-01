@@ -43,16 +43,15 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => {
         setIsBusinessDataModalOpen,
         businessDataMessage,
         setSubscriptionSuccessModalOpen,
-        // --- INICIO DE LA MODIFICACIÓN ---
         setUserToExpel,
-        // --- FIN DE LA MODIFICACIÓN ---
     } = appState;
 
     if (!user) {
         return null; // No renderizar nada si el usuario aún no está cargado
     }
 
-    const userHomePath = (user.role === 'user' || user.role === 'technician_subscribed') ? '/cars' : '/';
+    const technicianRoles = ['admin', 'technician', 'technician_subscribed'];
+    const userHomePath = technicianRoles.includes(user.role) ? '/' : '/cars';
 
     return (
         <Routes>
@@ -117,20 +116,20 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => {
                     onLogoutClick={onLogoutClick}
                 />} 
             />
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <Route 
                 path="/admin" 
-                element={(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed')
+                element={(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed' || user.canExpelUsers)
                     ? <ManageUsersPage 
                         users={users} 
                         onAddUser={() => setAddUserModalOpen(true)} 
                         onEditUser={setUserToEdit} 
                         onDeleteUser={setUserToDelete}
-                        // --- INICIO DE LA MODIFICACIÓN ---
                         onExpelUser={setUserToExpel}
-                        // --- FIN DE LA MODIFICACIÓN ---
                       /> 
                     : <Navigate to={userHomePath} replace />} 
             />
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
             <Route 
                 path="/subscription" 
                 element={<SubscriptionPage setSubscriptionSuccessModalOpen={setSubscriptionSuccessModalOpen} />} 

@@ -67,9 +67,7 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
         }
     }, [user]);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const roleOptions = useMemo(() => {
-        // Un admin puede asignar todos los roles.
         if (currentUser.role === 'admin') {
             return [ 
                 { id: 'user', name: 'Usuario' }, 
@@ -78,13 +76,11 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
                 { id: 'technician_subscribed', name: 'Técnico (requiere suscripción)' }, 
             ];
         }
-        // Un técnico (con o sin suscripción) solo puede alternar entre usuario y técnico con suscripción.
         if (currentUser.role === 'technician' || currentUser.role === 'technician_subscribed') {
             const baseOptions = [
                 { id: 'user', name: 'Usuario' }, 
                 { id: 'technician_subscribed', name: 'Técnico (con suscripción)' }
             ];
-            // Un técnico sin suscripción también puede asignar su propio rol.
             if (currentUser.role === 'technician') {
                 baseOptions.push({ id: 'technician', name: 'Técnico' });
             }
@@ -92,13 +88,12 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
         }
         return [{ id: 'user', name: 'Usuario' }];
     }, [currentUser.role]);
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const isEditingSelf = currentUser.id === user.id;
     const isCurrentUserAdmin = currentUser.role === 'admin';
     const isCurrentUserTechnician = currentUser.role === 'technician' || currentUser.role === 'technician_subscribed';
     
-    const canTechnicianEditMember = isCurrentUserTechnician && currentUser.canManageRoles && !isEditingSelf;
+    const canTechnicianEditMember = isCurrentUserTechnician && (currentUser.isOwner || currentUser.canManageRoles) && !isEditingSelf;
     
     const handleChange = (e) => setUserData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleSelectChange = (name, value) => setUserData(prev => ({ ...prev, [name]: value }));
@@ -106,14 +101,19 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
     const handleUpdateUser = async () => {
         setError('');
         try {
-            const dataToUpdate = { ...userData };
-            if (!isCurrentUserAdmin) {
-                delete dataToUpdate.name;
-                delete dataToUpdate.email;
-                delete dataToUpdate.password;
+            const dataToUpdate = {};
+            if (isCurrentUserAdmin) {
+                Object.assign(dataToUpdate, userData);
+                if (!userData.password) {
+                    delete dataToUpdate.password;
+                }
+            } else if (canTechnicianEditMember) {
+                dataToUpdate.canExpelUsers = userData.canExpelUsers;
             }
-             if (isCurrentUserAdmin && !userData.password) {
-                delete dataToUpdate.password;
+
+            if (Object.keys(dataToUpdate).length === 0) {
+                onClose();
+                return;
             }
             
             const updatedUser = await api.admin.updateUser(user.id, dataToUpdate);
@@ -153,21 +153,13 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
                                     {userData.name}
                                 </p>
                             </div>
-                            <Select label="Rol" value={userData.role} onChange={(value) => handleSelectChange('role', value)} options={roleOptions} icon={faUserShield} />
                             <div className="pt-4 border-t border-border-color space-y-4">
-                               <ToggleSwitch
-                                   label="Permiso para Gestionar Roles"
-                                   icon={faToggleOn}
-                                   enabled={userData.canManageRoles}
-                                   onChange={() => setUserData(prev => ({ ...prev, canManageRoles: !prev.canManageRoles }))}
-                                   description="Permitir a este técnico invitar y gestionar roles de otros."
-                               />
                                <ToggleSwitch
                                    label="Permiso para Expulsar Miembros"
                                    icon={faUserSlash}
                                    enabled={userData.canExpelUsers}
                                    onChange={() => setUserData(prev => ({ ...prev, canExpelUsers: !prev.canExpelUsers }))}
-                                   description="Permitir a este técnico expulsar a otros miembros del equipo."
+                                   description="Permitir a este miembro expulsar a otros del equipo."
                                />
                            </div>
                         </>
@@ -177,20 +169,22 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
                     {error && <p className="mt-4 text-sm text-red-accent text-center">{error}</p>}
                 </form>
                 
-                <div className="mt-6 flex justify-between items-center gap-4">
-                    <div>
-                        {canTechnicianEditMember && currentUser.canExpelUsers && (
-                            <button onClick={handleExpelClick} className="bg-red-accent/10 text-red-accent px-4 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-medium flex items-center gap-2">
+                <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-3">
+                    <div className="w-full sm:w-auto">
+                        {canTechnicianEditMember && (currentUser.isOwner || currentUser.canExpelUsers) && (
+                            <button onClick={handleExpelClick} className="w-full justify-center bg-red-accent/10 text-red-accent px-4 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-medium flex items-center gap-2">
                                 <FontAwesomeIcon icon={faUserSlash} />
                                 Expulsar
                             </button>
                         )}
                     </div>
-                    <div className="flex items-center gap-4">
-                        <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">Cancelar</button>
-                        <button onClick={handleUpdateUser} disabled={isEditingSelf || (!isCurrentUserAdmin && !canTechnicianEditMember)} className="bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <button onClick={onClose} className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">Cancelar</button>
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        <button onClick={handleUpdateUser} disabled={isEditingSelf || (!isCurrentUserAdmin && !canTechnicianEditMember)} className="w-full sm:w-auto bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
                             Guardar Cambios
                         </button>
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </div>
                 </div>
             </div>

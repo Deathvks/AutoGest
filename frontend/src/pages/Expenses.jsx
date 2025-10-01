@@ -7,8 +7,6 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) => {
-    const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-
     const generatePDF = () => {
         const doc = new jsPDF();
         doc.text("Resumen de Gastos Generales", 14, 16);
@@ -66,11 +64,13 @@ const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) =>
 
                                 <div className="flex justify-between items-end pt-3 border-t border-border-color">
                                     <div className="flex items-center gap-2">
+                                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                         {expense.attachments && expense.attachments.map((fileUrl, index) => (
-                                            <a href={`${API_BASE_URL}${fileUrl.path}`} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={fileUrl.originalname || `Ver adjunto ${index + 1}`}>
+                                            <a href={fileUrl.path} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={fileUrl.originalname || `Ver adjunto ${index + 1}`}>
                                                 <FontAwesomeIcon icon={faPaperclip} />
                                             </a>
                                         ))}
+                                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button onClick={() => onEditExpense(expense)} className="text-blue-accent hover:opacity-80 transition-opacity p-2" title="Editar gasto">
@@ -108,11 +108,13 @@ const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) =>
                                             <td className="px-6 py-4">{expense.description}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
+                                                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                                     {expense.attachments && expense.attachments.map((file, index) => (
-                                                        <a href={`${API_BASE_URL}${file.path}`} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={file.originalname || `Ver adjunto ${index + 1}`}>
+                                                        <a href={file.path} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={file.originalname || `Ver adjunto ${index + 1}`}>
                                                             <FontAwesomeIcon icon={faPaperclip} />
                                                         </a>
                                                     ))}
+                                                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right">

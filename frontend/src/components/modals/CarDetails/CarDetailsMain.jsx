@@ -17,6 +17,11 @@ const CarDetailsMain = ({ car }) => {
         tagsToShow = car.tags;
     }
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Función para mostrar 'N/A' si el valor es nulo, indefinido, 'NULL', o una cadena vacía.
+    const displayValue = (value) => (value && String(value).toUpperCase() !== 'NULL' ? value : 'N/A');
+    // --- FIN DE LA MODIFICACIÓN ---
+
     return (
         <div className="space-y-6">
             <section>
@@ -25,8 +30,8 @@ const CarDetailsMain = ({ car }) => {
                     <DetailItem icon={faCalendarAlt} label="FECHA DE MATRICULACIÓN" value={car.registrationDate ? new Date(car.registrationDate).toLocaleDateString('es-ES') : 'N/A'} />
                     <DetailItem icon={faTachometerAlt} label="KILOMETRAJE" value={car.km ? `${new Intl.NumberFormat('es-ES').format(car.km)} KM` : 'N/A'} />
                     {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    <DetailItem icon={faGasPump} label="COMBUSTIBLE" value={!car.fuel || car.fuel === 'NULL' ? 'N/A' : car.fuel} />
-                    <DetailItem icon={faCogs} label="TRANSMISIÓN" value={!car.transmission || car.transmission === 'NULL' ? 'N/A' : car.transmission} />
+                    <DetailItem icon={faGasPump} label="COMBUSTIBLE" value={displayValue(car.fuel)} />
+                    <DetailItem icon={faCogs} label="TRANSMISIÓN" value={displayValue(car.transmission)} />
                     {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <DetailItem icon={faBolt} label="POTENCIA" value={car.horsepower ? `${car.horsepower} CV` : 'N/A'} />
                     <div className="flex flex-col">

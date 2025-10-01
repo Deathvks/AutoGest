@@ -117,7 +117,7 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                 )}
 
                 {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                {user && (user.role === 'admin' || user.role === 'technician') && (
+                {user && (user.role === 'admin' || user.role === 'technician' || user.canExpelUsers) && (
                     <div className="lg:hidden">
                         <hr className="border-border-color" />
                         <div className="mt-6">

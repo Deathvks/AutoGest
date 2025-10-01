@@ -4,8 +4,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faTags, faShieldAlt, faExclamationTriangle, faClock, faKey } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../context/AuthContext';
 
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-
 const ToggleSwitch = ({ enabled, onChange }) => (
   <button
     type="button"
@@ -74,7 +72,12 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
 
   const visibleTags = tagsToShow.slice(0, 3);
   const hiddenTagsCount = tagsToShow.length - visibleTags.length;
-  const imageUrl = car.imageUrl ? `${API_BASE_URL}${car.imageUrl}` : `https://placehold.co/400x300/f1f3f5/6c757d?text=${car.make}+${car.model}`;
+  const imageUrl = car.imageUrl ? car.imageUrl : `https://placehold.co/400x300/f1f3f5/6c757d?text=${car.make}+${car.model}`;
+
+  // --- INICIO DE LA MODIFICACIÓN ---
+  // Función para mostrar 'N/A' si el valor es nulo, indefinido, 'NULL', o una cadena vacía.
+  const displayValue = (value) => (value && String(value).toUpperCase() !== 'NULL' ? value : 'N/A');
+  // --- FIN DE LA MODIFICACIÓN ---
 
   return (
     <div className={`bg-component-bg rounded-lg shadow-sm border border-border-color overflow-hidden flex flex-col sm:flex-row transition-all duration-300 hover:shadow-lg ${isLockedForUser ? 'opacity-70' : ''}`}>
@@ -114,13 +117,13 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
             <span>{car.registrationDate ? new Date(car.registrationDate).getFullYear() : 'N/A'}</span>
           </div>
           {/* --- INICIO DE LA MODIFICACIÓN --- */}
-          <div className="flex items-center gap-2 truncate uppercase" title={car.fuel && car.fuel !== 'NULL' ? car.fuel : 'N/A'}>
+          <div className="flex items-center gap-2 truncate uppercase" title={displayValue(car.fuel)}>
             <FontAwesomeIcon icon={faGasPump} className="w-4 h-4" />
-            <span>{car.fuel && car.fuel !== 'NULL' ? car.fuel : 'N/A'}</span>
+            <span>{displayValue(car.fuel)}</span>
           </div>
-          <div className="flex items-center gap-2 truncate uppercase" title={car.transmission && car.transmission !== 'NULL' ? car.transmission : 'N/A'}>
+          <div className="flex items-center gap-2 truncate uppercase" title={displayValue(car.transmission)}>
             <FontAwesomeIcon icon={faCogs} className="w-4 h-4" />
-            <span>{car.transmission && car.transmission !== 'NULL' ? car.transmission : 'N/A'}</span>
+            <span>{displayValue(car.transmission)}</span>
           </div>
           {/* --- FIN DE LA MODIFICACIÓN --- */}
           <div className="flex items-center gap-2 uppercase" title={`SEGURO: ${car.hasInsurance ? 'SÍ' : 'NO'}`}>
@@ -154,7 +157,7 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
             <p className="text-3xl font-extrabold text-accent">
               {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
             </p>
-            {(user.role === 'admin' || user.role === 'technician') && (
+            {(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && (
               <p className="text-xs text-text-secondary mt-2 uppercase">
                 COMPRA: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
               </p>

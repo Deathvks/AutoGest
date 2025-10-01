@@ -8,7 +8,6 @@ const { sanitizeFilename, deleteFile, safeJsonParse } = require('../../utils/car
  */
 exports.updateCar = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const whereClause = { id: req.params.id };
         if (req.user.companyId) {
             whereClause.companyId = req.user.companyId;
@@ -16,14 +15,13 @@ exports.updateCar = async (req, res) => {
             whereClause.userId = req.user.id;
         }
         const car = await Car.findOne({ where: whereClause });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (!car) {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para editarlo.' });
         }
         
         const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
-        const isUserTryingToModifyLockedCar = isReservedAndActive && user.role !== 'admin';
+        const isUserTryingToModifyLockedCar = isReservedAndActive && req.user.role !== 'admin';
 
         if (isUserTryingToModifyLockedCar) {
             const isCancellingReservation = req.body.status && req.body.status !== 'Reservado';
@@ -77,12 +75,15 @@ exports.updateCar = async (req, res) => {
             }
         });
         
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se asegura de que los campos de texto opcionales se guarden como null si están vacíos.
         const optionalTextFields = ['fuel', 'transmission', 'vin', 'location', 'notes'];
         optionalTextFields.forEach(field => {
-            if (updateData[field] !== undefined && String(updateData[field]).trim() === '') {
-                updateData[field] = null;
+            if (updateData[field] !== undefined) {
+                updateData[field] = String(updateData[field]).trim() === '' ? null : updateData[field];
             }
         });
+        // --- FIN DE LA MODIFICACIÓN ---
         
         if (updateData.buyerDetails) {
             try {
