@@ -102,22 +102,24 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                 return;
             }
 
+            // --- INICIO DE LA MODIFICACIÓN ---
             // Caso 2 y 3: Hay clientSecret (con o sin requiresAction)
             if (response.clientSecret) {
-                console.log('[CheckoutForm] Confirmando pago con client_secret...');
+                console.log('[CheckoutForm] Se necesita acción del usuario. Confirmando pago con client_secret...');
                 const { error: confirmError } = await stripe.confirmCardPayment(response.clientSecret);
 
                 if (confirmError) {
-                    console.error('[CheckoutForm] Error al confirmar el pago:', confirmError);
+                    console.error('[CheckoutForm] Error al confirmar el pago 3D Secure:', confirmError);
                     setError(confirmError.message);
                 } else {
-                    console.log('[CheckoutForm] Pago confirmado con éxito.');
+                    console.log('[CheckoutForm] Pago confirmado con éxito tras la autenticación.');
                     onSuccessfulPayment();
                 }
             } else {
-                console.error('[CheckoutForm] Respuesta inesperada del backend:', response);
+                console.error('[CheckoutForm] Respuesta inesperada del backend, no se recibió clientSecret cuando se esperaba:', response);
                 setError('No se pudo procesar el pago. Por favor, inténtalo de nuevo.');
             }
+            // --- FIN DE LA MODIFICACIÓN ---
 
         } catch (apiError) {
             console.error('[CheckoutForm] Error en la llamada a la API:', apiError);
