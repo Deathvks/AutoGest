@@ -41,9 +41,8 @@ exports.createSubscription = async (req, res) => {
             customer: customerId,
             items: [{ price: priceId }],
             // --- INICIO DE LA MODIFICACIÓN ---
-            // Cambiamos a 'allow_incomplete' para forzar el intento de pago inmediato
-            // y así garantizar la creación del PaymentIntent.
-            payment_behavior: 'allow_incomplete',
+            // Revertimos a 'default_incomplete' según la recomendación principal de Stripe.
+            payment_behavior: 'default_incomplete',
             // --- FIN DE LA MODIFICACIÓN ---
             payment_settings: { save_default_payment_method: 'on_subscription' },
             expand: ['latest_invoice.payment_intent'],
@@ -54,16 +53,22 @@ exports.createSubscription = async (req, res) => {
         let clientSecret;
         const latestInvoice = subscription.latest_invoice;
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Lógica mejorada para encontrar el client_secret
         if (latestInvoice && latestInvoice.payment_intent && typeof latestInvoice.payment_intent === 'object' && latestInvoice.payment_intent.client_secret) {
             console.log('[CREATE_SUB] client_secret obtenido directamente de la expansión de la suscripción.');
             clientSecret = latestInvoice.payment_intent.client_secret;
         } 
-        else if (latestInvoice && typeof latestInvoice === 'object' && latestInvoice.id) {
-            console.log(`[CREATE_SUB] La expansión falló. Obteniendo la factura ${latestInvoice.id} por separado.`);
+        else if (latestInvoice && (typeof latestInvoice === 'object' && latestInvoice.id) || typeof latestInvoice === 'string') {
+            const invoiceId = typeof latestInvoice === 'string' ? latestInvoice : latestInvoice.id;
+            console.log(`[CREATE_SUB] La expansión falló o no estaba presente. Obteniendo la factura ${invoiceId} por separado.`);
+            
             const retrievedInvoice = await stripe.invoices.retrieve(
-                latestInvoice.id,
+                invoiceId,
                 { expand: ['payment_intent'] }
             );
+
+            console.log('[CREATE_SUB] Objeto de factura recuperado:', JSON.stringify(retrievedInvoice, null, 2));
 
             if (retrievedInvoice.payment_intent && retrievedInvoice.payment_intent.client_secret) {
                 console.log('[CREATE_SUB] client_secret obtenido de la recuperación de la factura por separado.');
@@ -72,8 +77,14 @@ exports.createSubscription = async (req, res) => {
                 console.log('[CREATE_SUB] No se encontró el payment_intent incluso después de recuperar la factura por separado.');
             }
         } else {
-            console.log('[CREATE_SUB] No se encontró el objeto latest_invoice en la respuesta de la suscripción.');
+            console.log('[CREATE_SUB] No se encontró un objeto latest_invoice o un ID de factura en la respuesta de la suscripción.');
         }
+
+        if (!clientSecret) {
+            console.error('[CREATE_SUB] FATAL: No se pudo obtener el client_secret de Stripe después de todos los intentos.');
+            return res.status(500).json({ error: 'No se pudo obtener la información de pago necesaria de Stripe.' });
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         console.log(`[CREATE_SUB] Suscripción creada con ID: ${subscription.id} y estado: ${subscription.status}`);
 
