@@ -40,7 +40,11 @@ exports.createSubscription = async (req, res) => {
         const subscription = await stripe.subscriptions.create({
             customer: customerId,
             items: [{ price: priceId }],
-            payment_behavior: 'default_incomplete',
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Cambiamos a 'allow_incomplete' para forzar el intento de pago inmediato
+            // y así garantizar la creación del PaymentIntent.
+            payment_behavior: 'allow_incomplete',
+            // --- FIN DE LA MODIFICACIÓN ---
             payment_settings: { save_default_payment_method: 'on_subscription' },
             expand: ['latest_invoice.payment_intent'],
         });
@@ -50,13 +54,10 @@ exports.createSubscription = async (req, res) => {
         let clientSecret;
         const latestInvoice = subscription.latest_invoice;
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Comprueba si la expansión funcionó y el payment_intent es un objeto con el client_secret.
         if (latestInvoice && latestInvoice.payment_intent && typeof latestInvoice.payment_intent === 'object' && latestInvoice.payment_intent.client_secret) {
             console.log('[CREATE_SUB] client_secret obtenido directamente de la expansión de la suscripción.');
             clientSecret = latestInvoice.payment_intent.client_secret;
         } 
-        // Si no, y tenemos el ID de la factura, hacemos una llamada extra para obtenerlo.
         else if (latestInvoice && typeof latestInvoice === 'object' && latestInvoice.id) {
             console.log(`[CREATE_SUB] La expansión falló. Obteniendo la factura ${latestInvoice.id} por separado.`);
             const retrievedInvoice = await stripe.invoices.retrieve(
@@ -73,7 +74,6 @@ exports.createSubscription = async (req, res) => {
         } else {
             console.log('[CREATE_SUB] No se encontró el objeto latest_invoice en la respuesta de la suscripción.');
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         console.log(`[CREATE_SUB] Suscripción creada con ID: ${subscription.id} y estado: ${subscription.status}`);
 
