@@ -3,7 +3,7 @@ const { User } = require('../../models');
 const { stripe, getStripeConfig } = require('./stripeConfig');
 
 exports.createSubscription = async (req, res) => {
-    console.log('[CREATE_SUB] Iniciando processo de criação de subscrição (v5)...');
+    console.log('[CREATE_SUB] Iniciando el proceso de creación de suscripciones (v6)...');
     try {
         const { paymentMethodId } = req.body;
         const userId = req.user.id;
@@ -34,53 +34,69 @@ exports.createSubscription = async (req, res) => {
                 invoice_settings: { default_payment_method: paymentMethodId },
             });
         }
-        
+
         console.log(`[CREATE_SUB] Creando suscripción para customer ${customerId} con price ${priceId}...`);
 
-        const subscription = await stripe.subscriptions.create({
-            customer: customerId,
-            items: [{ price: priceId }],
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Añadimos explícitamente el método de pago a la suscripción.
-            default_payment_method: paymentMethodId,
-            // --- FIN DE LA MODIFICACIÓN ---
-            payment_behavior: 'default_incomplete',
-            payment_settings: { save_default_payment_method: 'on_subscription' },
-            expand: ['latest_invoice.payment_intent'],
-        });
-        
+        let subscription;
+        try {
+            subscription = await stripe.subscriptions.create({
+                customer: customerId,
+                items: [{ price: priceId }],
+                default_payment_method: paymentMethodId,
+                payment_behavior: 'error_if_incomplete',
+                payment_settings: {
+                    save_default_payment_method: 'on_subscription',
+                },
+                expand: ['latest_invoice.payment_intent'],
+            });
+        } catch (stripeError) {
+            // Si el error es por autenticación requerida, devuelve el payment_intent
+            if (stripeError.code === 'subscription_payment_intent_requires_action') {
+                console.log('[CREATE_SUB] Pago requiere autenticación adicional (3D Secure).');
+                const paymentIntentId = stripeError.raw?.payment_intent?.id;
+                
+                if (paymentIntentId) {
+                    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+                    
+                    return res.json({
+                        subscriptionId: stripeError.raw.subscription,
+                        clientSecret: paymentIntent.client_secret,
+                        requiresAction: true,
+                    });
+                }
+            }
+            // Si es otro tipo de error, relanzarlo
+            throw stripeError;
+        }
+
         console.log('[CREATE_SUB] Objeto de suscripción devuelto por Stripe:', JSON.stringify(subscription, null, 2));
 
         let clientSecret;
         const latestInvoice = subscription.latest_invoice;
 
-        if (latestInvoice && latestInvoice.payment_intent && typeof latestInvoice.payment_intent === 'object' && latestInvoice.payment_intent.client_secret) {
-            console.log('[CREATE_SUB] client_secret obtenido directamente de la expansión de la suscripción.');
-            clientSecret = latestInvoice.payment_intent.client_secret;
-        } 
-        else if (latestInvoice && (typeof latestInvoice === 'object' && latestInvoice.id) || typeof latestInvoice === 'string') {
-            const invoiceId = typeof latestInvoice === 'string' ? latestInvoice : latestInvoice.id;
-            console.log(`[CREATE_SUB] La expansión falló o no estaba presente. Obteniendo la factura ${invoiceId} por separado.`);
-            
-            const retrievedInvoice = await stripe.invoices.retrieve(
-                invoiceId,
-                { expand: ['payment_intent'] }
-            );
-
-            console.log('[CREATE_SUB] Objeto de factura recuperado:', JSON.stringify(retrievedInvoice, null, 2));
-
-            if (retrievedInvoice.payment_intent && retrievedInvoice.payment_intent.client_secret) {
-                console.log('[CREATE_SUB] client_secret obtenido de la recuperación de la factura por separado.');
-                clientSecret = retrievedInvoice.payment_intent.client_secret;
-            } else {
-                console.log('[CREATE_SUB] No se encontró el payment_intent incluso después de recuperar la factura por separado.');
+        if (latestInvoice && latestInvoice.payment_intent) {
+            if (typeof latestInvoice.payment_intent === 'object' && latestInvoice.payment_intent.client_secret) {
+                console.log('[CREATE_SUB] client_secret obtenido directamente de la expansión.');
+                clientSecret = latestInvoice.payment_intent.client_secret;
+            } else if (typeof latestInvoice.payment_intent === 'string') {
+                console.log('[CREATE_SUB] payment_intent es un ID, recuperándolo...');
+                const paymentIntent = await stripe.paymentIntents.retrieve(latestInvoice.payment_intent);
+                clientSecret = paymentIntent.client_secret;
             }
-        } else {
-            console.log('[CREATE_SUB] No se encontró un objeto latest_invoice o un ID de factura en la respuesta de la suscripción.');
+        }
+
+        // Si el pago fue exitoso inmediatamente, puede que no haya client_secret
+        if (!clientSecret && subscription.status === 'active') {
+            console.log('[CREATE_SUB] Suscripción activada inmediatamente sin necesidad de confirmación adicional.');
+            return res.json({
+                subscriptionId: subscription.id,
+                status: 'active',
+                clientSecret: null,
+            });
         }
 
         if (!clientSecret) {
-            console.error('[CREATE_SUB] FATAL: No se pudo obtener el client_secret de Stripe después de todos los intentos.');
+            console.error('[CREATE_SUB] FATAL: No se pudo obtener el client_secret de Stripe.');
             return res.status(500).json({ error: 'No se pudo obtener la información de pago necesaria de Stripe.' });
         }
 

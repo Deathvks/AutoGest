@@ -91,30 +91,37 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
         }
 
         try {
-            // --- INICIO DE LA MODIFICACIÓN ---
             console.log('[CheckoutForm] Creando suscripción con paymentMethodId:', paymentMethod.id);
-            const { clientSecret, subscriptionId } = await api.subscriptions.createSubscription(paymentMethod.id);
-            console.log('[CheckoutForm] Respuesta del backend:', { clientSecret, subscriptionId });
-            
-            if (clientSecret) {
-                console.log('[CheckoutForm] Se encontró un clientSecret. Procediendo a confirmar el pago con la tarjeta.');
-                const { error: confirmError } = await stripe.confirmCardPayment(clientSecret);
+            const response = await api.subscriptions.createSubscription(paymentMethod.id);
+            console.log('[CheckoutForm] Respuesta del backend:', response);
+
+            // Caso 1: Pago completado inmediatamente sin autenticación adicional
+            if (response.status === 'active' && !response.clientSecret) {
+                console.log('[CheckoutForm] Pago completado inmediatamente. Suscripción activa.');
+                onSuccessfulPayment();
+                return;
+            }
+
+            // Caso 2 y 3: Hay clientSecret (con o sin requiresAction)
+            if (response.clientSecret) {
+                console.log('[CheckoutForm] Confirmando pago con client_secret...');
+                const { error: confirmError } = await stripe.confirmCardPayment(response.clientSecret);
+
                 if (confirmError) {
                     console.error('[CheckoutForm] Error al confirmar el pago:', confirmError);
                     setError(confirmError.message);
                 } else {
-                    console.log('[CheckoutForm] Pago confirmado con éxito. Llamando a onSuccessfulPayment.');
+                    console.log('[CheckoutForm] Pago confirmado con éxito.');
                     onSuccessfulPayment();
                 }
             } else {
-                console.error('[CheckoutForm] No se recibió clientSecret del backend. El flujo de pago no puede continuar.');
-                setError('No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo.');
+                console.error('[CheckoutForm] Respuesta inesperada del backend:', response);
+                setError('No se pudo procesar el pago. Por favor, inténtalo de nuevo.');
             }
-            // --- FIN DE LA MODIFICACIÓN ---
 
         } catch (apiError) {
-            console.error('[CheckoutForm] Error en la llamada a la API del backend:', apiError);
-            setError(apiError.message);
+            console.error('[CheckoutForm] Error en la llamada a la API:', apiError);
+            setError(apiError.message || 'Error al procesar el pago.');
         }
 
         setProcessing(false);
