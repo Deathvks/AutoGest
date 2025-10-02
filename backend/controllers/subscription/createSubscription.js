@@ -46,15 +46,27 @@ exports.createSubscription = async (req, res) => {
         });
         
         // --- INICIO DE LA MODIFICACIÓN ---
-        // Se añade un log detallado del objeto de suscripción completo que devuelve Stripe.
         console.log('[CREATE_SUB] Objeto de suscripción devuelto por Stripe:', JSON.stringify(subscription, null, 2));
+
+        let clientSecret;
+
+        if (subscription.status === 'incomplete' && subscription.latest_invoice?.payment_intent) {
+            clientSecret = subscription.latest_invoice.payment_intent.client_secret;
+        } else if (subscription.status === 'incomplete' && subscription.latest_invoice) {
+            // Si el payment_intent no viene expandido, lo recuperamos explícitamente.
+            console.log(`[CREATE_SUB] Payment intent no expandido. Recuperando factura ${subscription.latest_invoice.id} por separado.`);
+            const invoice = await stripe.invoices.retrieve(subscription.latest_invoice.id, {
+                expand: ['payment_intent']
+            });
+            clientSecret = invoice.payment_intent?.client_secret;
+        }
         // --- FIN DE LA MODIFICACIÓN ---
 
         console.log(`[CREATE_SUB] Suscripción creada con ID: ${subscription.id} y estado: ${subscription.status}`);
 
         res.json({
             subscriptionId: subscription.id,
-            clientSecret: subscription.latest_invoice?.payment_intent?.client_secret,
+            clientSecret: clientSecret,
         });
 
     } catch (error) {
