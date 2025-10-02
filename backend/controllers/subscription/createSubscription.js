@@ -42,23 +42,28 @@ exports.createSubscription = async (req, res) => {
             items: [{ price: priceId }],
             payment_behavior: 'default_incomplete',
             payment_settings: { save_default_payment_method: 'on_subscription' },
-            expand: ['latest_invoice.payment_intent'],
+            expand: ['latest_invoice'], // Solo expandimos la factura, no el payment_intent anidado
         });
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         console.log('[CREATE_SUB] Objeto de suscripción devuelto por Stripe:', JSON.stringify(subscription, null, 2));
 
+        // --- INICIO DE LA MODIFICACIÓN ---
         let clientSecret;
+        const latestInvoice = subscription.latest_invoice;
 
-        if (subscription.status === 'incomplete' && subscription.latest_invoice?.payment_intent) {
-            clientSecret = subscription.latest_invoice.payment_intent.client_secret;
-        } else if (subscription.status === 'incomplete' && subscription.latest_invoice) {
-            // Si el payment_intent no viene expandido, lo recuperamos explícitamente.
-            console.log(`[CREATE_SUB] Payment intent no expandido. Recuperando factura ${subscription.latest_invoice.id} por separado.`);
-            const invoice = await stripe.invoices.retrieve(subscription.latest_invoice.id, {
-                expand: ['payment_intent']
-            });
-            clientSecret = invoice.payment_intent?.client_secret;
+        if (subscription.status === 'incomplete' && latestInvoice && latestInvoice.payment_intent) {
+            // El payment_intent puede ser un ID (string) o un objeto.
+            const paymentIntentId = typeof latestInvoice.payment_intent === 'string'
+                ? latestInvoice.payment_intent
+                : latestInvoice.payment_intent.id;
+            
+            if (paymentIntentId) {
+                console.log(`[CREATE_SUB] Obtenido Payment Intent ID: ${paymentIntentId}. Recuperándolo para obtener el client_secret.`);
+                const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+                clientSecret = paymentIntent.client_secret;
+            } else {
+                 console.log('[CREATE_SUB] El payment_intent en la factura es nulo, no se puede obtener el client_secret.');
+            }
         }
         // --- FIN DE LA MODIFICACIÓN ---
 
