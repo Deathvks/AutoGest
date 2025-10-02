@@ -42,10 +42,7 @@ exports.createSubscription = async (req, res) => {
             items: [{ price: priceId }],
             payment_behavior: 'default_incomplete',
             payment_settings: { save_default_payment_method: 'on_subscription' },
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Expandimos también el payment_intent dentro de la factura para obtener el client_secret.
             expand: ['latest_invoice.payment_intent'],
-            // --- FIN DE LA MODIFICACIÓN ---
         });
         
         console.log('[CREATE_SUB] Objeto de suscripción devuelto por Stripe:', JSON.stringify(subscription, null, 2));
@@ -54,11 +51,27 @@ exports.createSubscription = async (req, res) => {
         const latestInvoice = subscription.latest_invoice;
 
         // --- INICIO DE LA MODIFICACIÓN ---
-        // Ahora el payment_intent debería venir como un objeto expandido.
-        if (subscription.status === 'incomplete' && latestInvoice && latestInvoice.payment_intent && latestInvoice.payment_intent.client_secret) {
+        // Comprueba si la expansión funcionó y el payment_intent es un objeto con el client_secret.
+        if (latestInvoice && latestInvoice.payment_intent && typeof latestInvoice.payment_intent === 'object' && latestInvoice.payment_intent.client_secret) {
+            console.log('[CREATE_SUB] client_secret obtenido directamente de la expansión de la suscripción.');
             clientSecret = latestInvoice.payment_intent.client_secret;
+        } 
+        // Si no, y tenemos el ID de la factura, hacemos una llamada extra para obtenerlo.
+        else if (latestInvoice && typeof latestInvoice === 'object' && latestInvoice.id) {
+            console.log(`[CREATE_SUB] La expansión falló. Obteniendo la factura ${latestInvoice.id} por separado.`);
+            const retrievedInvoice = await stripe.invoices.retrieve(
+                latestInvoice.id,
+                { expand: ['payment_intent'] }
+            );
+
+            if (retrievedInvoice.payment_intent && retrievedInvoice.payment_intent.client_secret) {
+                console.log('[CREATE_SUB] client_secret obtenido de la recuperación de la factura por separado.');
+                clientSecret = retrievedInvoice.payment_intent.client_secret;
+            } else {
+                console.log('[CREATE_SUB] No se encontró el payment_intent incluso después de recuperar la factura por separado.');
+            }
         } else {
-             console.log('[CREATE_SUB] No se encontró un payment_intent o client_secret en la respuesta de la suscripción.');
+            console.log('[CREATE_SUB] No se encontró el objeto latest_invoice en la respuesta de la suscripción.');
         }
         // --- FIN DE LA MODIFICACIÓN ---
 
