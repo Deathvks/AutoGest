@@ -42,28 +42,23 @@ exports.createSubscription = async (req, res) => {
             items: [{ price: priceId }],
             payment_behavior: 'default_incomplete',
             payment_settings: { save_default_payment_method: 'on_subscription' },
-            expand: ['latest_invoice'], // Solo expandimos la factura, no el payment_intent anidado
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Expandimos también el payment_intent dentro de la factura para obtener el client_secret.
+            expand: ['latest_invoice.payment_intent'],
+            // --- FIN DE LA MODIFICACIÓN ---
         });
         
         console.log('[CREATE_SUB] Objeto de suscripción devuelto por Stripe:', JSON.stringify(subscription, null, 2));
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         let clientSecret;
         const latestInvoice = subscription.latest_invoice;
 
-        if (subscription.status === 'incomplete' && latestInvoice && latestInvoice.payment_intent) {
-            // El payment_intent puede ser un ID (string) o un objeto.
-            const paymentIntentId = typeof latestInvoice.payment_intent === 'string'
-                ? latestInvoice.payment_intent
-                : latestInvoice.payment_intent.id;
-            
-            if (paymentIntentId) {
-                console.log(`[CREATE_SUB] Obtenido Payment Intent ID: ${paymentIntentId}. Recuperándolo para obtener el client_secret.`);
-                const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-                clientSecret = paymentIntent.client_secret;
-            } else {
-                 console.log('[CREATE_SUB] El payment_intent en la factura es nulo, no se puede obtener el client_secret.');
-            }
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Ahora el payment_intent debería venir como un objeto expandido.
+        if (subscription.status === 'incomplete' && latestInvoice && latestInvoice.payment_intent && latestInvoice.payment_intent.client_secret) {
+            clientSecret = latestInvoice.payment_intent.client_secret;
+        } else {
+             console.log('[CREATE_SUB] No se encontró un payment_intent o client_secret en la respuesta de la suscripción.');
         }
         // --- FIN DE LA MODIFICACIÓN ---
 

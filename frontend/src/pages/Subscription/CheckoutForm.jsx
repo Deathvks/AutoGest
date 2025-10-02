@@ -107,8 +107,8 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                     onSuccessfulPayment();
                 }
             } else {
-                console.log('[CheckoutForm] No se recibió clientSecret. Asumiendo pago exitoso y llamando a onSuccessfulPayment.');
-                onSuccessfulPayment();
+                console.error('[CheckoutForm] No se recibió clientSecret del backend. El flujo de pago no puede continuar.');
+                setError('No se pudo iniciar el proceso de pago. Por favor, inténtalo de nuevo.');
             }
             // --- FIN DE LA MODIFICACIÓN ---
 

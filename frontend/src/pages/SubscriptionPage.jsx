@@ -37,23 +37,10 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
 
         const pollForStatus = async () => {
             if (attempts >= maxAttempts) {
-                try {
-                    // --- INICIO DE LA MODIFICACIÓN ---
-                    // Se corrige la llamada a la función de la API.
-                    await api.subscriptions.syncSubscription();
-                    // --- FIN DE LA MODIFICACIÓN ---
-                    const freshUser = await api.getMe();
-                    if (freshUser.subscriptionStatus === 'active') {
-                        await refreshSubscriptionStatus();
-                        setSubscriptionSuccessModalOpen(true);
-                        setIsVerifyingPayment(false);
-                        return;
-                    }
-                } catch (syncError) {
-                    console.error('[Sync] Error en sincronización manual:', syncError);
-                }
-
-                setVerificationError("La verificación tardó más de lo esperado. Recarga la página en unos momentos.");
+                // --- INICIO DE LA MODIFICACIÓN ---
+                // Se elimina la llamada a syncSubscription que estaba fallando.
+                setVerificationError("La verificación tardó más de lo esperado. Por favor, recarga la página en unos momentos para ver el estado actualizado de tu suscripción.");
+                // --- FIN DE LA MODIFICACIÓN ---
                 setIsVerifyingPayment(false);
                 return;
             }
