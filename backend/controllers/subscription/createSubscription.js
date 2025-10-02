@@ -3,7 +3,7 @@ const { User } = require('../../models');
 const { stripe, getStripeConfig } = require('./stripeConfig');
 
 exports.createSubscription = async (req, res) => {
-    console.log('[CREATE_SUB] Iniciando proceso de creación de suscripción (v5)...');
+    console.log('[CREATE_SUB] Iniciando processo de criação de subscrição (v5)...');
     try {
         const { paymentMethodId } = req.body;
         const userId = req.user.id;
@@ -41,9 +41,10 @@ exports.createSubscription = async (req, res) => {
             customer: customerId,
             items: [{ price: priceId }],
             // --- INICIO DE LA MODIFICACIÓN ---
-            // Revertimos a 'default_incomplete' según la recomendación principal de Stripe.
-            payment_behavior: 'default_incomplete',
+            // Añadimos explícitamente el método de pago a la suscripción.
+            default_payment_method: paymentMethodId,
             // --- FIN DE LA MODIFICACIÓN ---
+            payment_behavior: 'default_incomplete',
             payment_settings: { save_default_payment_method: 'on_subscription' },
             expand: ['latest_invoice.payment_intent'],
         });
@@ -53,8 +54,6 @@ exports.createSubscription = async (req, res) => {
         let clientSecret;
         const latestInvoice = subscription.latest_invoice;
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Lógica mejorada para encontrar el client_secret
         if (latestInvoice && latestInvoice.payment_intent && typeof latestInvoice.payment_intent === 'object' && latestInvoice.payment_intent.client_secret) {
             console.log('[CREATE_SUB] client_secret obtenido directamente de la expansión de la suscripción.');
             clientSecret = latestInvoice.payment_intent.client_secret;
@@ -84,7 +83,6 @@ exports.createSubscription = async (req, res) => {
             console.error('[CREATE_SUB] FATAL: No se pudo obtener el client_secret de Stripe después de todos los intentos.');
             return res.status(500).json({ error: 'No se pudo obtener la información de pago necesaria de Stripe.' });
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         console.log(`[CREATE_SUB] Suscripción creada con ID: ${subscription.id} y estado: ${subscription.status}`);
 
