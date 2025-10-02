@@ -39,34 +39,21 @@ exports.createSubscription = async (req, res) => {
 
         let subscription;
         try {
+            // --- INICIO DE LA MODIFICACIÓN ---
             subscription = await stripe.subscriptions.create({
                 customer: customerId,
                 items: [{ price: priceId }],
                 default_payment_method: paymentMethodId,
-                payment_behavior: 'error_if_incomplete',
+                payment_behavior: 'default_incomplete', // CAMBIO CLAVE: Permite flujos de autenticación
                 payment_settings: {
                     save_default_payment_method: 'on_subscription',
                 },
                 expand: ['latest_invoice.payment_intent'],
             });
-        } catch (stripeError) {
-            // --- INICIO DE LA MODIFICACIÓN ---
-            if (stripeError.code === 'subscription_payment_intent_requires_action') {
-                console.log('[CREATE_SUB] Pago requiere autenticación adicional (3D Secure).');
-                const subscription = stripeError.raw.subscription;
-
-                if (subscription && subscription.latest_invoice && subscription.latest_invoice.payment_intent && subscription.latest_invoice.payment_intent.client_secret) {
-                    console.log('[CREATE_SUB] Se encontró client_secret en el PaymentIntent expandido.');
-                    return res.json({
-                        subscriptionId: subscription.id,
-                        clientSecret: subscription.latest_invoice.payment_intent.client_secret,
-                        requiresAction: true,
-                    });
-                }
-            }
             // --- FIN DE LA MODIFICACIÓN ---
-
-            // Si llegamos aquí, es otro tipo de error
+        } catch (stripeError) {
+            // Este bloque catch ahora solo se activará para errores inesperados,
+            // ya que 'default_incomplete' no lanza error por requerir acción.
             throw stripeError;
         }
 
@@ -86,8 +73,8 @@ exports.createSubscription = async (req, res) => {
             }
         }
 
-        // Si el pago fue exitoso inmediatamente, puede que no haya client_secret
-        if (!clientSecret && subscription.status === 'active') {
+        // Si el pago fue exitoso inmediatamente (status: 'active')
+        if (subscription.status === 'active') {
             console.log('[CREATE_SUB] Suscripción activada inmediatamente sin necesidad de confirmación adicional.');
             return res.json({
                 subscriptionId: subscription.id,
@@ -96,17 +83,22 @@ exports.createSubscription = async (req, res) => {
             });
         }
 
+        // Si la suscripción está incompleta (requiere acción)
+        if (subscription.status === 'incomplete' && clientSecret) {
+             console.log(`[CREATE_SUB] Suscripción creada con ID: ${subscription.id} y estado: ${subscription.status}. Requiere acción.`);
+             return res.json({
+                subscriptionId: subscription.id,
+                clientSecret: clientSecret,
+                requiresAction: true,
+            });
+        }
+
+        // Fallback por si algo inesperado ocurre
         if (!clientSecret) {
-            console.error('[CREATE_SUB] FATAL: No se pudo obtener el client_secret de Stripe.');
+            console.error('[CREATE_SUB] FATAL: No se pudo obtener el client_secret de Stripe para una suscripción incompleta.');
             return res.status(500).json({ error: 'No se pudo obtener la información de pago necesaria de Stripe.' });
         }
 
-        console.log(`[CREATE_SUB] Suscripción creada con ID: ${subscription.id} y estado: ${subscription.status}`);
-
-        res.json({
-            subscriptionId: subscription.id,
-            clientSecret: clientSecret,
-        });
 
     } catch (error) {
         console.error('--- ERROR DETALLADO EN CREATE_SUB ---');
