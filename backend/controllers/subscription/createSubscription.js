@@ -39,21 +39,40 @@ exports.createSubscription = async (req, res) => {
 
         let subscription;
         try {
-            // --- INICIO DE LA MODIFICACIÓN ---
             subscription = await stripe.subscriptions.create({
                 customer: customerId,
                 items: [{ price: priceId }],
                 default_payment_method: paymentMethodId,
-                payment_behavior: 'default_incomplete', // CAMBIO CLAVE: Permite flujos de autenticación
+                payment_behavior: 'error_if_incomplete',
                 payment_settings: {
                     save_default_payment_method: 'on_subscription',
                 },
                 expand: ['latest_invoice.payment_intent'],
             });
-            // --- FIN DE LA MODIFICACIÓN ---
         } catch (stripeError) {
-            // Este bloque catch ahora solo se activará para errores inesperados,
-            // ya que 'default_incomplete' no lanza error por requerir acción.
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Se maneja el error específico cuando se requiere 3D Secure.
+            if (stripeError.code === 'subscription_payment_intent_requires_action') {
+                console.log('[CREATE_SUB] Pago requiere autenticación adicional (3D Secure).');
+                
+                // Extraemos el ID del PaymentIntent del objeto de error que nos envía Stripe.
+                const paymentIntentId = stripeError.raw?.payment_intent?.id;
+
+                if (paymentIntentId) {
+                    // Recuperamos el PaymentIntent completo para obtener su client_secret.
+                    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+                    // Enviamos al frontend la información necesaria para que el usuario pueda autenticar el pago.
+                    return res.json({
+                        subscriptionId: stripeError.raw.subscription, // ID de la suscripción incompleta
+                        clientSecret: paymentIntent.client_secret, // Secreto para confirmar el pago en el frontend
+                        requiresAction: true,
+                    });
+                }
+            }
+            // --- FIN DE LA MODIFICACIÓN ---
+
+            // Si llegamos aquí, es otro tipo de error
             throw stripeError;
         }
 
@@ -73,8 +92,8 @@ exports.createSubscription = async (req, res) => {
             }
         }
 
-        // Si el pago fue exitoso inmediatamente (status: 'active')
-        if (subscription.status === 'active') {
+        // Si el pago fue exitoso inmediatamente, puede que no haya client_secret
+        if (!clientSecret && subscription.status === 'active') {
             console.log('[CREATE_SUB] Suscripción activada inmediatamente sin necesidad de confirmación adicional.');
             return res.json({
                 subscriptionId: subscription.id,
@@ -83,22 +102,17 @@ exports.createSubscription = async (req, res) => {
             });
         }
 
-        // Si la suscripción está incompleta (requiere acción)
-        if (subscription.status === 'incomplete' && clientSecret) {
-             console.log(`[CREATE_SUB] Suscripción creada con ID: ${subscription.id} y estado: ${subscription.status}. Requiere acción.`);
-             return res.json({
-                subscriptionId: subscription.id,
-                clientSecret: clientSecret,
-                requiresAction: true,
-            });
-        }
-
-        // Fallback por si algo inesperado ocurre
         if (!clientSecret) {
-            console.error('[CREATE_SUB] FATAL: No se pudo obtener el client_secret de Stripe para una suscripción incompleta.');
+            console.error('[CREATE_SUB] FATAL: No se pudo obtener el client_secret de Stripe.');
             return res.status(500).json({ error: 'No se pudo obtener la información de pago necesaria de Stripe.' });
         }
 
+        console.log(`[CREATE_SUB] Suscripción creada con ID: ${subscription.id} y estado: ${subscription.status}`);
+
+        res.json({
+            subscriptionId: subscription.id,
+            clientSecret: clientSecret,
+        });
 
     } catch (error) {
         console.error('--- ERROR DETALLADO EN CREATE_SUB ---');
