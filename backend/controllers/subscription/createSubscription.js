@@ -50,14 +50,13 @@ exports.createSubscription = async (req, res) => {
                 expand: ['latest_invoice.payment_intent'],
             });
         } catch (stripeError) {
-            // Si el error es por autenticación requerida, devuelve el payment_intent
             if (stripeError.code === 'subscription_payment_intent_requires_action') {
                 console.log('[CREATE_SUB] Pago requiere autenticación adicional (3D Secure).');
                 const paymentIntentId = stripeError.raw?.payment_intent?.id;
-                
+
                 if (paymentIntentId) {
                     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-                    
+
                     return res.json({
                         subscriptionId: stripeError.raw.subscription,
                         clientSecret: paymentIntent.client_secret,
@@ -65,7 +64,8 @@ exports.createSubscription = async (req, res) => {
                     });
                 }
             }
-            // Si es otro tipo de error, relanzarlo
+
+            // Si llegamos aquí, es otro tipo de error
             throw stripeError;
         }
 
