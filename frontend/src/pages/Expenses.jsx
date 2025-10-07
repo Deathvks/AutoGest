@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faPlusCircle, faCar, faTrash, faCalendarDay, faTag, faEuroSign, faPaperclip, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faPlus, faTrash, faCalendarDay, faTag, faEuroSign, faPaperclip, faEdit, faSync } from '@fortawesome/free-solid-svg-icons';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -27,21 +27,21 @@ const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) =>
         <div>
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold text-text-primary tracking-tight">Gastos Generales</h1>
-                <div className="flex gap-4">
-                    <button
-                        onClick={onAddExpense}
-                        className="bg-blue-accent text-white w-12 h-12 flex items-center justify-center rounded-xl shadow-sm hover:opacity-90 transition-opacity"
-                        title="Añadir nuevo gasto general"
-                    >
-                        <FontAwesomeIcon icon={faPlusCircle} className="w-6 h-6" />
-                    </button>
+                <div className="flex gap-3">
                     <button
                         onClick={generatePDF}
                         disabled={expenses.length === 0}
-                        className="bg-component-bg text-text-secondary w-12 h-12 flex items-center justify-center rounded-xl hover:bg-component-bg-hover transition-colors border border-border-color disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-component-bg backdrop-blur-lg text-text-primary w-12 h-12 flex items-center justify-center rounded-xl hover:bg-component-bg-hover transition-colors border border-border-color disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl"
                         title={expenses.length === 0 ? "No hay gastos para exportar" : "Generar PDF"}
                     >
-                        <FontAwesomeIcon icon={faDownload} className="w-6 h-6" />
+                        <FontAwesomeIcon icon={faDownload} className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={onAddExpense}
+                        className="bg-accent text-white w-12 h-12 flex items-center justify-center rounded-xl shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity"
+                        title="Añadir nuevo gasto general"
+                    >
+                        <FontAwesomeIcon icon={faPlus} className="w-6 h-6" />
                     </button>
                 </div>
             </div>
@@ -51,26 +51,28 @@ const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) =>
                     {/* --- VISTA DE TARJETAS PARA MÓVIL --- */}
                     <div className="space-y-4 md:hidden">
                         {expenses.map(expense => (
-                            <div key={expense.id} className="bg-component-bg rounded-xl border border-border-color p-4 space-y-3">
+                            <div key={expense.id} className="bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color p-4 space-y-3 shadow-2xl">
                                 <div className="flex justify-between items-start">
                                     <div className="text-sm text-text-secondary space-y-1">
                                         <p className="flex items-center gap-2"><FontAwesomeIcon icon={faCalendarDay} />{new Date(expense.date).toLocaleDateString('es-ES')}</p>
-                                        <p className="flex items-center gap-2"><FontAwesomeIcon icon={faTag} />{expense.category}</p>
+                                        <p className="flex items-center gap-2">
+                                            <FontAwesomeIcon icon={faTag} />
+                                            {expense.category}
+                                            {expense.isRecurring && <FontAwesomeIcon icon={faSync} className="text-accent" title="Gasto recurrente" />}
+                                        </p>
                                     </div>
-                                    <p className="font-bold text-text-primary text-xl">€ {new Intl.NumberFormat('es-ES').format(expense.amount)}</p>
+                                    <p className="font-bold text-red-accent text-xl">- {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</p>
                                 </div>
 
                                 {expense.description && <p className="text-sm text-text-primary pt-3 border-t border-border-color">{expense.description}</p>}
 
                                 <div className="flex justify-between items-end pt-3 border-t border-border-color">
-                                    <div className="flex items-center gap-2">
-                                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                    <div className="flex items-center gap-3">
                                         {expense.attachments && expense.attachments.map((fileUrl, index) => (
                                             <a href={fileUrl.path} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={fileUrl.originalname || `Ver adjunto ${index + 1}`}>
                                                 <FontAwesomeIcon icon={faPaperclip} />
                                             </a>
                                         ))}
-                                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button onClick={() => onEditExpense(expense)} className="text-blue-accent hover:opacity-80 transition-opacity p-2" title="Editar gasto">
@@ -86,10 +88,10 @@ const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) =>
                     </div>
 
                     {/* --- VISTA DE TABLA PARA ESCRITORIO --- */}
-                    <div className="hidden md:block bg-component-bg rounded-xl border border-border-color overflow-hidden">
+                    <div className="hidden md:block bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color overflow-hidden shadow-2xl">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left text-text-secondary">
-                                <thead className="text-xs uppercase bg-component-bg-hover">
+                                <thead className="text-xs uppercase bg-component-bg-hover/50">
                                     <tr>
                                         <th scope="col" className="px-6 py-4 whitespace-nowrap">Fecha</th>
                                         <th scope="col" className="px-6 py-4 whitespace-nowrap">Categoría</th>
@@ -101,27 +103,30 @@ const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) =>
                                 </thead>
                                 <tbody className="divide-y divide-border-color">
                                     {expenses.map(expense => (
-                                        <tr key={expense.id} className="hover:bg-component-bg-hover">
+                                        <tr key={expense.id} className="hover:bg-component-bg-hover/50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap">{new Date(expense.date).toLocaleDateString('es-ES')}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap"><span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-medium px-2.5 py-1 rounded-full">{expense.category}</span></td>
-                                            <td className="px-6 py-4 font-bold text-text-primary whitespace-nowrap">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</td>
-                                            <td className="px-6 py-4">{expense.description}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="flex items-center gap-2 bg-background/50 text-text-primary text-xs font-medium px-2.5 py-1 rounded-full"> {/* Eliminado el 'border border-border-color' */}
+                                                    {expense.category}
+                                                    {expense.isRecurring && <FontAwesomeIcon icon={faSync} className="text-accent" title="Gasto recurrente" />}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 font-bold text-red-accent whitespace-nowrap">- {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</td>
+                                            <td className="px-6 py-4 text-text-primary">{expense.description}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                                     {expense.attachments && expense.attachments.map((file, index) => (
                                                         <a href={file.path} target="_blank" rel="noopener noreferrer" key={index} className="text-blue-accent hover:opacity-75 transition-opacity" title={file.originalname || `Ver adjunto ${index + 1}`}>
                                                             <FontAwesomeIcon icon={faPaperclip} />
                                                         </a>
                                                     ))}
-                                                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button onClick={() => onEditExpense(expense)} className="text-blue-accent hover:opacity-80 transition-opacity mr-4" title="Editar gasto">
+                                                <button onClick={() => onEditExpense(expense)} className="text-text-secondary hover:text-blue-accent transition-opacity mr-4" title="Editar gasto">
                                                     <FontAwesomeIcon icon={faEdit} />
                                                 </button>
-                                                <button onClick={() => onDeleteExpense(expense)} className="text-red-accent hover:opacity-80 transition-opacity" title="Eliminar gasto">
+                                                <button onClick={() => onDeleteExpense(expense)} className="text-text-secondary hover:text-red-accent transition-opacity" title="Eliminar gasto">
                                                     <FontAwesomeIcon icon={faTrash} />
                                                 </button>
                                             </td>
@@ -133,8 +138,8 @@ const Expenses = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) =>
                     </div>
                 </>
             ) : (
-                <div className="text-center py-16 px-4 bg-component-bg rounded-xl border border-border-color">
-                    <FontAwesomeIcon icon={faEuroSign} className="text-5xl text-zinc-500 dark:text-zinc-700 mb-4" />
+                <div className="text-center py-16 px-4 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl">
+                    <FontAwesomeIcon icon={faEuroSign} className="text-5xl text-text-secondary/50 mb-4" />
                     <h3 className="text-xl font-semibold text-text-primary">Aún no hay gastos generales</h3>
                     <p className="text-text-secondary mt-2">Cuando añadas tu primer gasto general (luz, agua, alquiler...), aparecerá aquí.</p>
                 </div>

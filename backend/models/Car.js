@@ -29,7 +29,9 @@ const Car = sequelize.define('Car', {
         allowNull: true,
     },
     status: {
-        type: DataTypes.STRING,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        type: DataTypes.ENUM('En venta', 'Vendido', 'Reservado', 'Taller'),
+        // --- FIN DE LA MODIFICACIÓN ---
         allowNull: false,
         defaultValue: 'En venta',
     },

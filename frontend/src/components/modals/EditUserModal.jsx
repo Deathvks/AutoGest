@@ -6,49 +6,46 @@ import Select from '../Select';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 
-// --- Componentes de Formulario ---
 const InputField = ({ label, name, value, onChange, type = 'text', icon, placeholder, disabled = false }) => (
     <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
+        <label className="block text-sm font-semibold text-text-primary mb-1">{label}</label>
         <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                 <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
             </div>
             <input
                 type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled}
-                className="w-full pl-10 px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full pl-11 px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent disabled:opacity-70 disabled:cursor-not-allowed placeholder:text-text-secondary"
             />
         </div>
     </div>
 );
 
 const ToggleSwitch = ({ label, icon, enabled, onChange, description, disabled = false }) => (
-    <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
-        <div className="flex items-start gap-4 mt-2">
-            <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary mt-1" />
-            <div className="flex-grow">
-                <div className="flex items-center">
-                    <button
-                        type="button"
-                        onClick={onChange}
-                        disabled={disabled}
-                        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent ${enabled ? 'bg-accent' : 'bg-zinc-200 dark:bg-zinc-700'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                        <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </button>
-                    <span className={`ml-3 font-semibold ${enabled ? 'text-accent' : 'text-text-secondary'}`}>
-                        {enabled ? 'SÍ' : 'NO'}
-                    </span>
-                </div>
-                {description && <p className="text-xs text-text-secondary mt-1">{description}</p>}
+    <div className="bg-background/50 p-4 rounded-xl border border-border-color">
+        <div className="flex items-start justify-between">
+            <label className="flex items-center text-sm font-semibold text-text-primary">
+                <FontAwesomeIcon icon={icon} className="h-4 w-4 text-accent mr-3" />
+                {label}
+            </label>
+            <div className="flex items-center gap-4">
+                <button
+                    type="button"
+                    onClick={onChange}
+                    disabled={disabled}
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent ${enabled ? 'bg-accent' : 'bg-component-bg-hover'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                    <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+                <span className={`font-semibold text-xs w-6 ${enabled ? 'text-accent' : 'text-text-secondary'}`}>
+                    {enabled ? 'SÍ' : 'NO'}
+                </span>
             </div>
         </div>
+         {description && <p className="text-xs text-text-secondary mt-2 px-1">{description}</p>}
     </div>
 );
 
-
-// --- Componente Principal del Modal ---
 const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
     const { user: currentUser } = useContext(AuthContext);
     const [userData, setUserData] = useState({
@@ -91,9 +88,7 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
 
     const isEditingSelf = currentUser.id === user.id;
     const isCurrentUserAdmin = currentUser.role === 'admin';
-    const isCurrentUserTechnician = currentUser.role === 'technician' || currentUser.role === 'technician_subscribed';
-    
-    const canTechnicianEditMember = isCurrentUserTechnician && (currentUser.isOwner || currentUser.canManageRoles) && !isEditingSelf;
+    const canEditPermissions = currentUser.isOwner || currentUser.canManageRoles;
     
     const handleChange = (e) => setUserData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleSelectChange = (name, value) => setUserData(prev => ({ ...prev, [name]: value }));
@@ -103,12 +98,19 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
         try {
             const dataToUpdate = {};
             if (isCurrentUserAdmin) {
-                Object.assign(dataToUpdate, userData);
-                if (!userData.password) {
-                    delete dataToUpdate.password;
+                Object.assign(dataToUpdate, {
+                    name: userData.name,
+                    email: userData.email,
+                    role: userData.role
+                });
+                if (userData.password) {
+                    dataToUpdate.password = userData.password;
                 }
-            } else if (canTechnicianEditMember) {
-                dataToUpdate.canExpelUsers = userData.canExpelUsers;
+            } else if (canEditPermissions) {
+                 Object.assign(dataToUpdate, {
+                    canManageRoles: userData.canManageRoles,
+                    canExpelUsers: userData.canExpelUsers
+                });
             }
 
             if (Object.keys(dataToUpdate).length === 0) {
@@ -127,64 +129,64 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
         onClose();
         onExpelUser(user);
     };
-
+    
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-component-bg rounded-xl shadow-lg w-full max-w-md p-6 border border-border-color">
-                <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
+                <div className="flex justify-between items-center p-6 border-b border-border-color">
                     <h2 className="text-xl font-bold text-text-primary">Editar Usuario</h2>
                     <button onClick={onClose} className="text-text-secondary hover:text-text-primary"><FontAwesomeIcon icon={faXmark} className="w-6 h-6" /></button>
                 </div>
 
-                <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-4">
-                    {isCurrentUserAdmin ? (
+                <form onSubmit={(e) => e.preventDefault()} noValidate className="p-6 space-y-4">
+                    <InputField label="Nombre Completo" name="name" value={userData.name} onChange={handleChange} icon={faUser} disabled={!isCurrentUserAdmin} />
+                    <InputField label="Email" name="email" value={userData.email} onChange={handleChange} type="email" icon={faEnvelope} disabled={!isCurrentUserAdmin} />
+                    
+                    {isCurrentUserAdmin && (
                         <>
-                            <InputField label="Nombre Completo" name="name" value={userData.name} onChange={handleChange} icon={faUser} />
-                            <InputField label="Email" name="email" value={userData.email} onChange={handleChange} type="email" icon={faEnvelope} />
                             <InputField label="Nueva Contraseña (opcional)" name="password" value={userData.password} onChange={handleChange} type="password" icon={faKey} placeholder="Dejar en blanco para no cambiar" />
                             <Select label="Rol" value={userData.role} onChange={(value) => handleSelectChange('role', value)} options={roleOptions} icon={faUserShield} />
                         </>
-                    ) : canTechnicianEditMember ? (
-                        <>
-                            <div>
-                                <label className="block text-sm font-medium text-text-secondary mb-1">Nombre Completo</label>
-                                <p className="w-full pl-10 px-3 py-2 bg-background border border-border-color rounded-lg text-text-primary relative">
-                                    <FontAwesomeIcon icon={faUser} className="h-4 w-4 text-text-secondary absolute left-3 top-1/2 -translate-y-1/2" />
-                                    {userData.name}
-                                </p>
-                            </div>
-                            <div className="pt-4 border-t border-border-color space-y-4">
-                               <ToggleSwitch
-                                   label="Permiso para Expulsar Miembros"
-                                   icon={faUserSlash}
-                                   enabled={userData.canExpelUsers}
-                                   onChange={() => setUserData(prev => ({ ...prev, canExpelUsers: !prev.canExpelUsers }))}
-                                   description="Permitir a este miembro expulsar a otros del equipo."
-                               />
-                           </div>
-                        </>
-                    ) : (
-                         <p className="text-sm text-text-secondary text-center">No tienes permisos para editar este usuario.</p>
                     )}
-                    {error && <p className="mt-4 text-sm text-red-accent text-center">{error}</p>}
+
+                    {canEditPermissions && !isCurrentUserAdmin && !isEditingSelf && (
+                        <div className="pt-4 border-t border-border-color space-y-4">
+                            <ToggleSwitch
+                                label="Gestionar Roles"
+                                icon={faUserShield}
+                                enabled={userData.canManageRoles}
+                                onChange={() => setUserData(prev => ({ ...prev, canManageRoles: !prev.canManageRoles }))}
+                                description="Permite cambiar roles a otros miembros del equipo."
+                                disabled={!currentUser.isOwner}
+                            />
+                            <ToggleSwitch
+                                label="Expulsar Miembros"
+                                icon={faUserSlash}
+                                enabled={userData.canExpelUsers}
+                                onChange={() => setUserData(prev => ({ ...prev, canExpelUsers: !prev.canExpelUsers }))}
+                                description="Permite expulsar a otros miembros del equipo."
+                                disabled={!currentUser.isOwner}
+                            />
+                        </div>
+                    )}
+                    
+                    {error && <p className="mt-4 text-sm text-red-accent text-center font-semibold">{error}</p>}
                 </form>
                 
-                <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-3">
-                    <div className="w-full sm:w-auto">
-                        {canTechnicianEditMember && (currentUser.isOwner || currentUser.canExpelUsers) && (
-                            <button onClick={handleExpelClick} className="w-full justify-center bg-red-accent/10 text-red-accent px-4 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-medium flex items-center gap-2">
+                <div className="flex justify-between items-center gap-4 p-4 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
+                    <div>
+                        {canEditPermissions && !isCurrentUserAdmin && !isEditingSelf && (
+                            <button onClick={handleExpelClick} className="bg-red-accent/10 text-red-accent px-4 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-semibold flex items-center gap-2">
                                 <FontAwesomeIcon icon={faUserSlash} />
                                 Expulsar
                             </button>
                         )}
                     </div>
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
-                        <button onClick={onClose} className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">Cancelar</button>
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                        <button onClick={handleUpdateUser} disabled={isEditingSelf || (!isCurrentUserAdmin && !canTechnicianEditMember)} className="w-full sm:w-auto bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-                            Guardar Cambios
+                    <div className="flex items-center gap-3">
+                        <button onClick={onClose} className="bg-component-bg border border-border-color text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold">Cancelar</button>
+                        <button onClick={handleUpdateUser} disabled={isEditingSelf} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                            Guardar
                         </button>
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </div>
                 </div>
             </div>

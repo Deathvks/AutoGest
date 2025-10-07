@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCar, faCheckCircle, faExclamationTriangle, faSpinner, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCar, faCheckCircle, faExclamationTriangle, faSpinner, faSignInAlt, faUsers } from '@fortawesome/free-solid-svg-icons';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 
@@ -68,14 +68,10 @@ const AcceptInvitationPage = () => {
         navigate('/login', { state: { from: location } });
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleLogoutAndSetRedirect = () => {
-        // Guarda la URL de invitación actual en el almacenamiento local.
         localStorage.setItem('loginRedirect', location.pathname);
-        // Llama a la función de logout original, que te llevará a /login.
         logout();
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const renderContent = () => {
         if (status === 'verifying' || isLoading) {
@@ -84,19 +80,19 @@ const AcceptInvitationPage = () => {
         if (status === 'error') {
             const isWrongUserError = error.includes('cierra sesión');
             return (
-                <div className="text-center text-red-accent bg-red-accent/10 p-4 rounded-lg">
-                    <FontAwesomeIcon icon={faExclamationTriangle} className="mb-2 text-2xl" />
+                <div className="text-center text-red-accent bg-red-accent/10 p-6 rounded-xl border border-red-accent/20">
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="mb-4 text-3xl" />
                     <p className="font-semibold">{error}</p>
-                    <div className="mt-4">
+                    <div className="mt-6">
                         {isWrongUserError ? (
                             <button
                                 onClick={handleLogoutAndSetRedirect}
-                                className="bg-accent text-white font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors"
+                                className="w-full bg-accent text-white font-semibold px-4 py-3 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-colors"
                             >
                                 Cerrar sesión para continuar
                             </button>
                         ) : (
-                            <Link to="/login" className="inline-block bg-accent text-white font-semibold px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors">
+                            <Link to="/login" className="inline-block w-full bg-accent text-white font-semibold px-4 py-3 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-colors">
                                 Ir a Iniciar Sesión
                             </Link>
                         )}
@@ -106,8 +102,8 @@ const AcceptInvitationPage = () => {
         }
         if (status === 'success') {
             return (
-                <div className="text-center text-green-accent bg-green-accent/10 p-4 rounded-lg">
-                    <FontAwesomeIcon icon={faCheckCircle} className="mb-2 text-2xl" />
+                <div className="text-center text-green-accent bg-green-accent/10 p-6 rounded-xl border border-green-accent/20">
+                    <FontAwesomeIcon icon={faCheckCircle} className="mb-4 text-3xl" />
                     <p className="font-semibold">{success}</p>
                 </div>
             );
@@ -115,16 +111,16 @@ const AcceptInvitationPage = () => {
         if (status === 'needsLogin' && invitationDetails) {
             return (
                 <>
-                    <p className="text-center text-sm text-text-secondary">
+                    <p className="text-center text-text-secondary">
                         Has sido invitado a unirte a <span className="font-bold text-text-primary">{invitationDetails.companyName}</span>.
                     </p>
-                    <p className="text-center text-sm text-text-secondary mt-2">
+                    <p className="text-center text-text-secondary mt-2">
                         Por favor, inicia sesión en tu cuenta <span className="font-bold text-text-primary">{invitationDetails.email}</span> para aceptar.
                     </p>
                     <div className="mt-8">
                         <button 
                             onClick={handleLogin} 
-                            className="group relative flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                            className="w-full flex items-center justify-center gap-2 rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
                         >
                             <FontAwesomeIcon icon={faSignInAlt} />
                             <span>Iniciar Sesión para Aceptar</span>
@@ -136,12 +132,12 @@ const AcceptInvitationPage = () => {
         if (status === 'readyToAccept' && invitationDetails) {
             return (
                 <>
-                    <p className="text-center text-sm text-text-secondary">
+                    <p className="text-center text-text-secondary">
                         Estás a punto de unirte a <span className="font-bold text-text-primary">{invitationDetails.companyName}</span> con tu cuenta <span className="font-bold text-text-primary">{invitationDetails.email}</span>.
                     </p>
                     <div className="mt-8">
-                        <button onClick={handleAccept} disabled={isLoading} className="group relative flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50">
-                            {isLoading ? 'UNIENDO...' : 'Confirmar y Unirme al Equipo'}
+                        <button onClick={handleAccept} disabled={isLoading} className="w-full flex items-center justify-center gap-2 rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50">
+                            {isLoading ? <><FontAwesomeIcon icon={faSpinner} spin className="mr-2" /> UNIENDO...</> : 'Confirmar y Unirme al Equipo'}
                         </button>
                     </div>
                 </>
@@ -151,14 +147,15 @@ const AcceptInvitationPage = () => {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-background">
-            <div className="w-[90%] sm:w-full max-w-md space-y-8 rounded-xl bg-component-bg p-8 sm:p-10 shadow-lg border border-border-color">
-                <div className="mx-auto flex h-12 w-auto items-center justify-center text-accent">
-                    <FontAwesomeIcon icon={faCar} className="h-10 w-10" />
+        <div className="flex min-h-screen items-center justify-center bg-background p-4">
+            <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[radial-gradient(var(--color-accent)_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+            <div className="w-full max-w-md space-y-8 rounded-2xl bg-component-bg p-8 shadow-2xl backdrop-blur-lg border border-border-color">
+                <div className="text-center">
+                    <FontAwesomeIcon icon={faUsers} className="mx-auto h-12 w-auto text-accent" />
+                    <h2 className="mt-6 text-3xl font-bold tracking-tight text-text-primary">
+                        Únete a tu Equipo
+                    </h2>
                 </div>
-                <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-text-primary">
-                    Únete a tu equipo
-                </h2>
                 {renderContent()}
             </div>
         </div>

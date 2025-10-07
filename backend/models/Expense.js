@@ -40,7 +40,6 @@ const Expense = sequelize.define('Expense', {
         type: DataTypes.JSON,
         allowNull: true,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     companyId: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -49,6 +48,28 @@ const Expense = sequelize.define('Expense', {
             key: 'id',
         },
         onDelete: 'CASCADE',
+    },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    isRecurring: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
+    recurrenceType: {
+        type: DataTypes.ENUM('daily', 'weekly', 'monthly', 'custom'),
+        allowNull: true,
+    },
+    recurrenceCustomValue: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        comment: 'Para "custom", representa el intervalo en días.'
+    },
+    recurrenceEndDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+    },
+    nextRecurrenceDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
     },
     // --- FIN DE LA MODIFICACIÓN ---
 }, {

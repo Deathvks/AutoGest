@@ -29,28 +29,31 @@ const ReservationPdfModal = ({ car, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg rounded-xl shadow-2xl w-full max-w-md p-6 text-center border border-border-color">
-                <FontAwesomeIcon icon={faCircleCheck} className="w-16 h-16 text-green-accent mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-text-primary mb-2">¡Reserva Confirmada!</h2>
-                <p className="text-text-secondary mb-4">
-                    Se ha generado el documento de reserva para el <span className="font-semibold text-text-primary">{car.make} {car.model}</span>.
-                </p>
-                <p className="text-xs text-text-secondary mb-6">
-                    Si cierras esta ventana, podrás descargar el documento desde la ficha del coche mientras la reserva esté activa.
-                </p>
-                <div className="flex flex-col sm:flex-row justify-center gap-3">
+            <div className="bg-component-bg/80 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
+                <div className="p-8 text-center">
+                    <FontAwesomeIcon icon={faCircleCheck} className="w-16 h-16 text-green-accent mx-auto mb-6" />
+                    <h2 className="text-2xl font-bold text-text-primary">¡Reserva Confirmada!</h2>
+                    <p className="text-text-secondary mt-2">
+                        Se ha generado el documento de reserva para el <span className="font-semibold text-text-primary">{car.make} {car.model}</span>.
+                    </p>
+                    <p className="text-xs text-text-secondary mt-4">
+                        Podrás descargar este documento desde la ficha del coche mientras la reserva esté activa.
+                    </p>
+                </div>
+
+                <div className="flex justify-center items-center gap-4 p-6 border-t border-border-color bg-component-bg-hover/50 rounded-b-2xl">
+                    <button
+                        onClick={onClose}
+                        className="w-full bg-component-bg border border-border-color text-text-primary px-4 py-2.5 rounded-lg hover:bg-border-color transition-colors font-semibold"
+                    >
+                        Cerrar
+                    </button>
                     <button
                         onClick={handleDownload}
-                        className="w-full sm:w-auto bg-blue-accent text-white px-6 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity font-semibold flex items-center justify-center gap-2"
+                        className="w-full bg-blue-accent text-white px-4 py-2.5 rounded-lg shadow-lg shadow-blue-accent/20 hover:opacity-90 transition-opacity font-semibold flex items-center justify-center gap-2"
                     >
                         <FontAwesomeIcon icon={faDownload} />
                         Descargar PDF
-                    </button>
-                    <button
-                        onClick={onClose}
-                        className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-6 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold"
-                    >
-                        Cerrar
                     </button>
                 </div>
             </div>

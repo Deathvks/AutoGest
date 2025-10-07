@@ -3,26 +3,26 @@ import React, { useState, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faUser, faIdCard, faFileSignature } from '@fortawesome/free-solid-svg-icons';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable'; // --- INICIO DE LA MODIFICACIÓN ---
+import autoTable from 'jspdf-autotable';
 import { AuthContext } from '../../context/AuthContext';
 
 const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 const InputField = ({ label, name, value, onChange, icon, required = false }) => (
     <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">
+        <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">
             {label}
             {required && <span className="text-red-accent ml-1">*</span>}
         </label>
         <div className="relative">
             {icon && (
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                     <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
                 </div>
             )}
             <input
                 type="text" name={name} value={value} onChange={onChange}
-                className={`w-full px-3 py-2 bg-background border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent ${icon ? 'pl-9' : ''}`}
+                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent placeholder:text-text-secondary ${icon ? 'pl-11' : ''}`}
             />
         </div>
     </div>
@@ -106,7 +106,6 @@ const TestDriveModal = ({ car, onClose }) => {
         doc.setLineWidth(0.5);
         doc.line(14, currentY + 2, 196, currentY + 2);
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         autoTable(doc, {
             startY: currentY + 5,
             theme: 'plain',
@@ -135,7 +134,6 @@ const TestDriveModal = ({ car, onClose }) => {
             styles: { fontSize: 11 },
             columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } }
         });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         currentY = doc.lastAutoTable.finalY + 20;
 
@@ -145,22 +143,16 @@ const TestDriveModal = ({ car, onClose }) => {
 
         currentY += 10;
         
-        const disclaimerText = `Por la presente, D./Dña. ${clientData.name} ${clientData.lastName}, con DNI/NIE ${clientData.dni}, declara realizar una prueba dinámica del vehículo arriba referenciado bajo su entera responsabilidad.
-
-El abajo firmante se compromete a conducir de manera responsable, respetando en todo momento las normas de circulación vigentes.
-
-La empresa ${user.businessName || user.name}, con CIF/NIF ${user.cif || user.dni}, queda eximida de cualquier responsabilidad civil o penal derivada de accidentes, multas, infracciones de tráfico o cualquier tipo de daño material o personal que pudiera ocurrir durante la prueba del vehículo.`;
+        const disclaimerText = `Por la presente, D./Dña. ${clientData.name} ${clientData.lastName}, con DNI/NIE ${clientData.dni}, declara realizar una prueba dinámica del vehículo arriba referenciado bajo su entera responsabilidad.\n\nEl abajo firmante se compromete a conducir de manera responsable, respetando en todo momento las normas de circulación vigentes.\n\nLa empresa ${user.businessName || user.name}, con CIF/NIF ${user.cif || user.dni}, queda eximida de cualquier responsabilidad civil o penal derivada de accidentes, multas, infracciones de tráfico o cualquier tipo de daño material o personal que pudiera ocurrir durante la prueba del vehículo.`;
 
         const splitText = doc.splitTextToSize(disclaimerText, 182);
         doc.setFontSize(10);
         doc.text(splitText, 14, currentY);
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        currentY = doc.getTextDimensions(splitText).h + currentY + 40; // Aumentamos el espacio para la firma
+        currentY = doc.getTextDimensions(splitText).h + currentY + 40;
 
         doc.text("Firma del Conductor:", 14, currentY);
-        doc.line(55, currentY, 196, currentY); // Línea para la firma
-        // --- FIN DE LA MODIFICACIÓN ---
+        doc.line(55, currentY, 196, currentY);
 
         doc.save(`Prueba_${car.licensePlate}_${clientData.dni}.pdf`);
         onClose();
@@ -168,10 +160,12 @@ La empresa ${user.businessName || user.name}, con CIF/NIF ${user.cif || user.dni
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
-            <div className="bg-component-bg rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
-                <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary">Prueba de Vehículo</h2>
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-border-color">
+                <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
+                    <h2 className="text-xl font-bold text-text-primary flex items-center gap-3">
+                        <FontAwesomeIcon icon={faFileSignature} />
+                        Prueba de Vehículo
+                    </h2>
                     <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
@@ -180,19 +174,18 @@ La empresa ${user.businessName || user.name}, con CIF/NIF ${user.cif || user.dni
                     <p className="text-text-secondary text-center">
                         Introduce los datos del cliente para generar el documento de exoneración de responsabilidad para la prueba del <span className="font-semibold text-text-primary">{car.make} {car.model}</span>.
                     </p>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <InputField label="NOMBRE" name="name" value={clientData.name} onChange={handleChange} icon={faUser} required={true} />
-                        <InputField label="APELLIDOS" name="lastName" value={clientData.lastName} onChange={handleChange} required={true} />
+                        <InputField label="Nombre" name="name" value={clientData.name} onChange={handleChange} icon={faUser} required={true} />
+                        <InputField label="Apellidos" name="lastName" value={clientData.lastName} onChange={handleChange} required={true} />
                     </div>
                     <InputField label="DNI / NIE" name="dni" value={clientData.dni} onChange={handleChange} icon={faIdCard} required={true} />
-                    {error && <p className="mt-2 text-sm text-red-accent text-center">{error}</p>}
+                    {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
                 </div>
                 <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-border-color">
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">CANCELAR</button>
-                    <button onClick={handleGenerateDocument} className="bg-yellow-accent text-white px-6 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity font-semibold flex items-center gap-2">
+                    <button onClick={onClose} className="bg-component-bg border border-border-color text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold uppercase">Cancelar</button>
+                    <button onClick={handleGenerateDocument} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold flex items-center gap-2 uppercase">
                         <FontAwesomeIcon icon={faFileSignature} />
-                        GENERAR DOCUMENTO
+                        Generar Documento
                     </button>
                 </div>
             </div>

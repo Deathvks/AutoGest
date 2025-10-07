@@ -1,22 +1,20 @@
 // autogest-app/frontend/src/components/modals/FilterModal.jsx
 import React, { useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFilter, faTimes, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faTimes, faMapMarkerAlt, faUndo } from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select';
 
 const FilterModal = ({ isOpen, onClose, cars, filters, setFilters, resetFilters }) => {
     if (!isOpen) return null;
 
     const makeOptions = useMemo(() =>
-        [...new Set(cars.map(car => car.make))].map(make => ({ id: make, name: make })),
+        [...new Set(cars.map(car => car.make))].sort((a, b) => a.localeCompare(b)).map(make => ({ id: make, name: make })),
     [cars]);
 
     const statusOptions = useMemo(() =>
-        [...new Set(cars.map(car => car.status))].map(status => ({ id: status, name: status })),
+        [...new Set(cars.map(car => car.status))].sort().map(status => ({ id: status, name: status })),
     [cars]);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se utiliza la misma lógica robusta que en el FilterSidebar para obtener ubicaciones únicas.
     const locationOptions = useMemo(() => {
         const uniqueLocations = cars.reduce((acc, car) => {
             if (car.location) {
@@ -33,7 +31,6 @@ const FilterModal = ({ isOpen, onClose, cars, filters, setFilters, resetFilters 
             .sort((a, b) => a.localeCompare(b))
             .map(location => ({ id: location, name: location }));
     }, [cars]);
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -46,7 +43,7 @@ const FilterModal = ({ isOpen, onClose, cars, filters, setFilters, resetFilters 
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col border border-border-color">
                 <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
                     <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
                         <FontAwesomeIcon icon={faFilter} />
@@ -70,8 +67,7 @@ const FilterModal = ({ isOpen, onClose, cars, filters, setFilters, resetFilters 
                         onChange={(value) => handleSelectChange('status', value)}
                         options={[{ id: '', name: 'Todos' }, ...statusOptions]}
                     />
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    {locationOptions.length > 0 ? (
+                    {locationOptions.length > 0 && (
                         <Select
                             label="Ubicación"
                             value={filters.location}
@@ -79,42 +75,34 @@ const FilterModal = ({ isOpen, onClose, cars, filters, setFilters, resetFilters 
                             options={[{ id: '', name: 'Todas' }, ...locationOptions]}
                             icon={faMapMarkerAlt}
                         />
-                    ) : (
-                        <div>
-                            <label className="block text-sm font-medium text-text-secondary mb-1">Ubicación</label>
-                            <div className="text-xs text-text-secondary bg-background p-2 rounded-md border border-border-color">
-                                Añade un coche con una ubicación para poder filtrar.
-                            </div>
-                        </div>
                     )}
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                            <label htmlFor="minPrice" className="block text-sm font-medium text-text-secondary mb-1">Precio Mín.</label>
-                           <input type="number" name="minPrice" id="minPrice" value={filters.minPrice} onChange={handleInputChange} placeholder="€" className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
+                           <input type="number" name="minPrice" id="minPrice" value={filters.minPrice} onChange={handleInputChange} placeholder="€" className="w-full px-3 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent text-text-primary placeholder:text-text-secondary"/>
                         </div>
                         <div>
                            <label htmlFor="maxPrice" className="block text-sm font-medium text-text-secondary mb-1">Precio Máx.</label>
-                           <input type="number" name="maxPrice" id="maxPrice" value={filters.maxPrice} onChange={handleInputChange} placeholder="€" className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
+                           <input type="number" name="maxPrice" id="maxPrice" value={filters.maxPrice} onChange={handleInputChange} placeholder="€" className="w-full px-3 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent text-text-primary placeholder:text-text-secondary"/>
                         </div>
                     </div>
                      <div className="grid grid-cols-2 gap-4">
                         <div>
                            <label htmlFor="minKm" className="block text-sm font-medium text-text-secondary mb-1">KM Mín.</label>
-                           <input type="number" name="minKm" id="minKm" value={filters.minKm} onChange={handleInputChange} placeholder="km" className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
+                           <input type="number" name="minKm" id="minKm" value={filters.minKm} onChange={handleInputChange} placeholder="km" className="w-full px-3 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent text-text-primary placeholder:text-text-secondary"/>
                         </div>
                         <div>
                            <label htmlFor="maxKm" className="block text-sm font-medium text-text-secondary mb-1">KM Máx.</label>
-                           <input type="number" name="maxKm" id="maxKm" value={filters.maxKm} onChange={handleInputChange} placeholder="km" className="w-full px-3 py-2 bg-background border border-border-color rounded-md focus:ring-1 focus:ring-accent"/>
+                           <input type="number" name="maxKm" id="maxKm" value={filters.maxKm} onChange={handleInputChange} placeholder="km" className="w-full px-3 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent text-text-primary placeholder:text-text-secondary"/>
                         </div>
                     </div>
                 </div>
 
                 <div className="flex-shrink-0 mt-auto flex justify-between items-center gap-4 p-4 border-t border-border-color">
-                    <button onClick={resetFilters} className="text-sm text-accent hover:underline">
+                    <button onClick={resetFilters} className="text-sm text-accent font-semibold hover:text-accent-hover transition-colors">
                         Limpiar filtros
                     </button>
-                    <button onClick={onClose} className="bg-accent text-white px-6 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors font-semibold">
+                    <button onClick={onClose} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-colors font-semibold">
                         Aplicar
                     </button>
                 </div>

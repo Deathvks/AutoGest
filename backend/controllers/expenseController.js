@@ -4,10 +4,33 @@ const { Op } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
 
+// --- INICIO DE LA MODIFICACIÓN ---
+// Función para calcular la siguiente fecha de recurrencia
+const calculateNextRecurrence = (startDate, type, customValue) => {
+    const date = new Date(startDate);
+    switch (type) {
+        case 'daily':
+            date.setDate(date.getDate() + 1);
+            break;
+        case 'weekly':
+            date.setDate(date.getDate() + 7);
+            break;
+        case 'monthly':
+            date.setMonth(date.getMonth() + 1);
+            break;
+        case 'custom':
+            date.setDate(date.getDate() + parseInt(customValue, 10));
+            break;
+        default:
+            return null;
+    }
+    return date.toISOString().split('T')[0];
+};
+// --- FIN DE LA MODIFICACIÓN ---
+
 // Obtener todos los gastos GENERALES (sin coche) del usuario o de su empresa
 exports.getAllExpenses = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const whereClause = {
             carLicensePlate: { [Op.is]: null }
         };
@@ -21,7 +44,6 @@ exports.getAllExpenses = async (req, res) => {
             where: whereClause,
             order: [['date', 'DESC']]
         });
-        // --- FIN DE LA MODIFICACIÓN ---
         res.status(200).json(expenses);
     } catch (error) {
         console.error(error);
@@ -32,19 +54,17 @@ exports.getAllExpenses = async (req, res) => {
 // Obtener TODOS los gastos del usuario (generales + específicos de coches) o de su empresa
 exports.getAllUserExpenses = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const whereClause = {};
         if (req.user.companyId) {
             whereClause.companyId = req.user.companyId;
         } else {
             whereClause.userId = req.user.id;
         }
-        
+
         const expenses = await Expense.findAll({
             where: whereClause,
             order: [['date', 'DESC']]
         });
-        // --- FIN DE LA MODIFICACIÓN ---
         res.status(200).json(expenses);
     } catch (error) {
         console.error(error);
@@ -55,21 +75,20 @@ exports.getAllUserExpenses = async (req, res) => {
 // Crear un nuevo gasto
 exports.createExpense = async (req, res) => {
     try {
-        const { carLicensePlate, ...expenseData } = req.body;
-        
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const { carLicensePlate, isRecurring, recurrenceType, recurrenceCustomValue, recurrenceEndDate, ...expenseData } = req.body;
+        // --- FIN DE LA MODIFICACIÓN ---
+
         const dataToCreate = {
             ...expenseData,
             userId: req.user.id
         };
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (req.user.companyId) {
             dataToCreate.companyId = req.user.companyId;
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (carLicensePlate) {
-            // --- INICIO DE LA MODIFICACIÓN ---
             const carWhereClause = {
                 [Op.and]: [
                     sequelize.where(
@@ -83,22 +102,33 @@ exports.createExpense = async (req, res) => {
             } else {
                 carWhereClause.userId = req.user.id;
             }
-            
+
             const car = await Car.findOne({ where: carWhereClause });
-            // --- FIN DE LA MODIFICACIÓN ---
-            
+
             if (!car) {
                 return res.status(403).json({ error: 'Permiso denegado. El coche no existe o no pertenece a este usuario/equipo.' });
             }
-            
+
             dataToCreate.carLicensePlate = car.licensePlate;
         } else {
             dataToCreate.carLicensePlate = null;
         }
-        
+
         if (req.files && req.files.length > 0) {
             dataToCreate.attachments = req.files.map(file => `/expenses/${file.filename}`);
         }
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const isRecurringBool = isRecurring === 'true' || isRecurring === true;
+        dataToCreate.isRecurring = isRecurringBool;
+
+        if (isRecurringBool) {
+            dataToCreate.recurrenceType = recurrenceType;
+            dataToCreate.recurrenceCustomValue = recurrenceType === 'custom' ? recurrenceCustomValue : null;
+            dataToCreate.recurrenceEndDate = recurrenceEndDate || null;
+            dataToCreate.nextRecurrenceDate = calculateNextRecurrence(dataToCreate.date, recurrenceType, recurrenceCustomValue);
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         const newExpense = await Expense.create(dataToCreate);
         res.status(201).json(newExpense);
@@ -111,7 +141,6 @@ exports.createExpense = async (req, res) => {
 // Actualizar un gasto
 exports.updateExpense = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const whereClause = { id: req.params.id };
         if (req.user.companyId) {
             whereClause.companyId = req.user.companyId;
@@ -119,18 +148,34 @@ exports.updateExpense = async (req, res) => {
             whereClause.userId = req.user.id;
         }
         const expense = await Expense.findOne({ where: whereClause });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (!expense) {
             return res.status(404).json({ error: 'Gasto no encontrado o no tienes permiso para editarlo.' });
         }
-        
-        const { date, category, amount, description } = req.body;
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const { date, category, amount, description, isRecurring, recurrenceType, recurrenceCustomValue, recurrenceEndDate } = req.body;
         const updateData = { date, category, amount, description };
+        
+        const isRecurringBool = isRecurring === 'true' || isRecurring === true;
+        updateData.isRecurring = isRecurringBool;
+
+        if (isRecurringBool) {
+            updateData.recurrenceType = recurrenceType;
+            updateData.recurrenceCustomValue = recurrenceType === 'custom' ? recurrenceCustomValue : null;
+            updateData.recurrenceEndDate = recurrenceEndDate || null;
+            updateData.nextRecurrenceDate = calculateNextRecurrence(date, recurrenceType, recurrenceCustomValue);
+        } else {
+            updateData.recurrenceType = null;
+            updateData.recurrenceCustomValue = null;
+            updateData.recurrenceEndDate = null;
+            updateData.nextRecurrenceDate = null;
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (req.files && req.files.length > 0) {
             const newAttachments = req.files.map(file => `/expenses/${file.filename}`);
-            updateData.attachments = newAttachments; 
+            updateData.attachments = newAttachments;
         }
 
         await expense.update(updateData);
@@ -142,10 +187,10 @@ exports.updateExpense = async (req, res) => {
     }
 };
 
+
 // Eliminar un gasto
 exports.deleteExpense = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const whereClause = { id: req.params.id };
         if (req.user.companyId) {
             whereClause.companyId = req.user.companyId;
@@ -153,12 +198,11 @@ exports.deleteExpense = async (req, res) => {
             whereClause.userId = req.user.id;
         }
         const expense = await Expense.findOne({ where: whereClause });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (!expense) {
             return res.status(404).json({ error: 'Gasto no encontrado o no tienes permiso para eliminarlo.' });
         }
-        
+
         if (expense.attachments && expense.attachments.length > 0) {
             expense.attachments.forEach(fileUrl => {
                 const filename = path.basename(fileUrl);
@@ -183,7 +227,6 @@ exports.getExpensesByCarLicensePlate = async (req, res) => {
         const { licensePlate } = req.params;
         const normalizedLicensePlate = licensePlate.replace(/\s/g, '').toUpperCase();
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         const carWhereClause = {
             [Op.and]: [
                 sequelize.where(
@@ -199,8 +242,7 @@ exports.getExpensesByCarLicensePlate = async (req, res) => {
         }
 
         const car = await Car.findOne({ where: carWhereClause });
-        // --- FIN DE LA MODIFICACIÓN ---
-        
+
         if (!car) {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para ver sus gastos.' });
         }

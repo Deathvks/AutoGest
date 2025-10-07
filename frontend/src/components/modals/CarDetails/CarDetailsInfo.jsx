@@ -1,8 +1,9 @@
 // autogest-app/frontend/src/components/modals/CarDetails/CarDetailsInfo.jsx
-import React, { useState, useEffect, useContext } from 'react'; // <-- Importar useContext
+import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClock } from '@fortawesome/free-solid-svg-icons';
-import { AuthContext } from '../../../context/AuthContext'; // <-- Importar el contexto
+import { AuthContext } from '../../../context/AuthContext';
+import CarPlaceholderImage from '../../../pages/MyCars/CarPlaceholderImage'; // --- INICIO DE LA MODIFICACIÓN ---
 
 const getStatusChipClass = (status) => {
     switch (status) {
@@ -14,13 +15,9 @@ const getStatusChipClass = (status) => {
 };
 
 const CarDetailsInfo = ({ car }) => {
-    const { user } = useContext(AuthContext); // Obtenemos el usuario del contexto
+    const { user } = useContext(AuthContext);
     const [remainingTime, setRemainingTime] = useState('');
     const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se elimina la URL base para que el proxy de Vite funcione en desarrollo
-    const imageUrl = car.imageUrl ? car.imageUrl : `https://placehold.co/600x400/f1f3f5/6c757d?text=${car.make}+${car.model}`;
-    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         if (!isReservedAndActive) return;
@@ -53,19 +50,27 @@ const CarDetailsInfo = ({ car }) => {
 
     return (
         <div className="space-y-4">
-            <img
-                src={imageUrl}
-                alt={`${car.make} ${car.model}`}
-                className="w-full h-auto object-cover rounded-lg border border-border-color"
-            />
-            <div className="bg-background p-4 rounded-lg text-center">
+            <div className="w-full h-auto aspect-video bg-component-bg-hover rounded-xl border-2 border-border-color flex items-center justify-center overflow-hidden">
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {car.imageUrl ? (
+                    <img
+                        src={car.imageUrl}
+                        alt={`${car.make} ${car.model}`}
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    <CarPlaceholderImage car={car} />
+                )}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
+            </div>
+            <div className="bg-component-bg-hover p-6 rounded-xl text-center border border-border-color">
                 <div className="flex flex-col items-center">
-                    <p className="text-lg text-text-secondary uppercase">Precio Venta Final</p>
-                    <p className="text-4xl font-extrabold text-accent">
+                    <p className="text-lg text-text-secondary uppercase font-semibold">Precio Venta Final</p>
+                    <p className="text-5xl lg:text-4xl font-extrabold text-accent">
                         {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice || car.price)}
                     </p>
                     {(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && (
-                        <p className="text-sm text-text-secondary mt-1 uppercase">
+                        <p className="text-sm text-text-secondary mt-2 uppercase">
                             Compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
                         </p>
                     )}
@@ -75,11 +80,11 @@ const CarDetailsInfo = ({ car }) => {
                         </p>
                     )}
                 </div>
-                <span className={`mt-2 inline-block text-sm font-bold px-3 py-1 rounded-full ${getStatusChipClass(car.status)} uppercase`}>
+                <span className={`mt-4 inline-block text-sm font-bold px-4 py-1.5 rounded-full ${getStatusChipClass(car.status)} uppercase`}>
                     {car.status} {car.saleDate ? ` - ${new Date(car.saleDate).toLocaleDateString('es-ES')}` : ''}
                 </span>
                 {isReservedAndActive && (
-                    <div className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-yellow-accent bg-yellow-accent/10 px-3 py-1 rounded-md uppercase">
+                    <div className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-yellow-accent bg-yellow-accent/10 px-3 py-1 rounded-full uppercase">
                         <FontAwesomeIcon icon={faClock} />
                         <span>Quedan: {remainingTime}</span>
                     </div>

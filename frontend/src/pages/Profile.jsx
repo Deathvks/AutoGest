@@ -2,7 +2,7 @@
 import React, { useContext, useState, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faTrash, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faTrash, faSave, faTimes, faUser, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 
 const Profile = () => {
     const { user, updateUserProfile, deleteUserAvatar, subscriptionStatus } = useContext(AuthContext);
@@ -90,37 +90,41 @@ const Profile = () => {
     const isExempt = user && (user.role === 'admin' || user.role === 'technician');
     const hasValidSubscription = subscriptionStatus === 'active' || 
         (subscriptionStatus === 'cancelled' && user && new Date(user.subscriptionExpiry) > new Date());
+        
+    const roleStyles = {
+        admin: 'bg-red-accent/10 text-red-accent',
+        user: 'bg-blue-accent/10 text-blue-accent',
+        technician: 'bg-green-accent/10 text-green-accent',
+        technician_subscribed: 'bg-accent/10 text-accent'
+    };
 
     return (
-        <div className="max-w-xl mx-auto">
+        <div className="max-w-2xl mx-auto">
             <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">MI PERFIL</h1>
             
-            <div className="bg-component-bg p-6 rounded-xl border border-border-color shadow-sm">
+            <div className="bg-component-bg backdrop-blur-lg p-6 sm:p-8 rounded-2xl border border-border-color shadow-2xl">
                 <div className="flex flex-col items-center gap-6">
                     <div className="relative">
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                        {/* Se elimina la URL base para que el proxy de Vite funcione en desarrollo */}
                         <img 
-                            src={avatarPreview || (user.avatarUrl ? user.avatarUrl : `https://ui-avatars.com/api/?name=${formData.name}&background=B8860B&color=fff&size=128`)} 
+                            src={avatarPreview || (user.avatarUrl ? user.avatarUrl : `https://ui-avatars.com/api/?name=${formData.name}&background=1A1629&color=F0EEF7&size=128`)} 
                             alt="Avatar"
-                            className="w-32 h-32 rounded-full object-cover border-4 border-border-color"
+                            className="w-32 h-32 rounded-full object-cover border-4 border-border-color shadow-lg"
                         />
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                         {isEditing && (
                             <>
                                 <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
-                                <button onClick={() => avatarInputRef.current.click()} className="absolute bottom-1 right-1 bg-accent text-white w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent-hover transition-colors shadow-md">
+                                <button onClick={() => avatarInputRef.current.click()} className="absolute bottom-1 right-1 bg-accent text-white w-9 h-9 flex items-center justify-center rounded-full hover:bg-accent-hover transition-colors shadow-md border-2 border-component-bg">
                                     <FontAwesomeIcon icon={faCamera} size="sm" />
                                 </button>
                                 {user.avatarUrl && (
-                                     <button onClick={handleDeleteAvatar} className="absolute top-1 right-1 bg-red-accent text-white w-8 h-8 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity shadow-md">
+                                     <button onClick={handleDeleteAvatar} className="absolute top-1 right-1 bg-red-accent text-white w-9 h-9 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity shadow-md border-2 border-component-bg">
                                         <FontAwesomeIcon icon={faTrash} size="sm"/>
                                     </button>
                                 )}
                             </>
                         )}
                         {!isEditing && !isExempt && (
-                            <span className={`absolute -bottom-1 -right-1 block text-white text-xs font-bold px-2 py-0.5 rounded-full border-2 border-component-bg ${hasValidSubscription ? 'bg-accent' : 'bg-text-secondary'}`}>
+                            <span className={`absolute -bottom-0.5 -right-0.5 block text-white text-[8px] font-bold px-1 py-0 rounded-md border-2 border-component-bg ${hasValidSubscription ? 'bg-accent' : 'bg-gray-700'}`}>
                                 {hasValidSubscription ? 'PRO' : 'FREE'}
                             </span>
                         )}
@@ -128,21 +132,27 @@ const Profile = () => {
 
                     <div className="w-full">
                         {isEditing ? (
-                            <div className="space-y-4">
+                            <div className="space-y-4 max-w-sm mx-auto">
                                 <div>
-                                    <label className="block text-sm font-medium text-text-secondary mb-1">Nombre Completo</label>
-                                    <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-accent" />
+                                    <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">Nombre Completo</label>
+                                    <div className="relative">
+                                        <FontAwesomeIcon icon={faUser} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
+                                        <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full pl-11 pr-4 py-2 bg-background/50 border rounded-lg focus:ring-1 focus:ring-accent text-text-primary transition-colors border-border-color focus:border-accent" />
+                                    </div>
                                 </div>
                                 <div>
-                                     <label className="block text-sm font-medium text-text-secondary mb-1">Email</label>
-                                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-accent" />
+                                     <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">Email</label>
+                                     <div className="relative">
+                                        <FontAwesomeIcon icon={faEnvelope} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
+                                        <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full pl-11 pr-4 py-2 bg-background/50 border rounded-lg focus:ring-1 focus:ring-accent text-text-primary transition-colors border-border-color focus:border-accent" />
+                                    </div>
                                 </div>
                             </div>
                         ) : (
                             <div className="text-center">
-                                <h2 className="text-2xl font-bold text-text-primary">{user.name}</h2>
-                                <p className="text-text-secondary">{user.email}</p>
-                                <span className={`mt-2 inline-block text-xs font-bold px-3 py-1 rounded-full ${user.role === 'admin' ? 'bg-red-accent/10 text-red-accent' : (user.role === 'technician' ? 'bg-green-accent/10 text-green-accent' : 'bg-blue-accent/10 text-blue-accent')}`}>{user.role}</span>
+                                <h2 className="text-3xl font-bold text-text-primary">{user.name}</h2>
+                                <p className="text-text-secondary mt-1">{user.email}</p>
+                                <span className={`mt-3 inline-block text-xs font-bold px-3 py-1 rounded-full uppercase ${roleStyles[user.role] || 'bg-background'}`}>{user.role.replace('_', ' ')}</span>
                             </div>
                         )}
                     </div>
@@ -151,21 +161,21 @@ const Profile = () => {
                 <div className="mt-8 pt-6 border-t border-border-color flex justify-center gap-4">
                     {isEditing ? (
                         <>
-                            <button onClick={handleCancel} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center gap-2">
+                            <button onClick={handleCancel} className="bg-component-bg-hover text-text-primary px-6 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center gap-2 font-semibold">
                                 <FontAwesomeIcon icon={faTimes} />
                                 Cancelar
                             </button>
-                            <button onClick={handleSaveChanges} className="bg-accent text-white px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2">
+                            <button onClick={handleSaveChanges} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity flex items-center gap-2 font-semibold">
                                 <FontAwesomeIcon icon={faSave} />
-                                Guardar Cambios
+                                Guardar
                             </button>
                         </>
                     ) : (
-                        <button onClick={() => setIsEditing(true)} className="bg-accent text-white px-4 py-2 rounded-lg shadow-sm hover:bg-accent-hover transition-colors">Editar Perfil</button>
+                        <button onClick={() => setIsEditing(true)} className="bg-accent text-white px-8 py-2.5 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold">Editar Perfil</button>
                     )}
                 </div>
-                {message && <p className="text-sm text-center mt-4 text-green-accent">{message}</p>}
-                {error && <p className="text-sm text-center mt-4 text-red-accent">{error}</p>}
+                {message && <p className="text-sm text-center mt-4 text-green-accent font-semibold">{message}</p>}
+                {error && <p className="text-sm text-center mt-4 text-red-accent font-semibold">{error}</p>}
             </div>
         </div>
     );

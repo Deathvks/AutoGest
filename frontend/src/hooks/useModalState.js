@@ -30,9 +30,11 @@ export const useModalState = () => {
     const [isSubscriptionSuccessModalOpen, setSubscriptionSuccessModalOpen] = useState(false);
     const [isLogoutModalOpen, setLogoutModalOpen] = useState(false);
     const [carForTestDrive, setCarForTestDrive] = useState(null);
-    // --- INICIO DE LA MODIFICACIÓN ---
     const [userToExpel, setUserToExpel] = useState(null);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [pdfModalInfo, setPdfModalInfo] = useState(null); // Nuevo estado para el modal de PDF
     // --- FIN DE LA MODIFICACIÓN ---
+
 
     return {
         isAddUserModalOpen, setAddUserModalOpen,
@@ -63,8 +65,9 @@ export const useModalState = () => {
         isSubscriptionSuccessModalOpen, setSubscriptionSuccessModalOpen,
         isLogoutModalOpen, setLogoutModalOpen,
         carForTestDrive, setCarForTestDrive,
-        // --- INICIO DE LA MODIFICACIÓN ---
         userToExpel, setUserToExpel,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        pdfModalInfo, setPdfModalInfo, // Exponer el nuevo estado
         // --- FIN DE LA MODIFICACIÓN ---
     };
 };

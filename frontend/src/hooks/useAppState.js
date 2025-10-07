@@ -26,13 +26,11 @@ export const useAppState = () => {
     } = useDataFetching();
 
     // 3. Hooks que contienen la lógica de negocio (handlers)
-    // --- INICIO DE LA MODIFICACIÓN ---
     const {
         handleAddCar, handleUpdateCar, handleDeleteCar, toast, setToast,
         handleSellConfirm, handleReserveConfirm, handleConfirmCancelReservation, handleUpdateCarInsurance,
         handleDeleteNote, handleGestoriaPickup, handleGestoriaReturn
     } = useCarHandlers(cars, setCars, locations, setLocations, modalState);
-    // --- FIN DE LA MODIFICACIÓN ---
     
     const { handleAddExpense, handleUpdateExpense, confirmDeleteExpense } = useExpenseHandlers(
         setExpenses, setAllExpenses, modalState
@@ -71,7 +69,6 @@ export const useAppState = () => {
         // Todos los estados de los modales
         ...modalState,
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         // Toast y lógica de deshacer
         toast,
         setToast,
@@ -84,7 +81,6 @@ export const useAppState = () => {
         handleAddCar,
         handleUpdateCar,
         handleDeleteCar,
-        // --- FIN DE LA MODIFICACIÓN ---
         handleSellConfirm,
         handleReserveConfirm,
         handleConfirmCancelReservation,

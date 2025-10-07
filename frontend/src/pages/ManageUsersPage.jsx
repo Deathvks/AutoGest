@@ -2,29 +2,29 @@
 import React, { useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faPlusCircle, faEdit, faTrash, faUserShield, faUser,
+    faPlus, faEdit, faTrash, faUserShield, faUser,
     faEnvelope, faCalendarDay, faCheckCircle, faExclamationTriangle,
     faPencilAlt, faUserPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
+// --- INICIO DE LA MODIFICACIÓN ---
 // --- Componente para la vista de Técnico (Estilo Netflix) ---
-const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser }) => {
+const TechnicianView = ({ users, onAddUser, onEditUser, currentUser }) => {
 
-    const ProfileCard = ({ user, onEdit, onExpel, isCurrentUser }) => (
+    const ProfileCard = ({ user, onEdit, isCurrentUser }) => (
         <div className="group w-32 sm:w-40 cursor-pointer flex flex-col items-center gap-2 text-center">
             <div
-                // Un usuario no puede editar al propietario ni a sí mismo desde aquí
                 onClick={() => !user.isOwner && !isCurrentUser && onEdit(user)}
-                className={`relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden transition-all duration-200 ${user.isOwner ? 'ring-2 ring-accent' : ''} ${!user.isOwner && !isCurrentUser ? 'group-hover:ring-4 group-hover:ring-accent' : ''}`}
+                className={`relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden transition-all duration-200 border-4 ${user.isOwner ? 'border-accent' : 'border-border-color'} ${!user.isOwner && !isCurrentUser ? 'group-hover:ring-4 group-hover:ring-accent group-hover:border-transparent' : ''}`}
             >
                 <img
-                    src={user.avatarUrl ? user.avatarUrl : `https://ui-avatars.com/api/?name=${user.name}&background=3A3A3A&color=EAEAEA&size=160`}
+                    src={user.avatarUrl ? user.avatarUrl : `https://ui-avatars.com/api/?name=${user.name}&background=1A1629&color=F0EEF7&size=160`}
                     alt={user.name}
                     className="w-full h-full object-cover"
                 />
                 {!user.isOwner && !isCurrentUser && (
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <FontAwesomeIcon icon={faPencilAlt} className="text-white text-3xl" />
                     </div>
                 )}
@@ -35,9 +35,6 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
             {user.isOwner && (
                 <span className="text-xs font-bold text-accent uppercase tracking-wider">Líder del Equipo</span>
             )}
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
-            {/* Se elimina el botón de expulsar de esta vista principal. */}
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </div>
     );
 
@@ -46,16 +43,16 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
             onClick={onAdd}
             className="group w-32 sm:w-40 cursor-pointer flex flex-col items-center gap-2 text-center"
         >
-            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-component-bg-hover border-2 border-dashed border-border-color flex items-center justify-center transition-all duration-200 group-hover:border-white group-hover:bg-component-bg">
-                <FontAwesomeIcon icon={faUserPlus} className="text-text-secondary text-4xl transition-colors group-hover:text-white" />
+            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-component-bg-hover border-2 border-dashed border-border-color flex items-center justify-center transition-all duration-200 group-hover:border-accent group-hover:bg-component-bg">
+                <FontAwesomeIcon icon={faUserPlus} className="text-text-secondary text-4xl transition-colors group-hover:text-accent" />
             </div>
-            <span className="text-text-secondary group-hover:text-text-primary transition-colors">Invitar Empleado</span>
+            <span className="text-text-secondary group-hover:text-text-primary transition-colors font-semibold">Invitar Empleado</span>
         </div>
     );
 
     if (!currentUser.companyId) {
         return (
-            <div className="flex flex-col items-center">
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl border border-border-color p-8">
                 <div className="text-center mb-12">
                     <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">Crea tu Equipo</h1>
                     <p className="mt-4 max-w-2xl text-lg text-text-secondary">
@@ -73,7 +70,7 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
     const teamMembers = users.filter(u => !u.isOwner);
 
     return (
-        <div className="flex flex-col items-center">
+        <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl border border-border-color p-8">
             <div className="text-center mb-12">
                 <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">Gestión de Equipo</h1>
                 <p className="mt-4 max-w-2xl text-lg text-text-secondary">
@@ -81,9 +78,9 @@ const TechnicianView = ({ users, onAddUser, onEditUser, onExpelUser, currentUser
                 </p>
             </div>
             <div className="flex flex-wrap justify-center items-start gap-x-4 gap-y-8 sm:gap-x-8">
-                {teamOwner && <ProfileCard key={teamOwner.id} user={teamOwner} onEdit={onEditUser} onExpel={onExpelUser} currentUser={currentUser} isCurrentUser={teamOwner.id === currentUser.id} />}
+                {teamOwner && <ProfileCard key={teamOwner.id} user={teamOwner} onEdit={onEditUser} currentUser={currentUser} isCurrentUser={teamOwner.id === currentUser.id} />}
                 {teamMembers.map(user => (
-                    <ProfileCard key={user.id} user={user} onEdit={onEditUser} onExpel={onExpelUser} currentUser={currentUser} isCurrentUser={user.id === currentUser.id} />
+                    <ProfileCard key={user.id} user={user} onEdit={onEditUser} currentUser={currentUser} isCurrentUser={user.id === currentUser.id} />
                 ))}
                 {(currentUser.isOwner || currentUser.canManageRoles) && (
                     <AddProfileCard onAdd={onAddUser} />
@@ -102,10 +99,10 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
             admin: 'bg-red-accent/10 text-red-accent',
             user: 'bg-blue-accent/10 text-blue-accent',
             technician: 'bg-green-accent/10 text-green-accent',
-            technician_subscribed: 'bg-purple-500/10 text-purple-400'
+            technician_subscribed: 'bg-accent/10 text-accent'
         };
         return (
-            <span className={`px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap ${roleStyles[role] || 'bg-zinc-200'}`}>
+            <span className={`px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap ${roleStyles[role] || 'bg-background'}`}>
                 {role.replace('_', ' ')}
             </span>
         );
@@ -130,10 +127,10 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                 <h1 className="text-3xl font-bold text-text-primary tracking-tight">Gestión de Usuarios</h1>
                 <button
                     onClick={onAddUser}
-                    className="bg-blue-accent text-white w-12 h-12 flex items-center justify-center rounded-xl shadow-sm hover:opacity-90 transition-opacity"
+                    className="bg-accent text-white w-12 h-12 flex items-center justify-center rounded-xl shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity"
                     title="Añadir nuevo usuario"
                 >
-                    <FontAwesomeIcon icon={faPlusCircle} className="w-6 h-6" />
+                    <FontAwesomeIcon icon={faPlus} className="w-6 h-6" />
                 </button>
             </div>
 
@@ -141,7 +138,7 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                 <>
                     <div className="space-y-4 md:hidden">
                         {users.map(user => (
-                            <div key={user.id} className="bg-component-bg rounded-xl border border-border-color p-4">
+                            <div key={user.id} className="bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color p-4 shadow-2xl">
                                 <div className="flex justify-between items-start gap-3 mb-3">
                                     <div className="min-w-0 flex-1">
                                         <p className="font-bold text-text-primary flex items-center gap-2 truncate">
@@ -170,7 +167,7 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                                             <FontAwesomeIcon icon={faEdit} />
                                         </button>
                                         {currentUser.id !== user.id && (
-                                            <button onClick={() => onDeleteUser(user)} className="text-red-accent hover:opacity-80 transition-opacity p-2" title="Eliminar usuario">
+                                            <button onClick={() => onDeleteUser(user)} className="text-text-secondary hover:text-red-accent transition-opacity p-2" title="Eliminar usuario">
                                                 <FontAwesomeIcon icon={faTrash} />
                                             </button>
                                         )}
@@ -180,10 +177,10 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                         ))}
                     </div>
 
-                    <div className="hidden md:block bg-component-bg rounded-xl border border-border-color overflow-hidden">
+                    <div className="hidden md:block bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color overflow-hidden shadow-2xl">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left text-text-secondary">
-                                <thead className="text-xs uppercase bg-component-bg-hover">
+                                <thead className="text-xs uppercase bg-component-bg-hover/50">
                                     <tr>
                                         <th scope="col" className="px-6 py-4">Nombre</th>
                                         <th scope="col" className="px-6 py-4">Email</th>
@@ -195,7 +192,7 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                                 </thead>
                                 <tbody className="divide-y divide-border-color">
                                     {users.map(user => (
-                                        <tr key={user.id} className="hover:bg-component-bg-hover">
+                                        <tr key={user.id} className="hover:bg-component-bg-hover/50 transition-colors">
                                             <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{user.name}</td>
                                             <td className="px-6 py-4">{user.email}</td>
                                             <td className="px-6 py-4"><RoleBadge role={user.role} /></td>
@@ -219,8 +216,8 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                     </div>
                 </>
             ) : (
-                <div className="text-center py-16 px-4 bg-component-bg rounded-xl border border-border-color">
-                    <FontAwesomeIcon icon={faUserShield} className="text-5xl text-zinc-500 dark:text-zinc-700 mb-4" />
+                <div className="text-center py-16 px-4 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl">
+                    <FontAwesomeIcon icon={faUserShield} className="text-5xl text-text-secondary/50 mb-4" />
                     <h3 className="text-xl font-semibold text-text-primary">No hay usuarios que gestionar</h3>
                     <p className="text-text-secondary mt-2">Cuando añadas un nuevo usuario, aparecerá aquí.</p>
                 </div>
@@ -228,6 +225,7 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
         </div>
     );
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 
 // --- Componente Principal ---

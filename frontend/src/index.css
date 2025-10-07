@@ -4,153 +4,235 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definición de las variables de color del tema */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
 @layer base {
   :root {
-    /* Tema Claro Profesional y Limpio */
-    --color-background: #f4f5f7; /* Gris muy claro */
-    --color-component-bg: #ffffff; /* Blanco puro */
-    --color-component-bg-hover: #f8fafc; /* slate-50 */
-    --color-border: #e5e7eb; /* gray-200 */
-    --color-text-primary: #111827; /* gray-900 */
-    --color-text-secondary: #6b7280; /* gray-500 */
-    
-    /* Colores de acento */
-    --color-accent: #B8860B; /* DarkGoldenRod - un dorado oscuro elegante */
-    --color-accent-hover: #D4AF37; /* Gold - un poco más claro para hover */
-    --color-accent-rgb: 184, 134, 11;
-    
-    /* Colores de estado */
-    --color-green-accent: #16a34a; 
-    --color-red-accent: #dc2626;   
-    --color-yellow-accent: #f59e0b; 
-    --color-blue-accent: #3b82f6;
+    /* Tema Oscuro Permanente - Estilo Liquid Glass */
+    --color-background: transparent;
+    --color-component-bg: rgba(255, 255, 255, 0.1);
+    --color-component-bg-hover: rgba(255, 255, 255, 0.15);
+    --color-border: rgba(255, 255, 255, 0.2);
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #cbd5e1;
+    --color-popup-bg: rgba(26, 22, 41, 0.95);
 
-    /* --- INICIO DE LA MODIFICACIÓN --- */
-    --color-accent-soft-glow: rgba(184, 134, 11, 0.15);
-    /* --- FIN DE LA MODIFICACIÓN --- */
-  }
-
-  .dark {
-    /* Tema Oscuro Lujoso */
-    --color-background: #121212;
-    --color-component-bg: #1E1E1E;
-    --color-component-bg-hover: #2A2A2A;
-    --color-border: #3A3A3A;
-    --color-text-primary: #EAEAEA;
-    --color-text-secondary: #888888;
-    
-    /* Colores de acento */
-    --color-accent: #C5A47E;
-    --color-accent-hover: #D9B48F;
-    --color-accent-rgb: 197, 164, 126;
+    /* Paleta de Acento por Defecto (Púrpura) */
+    --color-accent: rgb(168, 134, 226);
+    --color-accent-hover: rgb(187, 163, 233);
+    --color-accent-rgb: 168, 134, 226;
+    --color-accent-soft-glow: rgba(168, 134, 226, 0.15);
 
     /* Colores de estado */
-    --color-green-accent: #22c55e;
-    --color-red-accent: #f87171;
+    --color-green-accent: #4ade80;
+    --color-red-accent: rgb(224, 123, 142);
     --color-yellow-accent: #facc15;
     --color-blue-accent: #60a5fa;
 
-    --color-accent-soft-glow: rgba(197, 164, 126, 0.2);
+    /* Color para los círculos animados del fondo */
+    --color-circles-bg: linear-gradient(120deg, rgb(135, 60, 141), rgb(182, 85, 107));
   }
 
   body {
-    background-color: var(--color-background);
+    background: linear-gradient(-70deg, rgb(53, 33, 90), rgb(92, 37, 165));
+    background-attachment: fixed;
     color: var(--color-text-secondary);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  /* --- INICIO DE LA MODIFICACIÓN --- */
+  input, textarea, select {
+    @apply focus:outline-none;
+  }
+  /* --- FIN DE LA MODIFICACIÓN --- */
+
+  body::-webkit-scrollbar {
+    display: none;
   }
 }
 
+.circles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.circles {
+  position: absolute;
+  height: 270px;
+  width: 450px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--color-circles-bg);
+}
+
+.circle-1 {
+  height: 300px;
+  width: 300px;
+  top: 100px;
+  left: -50px;
+  opacity: 0.5;
+  animation: float 6s cubic-bezier(0.54, 0.085, 0.5, 0.92) 3.5s infinite alternate;
+}
+
+.circle-2 {
+  height: 240px;
+  width: 240px;
+  bottom: 40px;
+  right: -100px;
+  opacity: 0.5;
+  animation: float 6s cubic-bezier(0.54, 0.085, 0.5, 0.92) 2s infinite alternate;
+}
+
+
 :root {
-    --color-blue-accent: var(--color-accent);
+  --color-blue-accent: var(--color-accent);
 }
 
 body {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Estilos para el icono del calendario */
 input[type="date"]::-webkit-calendar-picker-indicator {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%236b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
 }
 
-.dark input[type="date"]::-webkit-calendar-picker-indicator {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23888888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>');
+input[type="date"] {
+  color-scheme: dark;
 }
-
-input[type="date"] { color-scheme: light; }
-.dark input[type="date"] { color-scheme: dark; }
 
 /* Animaciones y transiciones */
-@keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fade-in-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes rocket-liftoff {
-    0% { transform: translateY(50px) scale(0.8) rotate(-10deg); opacity: 0; }
-    100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
-}
-@keyframes background-pan {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  0% {
+    transform: translateY(50px) scale(0.8) rotate(-10deg);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
 
-.animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
-.animate-fade-in-down { animation: fade-in-down 0.6s ease-out forwards; }
-.animate-rocket-liftoff { animation: rocket-liftoff 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+@keyframes float {
+  50% {
+    transform: translateY(10px) translateX(5px);
+  }
+}
 
-body, .bg-background, .bg-component-bg, .bg-component-bg-hover, .border-border-color, .text-text-primary, .text-text-secondary {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+body,
+.bg-background,
+.bg-component-bg,
+.bg-component-bg-hover,
+.border-border-color,
+.text-text-primary,
+.text-text-secondary {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 @keyframes animated-gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
-/* --- INICIO DE LA MODIFICACIÓN --- */
+/* Animación de resplandor para bordes */
+@keyframes glow {
+  0% {
+    border-color: var(--color-border);
+  }
+
+  50% {
+    border-color: var(--color-accent);
+  }
+
+  100% {
+    border-color: var(--color-border);
+  }
+}
+
 .animated-premium-background {
-    background: linear-gradient(
-        -45deg, 
-        var(--color-component-bg-hover), 
-        var(--color-accent-soft-glow), 
-        var(--color-component-bg-hover)
-    );
-    background-size: 400% 400%;
-    animation: animated-gradient 15s ease infinite;
+  background: linear-gradient(-45deg, #1A1629, #26213D, #1A1629);
+  background-size: 400% 400%;
+  animation: animated-gradient 20s ease infinite;
+  position: relative;
+  overflow: hidden;
 }
 
-.dark .animated-premium-background {
-    background: linear-gradient(-45deg, #1e1e1e, #2a2a2a, #1e1e1e);
-    background-size: 400% 400%;
-    animation: animated-gradient 20s ease infinite;
-    position: relative;
-    overflow: hidden;
+.animated-premium-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(-45deg,
+      transparent,
+      rgba(var(--color-accent-rgb), 0.15),
+      transparent,
+      rgba(var(--color-accent-rgb), 0.1),
+      transparent);
+  background-size: 600% 600%;
+  animation: animated-gradient 12s ease-in-out infinite alternate;
+  opacity: 0.8;
+  z-index: 0;
 }
 
-.dark .animated-premium-background::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-        -45deg, 
-        transparent, 
-        rgba(var(--color-accent-rgb), 0.15),
-        transparent,
-        rgba(var(--color-accent-rgb), 0.1),
-        transparent
-    );
-    background-size: 600% 600%;
-    animation: animated-gradient 12s ease-in-out infinite alternate;
-    opacity: 0.8;
-    z-index: 0;
+.animated-premium-background>* {
+  position: relative;
+  z-index: 1;
 }
-
-.dark .animated-premium-background > * {
-    position: relative;
-    z-index: 1;
-}
-/* --- FIN DE LA MODIFICACIÓN --- */

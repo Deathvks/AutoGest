@@ -14,7 +14,7 @@ import AppRoutes from '../components/AppRoutes';
 import AppModals from '../components/AppModals';
 import VersionIndicator from '../components/VersionIndicator';
 
-const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
+const MainLayout = () => {
     const appState = useAppState();
     const { isDataLoading, setLogoutModalOpen } = appState;
     const { user, subscriptionStatus, isRefreshing } = useContext(AuthContext);
@@ -67,24 +67,22 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
                 <Sidebar onLogoutClick={() => setLogoutModalOpen(true)} />
                 <div className="flex flex-col flex-1 min-w-0">
                     <Header />
-                    <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex items-center justify-center">
-                        <div className="text-center bg-component-bg p-8 rounded-xl border border-border-color shadow-sm max-w-lg">
+                    <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex items-center justify-center no-scrollbar">
+                        <div className="w-full max-w-lg space-y-6 rounded-2xl bg-component-bg p-8 text-center shadow-2xl backdrop-blur-lg border border-border-color">
                             <FontAwesomeIcon icon={faUsers} className="text-5xl text-accent mb-4" />
                             <h2 className="text-2xl font-bold text-text-primary">Acción Requerida</h2>
                             <p className="mt-2 text-text-secondary">
                                 Para poder usar la aplicación, necesitas unirte a un equipo o tener una suscripción activa.
                             </p>
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                             <div className="mt-6">
                                 <Link 
                                     to="/subscription" 
-                                    className="inline-flex items-center justify-center gap-2 bg-accent text-white font-semibold px-6 py-3 rounded-lg shadow-sm hover:bg-accent-hover transition-colors w-full sm:w-auto"
+                                    className="inline-flex items-center justify-center gap-2 bg-accent text-white font-semibold px-6 py-3 rounded-lg shadow-lg shadow-accent/20 transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background w-full sm:w-auto"
                                 >
                                     <FontAwesomeIcon icon={faCreditCard} />
                                     <span>Ver Planes de Suscripción</span>
                                 </Link>
                             </div>
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
                     </main>
                 </div>
@@ -103,19 +101,17 @@ const MainLayout = ({ isDarkMode, setIsDarkMode }) => {
             <Sidebar onLogoutClick={() => setLogoutModalOpen(true)} />
             <div className="flex flex-col flex-1 min-w-0">
                 <Header />
-                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 no-scrollbar">
                     <Suspense fallback={<div className="flex h-full w-full items-center justify-center">Cargando página...</div>}>
                         <AppRoutes 
                             appState={appState} 
-                            isDarkMode={isDarkMode} 
-                            setIsDarkMode={setIsDarkMode} 
                             onLogoutClick={() => setLogoutModalOpen(true)} 
                         />
                     </Suspense>
                 </main>
             </div>
             <BottomNav />
-            <VersionIndicator className="hidden lg:block fixed bottom-6 right-6 bg-component-bg px-2 py-1 rounded border border-border-color" />
+            <VersionIndicator className="hidden lg:block fixed bottom-4 right-4 bg-component-bg/50 px-2 py-1 rounded-lg border border-border-color text-xs" />
             <AppModals appState={appState} />
         </div>
     );

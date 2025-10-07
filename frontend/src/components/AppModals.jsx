@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 // Importa todos los componentes de modales
-import CarDetailsModal from './modals/CarDetailsModal'; // --- INICIO DE LA MODIFICACIÓN ---
+import CarDetailsModal from './modals/CarDetailsModal';
 import SellCarModal from './modals/SellCarModal';
 import AddCarModal from './modals/AddCarModal';
 import EditCarModal from './modals/EditCarModal';
@@ -30,9 +30,12 @@ import LogoutConfirmationModal from './modals/LogoutConfirmationModal';
 import TestDriveModal from './modals/TestDriveModal';
 import ExpelUserConfirmationModal from './modals/ExpelUserConfirmationModal';
 import BusinessDataModal from './modals/BusinessDataModal';
+// --- INICIO DE LA MODIFICACIÓN ---
+import GeneratePdfModal from './modals/GeneratePdfModal';
+// --- FIN DE LA MODIFICACIÓN ---
 
 const AppModals = ({ appState }) => {
-    const { logout } = useContext(AuthContext);
+    const { logout, user } = useContext(AuthContext);
 
     const {
         incidents, locations, allExpenses, cars, users,
@@ -52,6 +55,7 @@ const AppModals = ({ appState }) => {
         isLogoutModalOpen, setLogoutModalOpen,
         carForTestDrive, setCarForTestDrive,
         userToExpel, setUserToExpel,
+        pdfModalInfo, setPdfModalInfo,
         handleSaveBusinessData, handleUserAdded, handleUserUpdated,
         handleUserDeleted, handleExpelUser, handleAddCar, handleUpdateCar,
         handleDeleteCar, handleSellConfirm, handleReserveConfirm,
@@ -63,7 +67,6 @@ const AppModals = ({ appState }) => {
 
     return (
         <>
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <CarDetailsModal
                 car={carToView}
                 incidents={carToView ? incidents.filter(inc => inc.carId === carToView.id) : []}
@@ -84,8 +87,14 @@ const AppModals = ({ appState }) => {
                 onGestoriaReturnClick={(car) => { setCarToView(null); setCarForGestoriaReturn(car); }}
                 onUpdateCar={handleUpdateCar}
                 onTestDriveClick={(car) => { setCarToView(null); setCarForTestDrive(car); }}
+                // --- INICIO DE LA MODIFICACIÓN ---
+                onGeneratePdfClick={(car, type) => {
+                    const nextNumber = type === 'proforma' ? user.proformaCounter : user.invoiceCounter;
+                    setPdfModalInfo({ car, type, number: nextNumber });
+                    setCarToView(null);
+                }}
+                // --- FIN DE LA MODIFICACIÓN ---
             />
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
             
             {isAddCarModalOpen && <AddCarModal onClose={() => setAddCarModalOpen(false)} onAdd={handleAddCar} locations={locations} />}
             {carToEdit && <EditCarModal car={carToEdit} onClose={() => setCarToEdit(null)} onUpdate={(formData) => handleUpdateCar(carToEdit.id, formData)} locations={locations} />}
@@ -130,6 +139,23 @@ const AppModals = ({ appState }) => {
                 onConfirm={logout}
             />
             {carForTestDrive && <TestDriveModal car={carForTestDrive} onClose={() => setCarForTestDrive(null)} />}
+
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            {pdfModalInfo && (
+                <GeneratePdfModal
+                    isOpen={!!pdfModalInfo}
+                    onClose={() => setPdfModalInfo(null)}
+                    onConfirm={async (type, number, igicRate) => {
+                        // Lógica de generación de PDF movida a CarDetailsActions, se pasará la función
+                        // Aquí solo cerramos el modal
+                        setPdfModalInfo(null);
+                    }}
+                    type={pdfModalInfo.type}
+                    defaultNumber={pdfModalInfo.number}
+                    car={pdfModalInfo.car}
+                />
+            )}
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
     );
 };

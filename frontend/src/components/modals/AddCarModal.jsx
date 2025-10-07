@@ -37,10 +37,8 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        // --- INICIO DE LA MODIFICACIÓN ---
         const finalValue = type === 'checkbox' ? checked : (typeof value === 'string' ? value.toUpperCase() : value);
         setNewCar(prev => ({ ...prev, [name]: finalValue }));
-        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     const handleImageChange = (e) => {
@@ -104,7 +102,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         if (!newCar.make.trim()) errors.make = 'LA MARCA ES OBLIGATORIA';
         if (!newCar.model.trim()) errors.model = 'EL MODELO ES OBLIGATORIO';
         if (!newCar.licensePlate.trim()) errors.licensePlate = 'LA MATRÍCULA ES OBLIGATORIA';
-        if ((user.role === 'admin' || user.role === 'technician') && !newCar.purchasePrice.trim()) {
+        if ((user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && !newCar.purchasePrice.trim()) {
             errors.purchasePrice = 'EL PRECIO DE COMPRA ES OBLIGATORIO';
         }
         if (!newCar.price.trim()) errors.price = 'EL PRECIO DE VENTA ES OBLIGATORIO';
@@ -162,16 +160,18 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
 
     return (
        <>
-           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-                <div className="bg-component-bg rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-                    <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
-                        <h2 className="text-xl font-bold text-text-primary">AÑADIR NUEVO COCHE</h2>
+           {/* --- INICIO DE LA MODIFICACIÓN --- */}
+           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in-up">
+           {/* --- FIN DE LA MODIFICACIÓN --- */}
+                <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-border-color">
+                    <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
+                        <h2 className="text-xl font-bold text-text-primary uppercase">Añadir Nuevo Coche</h2>
                         <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
                             <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                         </button>
                     </div>
 
-                    <form onSubmit={(e) => e.preventDefault()} noValidate className="flex-grow overflow-y-auto p-6 space-y-4">
+                    <form onSubmit={(e) => e.preventDefault()} noValidate className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar">
                         <AddCarFileUploads
                             imagePreview={imagePreview}
                             handleImageChange={handleImageChange}
@@ -181,28 +181,30 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                             handleFileChange={handleFileChange}
                             handleRemoveFile={handleRemoveFile}
                         />
-                        <AddCarFormFields
-                            newCar={newCar}
-                            fieldErrors={fieldErrors}
-                            locations={locationOptions}
-                            fuelOptions={fuelOptions}
-                            transmissionOptions={transmissionOptions}
-                            handleChange={handleChange}
-                            handleLocationSelect={handleLocationSelect}
-                            handleNewLocationInput={handleNewLocationInput}
-                            handleSelectChange={handleSelectChange}
-                            handleTagKeyDown={handleTagKeyDown}
-                            tagInput={tagInput}
-                            setTagInput={setTagInput}
-                            removeTag={removeTag}
-                        />
+                        <div className="pt-6 border-t border-border-color">
+                            <AddCarFormFields
+                                newCar={newCar}
+                                fieldErrors={fieldErrors}
+                                locations={locationOptions}
+                                fuelOptions={fuelOptions}
+                                transmissionOptions={transmissionOptions}
+                                handleChange={handleChange}
+                                handleLocationSelect={handleLocationSelect}
+                                handleNewLocationInput={handleNewLocationInput}
+                                handleSelectChange={handleSelectChange}
+                                handleTagKeyDown={handleTagKeyDown}
+                                tagInput={tagInput}
+                                setTagInput={setTagInput}
+                                removeTag={removeTag}
+                            />
+                        </div>
                     </form>
 
-                    {error && <p className="flex-shrink-0 px-6 pb-4 text-sm text-red-accent text-center">{error}</p>}
+                    {error && <p className="flex-shrink-0 px-6 pb-4 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
 
                     <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-border-color">
-                        <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold">CANCELAR</button>
-                        <button onClick={handleAdd} className="bg-blue-accent text-white px-6 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity font-semibold">AÑADIR COCHE</button>
+                        <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold">CANCELAR</button>
+                        <button onClick={handleAdd} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold">AÑADIR COCHE</button>
                     </div>
                 </div>
             </div>

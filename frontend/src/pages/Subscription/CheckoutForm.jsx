@@ -28,17 +28,17 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
         hidePostalCode: true,
         style: {
             base: {
-                color: theme === 'dark' ? '#EAEAEA' : '#111827',
+                color: theme === 'dark' ? '#F0EEF7' : '#18181b',
                 fontFamily: 'Inter, sans-serif',
                 fontSmoothing: 'antialiased',
                 fontSize: '16px',
                 '::placeholder': {
-                    color: theme === 'dark' ? '#888888' : '#6b7280',
+                    color: theme === 'dark' ? '#908CAA' : '#71717a',
                 },
             },
             invalid: {
-                color: '#dc2626',
-                iconColor: '#dc2626',
+                color: theme === 'dark' ? '#f87171' : '#dc2626',
+                iconColor: theme === 'dark' ? '#f87171' : '#dc2626',
             },
         },
     }), [theme]);
@@ -91,38 +91,26 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
         }
 
         try {
-            console.log('[CheckoutForm] Creando suscripción con paymentMethodId:', paymentMethod.id);
             const response = await api.subscriptions.createSubscription(paymentMethod.id);
-            console.log('[CheckoutForm] Respuesta del backend:', response);
 
-            // Caso 1: Pago completado inmediatamente sin autenticación adicional
             if (response.status === 'active' && !response.clientSecret) {
-                console.log('[CheckoutForm] Pago completado inmediatamente. Suscripción activa.');
                 onSuccessfulPayment();
                 return;
             }
 
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Caso 2 y 3: Hay clientSecret (con o sin requiresAction)
             if (response.clientSecret) {
-                console.log('[CheckoutForm] Se necesita acción del usuario. Confirmando pago con client_secret...');
                 const { error: confirmError } = await stripe.confirmCardPayment(response.clientSecret);
 
                 if (confirmError) {
-                    console.error('[CheckoutForm] Error al confirmar el pago 3D Secure:', confirmError);
                     setError(confirmError.message);
                 } else {
-                    console.log('[CheckoutForm] Pago confirmado con éxito tras la autenticación.');
                     onSuccessfulPayment();
                 }
             } else {
-                console.error('[CheckoutForm] Respuesta inesperada del backend, no se recibió clientSecret cuando se esperaba:', response);
                 setError('No se pudo procesar el pago. Por favor, inténtalo de nuevo.');
             }
-            // --- FIN DE LA MODIFICACIÓN ---
 
         } catch (apiError) {
-            console.error('[CheckoutForm] Error en la llamada a la API:', apiError);
             setError(apiError.message || 'Error al procesar el pago.');
         }
 
@@ -130,28 +118,28 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
     };
 
     return (
-        <div className="p-8 bg-component-bg rounded-xl border border-border-color shadow-lg h-full flex flex-col animated-premium-background">
+        <div className="p-8 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl h-full flex flex-col animated-premium-background">
             <h3 className="text-xl font-bold text-text-primary mb-2 animate-fade-in-down">COMPLETA TU SUSCRIPCIÓN</h3>
             <p className="text-text-secondary mb-6 animate-fade-in-down" style={{ animationDelay: '150ms' }}>Acceso completo a todas las herramientas por un único pago mensual.</p>
             <form onSubmit={handleSubmit} className="space-y-6 flex-grow flex flex-col">
                 <div className="flex-grow animate-fade-in-up" style={{ animationDelay: '300ms' }}>
                     {adBlockerDetected && (
-                        <div className="bg-yellow-accent/10 text-yellow-accent p-3 rounded-lg border border-border-color flex items-center gap-3 mb-4">
+                        <div className="bg-yellow-accent/10 text-yellow-accent p-3 rounded-lg border border-yellow-accent/20 flex items-center gap-3 mb-4">
                             <FontAwesomeIcon icon={faShieldAlt} className="w-5 h-5 flex-shrink-0" />
                             <p className="text-sm font-medium">
                                 {isBraveBrowser
-                                    ? '¿USAS BRAVE? SU BLOQUEADOR PUEDE OCULTAR OPCIONES DE PAGO COMO "LINK". PARA VER TODAS LAS OPCIONES, DESACTIVA LOS ESCUDOS.'
+                                    ? '¿USAS BRAVE? SU BLOQUEADOR PUEDE OCULTAR OPCIONES DE PAGO. PARA VER TODAS LAS OPCIONES, DESACTIVA LOS ESCUDOS.'
                                     : '¡ATENCIÓN! HEMOS DETECTADO UN BLOQUEADOR. PARA ASEGURAR QUE EL PAGO FUNCIONE, DESACTÍVALO TEMPORALMENTE.'}
                             </p>
                         </div>
                     )}
-                    <label className="block text-sm font-medium text-text-secondary mb-2">DATOS DE LA TARJETA</label>
-                    <div className="p-4 bg-background rounded-lg border border-border-color shadow-inner">
+                    <label className="block text-sm font-semibold text-text-primary mb-2 uppercase">Datos de la Tarjeta</label>
+                    <div className="p-4 bg-component-bg-hover rounded-lg border border-border-color shadow-inner">
                         <CardElement key={theme} options={cardElementOptions} />
                     </div>
                 </div>
                 {error && (
-                    <div className="text-red-accent text-sm flex items-center gap-2">
+                    <div className="text-red-accent text-sm flex items-center gap-2 font-semibold">
                         <FontAwesomeIcon icon={faExclamationTriangle} />
                         {error}
                     </div>
@@ -159,7 +147,7 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                 <button
                     type="submit"
                     disabled={!stripe || processing}
-                    className="w-full bg-accent text-white font-semibold py-3 rounded-lg shadow-[0_5px_20px_-5px_rgba(var(--color-accent-rgb),0.5)] hover:shadow-[0_8px_25px_-8px_rgba(var(--color-accent-rgb),0.8)] transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-wait animate-fade-in-up"
+                    className="w-full bg-accent text-white font-semibold py-3 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-wait animate-fade-in-up"
                     style={{ animationDelay: '450ms' }}
                 >
                     {processing ? <FontAwesomeIcon icon={faSpinner} spin /> : 'SUSCRIBIRME AHORA (1,00€/MES)'}

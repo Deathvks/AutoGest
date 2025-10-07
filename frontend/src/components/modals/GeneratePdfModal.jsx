@@ -10,7 +10,6 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
     const { refreshUser } = useContext(AuthContext);
     const [number, setNumber] = useState(defaultNumber);
     const [error, setError] = useState('');
-    // --- INICIO DE LA MODIFICACIÓN ---
     const [igicRate, setIgicRate] = useState('7'); // El IGIC por defecto
     
     const igicOptions = [
@@ -20,7 +19,6 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
         { id: '9.5', name: '9.5% (Incrementado)' },
         { id: '13.5', name: '13.5% (Especial)' },
     ];
-    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         setNumber(defaultNumber);
@@ -43,10 +41,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             
             await refreshUser();
             
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Se pasa el IGIC seleccionado a la función de confirmación
             onConfirm(type, num, parseFloat(igicRate));
-            // --- FIN DE LA MODIFICACIÓN ---
         } catch (err) {
             setError(err.message || 'Error al actualizar los datos.');
         }
@@ -56,23 +51,23 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
-                <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col border border-border-color">
+                <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
+                    <h2 className="text-xl font-bold text-text-primary flex items-center gap-3">
                         <FontAwesomeIcon icon={faFileInvoice} />
-                        Generar {type === 'proforma' ? 'Proforma' : 'Factura'}
+                        GENERAR {type === 'proforma' ? 'PROFORMA' : 'FACTURA'}
                     </h2>
                     <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
                         <FontAwesomeIcon icon={faTimes} className="w-6 h-6" />
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6 space-y-4">
+                <div className="flex-grow overflow-y-auto p-6 space-y-6">
                     <p className="text-text-secondary text-center">
                         Introduce el número para la {type === 'proforma' ? 'proforma' : 'factura'} o usa el siguiente número disponible.
                     </p>
                     <div>
-                        <label htmlFor="pdfNumber" className="block text-sm font-medium text-text-secondary mb-1">
+                        <label htmlFor="pdfNumber" className="block text-sm font-semibold text-text-primary mb-1 uppercase">
                             Número de {type === 'proforma' ? 'Proforma' : 'Factura'}
                         </label>
                         <input
@@ -80,10 +75,9 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                             type="number"
                             value={number}
                             onChange={(e) => setNumber(e.target.value)}
-                            className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary"
+                            className="w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent"
                         />
                     </div>
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     {type === 'factura' && (
                         <Select
                             label="Porcentaje de IGIC a aplicar"
@@ -93,13 +87,12 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                             icon={faPercentage}
                         />
                     )}
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
-                     {error && <p className="mt-2 text-sm text-red-accent text-center">{error}</p>}
+                     {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
                 </div>
 
                 <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-border-color">
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">CANCELAR</button>
-                    <button onClick={handleConfirm} className="bg-blue-accent text-white px-6 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity font-semibold">GENERAR PDF</button>
+                    <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold uppercase">Cancelar</button>
+                    <button onClick={handleConfirm} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold uppercase">Generar PDF</button>
                 </div>
             </div>
         </div>

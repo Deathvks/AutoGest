@@ -2,9 +2,10 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload, faTags, faCar, faCalendarDay, faEuroSign, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faTags, faCar, faCalendarDay } from '@fortawesome/free-solid-svg-icons';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import CarPlaceholderImage from './MyCars/CarPlaceholderImage';
 
 const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
 
@@ -21,7 +22,8 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                 );
                 const profit = (parseFloat(car.salePrice) || 0) - (parseFloat(car.purchasePrice) || 0) - totalExpenses;
                 return { ...car, totalExpenses, profit };
-            });
+            })
+            .sort((a, b) => new Date(b.saleDate || b.updatedAt) - new Date(a.saleDate || a.updatedAt));
     }, [cars, expenses]);
 
     const generatePDF = () => {
@@ -52,10 +54,10 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                 <button 
                     onClick={generatePDF} 
                     disabled={noSoldCars}
-                    className="bg-component-bg text-text-secondary w-12 h-12 flex items-center justify-center rounded-xl hover:bg-component-bg-hover transition-colors border border-border-color disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-component-bg backdrop-blur-lg text-text-primary w-12 h-12 flex items-center justify-center rounded-xl hover:bg-component-bg-hover transition-colors border border-border-color disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl"
                     title={noSoldCars ? "No hay ventas para exportar" : "Generar PDF"}
                 >
-                    <FontAwesomeIcon icon={faDownload} className="w-6 h-6" />
+                    <FontAwesomeIcon icon={faDownload} className="w-5 h-5" />
                 </button>
             </div>
 
@@ -65,36 +67,40 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                         {soldCarsWithProfit.map(car => (
                             <div 
                                 key={car.id} 
-                                className="bg-component-bg rounded-xl border border-border-color p-4 cursor-pointer hover:bg-component-bg-hover transition-colors"
+                                className="bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color p-4 cursor-pointer hover:bg-component-bg-hover/50 transition-colors shadow-2xl"
                                 onClick={() => onViewDetailsClick(car)}
                             >
                                 <div className="flex justify-between items-start mb-3">
-                                    <div className="flex items-center gap-3">
-                                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                                        <img 
-                                            src={car.imageUrl ? car.imageUrl : `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`} 
-                                            className="w-16 h-12 object-cover rounded-md flex-shrink-0" 
-                                            alt={`${car.make} ${car.model}`} 
-                                        />
-                                        {/* --- FIN DE LA MODIFICACIÓN --- */}
-                                        <div>
-                                            <p className="font-semibold text-text-primary">{car.make} {car.model}</p>
-                                            <p className="text-sm text-text-secondary flex items-center gap-1">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-16 h-12 rounded-lg flex-shrink-0 border border-border-color overflow-hidden">
+                                            {car.imageUrl ? (
+                                                <img 
+                                                    src={car.imageUrl} 
+                                                    className="w-full h-full object-cover" 
+                                                    alt={`${car.make} ${car.model}`} 
+                                                />
+                                            ) : (
+                                                <CarPlaceholderImage car={car} size="small" />
+                                            )}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-text-primary truncate">{car.make} {car.model}</p>
+                                            <p className="text-sm text-text-secondary flex items-center gap-1.5">
                                                 <FontAwesomeIcon icon={faCalendarDay} className="w-3 h-3" />
                                                 {new Date(car.registrationDate).getFullYear()}
                                             </p>
                                             <p className="text-sm text-text-secondary">{car.licensePlate}</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right flex-shrink-0 ml-2">
                                         <p className={`font-bold text-lg ${car.profit >= 0 ? 'text-green-accent' : 'text-red-accent'}`}>
                                             {car.profit >= 0 ? '+' : ''}{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.profit)}
                                         </p>
-                                        <p className="text-xs text-text-secondary">Beneficio/Pérdida</p>
+                                        <p className="text-xs text-text-secondary">Beneficio</p>
                                     </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-3 items-center pt-3 border-t border-border-color text-sm">
+                                <div className="grid grid-cols-3 items-center pt-3 border-t border-border-color text-xs">
                                     <div className="text-left">
                                         <p className="text-text-secondary">Compra:</p>
                                         <p className="text-text-primary font-medium">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</p>
@@ -112,10 +118,10 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                         ))}
                     </div>
 
-                    <div className="hidden md:block bg-component-bg rounded-xl border border-border-color overflow-hidden">
+                    <div className="hidden md:block bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color overflow-hidden shadow-2xl">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left text-text-secondary">
-                                <thead className="text-xs uppercase bg-component-bg-hover">
+                                <thead className="text-xs uppercase bg-component-bg-hover/50">
                                     <tr>
                                         <th scope="col" className="px-6 py-4">Coche</th>
                                         <th scope="col" className="px-6 py-4 whitespace-nowrap">Matrícula</th>
@@ -129,18 +135,22 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                     {soldCarsWithProfit.map(car => (
                                         <tr 
                                             key={car.id} 
-                                            className="cursor-pointer hover:bg-component-bg-hover transition-colors"
+                                            className="cursor-pointer hover:bg-component-bg-hover/50 transition-colors"
                                             onClick={() => onViewDetailsClick(car)}
                                         >
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-4">
-                                                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                                                    <img 
-                                                        src={car.imageUrl ? car.imageUrl : `https://placehold.co/600x400/e2e8f0/1e293b?text=${car.make}+${car.model}`} 
-                                                        className="w-16 h-10 object-cover rounded-md" 
-                                                        alt={`${car.make} ${car.model}`} 
-                                                    />
-                                                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+                                                    <div className="w-16 h-10 rounded-lg border border-border-color overflow-hidden flex-shrink-0">
+                                                        {car.imageUrl ? (
+                                                            <img 
+                                                                src={car.imageUrl} 
+                                                                className="w-full h-full object-cover" 
+                                                                alt={`${car.make} ${car.model}`} 
+                                                            />
+                                                        ) : (
+                                                            <CarPlaceholderImage car={car} size="small" />
+                                                        )}
+                                                    </div>
                                                     <div>
                                                         <p className="font-medium text-text-primary">{car.make} {car.model}</p>
                                                         <p className="text-xs text-text-secondary">{new Date(car.registrationDate).getFullYear()}</p>
@@ -148,7 +158,7 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-medium px-2.5 py-1 rounded-full">
+                                                <span className="bg-background/50 text-text-primary text-xs font-medium px-2.5 py-1 rounded-full border border-border-color">
                                                     {car.licensePlate}
                                                 </span>
                                             </td>
@@ -172,11 +182,11 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                     </div>
                 </>
             ) : (
-                <div className="text-center py-16 px-4 bg-component-bg rounded-xl border border-border-color">
-                    <FontAwesomeIcon icon={faTags} className="text-5xl text-zinc-500 dark:text-zinc-600 mb-4" />
+                <div className="text-center py-16 px-4 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl">
+                    <FontAwesomeIcon icon={faTags} className="text-5xl text-text-secondary/50 mb-4" />
                     <h3 className="text-xl font-semibold text-text-primary">Aún no hay ventas registradas</h3>
                     <p className="text-text-secondary mt-2">Cuando vendas tu primer coche, aparecerá aquí el resumen.</p>
-                    <Link to="/cars" className="mt-4 inline-flex items-center gap-2 bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
+                    <Link to="/cars" className="mt-6 inline-flex items-center gap-2 bg-accent text-white px-4 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-colors">
                         <FontAwesomeIcon icon={faCar} />
                         Ver mis coches
                     </Link>

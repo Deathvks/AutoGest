@@ -1,23 +1,30 @@
 // autogest-app/frontend/src/components/modals/SellCarModal.jsx
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faEuroSign, faCalendarDay, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
 
-const InputField = ({ label, name, value, onChange, type = 'text', placeholder, helpText, required = false }) => (
+// --- INICIO DE LA MODIFICACIÓN ---
+const InputField = ({ label, name, value, onChange, type = 'text', placeholder, icon, required = false }) => (
     <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">
+        <label className="block text-sm font-semibold text-text-primary mb-1">
             {label}
             {required && <span className="text-red-accent ml-1">*</span>}
         </label>
-        <input
-            type={type}
-            name={name}
-            value={value}
-            onChange={onChange}
-            placeholder={placeholder}
-            className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary"
-        />
-        {helpText && <p className="mt-1 text-xs text-text-secondary">{helpText}</p>}
+        <div className="relative">
+            {icon && (
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+                </div>
+            )}
+            <input
+                type={type}
+                name={name}
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent placeholder:text-text-secondary/70 ${icon ? 'pl-11' : ''}`}
+            />
+        </div>
     </div>
 );
 
@@ -48,10 +55,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             }
 
             setSaleData({
-                // --- INICIO DE LA MODIFICACIÓN ---
-                // Se inicializa vacío para que el usuario introduzca el precio final.
                 salePrice: '', 
-                // --- FIN DE LA MODIFICACIÓN ---
                 saleDate: new Date().toISOString().split('T')[0],
                 buyerName: buyerDetails.name || '',
                 buyerLastName: buyerDetails.lastName || '',
@@ -68,9 +72,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
         const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/i;
         value = value.toUpperCase();
 
-        if (!dniRegex.test(value) && !nieRegex.test(value)) {
-            return false;
-        }
+        if (!dniRegex.test(value) && !nieRegex.test(value)) return false;
 
         const controlChars = 'TRWAGMYFPDXBNJZSQVHLCKE';
         let number;
@@ -86,10 +88,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             number = parseInt(value.substring(0, 8), 10);
         }
 
-        const calculatedChar = controlChars.charAt(number % 23);
-        const providedChar = value.charAt(value.length - 1);
-
-        return calculatedChar === providedChar;
+        return controlChars.charAt(number % 23) === value.charAt(value.length - 1);
     };
 
     const handleChange = (e) => {
@@ -109,12 +108,10 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             setError("Por favor, introduce un precio de venta válido.");
             return;
         }
-        
         if (!isValidDniNie(saleData.buyerDni)) {
             setError("EL FORMATO DEL DNI/NIE DEL COMPRADOR NO ES VÁLIDO.");
             return;
         }
-        
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(saleData.buyerEmail)) {
             setError("Por favor, introduce un email válido.");
@@ -134,71 +131,61 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg rounded-xl shadow-lg w-full max-w-lg max-h-[90vh] flex flex-col">
-                <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary">VENDER COCHE</h2>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in-up">
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-border-color">
+                <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
+                    <h2 className="text-xl font-bold text-text-primary uppercase">Vender Coche</h2>
                     <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6">
-                    <div className="text-center mb-6">
-                        <p className="text-text-secondary">VAS A MARCAR COMO VENDIDO EL <span className="font-bold text-text-primary">{car.make} {car.model} ({car.licensePlate})</span>.</p>
-                        <p className="text-sm text-text-secondary mt-1">
-                            PRECIO DE COMPRA: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
-                        </p>
-                        <p className="text-sm text-text-secondary">
-                            PRECIO DE VENTA: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
-                        </p>
+                <div className="flex-grow overflow-y-auto p-6 no-scrollbar">
+                    <div className="text-center mb-6 p-4 bg-background/50 rounded-xl border border-border-color">
+                        <p className="text-text-secondary uppercase">Marcando como vendido el <span className="font-bold text-text-primary">{car.make} {car.model} ({car.licensePlate})</span>.</p>
+                        <div className="mt-2 flex justify-center gap-4 text-sm">
+                            <p className="text-text-secondary uppercase">Compra: <span className="font-semibold text-text-primary">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</span></p>
+                            <p className="text-text-secondary uppercase">Venta: <span className="font-semibold text-text-primary">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}</span></p>
+                        </div>
                     </div>
 
-                    <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-4">
-                        <h3 className="text-lg font-semibold text-text-primary border-b border-border-color pb-2">DATOS DE LA VENTA</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <InputField 
-                                label="PRECIO DE VENTA FINAL (€)" 
-                                name="salePrice" 
-                                value={saleData.salePrice} 
-                                onChange={handleChange} 
-                                type="number" 
-                                placeholder="EJ: 23500"
-                                required={true}
-                            />
-                            <InputField 
-                                label="FECHA DE VENTA" 
-                                name="saleDate" 
-                                value={saleData.saleDate} 
-                                onChange={handleChange} 
-                                type="date" 
-                                required={true}
-                            />
+                    <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-6">
+                        <div>
+                            <h3 className="text-lg font-semibold text-text-primary mb-3">Datos de la Venta</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <InputField label="Precio Venta Final (€)" name="salePrice" value={saleData.salePrice} onChange={handleChange} type="number" placeholder="Ej: 23500" required={true} icon={faEuroSign}/>
+                                <InputField label="Fecha de Venta" name="saleDate" value={saleData.saleDate} onChange={handleChange} type="date" required={true} icon={faCalendarDay} />
+                            </div>
                         </div>
                         
-                        <h3 className="text-lg font-semibold text-text-primary border-b border-border-color pb-2 pt-4">DATOS DEL COMPRADOR</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <InputField label="NOMBRE" name="buyerName" value={saleData.buyerName} onChange={handleChange} required={true} />
-                            <InputField label="APELLIDOS" name="buyerLastName" value={saleData.buyerLastName} onChange={handleChange} required={true} />
+                        <div>
+                            <h3 className="text-lg font-semibold text-text-primary mb-3 pt-4 border-t border-border-color">Datos del Comprador</h3>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <InputField label="Nombre" name="buyerName" value={saleData.buyerName} onChange={handleChange} required={true} icon={faUser} />
+                                    <InputField label="Apellidos" name="buyerLastName" value={saleData.buyerLastName} onChange={handleChange} required={true} />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <InputField label="DNI/NIE" name="buyerDni" value={saleData.buyerDni} onChange={handleChange} required={true} icon={faIdCard} />
+                                    <InputField label="Teléfono" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} required={true} icon={faPhone} />
+                                </div>
+                                <InputField label="Correo Electrónico" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" required={true} icon={faEnvelope} />
+                                <InputField label="Dirección" name="buyerAddress" value={saleData.buyerAddress} onChange={handleChange} icon={faMapMarkerAlt} required={false} />
+                            </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <InputField label="DNI/NIE" name="buyerDni" value={saleData.buyerDni} onChange={handleChange} required={true} />
-                            <InputField label="TELÉFONO" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} required={true} />
-                        </div>
-                        <InputField label="CORREO ELECTRÓNICO" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" required={true} />
-                        <InputField label="DIRECCIÓN" name="buyerAddress" value={saleData.buyerAddress} onChange={handleChange} />
 
-                        {error && <p className="mt-4 text-sm text-red-accent text-center">{error}</p>}
+                        {error && <p className="text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
                     </form>
                 </div>
                 
                 <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-border-color">
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">CANCELAR</button>
-                    <button onClick={handleConfirm} className="bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">CONFIRMAR VENTA</button>
+                    <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold">CANCELAR</button>
+                    <button onClick={handleConfirm} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold">CONFIRMAR VENTA</button>
                 </div>
             </div>
         </div>
     );
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 export default SellCarModal;

@@ -4,13 +4,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faUser, faIdCard, faPhone, faEnvelope, faMapPin, faCalendarDay,
     faCalendarCheck, faTruckPickup, faCheckCircle, faTrashAlt, faEdit,
-    faPaperclip, faUndo
+    faPaperclip, faUndo, faSpinner
 } from '@fortawesome/free-solid-svg-icons';
 import api from '../../../services/api';
 import { DetailItem } from './CarDetailsUtils';
 
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-
+// --- INICIO DE LA MODIFICACIÓN ---
 const BuyerSection = ({ car }) => {
     let buyer = null;
     if (car.buyerDetails) {
@@ -25,12 +24,12 @@ const BuyerSection = ({ car }) => {
     return (
         <section>
             <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">Datos del Comprador</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <DetailItem icon={faUser} label="NOMBRE" value={`${buyer.name || ''} ${buyer.lastName || ''}`} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-5">
+                <DetailItem icon={faUser} label="Nombre" value={`${buyer.name || ''} ${buyer.lastName || ''}`} />
                 <DetailItem icon={faIdCard} label="DNI/NIE" value={buyer.dni} />
-                <DetailItem icon={faPhone} label="TELÉFONO" value={buyer.phone} />
-                <DetailItem icon={faEnvelope} label="EMAIL" value={buyer.email} />
-                <DetailItem icon={faMapPin} label="DIRECCIÓN" value={buyer.address} />
+                <DetailItem icon={faPhone} label="Teléfono" value={buyer.phone} />
+                <DetailItem icon={faEnvelope} label="Email" value={buyer.email} />
+                <DetailItem icon={faMapPin} label="Dirección" value={buyer.address} />
             </div>
         </section>
     );
@@ -42,19 +41,19 @@ const GestoriaSection = ({ car, onGestoriaPickupClick, onGestoriaReturnClick }) 
     return (
         <section>
             <h3 className="text-lg font-semibold text-text-primary my-4 border-b border-border-color pb-2 uppercase">Gestión Documentación</h3>
-            <div className="p-4 bg-background rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="bg-component-bg-hover p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-border-color">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                    <DetailItem icon={faCalendarDay} label="FECHA DE RECOGIDA" value={car.gestoriaPickupDate ? new Date(car.gestoriaPickupDate).toLocaleDateString('es-ES') : 'Pendiente'} />
-                    <DetailItem icon={faCalendarCheck} label="FECHA DE ENTREGA" value={car.gestoriaReturnDate ? new Date(car.gestoriaReturnDate).toLocaleDateString('es-ES') : 'Pendiente'} />
+                    <DetailItem icon={faCalendarDay} label="Recogida" value={car.gestoriaPickupDate ? new Date(car.gestoriaPickupDate).toLocaleDateString('es-ES') : 'Pendiente'} />
+                    <DetailItem icon={faCalendarCheck} label="Entrega" value={car.gestoriaReturnDate ? new Date(car.gestoriaReturnDate).toLocaleDateString('es-ES') : 'Pendiente'} />
                 </div>
                 <div className="w-full sm:w-auto flex-shrink-0">
                     {!car.gestoriaPickupDate ? (
-                        <button onClick={() => onGestoriaPickupClick(car)} className="w-full sm:w-auto bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 text-sm font-semibold flex items-center justify-center gap-2 uppercase">
+                        <button onClick={() => onGestoriaPickupClick(car)} className="w-full sm:w-auto bg-accent text-white px-4 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover text-sm font-semibold flex items-center justify-center gap-2 uppercase">
                             <FontAwesomeIcon icon={faTruckPickup} />
                             Registrar Recogida
                         </button>
                     ) : !car.gestoriaReturnDate ? (
-                        <button onClick={() => onGestoriaReturnClick(car)} className="w-full sm:w-auto bg-blue-accent text-white px-4 py-2 rounded-lg shadow-sm hover:opacity-90 text-sm font-semibold flex items-center justify-center gap-2 uppercase">
+                        <button onClick={() => onGestoriaReturnClick(car)} className="w-full sm:w-auto bg-accent text-white px-4 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover text-sm font-semibold flex items-center justify-center gap-2 uppercase">
                             <FontAwesomeIcon icon={faCalendarCheck} />
                             Registrar Entrega
                         </button>
@@ -87,20 +86,22 @@ const NotesSection = ({ car, onDeleteNote }) => {
             <div className="space-y-3">
                 {parsedNotes.length > 0 ? (
                     parsedNotes.map(note => (
-                        <div key={note.id} className="bg-background p-3 rounded-lg flex items-start justify-between gap-4">
+                        <div key={note.id} className="bg-component-bg-hover p-3 rounded-lg flex items-start justify-between gap-4 border border-border-color">
                             <div>
                                 <p className="text-sm text-text-primary uppercase">{note.content}</p>
                                 <p className="text-xs text-text-secondary mt-1 uppercase">
                                     {note.type} - {new Date(note.date).toLocaleDateString('es-ES')}
                                 </p>
                             </div>
-                            <button onClick={() => onDeleteNote(car, note.id)} className="text-red-accent hover:opacity-75 transition-opacity flex-shrink-0" title="Eliminar nota">
+                            <button onClick={() => onDeleteNote(car, note.id)} className="text-red-accent/70 hover:text-red-accent transition-opacity flex-shrink-0 p-1" title="Eliminar nota">
                                 <FontAwesomeIcon icon={faTrashAlt} />
                             </button>
                         </div>
                     ))
                 ) : (
-                    <p className="text-sm text-text-secondary text-center py-4 uppercase">No hay anotaciones.</p>
+                    <div className="text-center py-4 bg-component-bg-hover rounded-lg border border-border-color">
+                        <p className="text-sm text-text-secondary uppercase">No hay anotaciones.</p>
+                    </div>
                 )}
             </div>
         </section>
@@ -108,7 +109,7 @@ const NotesSection = ({ car, onDeleteNote }) => {
 };
 
 const ExpenseItem = ({ expense, onEditExpenseClick, onDeleteExpense }) => (
-    <div className="bg-background p-3 rounded-lg">
+    <div className="bg-component-bg-hover p-4 rounded-lg border border-border-color">
         <div className="flex items-start justify-between">
             <div>
                 <p className="font-semibold text-text-primary uppercase">{expense.category}</p>
@@ -116,24 +117,23 @@ const ExpenseItem = ({ expense, onEditExpenseClick, onDeleteExpense }) => (
                 {expense.description && <p className="text-sm text-text-primary mt-1 uppercase">{expense.description}</p>}
             </div>
             <div className="text-right flex-shrink-0 ml-4">
-                <p className="font-bold text-red-accent">- {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</p>
-                <div className="mt-1">
-                    <button onClick={() => onEditExpenseClick(expense)} className="text-blue-accent hover:opacity-75 transition-opacity text-xs mr-3" title="EDITAR GASTO">
+                <p className="font-bold text-red-accent text-lg">- {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</p>
+                <div className="mt-2 flex items-center gap-4">
+                    <button onClick={() => onEditExpenseClick(expense)} className="text-text-secondary hover:text-blue-accent transition-opacity text-xs" title="EDITAR GASTO">
                         <FontAwesomeIcon icon={faEdit} />
                     </button>
-                    <button onClick={() => onDeleteExpense(expense)} className="text-red-accent hover:opacity-75 transition-opacity text-xs" title="ELIMINAR GASTO">
+                    <button onClick={() => onDeleteExpense(expense)} className="text-text-secondary hover:text-red-accent transition-opacity text-xs" title="ELIMINAR GASTO">
                         <FontAwesomeIcon icon={faTrashAlt} />
                     </button>
                 </div>
             </div>
         </div>
         {expense.attachments && expense.attachments.length > 0 && (
-            <div className="mt-2 pt-2 border-t border-border-color">
-                <p className="text-xs font-semibold text-text-secondary mb-1 uppercase">Adjuntos:</p>
+            <div className="mt-3 pt-3 border-t border-border-color">
                 <div className="flex flex-wrap gap-2">
-                    {expense.attachments.map((fileUrl, index) => (
-                        <a href={`${API_BASE_URL}${fileUrl}`} target="_blank" rel="noopener noreferrer" key={index} className="text-xs text-blue-accent hover:underline bg-blue-accent/10 px-2 py-1 rounded-md uppercase">
-                            <FontAwesomeIcon icon={faPaperclip} className="mr-1" />
+                    {expense.attachments.map((file, index) => (
+                        <a href={file.path} target="_blank" rel="noopener noreferrer" key={index} title={file.originalname} className="text-xs font-semibold text-blue-accent hover:underline bg-blue-accent/10 px-2 py-1 rounded-md uppercase flex items-center gap-1.5">
+                            <FontAwesomeIcon icon={faPaperclip} />
                             Adjunto {index + 1}
                         </a>
                     ))}
@@ -168,11 +168,15 @@ const ExpensesSection = ({ car, onEditExpenseClick, onDeleteExpense }) => {
             <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">Gastos del Vehículo</h3>
             <div className="space-y-3">
                 {isLoading ? (
-                    <p className="text-sm text-text-secondary text-center py-4 uppercase">Cargando gastos...</p>
+                    <div className="text-center py-4 bg-component-bg-hover rounded-lg border border-border-color">
+                        <FontAwesomeIcon icon={faSpinner} spin className="text-text-secondary" />
+                    </div>
                 ) : carExpenses.length > 0 ? (
                     carExpenses.map(expense => <ExpenseItem key={expense.id} expense={expense} onEditExpenseClick={onEditExpenseClick} onDeleteExpense={onDeleteExpense} />)
                 ) : (
-                    <p className="text-sm text-text-secondary text-center py-4 uppercase">No hay gastos registrados para este vehículo.</p>
+                    <div className="text-center py-4 bg-component-bg-hover rounded-lg border border-border-color">
+                        <p className="text-sm text-text-secondary uppercase">No hay gastos registrados.</p>
+                    </div>
                 )}
             </div>
         </section>
@@ -180,21 +184,21 @@ const ExpensesSection = ({ car, onEditExpenseClick, onDeleteExpense }) => {
 };
 
 const IncidentItem = ({ incident, onResolve, onDelete }) => (
-    <div className="bg-background p-3 rounded-lg flex items-start justify-between">
+    <div className="bg-component-bg-hover p-3 rounded-lg flex items-start justify-between border border-border-color">
         <div>
             <p className="text-sm text-text-primary uppercase">{incident.description}</p>
             <p className="text-xs text-text-secondary mt-1 uppercase">
                 {new Date(incident.date).toLocaleDateString()} -
-                <span className={`font-semibold ${incident.status === 'resuelta' ? 'text-green-accent' : 'text-accent'}`}>
+                <span className={`font-semibold ${incident.status === 'resuelta' ? 'text-green-accent' : 'text-yellow-accent'}`}>
                     {incident.status === 'resuelta' ? ' Resuelta' : ' Pendiente'}
                 </span>
             </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-            <button onClick={() => onResolve(incident.id, incident.status === 'resuelta' ? 'abierta' : 'resuelta')} className={`${incident.status === 'resuelta' ? 'text-accent' : 'text-green-accent'} hover:opacity-75 transition-opacity`} title={incident.status === 'resuelta' ? 'MARCAR COMO PENDIENTE' : 'MARCAR COMO RESUELTA'}>
+        <div className="flex items-center gap-4 flex-shrink-0 ml-4">
+            <button onClick={() => onResolve(incident.id, incident.status === 'resuelta' ? 'abierta' : 'resuelta')} className={`${incident.status === 'resuelta' ? 'text-yellow-accent' : 'text-green-accent'} hover:opacity-75 transition-opacity`} title={incident.status === 'resuelta' ? 'MARCAR COMO PENDIENTE' : 'MARCAR COMO RESUELTA'}>
                 <FontAwesomeIcon icon={incident.status === 'resuelta' ? faUndo : faCheckCircle} />
             </button>
-            <button onClick={() => onDelete(incident.id)} className="text-red-accent hover:opacity-75 transition-opacity" title="ELIMINAR INCIDENCIA">
+            <button onClick={() => onDelete(incident.id)} className="text-red-accent/70 hover:text-red-accent transition-opacity" title="ELIMINAR INCIDENCIA">
                 <FontAwesomeIcon icon={faTrashAlt} />
             </button>
         </div>
@@ -208,7 +212,9 @@ const IncidentsSection = ({ incidents, onResolveIncident, onDeleteIncident }) =>
             {incidents.length > 0 ? (
                 incidents.map(incident => <IncidentItem key={incident.id} incident={incident} onResolve={onResolveIncident} onDelete={onDeleteIncident} />)
             ) : (
-                <p className="text-sm text-text-secondary text-center py-4 uppercase">No hay incidencias registradas para este vehículo.</p>
+                <div className="text-center py-4 bg-component-bg-hover rounded-lg border border-border-color">
+                    <p className="text-sm text-text-secondary uppercase">No hay incidencias registradas.</p>
+                </div>
             )}
         </div>
     </section>
@@ -226,5 +232,6 @@ const CarDetailsSections = (props) => {
         </div>
     );
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 export default CarDetailsSections;

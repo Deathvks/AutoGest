@@ -6,7 +6,6 @@ import ForceVerificationModal from './LoginPage/ForceVerificationModal';
 const LoginPage = () => {
     const [verificationData, setVerificationData] = useState({ isOpen: false, email: '' });
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     useEffect(() => {
         const emailToVerify = localStorage.getItem('emailForcedVerification');
         if (emailToVerify) {
@@ -23,7 +22,6 @@ const LoginPage = () => {
         localStorage.removeItem('emailForcedVerification');
         setVerificationData({ isOpen: false, email: '' });
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     return (
         <>

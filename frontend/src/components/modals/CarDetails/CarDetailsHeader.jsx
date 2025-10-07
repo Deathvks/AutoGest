@@ -3,16 +3,18 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
+// --- INICIO DE LA MODIFICACIÓN ---
 const CarDetailsHeader = ({ car, onClose }) => (
-    <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
+    <div className="flex-shrink-0 flex justify-between items-start p-6 border-b border-border-color">
         <div>
-            <h2 className="text-2xl font-bold text-text-primary uppercase">{car.make} {car.model}</h2>
-            <p className="text-sm text-text-secondary uppercase">{car.licensePlate}</p>
+            <h2 className="text-2xl font-bold text-text-primary uppercase tracking-wide">{car.make} {car.model}</h2>
+            <p className="text-sm font-semibold text-accent uppercase">{car.licensePlate}</p>
         </div>
         <button onClick={onClose} className="text-text-secondary hover:text-text-primary transition-colors">
             <FontAwesomeIcon icon={faTimes} className="w-6 h-6" />
         </button>
     </div>
 );
+// --- FIN DE LA MODIFICACIÓN ---
 
 export default CarDetailsHeader;

@@ -14,7 +14,7 @@ const ManageUsersPage = lazy(() => import('../pages/ManageUsersPage'));
 const SubscriptionPage = lazy(() => import('../pages/SubscriptionPage'));
 const AcceptInvitationPage = lazy(() => import('../pages/AcceptInvitationPage')); // <-- Asegurarse de que esté importado
 
-const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => {
+const AppRoutes = ({ appState, onLogoutClick }) => {
     const { user } = useContext(AuthContext);
 
     const {
@@ -62,7 +62,6 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => {
                         <Dashboard 
                             cars={cars} 
                             expenses={allExpenses} 
-                            isDarkMode={isDarkMode} 
                             onTotalInvestmentClick={() => setInvestmentModalOpen(true)} 
                             onRevenueClick={() => setRevenueModalOpen(true)} 
                         />
@@ -71,6 +70,7 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => {
                     )
                 } 
             />
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <Route 
                 path="/cars" 
                 element={<MyCars 
@@ -84,6 +84,7 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => {
                     onUpdateInsurance={handleUpdateCarInsurance} 
                 />} 
             />
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
             <Route 
                 path="/sales" 
                 element={<SalesSummary 
@@ -105,8 +106,6 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => {
             <Route 
                 path="/settings" 
                 element={<Settings 
-                    isDarkMode={isDarkMode} 
-                    setIsDarkMode={setIsDarkMode} 
                     cars={cars} 
                     expenses={expenses} 
                     incidents={incidents} 
@@ -116,7 +115,6 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => {
                     onLogoutClick={onLogoutClick}
                 />} 
             />
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <Route 
                 path="/admin" 
                 element={(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed' || user.canExpelUsers)
@@ -129,7 +127,6 @@ const AppRoutes = ({ appState, isDarkMode, setIsDarkMode, onLogoutClick }) => {
                       /> 
                     : <Navigate to={userHomePath} replace />} 
             />
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
             <Route 
                 path="/subscription" 
                 element={<SubscriptionPage setSubscriptionSuccessModalOpen={setSubscriptionSuccessModalOpen} />} 

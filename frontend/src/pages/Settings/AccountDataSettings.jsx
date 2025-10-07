@@ -57,100 +57,89 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
         document.body.removeChild(link);
     };
 
+    const liquidButtonClass = "bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2";
+
     return (
-        <div className="p-6 bg-component-bg rounded-xl border border-border-color">
-            <h3 className="text-lg font-bold text-text-primary mb-4">CUENTA Y DATOS</h3>
-            <div className="space-y-6">
-                <form onSubmit={handlePasswordSubmit}>
-                    <h4 className="font-semibold text-text-primary mb-2">CAMBIAR CONTRASEÑA</h4>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                        <input name="currentPassword" type="password" placeholder="CONTRASEÑA ACTUAL" value={passwordData.currentPassword} onChange={handlePasswordChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary" />
-                        <input name="newPassword" type="password" placeholder="NUEVA CONTRASEÑA" value={passwordData.newPassword} onChange={handlePasswordChange} className="w-full px-3 py-2 bg-background border border-border-color rounded-lg focus:ring-1 focus:ring-blue-accent focus:border-blue-accent text-text-primary" />
-                    </div>
-                    <div className="mt-3 flex items-center gap-4">
-                        <button type="submit" className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                            <FontAwesomeIcon icon={faKey} className="mr-2" />
-                            ACTUALIZAR CONTRASEÑA
-                        </button>
-                        {passwordMessage.text && (
-                            <span className={`text-sm ${passwordMessage.type === 'success' ? 'text-green-accent' : 'text-red-accent'}`}>
-                                {passwordMessage.text}
-                            </span>
-                        )}
-                    </div>
-                </form>
+        <div className="space-y-8">
+            <div>
+                <h3 className="text-lg font-bold text-text-primary mb-4 uppercase">Cuenta y Datos</h3>
+                <div className="space-y-6">
+                    <form onSubmit={handlePasswordSubmit} className="p-6 bg-background/50 rounded-xl border border-border-color">
+                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Cambiar Contraseña</h4>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <input name="currentPassword" type="password" placeholder="Contraseña Actual" value={passwordData.currentPassword} onChange={handlePasswordChange} className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary" />
+                            <input name="newPassword" type="password" placeholder="Nueva Contraseña" value={passwordData.newPassword} onChange={handlePasswordChange} className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary" />
+                        </div>
+                        <div className="mt-4 flex items-center gap-4">
+                            <button type="submit" className={liquidButtonClass}>
+                                <FontAwesomeIcon icon={faKey} />
+                                Actualizar
+                            </button>
+                            {passwordMessage.text && (
+                                <span className={`text-sm font-semibold ${passwordMessage.type === 'success' ? 'text-green-accent' : 'text-red-accent'}`}>
+                                    {passwordMessage.text}
+                                </span>
+                            )}
+                        </div>
+                    </form>
 
-                <hr className="border-border-color" />
-
-                <div>
-                    <h4 className="font-semibold text-text-primary mb-2">EXPORTAR DATOS</h4>
-                    <p className="text-sm text-text-secondary mb-3">DESCARGA UNA COPIA DE SEGURIDAD DE TUS DATOS EN FORMATO CSV.</p>
-                    <div className="flex flex-wrap gap-2">
-                        <button onClick={() => handleExport(cars, 'coches.csv', 'coches')} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                            <FontAwesomeIcon icon={faFileExport} className="mr-2" />
-                            EXPORTAR COCHES
-                        </button>
-                        <button onClick={() => handleExport(expenses, 'gastos.csv', 'gastos')} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                            <FontAwesomeIcon icon={faFileExport} className="mr-2" />
-                            EXPORTAR GASTOS
-                        </button>
-                        <button onClick={() => handleExport(incidents, 'incidencias.csv', 'incidencias')} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                            <FontAwesomeIcon icon={faFileExport} className="mr-2" />
-                            EXPORTAR INCIDENCIAS
-                        </button>
+                    <div className="p-6 bg-background/50 rounded-xl border border-border-color">
+                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Exportar Datos</h4>
+                        <p className="text-sm text-text-secondary mb-3">Descarga una copia de seguridad de tus datos en formato CSV.</p>
+                        <div className="flex flex-wrap gap-2">
+                            <button onClick={() => handleExport(cars, 'coches.csv', 'coches')} className={liquidButtonClass}>
+                                <FontAwesomeIcon icon={faFileExport} />
+                                Coches
+                            </button>
+                            <button onClick={() => handleExport(expenses, 'gastos.csv', 'gastos')} className={liquidButtonClass}>
+                                <FontAwesomeIcon icon={faFileExport} />
+                                Gastos
+                            </button>
+                            <button onClick={() => handleExport(incidents, 'incidencias.csv', 'incidencias')} className={liquidButtonClass}>
+                                <FontAwesomeIcon icon={faFileExport} />
+                                Incidencias
+                            </button>
+                        </div>
+                        {exportMessage && <p className="text-sm text-yellow-accent mt-3 font-semibold">{exportMessage}</p>}
                     </div>
-                    {exportMessage && <p className="text-sm text-yellow-accent mt-3">{exportMessage}</p>}
-                </div>
 
-                {user && (
-                    <div className="lg:hidden">
-                        <hr className="border-border-color" />
-                        <div className="mt-6">
-                            <h4 className="font-semibold text-text-primary mb-2">SUSCRIPCIÓN</h4>
-                            <p className="text-sm text-text-secondary mb-3">GESTIONA O REVISA EL PLAN DE SUSCRIPCIÓN.</p>
-                            <Link to="/subscription" className="inline-flex items-center justify-center gap-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                                <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
-                                GESTIONAR SUSCRIPCIÓN
+                    {user && (
+                        <div className="p-6 bg-background/50 rounded-xl border border-border-color lg:hidden">
+                            <h4 className="font-semibold text-text-primary mb-2 uppercase">Suscripción</h4>
+                            <p className="text-sm text-text-secondary mb-3">Gestiona o revisa el plan de suscripción.</p>
+                            <Link to="/subscription" className="inline-flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm">
+                                <FontAwesomeIcon icon={faCreditCard} />
+                                Gestionar Suscripción
                             </Link>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                {/* Ahora solo se muestra para el rol 'admin', ya que los demás acceden desde el header */}
-                {user && user.role === 'admin' && (
-                    <div className="lg:hidden">
-                        <hr className="border-border-color" />
-                        <div className="mt-6">
-                            <h4 className="font-semibold text-text-primary mb-2">ADMINISTRACIÓN</h4>
-                            <Link to="/admin" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                                <FontAwesomeIcon icon={faUserShield} className="mr-2" />
-                                GESTIONAR USUARIOS
+                    {user && user.role === 'admin' && (
+                        <div className="p-6 bg-background/50 rounded-xl border border-border-color lg:hidden">
+                            <h4 className="font-semibold text-text-primary mb-2 uppercase">Administración</h4>
+                            <Link to="/admin" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm">
+                                <FontAwesomeIcon icon={faUserShield} />
+                                Gestionar Usuarios
                             </Link>
                         </div>
+                    )}
+                    
+                    <div className="p-6 bg-background/50 rounded-xl border border-border-color">
+                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Sesión</h4>
+                         <button onClick={onLogoutClick} className="w-full sm:w-auto bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2">
+                            <FontAwesomeIcon icon={faSignOutAlt} />
+                            Cerrar Sesión
+                        </button>
                     </div>
-                )}
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
-                
-                <hr className="border-border-color" />
-                
-                <div>
-                    <h4 className="font-semibold text-text-primary mb-2">SESIÓN</h4>
-                     <button onClick={onLogoutClick} className="w-full sm:w-auto bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-medium">
-                        <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-                        CERRAR SESIÓN
-                    </button>
-                </div>
 
-                <hr className="border-border-color" />
-
-                <div>
-                    <h4 className="font-semibold text-red-accent mb-2">ZONA DE PELIGRO</h4>
-                    <p className="text-sm text-text-secondary mb-3">LA ELIMINACIÓN DE TU CUENTA ES PERMANENTE Y NO SE PUEDE DESHACER.</p>
-                    <button onClick={onDeleteAccountClick} className="w-full sm:w-auto bg-red-accent/10 text-red-accent px-4 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-medium">
-                        <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2" />
-                        ELIMINAR MI CUENTA
-                    </button>
+                    <div className="p-6 bg-red-accent/10 rounded-xl">
+                        <h4 className="font-semibold text-red-accent mb-2 uppercase">Zona de Peligro</h4>
+                        <p className="text-sm text-red-accent/80 mb-3">La eliminación de tu cuenta es permanente y no se puede deshacer.</p>
+                        <button onClick={onDeleteAccountClick} className="w-full sm:w-auto bg-component-bg-hover text-red-accent font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2">
+                            <FontAwesomeIcon icon={faExclamationTriangle} />
+                            Eliminar Mi Cuenta
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,56 +1,72 @@
 // autogest-app/frontend/src/components/Select.jsx
-import React, { Fragment } from 'react';
-import { Listbox, Transition } from '@headlessui/react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronDown, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { ThemeContext } from '../context/ThemeContext';
 
 const Select = ({ label, value, onChange, options, icon }) => {
-    const selectedOption = options.find(opt => opt.id === value);
+    const [isOpen, setIsOpen] = useState(false);
+    const { activeTheme } = useContext(ThemeContext);
+    const selectRef = useRef(null);
+
+    const internalValue = value ?? '';
+    const selectedOption = options.find(opt => opt.id === internalValue);
+
+    const handleSelect = (optionId) => {
+        onChange(optionId);
+        setIsOpen(false);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (selectRef.current && !selectRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     return (
-        <div>
-            {label && <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>}
-            <Listbox value={value} onChange={onChange}>
-                <div className="relative">
-                    <Listbox.Button className="relative w-full cursor-default rounded-lg bg-background py-2 pl-3 pr-10 text-left border border-border-color focus:outline-none focus-visible:border-blue-accent focus-visible:ring-1 focus-visible:ring-blue-accent sm:text-sm text-text-primary">
-                        {icon && (
-                            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" aria-hidden="true" />
+        <div className="relative" ref={selectRef}>
+            {label && <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">{label}</label>}
+            
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className="relative w-full cursor-pointer rounded-lg bg-component-bg-hover py-2 px-4 pr-10 text-left border-none h-[42px] flex items-center"
+            >
+                {icon && (
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" aria-hidden="true" />
+                )}
+                <span className={`block truncate text-text-primary sm:text-sm ${icon ? 'ml-3' : ''}`}>
+                    {selectedOption?.name || 'Selecciona una opción'}
+                </span>
+                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <FontAwesomeIcon icon={faChevronDown} className={`h-4 w-4 text-text-secondary transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+                </span>
+            </button>
+
+            {isOpen && (
+                <ul 
+                    className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-popup-bg backdrop-blur-lg py-1 text-base shadow-lg focus:outline-none sm:text-sm border border-border-color"
+                >
+                    {options.map((option) => (
+                        <li
+                            key={option.id}
+                            onClick={() => handleSelect(option.id)}
+                            className="text-text-primary relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-component-bg-hover"
+                            style={{ '--hover-color': activeTheme.accent }}
+                        >
+                            <span className={`block truncate ${selectedOption?.id === option.id ? 'font-semibold' : 'font-normal'}`}>
+                                {option.name}
                             </span>
-                        )}
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                        <span className={`block ${icon ? 'pl-6' : ''}`}>{selectedOption?.name || 'Selecciona una opción'}</span>
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
-                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                            <FontAwesomeIcon icon={faChevronDown} className="h-4 w-4 text-text-secondary" aria-hidden="true" />
-                        </span>
-                    </Listbox.Button>
-                    <Transition as={Fragment} leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0">
-                        <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-component-bg py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm z-10 border border-border-color">
-                            {options.map((option) => (
-                                <Listbox.Option
-                                    key={option.id}
-                                    className={({ active }) => `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-blue-accent text-white' : 'text-text-primary'}`}
-                                    value={option.id}
-                                >
-                                    {({ selected }) => (
-                                        <>
-                                            <span className={`block ${selected ? 'font-medium' : 'font-normal'}`}>
-                                                {option.name}
-                                            </span>
-                                            {selected ? (
-                                                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-accent">
-                                                    <FontAwesomeIcon icon={faCheck} className="h-5 w-5" aria-hidden="true" />
-                                                </span>
-                                            ) : null}
-                                        </>
-                                    )}
-                                </Listbox.Option>
-                            ))}
-                        </Listbox.Options>
-                    </Transition>
-                </div>
-            </Listbox>
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     );
 };

@@ -6,19 +6,19 @@ import { AuthContext } from '../../context/AuthContext';
 
 const InputField = ({ label, name, value, onChange, icon, required = false }) => (
     <div>
-        <label className="block text-sm font-medium text-text-secondary mb-1">
+        <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">
             {label}
             {required && <span className="text-red-accent ml-1">*</span>}
         </label>
         <div className="relative">
             {icon && (
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                     <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
                 </div>
             )}
             <input
                 type="text" name={name} value={value || ''} onChange={onChange}
-                className={`w-full px-3 py-2 bg-background border rounded-lg focus:ring-1 focus:border-blue-accent text-text-primary transition-colors border-border-color focus:ring-blue-accent ${icon ? 'pl-9' : ''}`}
+                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent ${icon ? 'pl-11' : ''}`}
             />
         </div>
     </div>
@@ -58,18 +58,19 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
         let sum = 0;
         for (let i = 0; i < numberPart.length; i++) {
             let num = parseInt(numberPart[i], 10);
-            if (i % 2 === 0) {
+            if (i % 2 === 0) { // Posiciones impares (índice par)
                 num *= 2;
                 sum += num < 10 ? num : Math.floor(num / 10) + (num % 10);
-            } else {
+            } else { // Posiciones pares (índice impar)
                 sum += num;
             }
         }
         const lastDigitOfSum = sum % 10;
         const calculatedControl = lastDigitOfSum === 0 ? 0 : 10 - lastDigitOfSum;
-        if (/[A-Z]/.test(controlDigit)) {
+        
+        if (/[A-Z]/.test(controlDigit)) { // Letra
             return String.fromCharCode(64 + calculatedControl) === controlDigit;
-        } else {
+        } else { // Número
             return calculatedControl === parseInt(controlDigit, 10);
         }
     };
@@ -156,9 +157,9 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
-                <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-border-color">
+                <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
+                    <h2 className="text-xl font-bold text-text-primary flex items-center gap-3">
                         <FontAwesomeIcon icon={faBuilding} />
                         DATOS DE FACTURACIÓN
                     </h2>
@@ -167,35 +168,59 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6 space-y-4">
-                    <div className="flex items-center rounded-lg bg-background p-1 border border-border-color text-text-secondary">
-                        <button type="button" onClick={() => setAccountType('empresa')} className={`flex-1 px-3 py-1 text-sm rounded-md transition-colors ${accountType === 'empresa' ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}>EMPRESA</button>
-                        <button type="button" onClick={() => setAccountType('particular')} className={`flex-1 px-3 py-1 text-sm rounded-md transition-colors ${accountType === 'particular' ? 'bg-accent text-white' : 'hover:bg-component-bg-hover'}`}>AUTÓNOMO / PARTICULAR</button>
+                <div className="flex-grow overflow-y-auto p-6 space-y-6">
+                    <div className="relative flex w-full items-center rounded-full bg-component-bg-hover p-1 border border-border-color overflow-hidden">
+                        <span
+                            className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
+                                accountType === 'particular' ? 'translate-x-[96%]' : 'translate-x-0'
+                            }`}
+                            style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setAccountType('empresa')}
+                            className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${
+                                accountType === 'empresa' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                            }`}
+                        >
+                            EMPRESA
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setAccountType('particular')}
+                            className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${
+                                accountType === 'particular' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                            }`}
+                        >
+                            AUTÓNOMO / PARTICULAR
+                        </button>
                     </div>
 
-                    {accountType === 'empresa' ? (
-                        <>
-                            <InputField label="RAZÓN SOCIAL" name="businessName" value={formData.businessName} onChange={handleChange} icon={faBuilding} required={true} />
-                            <InputField label="CIF" name="cif" value={formData.cif} onChange={handleChange} icon={faFileInvoice} required={true} />
-                        </>
-                    ) : (
-                        <>
-                            <InputField label="NOMBRE Y APELLIDOS" name="name" value={formData.name} onChange={handleChange} icon={faUser} required={true} />
-                            <InputField label="DNI / NIE" name="dni" value={formData.dni} onChange={handleChange} icon={faIdCard} required={true} />
-                        </>
-                    )}
-                    
-                    <hr className="border-border-color" />
+                    <div className="space-y-4">
+                        {accountType === 'empresa' ? (
+                            <>
+                                <InputField label="Razón Social" name="businessName" value={formData.businessName} onChange={handleChange} icon={faBuilding} required={true} />
+                                <InputField label="CIF" name="cif" value={formData.cif} onChange={handleChange} icon={faFileInvoice} required={true} />
+                            </>
+                        ) : (
+                            <>
+                                <InputField label="Nombre y Apellidos" name="name" value={formData.name} onChange={handleChange} icon={faUser} required={true} />
+                                <InputField label="DNI / NIE" name="dni" value={formData.dni} onChange={handleChange} icon={faIdCard} required={true} />
+                            </>
+                        )}
+                        
+                        <hr className="border-border-color !my-6" />
 
-                    <InputField label="DIRECCIÓN" name="address" value={formData.address} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
-                    <InputField label="TELÉFONO" name="phone" value={formData.phone} onChange={handleChange} icon={faPhone} required={true} />
+                        <InputField label="Dirección Fiscal" name="address" value={formData.address} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
+                        <InputField label="Teléfono" name="phone" value={formData.phone} onChange={handleChange} icon={faPhone} required={true} />
+                    </div>
 
-                    {error && <p className="mt-2 text-sm text-red-accent text-center">{error}</p>}
+                    {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
                 </div>
 
                 <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-border-color">
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-secondary px-4 py-2 rounded-lg hover:bg-border-color transition-colors">CANCELAR</button>
-                    <button onClick={handleConfirmSave} className="bg-blue-accent text-white px-6 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity font-semibold">GUARDAR DATOS</button>
+                    <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold uppercase">Cancelar</button>
+                    <button onClick={handleConfirmSave} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold uppercase">Guardar Datos</button>
                 </div>
             </div>
         </div>

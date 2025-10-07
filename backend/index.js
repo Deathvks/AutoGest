@@ -4,6 +4,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const db = require('./models');
+// --- INICIO DE LA MODIFICACIÓN ---
+const { processRecurringExpenses } = require('./jobs/recurringExpenses');
+// --- FIN DE LA MODIFICACIÓN ---
 
 // Listeners para capturar cualquier salida inesperada del proceso
 process.on('exit', (code) => {
@@ -75,6 +78,18 @@ const syncDatabaseAndStartServer = async () => {
     
     app.listen(PORT, () => {
       console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
+
+      // --- INICIO DE LA MODIFICACIÓN ---
+      // Ejecutar la tarea de gastos recurrentes al iniciar y luego cada 24 horas
+      console.log('[JOBS] Ejecutando tarea de gastos recurrentes al inicio...');
+      processRecurringExpenses(); // Ejecuta una vez al arrancar
+
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+      setInterval(() => {
+        console.log('[JOBS] Ejecutando tarea programada de gastos recurrentes...');
+        processRecurringExpenses();
+      }, twentyFourHours); // Se ejecuta cada 24 horas
+      // --- FIN DE LA MODIFICACIÓN ---
     });
 
   } catch (error) {
@@ -85,10 +100,5 @@ const syncDatabaseAndStartServer = async () => {
 
 syncDatabaseAndStartServer();
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Se añade un intervalo vacío para forzar que el proceso de Node.js se mantenga activo.
-// Esto previene que el script termine su ejecución y sea reiniciado por PM2 en un bucle.
-setInterval(() => {
-  // Este bloque se mantiene vacío a propósito. Su única función es mantener el proceso vivo.
-}, 1000 * 60 * 60); // Se ejecuta cada hora para un impacto mínimo.
-// --- FIN DE LA MODIFICACIÓN ---
+// Se elimina el intervalo vacío anterior que mantenía el proceso vivo.
+// La nueva tarea programada cumplirá una función similar.

@@ -7,13 +7,9 @@ import { APP_NAME } from '../config/version';
 import AppearanceSettings from './Settings/AppearanceSettings';
 import BusinessDataSettings from './Settings/BusinessDataSettings';
 import AccountDataSettings from './Settings/AccountDataSettings';
-// --- INICIO DE LA MODIFICACIÓN ---
 import ContactSettings from './Settings/ContactSettings';
-// --- FIN DE LA MODIFICACIÓN ---
 
 const Settings = ({ 
-    isDarkMode, 
-    setIsDarkMode, 
     cars, 
     expenses, 
     incidents, 
@@ -27,29 +23,32 @@ const Settings = ({
             <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">AJUSTES</h1>
 
             <div className="space-y-8">
-                <AppearanceSettings 
-                    isDarkMode={isDarkMode} 
-                    setIsDarkMode={setIsDarkMode} 
-                />
+                <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
+                    <AppearanceSettings />
+                </div>
                 
-                <BusinessDataSettings 
-                    onBusinessDataClick={onBusinessDataClick} 
-                    businessDataMessage={businessDataMessage} 
-                />
+                <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
+                    <BusinessDataSettings 
+                        onBusinessDataClick={onBusinessDataClick} 
+                        businessDataMessage={businessDataMessage} 
+                    />
+                </div>
 
-                <AccountDataSettings 
-                    cars={cars}
-                    expenses={expenses}
-                    incidents={incidents}
-                    onLogoutClick={onLogoutClick}
-                    onDeleteAccountClick={onDeleteAccountClick}
-                />
+                <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
+                    <AccountDataSettings 
+                        cars={cars}
+                        expenses={expenses}
+                        incidents={incidents}
+                        onLogoutClick={onLogoutClick}
+                        onDeleteAccountClick={onDeleteAccountClick}
+                    />
+                </div>
 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                <ContactSettings />
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
+                <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
+                    <ContactSettings />
+                </div>
 
-                <div className="p-6 bg-component-bg rounded-xl border border-border-color lg:hidden">
+                <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl lg:hidden">
                     <h3 className="text-lg font-bold text-text-primary mb-4">ACERCA DE</h3>
                     <div className="flex justify-between items-center">
                         <span className="font-medium text-text-primary">{APP_NAME}</span>

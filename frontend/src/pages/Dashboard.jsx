@@ -1,17 +1,18 @@
 // autogest-app/frontend/src/pages/Dashboard.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCar, faCalendarPlus, faReceipt, faTags, faChevronLeft, faChevronRight, faWrench, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCar, faCalendarPlus, faReceipt, faTags, faChevronLeft, faChevronRight, faWrench, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import api from '../services/api';
+import { ThemeContext } from '../context/ThemeContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 const StatCard = ({ title, value, colorClass, onClick, isClickable }) => (
     <div 
-        className={`bg-component-bg p-6 rounded-xl shadow-sm border border-border-color ${isClickable ? 'cursor-pointer transition-colors hover:bg-component-bg-hover' : ''}`}
+        className={`bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color ${isClickable ? 'cursor-pointer transition-all duration-300 hover:border-accent hover:scale-[1.03] hover:shadow-xl' : ''}`}
         onClick={onClick}
     >
         <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider">{title}</h3>
@@ -57,13 +58,15 @@ const ActivityHistory = () => {
     };
 
     return (
-        <div className="bg-component-bg p-6 rounded-xl shadow-sm border border-border-color h-full flex flex-col">
+        <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color h-full flex flex-col">
             <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">HISTORIAL DE ACTIVIDAD</h3>
             {isLoading ? (
-                <div className="flex-grow flex items-center justify-center text-text-secondary">CARGANDO...</div>
+                <div className="flex-grow flex items-center justify-center text-text-secondary">
+                    <FontAwesomeIcon icon={faSpinner} spin size="2x" />
+                </div>
             ) : activityData.activities.length > 0 ? (
                 <>
-                    <div className="space-y-4 flex-grow overflow-y-auto pr-2">
+                    <div className="space-y-3 flex-grow overflow-y-auto pr-2">
                         {activityData.activities.map((item, index) => {
                             const { icon, color } = getActivityIcon(item.type);
                             const isClickable = !!item.carId;
@@ -71,11 +74,11 @@ const ActivityHistory = () => {
                                 <div 
                                     key={index} 
                                     onClick={() => isClickable && handleCarClick(item.carId)} 
-                                    className={`flex items-center gap-4 p-2 rounded-md ${isClickable ? 'cursor-pointer hover:bg-component-bg-hover' : 'cursor-default'}`}
+                                    className={`flex items-center gap-4 p-3 rounded-xl ${isClickable ? 'cursor-pointer hover:bg-component-bg-hover' : 'cursor-default'} transition-colors`}
                                 >
                                     <FontAwesomeIcon icon={icon} className={`w-5 h-5 ${color}`} />
-                                    <div className="flex-grow">
-                                        <p className="text-sm font-medium text-text-primary">{item.description}</p>
+                                    <div className="flex-grow min-w-0">
+                                        <p className="text-sm font-medium text-text-primary truncate">{item.description}</p>
                                         <p className="text-xs text-text-secondary">{new Date(item.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
                                     </div>
                                 </div>
@@ -83,26 +86,26 @@ const ActivityHistory = () => {
                         })}
                     </div>
                     <div className="flex justify-between items-center mt-4 pt-4 border-t border-border-color flex-shrink-0">
-                        <button onClick={() => fetchActivity(activityData.currentPage - 1)} disabled={activityData.currentPage <= 1} className="px-3 py-1 rounded-md bg-component-bg-hover disabled:opacity-50">
+                        <button onClick={() => fetchActivity(activityData.currentPage - 1)} disabled={activityData.currentPage <= 1} className="px-3 py-1.5 rounded-lg bg-component-bg-hover disabled:opacity-50 hover:bg-border-color transition-colors">
                             <FontAwesomeIcon icon={faChevronLeft} />
                         </button>
-                        <span className="text-sm text-text-secondary">PÁGINA {activityData.currentPage} DE {activityData.totalPages}</span>
-                        <button onClick={() => fetchActivity(activityData.currentPage + 1)} disabled={activityData.currentPage >= activityData.totalPages} className="px-3 py-1 rounded-md bg-component-bg-hover disabled:opacity-50">
+                        <span className="text-sm font-semibold text-text-secondary">PÁGINA {activityData.currentPage} DE {activityData.totalPages}</span>
+                        <button onClick={() => fetchActivity(activityData.currentPage + 1)} disabled={activityData.currentPage >= activityData.totalPages} className="px-3 py-1.5 rounded-lg bg-component-bg-hover disabled:opacity-50 hover:bg-border-color transition-colors">
                             <FontAwesomeIcon icon={faChevronRight} />
                         </button>
                     </div>
                 </>
             ) : (
-                <div className="flex-grow flex items-center justify-center text-text-secondary">NO HAY ACTIVIDAD RECIENTE.</div>
+                <div className="flex-grow flex items-center justify-center text-text-secondary text-sm">NO HAY ACTIVIDAD RECIENTE.</div>
             )}
         </div>
     );
 };
 
-const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onRevenueClick }) => {
+const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) => {
+    const { activeTheme } = useContext(ThemeContext);
     const [generalStats, setGeneralStats] = useState({ totalInvestment: 0, totalRevenue: 0, potentialRevenue: 0, totalExpenses: 0, totalProfit: 0 });
     const [monthlyStats, setMonthlyStats] = useState({ totalInvestment: 0, totalRevenue: 0, potentialRevenue: 0, totalExpenses: 0, totalProfit: 0 });
-    
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
     useEffect(() => {
@@ -135,11 +138,11 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
     }, [currentMonth]);
     
     useEffect(() => {
-        const textColor = isDarkMode ? '#94a3b8' : '#64748b';
-        const gridColor = isDarkMode ? '#334155' : '#e2e8f0';
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--color-text-secondary').trim();
+        const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--color-border').trim();
         ChartJS.defaults.color = textColor;
         ChartJS.defaults.borderColor = gridColor;
-    }, [isDarkMode]);
+    }, [activeTheme]);
 
     const changeMonth = (amount) => {
         setCurrentMonth(prevDate => {
@@ -160,18 +163,19 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
             acc[exp.category] = (acc[exp.category] || 0) + parseFloat(exp.amount || 0);
             return acc;
         }, {});
+        
         return {
             labels: Object.keys(categories),
             datasets: [{ 
                 label: 'GASTOS', 
                 data: Object.values(categories), 
-                backgroundColor: isDarkMode ? 'rgba(197, 164, 126, 0.5)' : 'rgba(184, 134, 11, 0.6)', 
-                borderColor: isDarkMode ? '#C5A47E' : '#B8860B', 
+                backgroundColor: `rgba(${activeTheme.accentRgb}, 0.5)`,
+                borderColor: activeTheme.accent, 
                 borderWidth: 1,
-                borderRadius: 4,
+                borderRadius: 8,
             }],
         };
-    }, [expenses, isDarkMode]);
+    }, [expenses, activeTheme]);
     
     const statusData = useMemo(() => {
         const statusCounts = cars.reduce((acc, car) => {
@@ -179,24 +183,26 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
             return acc;
         }, {});
         
-        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim();
         const colors = {
-            'EN VENTA': accentColor,
-            'RESERVADO': isDarkMode ? '#FFA500' : '#FF8C00',
-            'VENDIDO': isDarkMode ? '#00FF00' : '#32CD32',
-            'OTRO': isDarkMode ? '#94a3b8' : '#64748b'
+            'En venta': '#60a5fa',
+            'Reservado': '#facc15',
+            'Vendido': '#4ade80',
+            'Taller': '#908CAA',
+            'Otro': '#908CAA'
         };
+        const borderColor = 'rgb(53, 33, 90)';
 
         const labels = Object.keys(statusCounts);
         return {
             labels: labels,
             datasets: [{ 
                 data: Object.values(statusCounts), 
-                backgroundColor: labels.map(label => colors[label.toUpperCase()] || colors['OTRO']), 
-                borderColor: 'var(--color-component-bg)'
+                backgroundColor: labels.map(label => colors[label] || colors['Otro']), 
+                borderColor: borderColor,
+                borderWidth: 4,
             }],
         };
-    }, [cars, isDarkMode]);
+    }, [cars]);
 
     const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
     const pieOptions = { ...chartOptions, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } } } };
@@ -208,9 +214,10 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
                     <StatCard title="INVERSIÓN TOTAL" value={generalStats.totalInvestment} colorClass="text-text-primary" onClick={onTotalInvestmentClick} isClickable={true} />
                     <StatCard title="INGRESOS REALES" value={generalStats.totalRevenue} colorClass="text-green-accent" onClick={onRevenueClick} isClickable={true} />
-                    <StatCard title="INGRESOS POTENCIALES" value={generalStats.potentialRevenue} colorClass="text-blue-accent" />
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <StatCard title="INGRESOS POTENCIALES" value={generalStats.potentialRevenue} colorClass="text-accent" />
                     <StatCard title="GASTOS" value={generalStats.totalExpenses} colorClass="text-red-accent" />
-                    <StatCard title="BENEFICIO NETO" value={generalStats.totalProfit} colorClass={generalStats.totalProfit >= 0 ? 'text-accent' : 'text-red-accent'} />
+                    <StatCard title="BENEFICIO NETO" value={generalStats.totalProfit} colorClass={generalStats.totalProfit >= 0 ? 'text-green-accent' : 'text-accent'} />
                 </div>
             </div>
 
@@ -218,10 +225,10 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
                 <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-4">DASHBOARD POR MES</h2>
                 <div className="flex flex-col lg:flex-row gap-8">
                     <div className="lg:w-72 xl:w-80 flex-shrink-0">
-                        <div className="bg-component-bg p-6 rounded-xl shadow-sm border border-border-color">
+                        <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color">
                             <h3 className="text-lg font-semibold text-text-primary mb-4">SELECCIONAR MES</h3>
-                            <div className="flex items-center justify-between p-2 bg-background rounded-md border border-border-color">
-                                <button onClick={() => changeMonth(-1)} className="p-2 w-10 h-10 flex items-center justify-center hover:bg-component-bg-hover rounded-md transition-colors" title="MES ANTERIOR">
+                            <div className="flex items-center justify-between p-2 bg-background rounded-xl border border-border-color">
+                                <button onClick={() => changeMonth(-1)} className="p-2 w-10 h-10 flex items-center justify-center hover:bg-component-bg-hover rounded-lg transition-colors" title="MES ANTERIOR">
                                     <FontAwesomeIcon icon={faChevronLeft} />
                                 </button>
                                 <div className="text-center font-semibold text-text-primary">
@@ -230,7 +237,7 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
                                 <button 
                                     onClick={() => changeMonth(1)} 
                                     disabled={isNextMonthDisabled()}
-                                    className="p-2 w-10 h-10 flex items-center justify-center hover:bg-component-bg-hover rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="p-2 w-10 h-10 flex items-center justify-center hover:bg-component-bg-hover rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     title="SIGUIENTE MES"
                                 >
                                     <FontAwesomeIcon icon={faChevronRight} />
@@ -243,20 +250,21 @@ const Dashboard = ({ cars, expenses, isDarkMode, onTotalInvestmentClick, onReven
                         <StatCard title="INVERSIÓN DEL MES" value={monthlyStats.totalInvestment} colorClass="text-text-primary" />
                         <StatCard title="INGRESOS DEL MES" value={monthlyStats.totalRevenue} colorClass="text-green-accent" />
                         <StatCard title="GASTOS DEL MES" value={monthlyStats.totalExpenses} colorClass="text-red-accent" />
-                        <StatCard title="BENEFICIO DEL MES" value={monthlyStats.totalProfit} colorClass={monthlyStats.totalProfit >= 0 ? 'text-accent' : 'text-red-accent'} />
+                        <StatCard title="BENEFICIO DEL MES" value={monthlyStats.totalProfit} colorClass={monthlyStats.totalProfit >= 0 ? 'text-green-accent' : 'text-accent'} />
                     </div>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
             </div>
             
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                 <div className="xl:col-span-2 space-y-8">
-                    <div className="bg-component-bg p-6 rounded-xl shadow-sm border border-border-color h-96 flex flex-col">
+                    <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color h-96 flex flex-col">
                         <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">GASTOS GENERALES POR CATEGORÍA</h3>
                         <div className="relative flex-grow">
                             <Bar data={expensesByCategoryData} options={chartOptions} />
                         </div>
                     </div>
-                    <div className="bg-component-bg p-6 rounded-xl shadow-sm border border-border-color h-96 flex flex-col">
+                    <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color h-96 flex flex-col">
                         <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">DISTRIBUCIÓN GENERAL DE COCHES</h3>
                         <div className="relative flex-grow">
                             <Pie data={statusData} options={pieOptions} />

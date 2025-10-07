@@ -7,6 +7,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { DetailItem, MultiFileLinks } from './CarDetailsUtils';
 
+// --- INICIO DE LA MODIFICACIÓN ---
 const CarDetailsMain = ({ car }) => {
     let tagsToShow = [];
     if (typeof car.tags === 'string') {
@@ -17,56 +18,54 @@ const CarDetailsMain = ({ car }) => {
         tagsToShow = car.tags;
     }
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Función para mostrar 'N/A' si el valor es nulo, indefinido, 'NULL', o una cadena vacía.
-    const displayValue = (value) => (value && String(value).toUpperCase() !== 'NULL' ? value : 'N/A');
-    // --- FIN DE LA MODIFICACIÓN ---
+    const displayValue = (value) => (value && String(value).toUpperCase() !== 'NULL' ? value : 'No especificado');
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <section>
-                <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">DETALLES PRINCIPALES</h3>
-                <div className="grid grid-cols-2 gap-4">
-                    <DetailItem icon={faCalendarAlt} label="FECHA DE MATRICULACIÓN" value={car.registrationDate ? new Date(car.registrationDate).toLocaleDateString('es-ES') : 'N/A'} />
-                    <DetailItem icon={faTachometerAlt} label="KILOMETRAJE" value={car.km ? `${new Intl.NumberFormat('es-ES').format(car.km)} KM` : 'N/A'} />
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    <DetailItem icon={faGasPump} label="COMBUSTIBLE" value={displayValue(car.fuel)} />
-                    <DetailItem icon={faCogs} label="TRANSMISIÓN" value={displayValue(car.transmission)} />
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
-                    <DetailItem icon={faBolt} label="POTENCIA" value={car.horsepower ? `${car.horsepower} CV` : 'N/A'} />
+                <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">Detalles Principales</h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+                    <DetailItem icon={faCalendarAlt} label="Matriculación" value={car.registrationDate ? new Date(car.registrationDate).toLocaleDateString('es-ES') : 'N/A'} />
+                    <DetailItem icon={faTachometerAlt} label="Kilometraje" value={car.km ? `${new Intl.NumberFormat('es-ES').format(car.km)} KM` : 'N/A'} />
+                    <DetailItem icon={faGasPump} label="Combustible" value={displayValue(car.fuel)} />
+                    <DetailItem icon={faCogs} label="Transmisión" value={displayValue(car.transmission)} />
+                    <DetailItem icon={faBolt} label="Potencia" value={car.horsepower ? `${car.horsepower} CV` : 'N/A'} />
                     <div className="flex flex-col">
                         <div className="flex items-center text-sm text-text-secondary mb-1 uppercase">
                             <FontAwesomeIcon icon={faShieldAlt} className={`w-4 h-4 mr-2 ${!car.hasInsurance ? 'text-red-accent' : ''}`} />
-                            <span>SEGURO</span>
+                            <span>Seguro</span>
                         </div>
-                        <p className="font-semibold text-text-primary break-words uppercase">{car.hasInsurance ? 'SÍ' : 'NO'}</p>
+                        <p className="font-semibold text-text-primary break-words uppercase">{car.hasInsurance ? 'Sí' : 'No'}</p>
                     </div>
                 </div>
             </section>
 
             <section>
-                <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">IDENTIFICACIÓN Y DOCUMENTOS</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <DetailItem icon={faIdCard} label="MATRÍCULA" value={car.licensePlate || 'N/A'} />
-                    <DetailItem icon={faFingerprint} label="Nº DE BASTIDOR" value={car.vin || 'N/A'} />
-                    <DetailItem icon={faMapMarkerAlt} label="UBICACIÓN" value={car.location || 'N/A'} />
-                    <DetailItem icon={faKey} label="Nº DE LLAVES" value={car.keys || '1'} />
-                    <MultiFileLinks label="FICHA TÉCNICA" icon={faFileLines} filesData={car.technicalSheetUrl} />
-                    <MultiFileLinks label="PERMISO DE CIRCULACIÓN" icon={faFileLines} filesData={car.registrationCertificateUrl} />
-                    <MultiFileLinks label="ARCHIVOS VARIOS" filesData={car.otherDocumentsUrls} />
+                <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">Identificación y Documentos</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
+                    <DetailItem icon={faIdCard} label="Matrícula" value={car.licensePlate || 'N/A'} />
+                    <DetailItem icon={faFingerprint} label="Nº de Bastidor" value={car.vin || 'N/A'} />
+                    <DetailItem icon={faMapMarkerAlt} label="Ubicación" value={car.location || 'N/A'} />
+                    <DetailItem icon={faKey} label="Nº de Llaves" value={car.keys || '1'} />
+                    <MultiFileLinks label="Ficha Técnica" icon={faFileLines} filesData={car.technicalSheetUrl} />
+                    <MultiFileLinks label="Permiso de Circulación" icon={faFileLines} filesData={car.registrationCertificateUrl} />
+                    <MultiFileLinks label="Archivos Varios" filesData={car.otherDocumentsUrls} />
                 </div>
             </section>
 
-            <section>
-                <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">ETIQUETAS</h3>
-                <div className="flex flex-wrap gap-2">
-                    {tagsToShow.length > 0 ? tagsToShow.map(tag => (
-                        <span key={tag} className="bg-accent/10 text-accent text-xs font-semibold px-2.5 py-1 rounded-full uppercase">{tag}</span>
-                    )) : <p className="text-text-primary text-sm font-semibold uppercase">SIN ETIQUETAS</p>}
-                </div>
-            </section>
+            {tagsToShow.length > 0 && (
+                <section>
+                    <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">Etiquetas</h3>
+                    <div className="flex flex-wrap gap-2">
+                        {tagsToShow.map(tag => (
+                            <span key={tag} className="bg-accent/10 text-accent text-xs font-semibold px-2.5 py-1 rounded-full uppercase">{tag}</span>
+                        ))}
+                    </div>
+                </section>
+            )}
         </div>
     );
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 export default CarDetailsMain;

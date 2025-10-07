@@ -27,7 +27,6 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
     const [verificationError, setVerificationError] = useState('');
 
     const handleSuccessfulPayment = () => {
-        console.log('[Payment] Pago exitoso. Iniciando verificación...');
         setIsVerifyingPayment(true);
         setVerificationError('');
 
@@ -37,10 +36,7 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
 
         const pollForStatus = async () => {
             if (attempts >= maxAttempts) {
-                // --- INICIO DE LA MODIFICACIÓN ---
-                // Se elimina la llamada a syncSubscription que estaba fallando.
                 setVerificationError("La verificación tardó más de lo esperado. Por favor, recarga la página en unos momentos para ver el estado actualizado de tu suscripción.");
-                // --- FIN DE LA MODIFICACIÓN ---
                 setIsVerifyingPayment(false);
                 return;
             }
@@ -75,10 +71,9 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
         }
     }, [user]);
 
-    // Se añade 'technician' a los roles que no requieren suscripción de pago.
     if (user.role === 'admin' || user.role === 'technician') {
         return (
-            <div className="p-8 bg-component-bg rounded-xl border border-border-color text-center animated-premium-background">
+            <div className="p-8 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color text-center shadow-2xl">
                 <FontAwesomeIcon icon={faCheckCircle} className="w-16 h-16 mx-auto mb-4 text-green-accent" />
                 <h3 className="text-xl font-bold text-green-accent">CUENTA DE ACCESO COMPLETO</h3>
                 <p className="text-text-secondary mt-2">TU ROL DE {user.role.toUpperCase()} NO REQUIERE UNA SUSCRIPCIÓN DE PAGO.</p>
@@ -88,7 +83,7 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
     
     if (user.role === 'user' && user.companyId) {
         return (
-            <div className="p-8 bg-component-bg rounded-xl border border-border-color text-center animated-premium-background">
+            <div className="p-8 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color text-center shadow-2xl">
                 <FontAwesomeIcon icon={faUsersCog} className="w-16 h-16 mx-auto mb-4 text-blue-accent" />
                 <h3 className="text-xl font-bold text-blue-accent">SUSCRIPCIÓN GESTIONADA</h3>
                 <p className="text-text-secondary mt-2">
@@ -136,13 +131,13 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
             </div>
             <div>
                 {isVerifyingPayment ? (
-                    <div className="p-8 bg-component-bg rounded-xl border border-border-color shadow-lg h-full flex flex-col items-center justify-center">
+                    <div className="p-8 bg-component-bg/80 backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl h-full flex flex-col items-center justify-center">
                         <FontAwesomeIcon icon={faSpinner} spin size="2x" className="text-accent mb-4" />
                         <h3 className="text-xl font-bold text-text-primary">VERIFICANDO PAGO...</h3>
                         <p className="text-text-secondary mt-2 text-center">ESTO PUEDE TARDAR UNOS SEGUNDOS. NO CIERRES ESTA VENTANA.</p>
                     </div>
                 ) : verificationError ? (
-                    <div className="p-8 bg-component-bg rounded-xl border border-border-color shadow-lg h-full flex flex-col items-center justify-center">
+                    <div className="p-8 bg-component-bg/80 backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl h-full flex flex-col items-center justify-center">
                         <FontAwesomeIcon icon={faExclamationTriangle} size="2x" className="text-red-accent mb-4" />
                         <h3 className="text-xl font-bold text-text-primary">ERROR DE VERIFICACIÓN</h3>
                         <p className="text-text-secondary mt-2 text-center">{verificationError}</p>

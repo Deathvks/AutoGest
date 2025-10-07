@@ -1,5 +1,5 @@
 // autogest-app/frontend/src/components/modals/CarDetails/CarDetailsActions.jsx
-import React, { useContext, useState } from 'react';
+import React, { useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faPencilAlt, faTrashAlt, faFileInvoiceDollar, faBan, faHandHoldingUsd,
@@ -8,19 +8,25 @@ import {
 import { AuthContext } from '../../../context/AuthContext';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import GeneratePdfModal from '../GeneratePdfModal';
-import api from '../../../services/api';
 
-const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onAddExpenseClick, onAddIncidentClick, onUpdateCar, onTestDriveClick }) => {
+const ActionButton = ({ onClick, disabled, icon, text, colorClass, title }) => (
+    <button
+        onClick={(e) => { e.stopPropagation(); onClick(); }} // Prevent modal close on button click
+        disabled={disabled}
+        title={title || text}
+        className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg shadow-sm transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 ${colorClass}`}
+    >
+        <FontAwesomeIcon icon={icon} />
+        <span className="hidden sm:inline">{text}</span>
+    </button>
+);
+
+const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onReserveClick, onCancelReservationClick, onAddExpenseClick, onAddIncidentClick, onUpdateCar, onTestDriveClick, onGeneratePdfClick }) => {
     const { user } = useContext(AuthContext);
     const isReservedAndActive = car.status.toUpperCase() === 'RESERVADO' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
     const isLockedForUser = isReservedAndActive && user.role !== 'admin';
 
-    const [pdfModalInfo, setPdfModalInfo] = useState({ isOpen: false, type: '', number: 0 });
-
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleGeneratePdf = async (type, number, igicRate) => {
-    // --- FIN DE LA MODIFICACIÓN ---
         const doc = new jsPDF();
         const today = new Date().toLocaleDateString('es-ES');
         let currentY = 20;
@@ -74,112 +80,76 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
             }
         }
         
-        const lightGreenColor = [219, 237, 213];
+        const accentColor = [139, 92, 246];
 
         doc.setFontSize(24);
+        doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
         doc.text(type.toUpperCase(), 14, currentY);
 
         doc.setFontSize(10);
-        doc.text(`Nº ${type.toUpperCase()}: ${type.toUpperCase()}-${number}`, 150, currentY);
-        doc.text(`EMISIÓN: ${today}`, 150, currentY + 5);
+        doc.setTextColor(144, 140, 170);
+        doc.text(`Nº ${type.toUpperCase()}: ${type.toUpperCase()}-${number}`, 200, currentY, { align: 'right' });
+        doc.text(`EMISIÓN: ${today}`, 200, currentY + 5, { align: 'right' });
         
         currentY += 25;
-
-        doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
-        doc.rect(14, currentY - 5, 85, 7, 'F');
-        doc.setFontSize(11);
-        doc.setTextColor(0, 0, 0);
-        doc.text('CLIENTE:', 16, currentY);
-
-        doc.setFontSize(10);
-        doc.text(`${buyer.name || '...........................................'} ${buyer.lastName || ''}`, 16, currentY + 10);
-        doc.text(`${buyer.address || '...........................................'}`, 16, currentY + 15);
-        doc.text(`${buyer.phone || '...........................................'}`, 16, currentY + 20);
-        doc.text(`${buyer.email || '...........................................'}`, 16, currentY + 25);
-        doc.text(`${buyer.dni || '...........................................'}`, 16, currentY + 30);
-
-        doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
-        doc.rect(105, currentY - 5, 91, 7, 'F');
-        doc.setFontSize(11);
-        doc.text('EN SIGNA:', 107, currentY);
         
-        doc.setFontSize(10);
-        if (user.cif) {
-            doc.text(`${user.businessName || ''}`, 107, currentY + 10);
-            doc.text(`${user.cif || ''}`, 107, currentY + 15);
-        } else {
-            doc.text(`${user.name || ''}`, 107, currentY + 10);
-            doc.text(`${user.dni || ''}`, 107, currentY + 15);
-        }
-        doc.text(`${user.address || ''}`, 107, currentY + 20);
-        doc.text(`${user.phone || ''}`, 107, currentY + 25);
-        doc.text(`${user.email || ''}`, 107, currentY + 30);
+        doc.setFontSize(11);
+        doc.setTextColor(40, 37, 61);
+        doc.text('CLIENTE:', 14, currentY);
+        doc.text('EMISOR:', 110, currentY);
 
-        currentY += 45;
+        doc.setLineWidth(0.2);
+        doc.setDrawColor(228, 228, 231);
+        doc.line(14, currentY + 2, 200, currentY + 2);
+        
+        currentY += 8;
+
+        doc.setFontSize(10);
+        doc.setTextColor(113, 113, 122);
+        doc.text(`${buyer.name || ''} ${buyer.lastName || ''}`, 14, currentY);
+        doc.text(`${user.cif ? user.businessName : user.name}`, 110, currentY);
+        doc.text(`${buyer.dni || ''}`, 14, currentY + 5);
+        doc.text(`${user.cif || user.dni}`, 110, currentY + 5);
+        doc.text(`${buyer.address || ''}`, 14, currentY + 10);
+        doc.text(`${user.address || ''}`, 110, currentY + 10);
+
+        currentY += 25;
         
         const price = parseFloat(type === 'factura' ? car.salePrice : car.price);
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        if (type === 'factura' && igicRate > 0) {
+        const tableHeadStyles = { fillColor: [238, 236, 247], textColor: [24, 24, 27], fontStyle: 'bold' };
+        if (igicRate > 0 && type === 'factura') {
             const basePrice = price / (1 + igicRate / 100);
             const igicAmount = price - basePrice;
 
             autoTable(doc, {
                 startY: currentY,
-                head: [['Descripción', 'Base Imponible', `IGIC (${igicRate}%)`, 'TOTAL']],
+                head: [['Descripción', 'Base Imponible', `IGIC (${igicRate}%)`, 'Total']],
                 body: [[
-                    `VEHÍCULO: ${car.make} ${car.model} (${car.licensePlate})`,
-                    `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(basePrice)} €`,
-                    `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(igicAmount)} €`,
-                    `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`
+                    { content: `VEHÍCULO: ${car.make} ${car.model} (${car.licensePlate})`, styles: { cellWidth: 85 } },
+                    { content: `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(basePrice)} €`, styles: { halign: 'right' } },
+                    { content: `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(igicAmount)} €`, styles: { halign: 'right' } },
+                    { content: `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`, styles: { halign: 'right' } }
                 ]],
-                theme: 'grid',
-                styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
-                headStyles: { fillColor: lightGreenColor, textColor: 0, fontStyle: 'bold' },
-                columnStyles: { 0: { cellWidth: 85 }, 1: { cellWidth: 30, halign: 'right' }, 2: { cellWidth: 30, halign: 'right' }, 3: { cellWidth: 35, halign: 'right' } }
+                theme: 'grid', styles: { fontSize: 9 }, headStyles: tableHeadStyles
             });
 
-            const finalYTable = doc.lastAutoTable.finalY;
-            doc.setFontSize(10);
-            doc.text('SUBTOTAL:', 150, finalYTable + 10, { align: 'right' });
-            doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(basePrice)} €`, 190, finalYTable + 10, { align: 'right' });
-            doc.text(`IGIC (${igicRate}%):`, 150, finalYTable + 15, { align: 'right' });
-            doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(igicAmount)} €`, 190, finalYTable + 15, { align: 'right' });
-
-            doc.setFontSize(12);
-            doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
-            doc.rect(140, finalYTable + 20, 55, 7, 'F');
-            doc.setTextColor(0, 0, 0);
-            doc.text('TOTAL:', 145, finalYTable + 25);
-            doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`, 193, finalYTable + 25, { align: 'right' });
         } else {
-        // --- FIN DE LA MODIFICACIÓN ---
             autoTable(doc, {
                 startY: currentY,
-                head: [['Descripción', 'TOTAL']],
+                head: [['Descripción', 'Total']],
                 body: [[
                     `VEHÍCULO: ${car.make} ${car.model} (${car.licensePlate})`,
-                    `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`
+                    { content: `${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`, styles: { halign: 'right' } }
                 ]],
-                theme: 'grid',
-                styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
-                headStyles: { fillColor: lightGreenColor, textColor: 0, fontStyle: 'bold' },
-                columnStyles: { 0: { cellWidth: 150 }, 1: { cellWidth: 30, halign: 'right' } }
+                theme: 'grid', styles: { fontSize: 9 }, headStyles: tableHeadStyles,
             });
-
-            const finalYTable = doc.lastAutoTable.finalY;
-            doc.setFontSize(12);
-            doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
-            doc.rect(140, finalYTable + 15, 55, 7, 'F');
-            doc.setTextColor(0, 0, 0);
-            doc.text('TOTAL:', 145, finalYTable + 20);
-            doc.text(`${new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price)} €`, 193, finalYTable + 20, { align: 'right' });
         }
         
-        doc.setTextColor(0, 0, 0);
         if (type === 'proforma') {
             doc.setFontSize(8);
-            doc.text("ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL.", 105, doc.internal.pageSize.height - 10, { align: 'center' });
+            doc.setTextColor(113, 113, 122);
+            doc.text("Este documento no tiene validez fiscal.", 105, doc.internal.pageSize.height - 10, { align: 'center' });
         }
         
         const fileName = `${type}_${number}_${car.licensePlate}.pdf`;
@@ -191,81 +161,44 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
         formData.append('invoicePdf', pdfFile);
 
         await onUpdateCar(car.id, formData);
-        
-        setPdfModalInfo({ isOpen: false, type: '', number: 0 });
     };
-
-    const openPdfModal = (type) => {
-        const nextNumber = type === 'proforma' ? user.proformaCounter : user.invoiceCounter;
-        setPdfModalInfo({ isOpen: true, type, number: nextNumber });
-    };
+    
+    const buttonStyle = "bg-component-bg-hover text-text-primary hover:bg-border-color";
 
     return (
-        <>
-            <div className="flex-shrink-0 p-4 border-t border-border-color flex flex-wrap justify-center sm:justify-end gap-3">
-                {(car.status.toUpperCase() === 'EN VENTA') && (
-                    <button onClick={() => onTestDriveClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-yellow-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
-                        <FontAwesomeIcon icon={faFileSignature} /> DOCUMENTO PRUEBA
-                    </button>
-                )}
-
-                {car.status.toUpperCase() === 'VENDIDO' ? (
-                    <button onClick={() => openPdfModal('factura')} className="px-4 py-2 text-sm font-semibold text-white bg-green-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
-                        <FontAwesomeIcon icon={faFileInvoice} /> FACTURA
-                    </button>
-                ) : (
-                    <button onClick={() => openPdfModal('proforma')} className="px-4 py-2 text-sm font-semibold text-white bg-green-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
-                        <FontAwesomeIcon icon={faFileInvoice} /> PROFORMA
-                    </button>
-                )}
-                
-                <button disabled={isLockedForUser} onClick={() => onAddExpenseClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-blue-accent rounded-lg shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <FontAwesomeIcon icon={faFileInvoiceDollar} /> AÑADIR GASTO
-                </button>
-                
-                {car.status.toUpperCase() === 'VENDIDO' && (
-                    <button disabled={isLockedForUser} onClick={() => onAddIncidentClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <FontAwesomeIcon icon={faExclamationTriangle} /> AÑADIR INCIDENCIA
-                    </button>
-                )}
-                
-                {(car.status.toUpperCase() === 'EN VENTA' || car.status.toUpperCase() === 'RESERVADO') && (
-                    <button disabled={isLockedForUser} onClick={() => onSellClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <FontAwesomeIcon icon={faHandHoldingUsd} /> VENDER
-                    </button>
-                )}
-                
-                {car.status.toUpperCase() === 'EN VENTA' && (
-                    <button disabled={isLockedForUser} onClick={() => onReserveClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-accent rounded-lg shadow-sm hover:bg-accent-hover transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <FontAwesomeIcon icon={faBell} /> RESERVAR
-                    </button>
-                )}
-                
-                {car.status.toUpperCase() === 'RESERVADO' && (
-                    <button onClick={() => onCancelReservationClick(car)} className="px-4 py-2 text-sm font-semibold text-white bg-red-accent rounded-lg shadow-sm hover:opacity-90 flex items-center gap-2">
-                        <FontAwesomeIcon icon={faBan} /> CANCELAR RESERVA
-                    </button>
-                )}
-                
-                <button disabled={isLockedForUser} onClick={() => onEditClick(car)} className="px-4 py-2 text-sm font-semibold text-text-primary bg-component-bg-hover rounded-lg border border-border-color hover:bg-border-color flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <FontAwesomeIcon icon={faPencilAlt} /> EDITAR
-                </button>
-                
-                <button disabled={isLockedForUser} onClick={() => onDeleteClick(car)} className="px-4 py-2 text-sm font-semibold text-red-accent bg-red-accent/10 rounded-lg hover:bg-red-accent/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <FontAwesomeIcon icon={faTrashAlt} /> ELIMINAR
-                </button>
-            </div>
-            {pdfModalInfo.isOpen && (
-                <GeneratePdfModal
-                    isOpen={pdfModalInfo.isOpen}
-                    onClose={() => setPdfModalInfo({ isOpen: false, type: '', number: 0 })}
-                    onConfirm={handleGeneratePdf}
-                    type={pdfModalInfo.type}
-                    defaultNumber={pdfModalInfo.number}
-                    car={car}
-                />
+        <div className="flex-shrink-0 p-4 border-t border-border-color flex flex-wrap justify-center sm:justify-end gap-3 bg-component-bg/50">
+            {car.status.toUpperCase() === 'EN VENTA' && (
+                <ActionButton onClick={() => onTestDriveClick(car)} icon={faFileSignature} text="Prueba" colorClass={buttonStyle} />
             )}
-        </>
+
+            {car.status.toUpperCase() === 'VENDIDO' ? (
+                <ActionButton onClick={() => onGeneratePdfClick(car, 'factura')} icon={faFileInvoice} text="Factura" colorClass={buttonStyle} />
+            ) : (
+                <ActionButton onClick={() => onGeneratePdfClick(car, 'proforma')} icon={faFileInvoice} text="Proforma" colorClass={buttonStyle} />
+            )}
+            
+            <ActionButton disabled={isLockedForUser} onClick={() => onAddExpenseClick(car)} icon={faFileInvoiceDollar} text="Gasto" colorClass={buttonStyle} />
+            
+            {car.status.toUpperCase() === 'VENDIDO' && (
+                <ActionButton disabled={isLockedForUser} onClick={() => onAddIncidentClick(car)} icon={faExclamationTriangle} text="Incidencia" colorClass={buttonStyle} />
+            )}
+            
+            {(car.status.toUpperCase() === 'EN VENTA' || car.status.toUpperCase() === 'RESERVADO') && (
+                <ActionButton disabled={isLockedForUser} onClick={() => onSellClick(car)} icon={faHandHoldingUsd} text="Vender" colorClass={buttonStyle} />
+            )}
+            
+            {car.status.toUpperCase() === 'EN VENTA' && (
+                <ActionButton disabled={isLockedForUser} onClick={() => onReserveClick(car)} icon={faBell} text="Reservar" colorClass={buttonStyle} />
+            )}
+            
+            {car.status.toUpperCase() === 'RESERVADO' && (
+                <ActionButton onClick={() => onCancelReservationClick(car)} icon={faBan} text="Cancelar" colorClass={buttonStyle} />
+            )}
+            
+            <ActionButton disabled={isLockedForUser} onClick={() => onEditClick(car)} icon={faPencilAlt} text="Editar" colorClass={buttonStyle} />
+            
+            <ActionButton disabled={isLockedForUser} onClick={() => onDeleteClick(car)} icon={faTrashAlt} text="Eliminar" colorClass={buttonStyle} />
+        </div>
     );
 };
 

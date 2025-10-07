@@ -11,7 +11,6 @@ export default {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },
-      // Paleta de colores profesional
       colors: {
         background: 'var(--color-background)',
         'component-bg': 'var(--color-component-bg)',
@@ -20,19 +19,32 @@ export default {
         'text-primary': 'var(--color-text-primary)',
         'text-secondary': 'var(--color-text-secondary)',
         
-        // Color de acento principal (dorado/cobre)
         'accent': 'var(--color-accent)',
         'accent-hover': 'var(--color-accent-hover)',
 
-        // Colores semánticos
         'green-accent': 'var(--color-green-accent)',
         'red-accent': 'var(--color-red-accent)',
         'yellow-accent': 'var(--color-yellow-accent)',
-        'blue-accent': 'var(--color-blue-accent)', // Se renombra pero se mantiene por si se usa para elementos informativos
+        'blue-accent': 'var(--color-blue-accent)',
+        
+        'popup-bg': 'var(--color-popup-bg)', // <-- AÑADIDO
+      },
+      borderRadius: {
+        'lg': '0.75rem',
+        'xl': '1rem',
+        '2xl': '1.5rem',
+        '3xl': '2rem',
+      },
+      keyframes: {
+        glow: {
+          '0%, 100%': { borderColor: 'var(--color-border)' },
+          '50%': { borderColor: 'var(--color-accent)' },
+        }
+      },
+      animation: {
+        'ring-glow': 'glow 3s linear infinite',
       }
     },
   },
-  plugins: [
-    require('@tailwindcss/forms'),
-  ],
+  plugins: [],
 }
