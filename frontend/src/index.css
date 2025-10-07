@@ -50,11 +50,9 @@
     -ms-overflow-style: none;
   }
   
-  /* --- INICIO DE LA MODIFICACIÓN --- */
   input, textarea, select {
     @apply focus:outline-none;
   }
-  /* --- FIN DE LA MODIFICACIÓN --- */
 
   body::-webkit-scrollbar {
     display: none;
@@ -236,3 +234,21 @@ body,
   position: relative;
   z-index: 1;
 }
+
+/* --- INICIO DE LA MODIFICACIÓN --- */
+/* Estilos definitivos para el selector de color personalizado */
+
+/* Contenedor principal del selector de color */
+.custom-color-picker.chrome-picker {
+  border-radius: 1rem !important;
+  box-shadow: none !important;
+  background: var(--color-popup-bg) !important;
+  border: 1px solid var(--color-border) !important;
+  overflow: hidden;
+}
+
+/* Oculta la sección de inputs (HEX/RGB) que es el último elemento con esta clase */
+.custom-color-picker .flexbox-fix:last-of-type {
+  display: none !important;
+}
+/* --- FIN DE LA MODIFICACIÓN --- */

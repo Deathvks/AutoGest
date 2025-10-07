@@ -17,7 +17,7 @@ const themes = [
         accentRgb: '168, 134, 226',
         redAccent: 'rgb(224, 123, 142)',
         circlesBg: 'linear-gradient(120deg, rgb(135, 60, 141), rgb(182, 85, 107))',
-        popupBg: 'rgb(26, 22, 41)', // <-- MODIFICADO
+        popupBg: 'rgb(26, 22, 41)',
     },
     {
         name: 'Medianoche',
@@ -33,7 +33,7 @@ const themes = [
         accentRgb: '156, 163, 175',
         redAccent: 'rgb(239, 68, 68)',
         circlesBg: 'linear-gradient(120deg, rgb(30, 58, 138), rgb(79, 70, 229))',
-        popupBg: 'rgb(30, 41, 59)', // <-- MODIFICADO
+        popupBg: 'rgb(30, 41, 59)',
     },
     {
         name: 'Esmeralda',
@@ -49,7 +49,7 @@ const themes = [
         accentRgb: '52, 211, 153',
         redAccent: 'rgb(244, 63, 94)',
         circlesBg: 'linear-gradient(120deg, #10b981, #a7f3d0)',
-        popupBg: 'rgb(6, 78, 59)', // <-- MODIFICADO
+        popupBg: 'rgb(6, 78, 59)',
     },
     {
         name: 'Rubí',
@@ -65,7 +65,7 @@ const themes = [
         accentRgb: '252, 165, 165',
         redAccent: 'rgb(252, 165, 165)',
         circlesBg: 'linear-gradient(120deg, #fda4af, #f43f5e)',
-        popupBg: 'rgb(127, 29, 29)', // <-- MODIFICADO
+        popupBg: 'rgb(127, 29, 29)',
     },
     // --- TEMAS CLAROS ---
     {
@@ -82,7 +82,7 @@ const themes = [
         accentRgb: '92, 37, 165',
         redAccent: '#c53030',
         circlesBg: 'linear-gradient(120deg, #e9d5ff, #c4b5fd)',
-        popupBg: '#ffffff', // <-- MODIFICADO
+        popupBg: '#ffffff',
     },
     {
         name: 'Claro (Azul)',
@@ -98,7 +98,7 @@ const themes = [
         accentRgb: '37, 99, 235',
         redAccent: '#ef4444',
         circlesBg: 'linear-gradient(120deg, #dbeafe, #93c5fd)',
-        popupBg: '#ffffff', // <-- MODIFICADO
+        popupBg: '#ffffff',
     }
 ];
 
@@ -106,6 +106,22 @@ const hexToRgb = (hex) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null;
 };
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Función para determinar la luminosidad de un color (de 0 a 255)
+const getColorBrightness = (hex) => {
+    try {
+        const hexClean = hex.replace(/^#/, '');
+        const r = parseInt(hexClean.substring(0, 2), 16);
+        const g = parseInt(hexClean.substring(2, 4), 16);
+        const b = parseInt(hexClean.substring(4, 6), 16);
+        // Fórmula de luminosidad relativa (YIQ)
+        return ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    } catch (e) {
+        return 128; // Valor intermedio si falla
+    }
+};
+// --- FIN DE LA MODIFICACIÓN ---
 
 const lightenColor = (hex, percent) => {
     try {
@@ -167,21 +183,34 @@ export const ThemeProvider = ({ children }) => {
         const rgbColor = hexToRgb(hexColor);
         if (!rgbColor) return;
         
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const brightness = getColorBrightness(hexColor);
+        const isLightColor = brightness > 150; // Umbral de luminosidad (ajustable)
+
+        // Determina si el tema base debe ser claro u oscuro
         const lastThemeId = localStorage.getItem('app-theme') || 'default-purple';
-        const isBaseLight = themes.find(t => t.id === lastThemeId && t.id !== 'custom')?.background.startsWith('#');
-        const base = isBaseLight ? themes.find(t => t.id === 'light-standard') : themes.find(t => t.id === 'default-purple');
+        const isBaseLight = themes.find(t => t.id === lastThemeId)?.background.startsWith('#');
+        const baseThemeId = (isBaseLight || isLightColor) ? 'light-standard' : 'default-purple';
+        const base = themes.find(t => t.id === baseThemeId);
 
         const newCustomTheme = {
             ...base,
             id: 'custom',
             name: 'Personalizado',
             accent: hexColor,
-            accentHover: lightenColor(hexColor, 10),
+            accentHover: isLightColor ? darkenColor(hexColor, 10) : lightenColor(hexColor, 10),
             accentRgb: rgbColor,
-            background: isBaseLight ? base.background : `linear-gradient(-70deg, ${darkenColor(hexColor, 30)}, ${darkenColor(hexColor, 15)})`,
-            circlesBg: isBaseLight ? `linear-gradient(120deg, ${lightenColor(hexColor, 20)}, ${hexColor})` : `linear-gradient(120deg, ${darkenColor(hexColor, 10)}, ${lightenColor(hexColor, 10)})`,
-            popupBg: isBaseLight ? '#ffffff' : darkenColor(hexColor, 40), // <-- MODIFICADO
+            background: isLightColor ? base.background : `linear-gradient(-70deg, ${darkenColor(hexColor, 30)}, ${darkenColor(hexColor, 15)})`,
+            circlesBg: isLightColor ? `linear-gradient(120deg, ${lightenColor(hexColor, 20)}, ${hexColor})` : `linear-gradient(120deg, ${darkenColor(hexColor, 10)}, ${lightenColor(hexColor, 10)})`,
+            popupBg: isLightColor ? '#ffffff' : darkenColor(hexColor, 40),
+            // Ajuste dinámico de los colores del texto
+            textPrimary: isLightColor ? '#18181b' : '#f8fafc',
+            textSecondary: isLightColor ? '#71717a' : '#cbd5e1',
+            componentBg: isLightColor ? base.componentBg : 'rgba(255, 255, 255, 0.1)',
+            componentBgHover: isLightColor ? base.componentBgHover : 'rgba(255, 255, 255, 0.15)',
+            border: isLightColor ? base.border : 'rgba(255, 255, 255, 0.2)',
         };
+        // --- FIN DE LA MODIFICACIÓN ---
         
         setCustomTheme(newCustomTheme);
         localStorage.setItem('app-custom-theme', hexColor);

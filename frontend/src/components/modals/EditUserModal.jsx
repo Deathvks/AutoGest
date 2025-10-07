@@ -173,22 +173,24 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
                     {error && <p className="mt-4 text-sm text-red-accent text-center font-semibold">{error}</p>}
                 </form>
                 
-                <div className="flex justify-between items-center gap-4 p-4 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
-                    <div>
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-3 p-4 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
+                    <div className="w-full sm:w-auto">
                         {canEditPermissions && !isCurrentUserAdmin && !isEditingSelf && (
-                            <button onClick={handleExpelClick} className="bg-red-accent/10 text-red-accent px-4 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-semibold flex items-center gap-2">
+                            <button onClick={handleExpelClick} className="w-full bg-red-accent/10 text-red-accent px-4 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-semibold flex items-center justify-center gap-2">
                                 <FontAwesomeIcon icon={faUserSlash} />
                                 Expulsar
                             </button>
                         )}
                     </div>
-                    <div className="flex items-center gap-3">
-                        <button onClick={onClose} className="bg-component-bg border border-border-color text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold">Cancelar</button>
-                        <button onClick={handleUpdateUser} disabled={isEditingSelf} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                    <div className="w-full sm:w-auto flex items-center gap-3">
+                        <button onClick={onClose} className="w-full sm:w-auto bg-component-bg border border-border-color text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold">Cancelar</button>
+                        <button onClick={handleUpdateUser} disabled={isEditingSelf && !isCurrentUserAdmin} className="w-full sm:w-auto bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
                             Guardar
                         </button>
                     </div>
                 </div>
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
         </div>
     );

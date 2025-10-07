@@ -124,13 +124,15 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                         </div>
                     )}
                     
-                    <div className="p-6 bg-background/50 rounded-xl border border-border-color">
-                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Sesión</h4>
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <div className="p-6 bg-background/50 rounded-xl border border-border-color lg:hidden">
+                         <h4 className="font-semibold text-text-primary mb-2 uppercase">Sesión</h4>
                          <button onClick={onLogoutClick} className="w-full sm:w-auto bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2">
                             <FontAwesomeIcon icon={faSignOutAlt} />
                             Cerrar Sesión
                         </button>
                     </div>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                     <div className="p-6 bg-red-accent/10 rounded-xl">
                         <h4 className="font-semibold text-red-accent mb-2 uppercase">Zona de Peligro</h4>

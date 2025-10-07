@@ -2,7 +2,7 @@
 import React, { useContext, useState, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faTrash, faSave, faTimes, faUser, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faTrash, faSave, faTimes, faUser, faEnvelope, faPencilAlt, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 const Profile = () => {
     const { user, updateUserProfile, deleteUserAvatar, subscriptionStatus } = useContext(AuthContext);
@@ -16,7 +16,8 @@ const Profile = () => {
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
-    const avatarInputRef = React.useRef(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const avatarInputRef = useRef(null);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -38,21 +39,25 @@ const Profile = () => {
     const handleSaveChanges = async () => {
         setMessage('');
         setError('');
+        setIsLoading(true);
         try {
             const data = new FormData();
+            let hasChanges = false;
             
             if (formData.name !== user.name) {
                 data.append('name', formData.name);
+                hasChanges = true;
             }
             if (formData.email !== user.email) {
                 data.append('email', formData.email);
+                hasChanges = true;
             }
-
             if (avatarFile) {
                 data.append('avatar', avatarFile);
+                hasChanges = true;
             }
 
-            if (Array.from(data.entries()).length > 0) {
+            if (hasChanges) {
                  await updateUserProfile(data);
             }
            
@@ -60,27 +65,31 @@ const Profile = () => {
             setIsEditing(false);
             setAvatarFile(null);
             setAvatarPreview(null);
+            setTimeout(() => setMessage(''), 3000);
         } catch (error) {
             setError(error.message || 'Error al actualizar el perfil.');
+        } finally {
+            setIsLoading(false);
         }
     };
     
     const handleDeleteAvatar = async () => {
+        setIsLoading(true);
         try {
             await deleteUserAvatar();
             setAvatarPreview(null);
             setMessage('Avatar eliminado con éxito.');
+            setTimeout(() => setMessage(''), 3000);
         } catch (error) {
             setError(error.message || 'Error al eliminar el avatar.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const handleCancel = () => {
         setIsEditing(false);
-        setFormData({
-            name: user?.name || '',
-            email: user?.email || '',
-        });
+        setFormData({ name: user?.name || '', email: user?.email || '' });
         setAvatarFile(null);
         setAvatarPreview(null);
         setError('');
@@ -88,8 +97,7 @@ const Profile = () => {
     };
     
     const isExempt = user && (user.role === 'admin' || user.role === 'technician');
-    const hasValidSubscription = subscriptionStatus === 'active' || 
-        (subscriptionStatus === 'cancelled' && user && new Date(user.subscriptionExpiry) > new Date());
+    const hasValidSubscription = subscriptionStatus === 'active' || (subscriptionStatus === 'cancelled' && user && new Date(user.subscriptionExpiry) > new Date());
         
     const roleStyles = {
         admin: 'bg-red-accent/10 text-red-accent',
@@ -97,85 +105,99 @@ const Profile = () => {
         technician: 'bg-green-accent/10 text-green-accent',
         technician_subscribed: 'bg-accent/10 text-accent'
     };
+    
+    const InputField = ({ label, name, value, onChange, type = 'text', icon, disabled }) => (
+        <div>
+            <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">{label}</label>
+            <div className="relative">
+                <FontAwesomeIcon icon={icon} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
+                <input 
+                    type={type} 
+                    name={name} 
+                    value={value} 
+                    onChange={onChange} 
+                    disabled={disabled}
+                    className="w-full pl-11 pr-4 py-3 bg-component-bg-hover border rounded-lg focus:ring-1 focus:ring-accent text-text-primary transition-colors border-border-color focus:border-accent disabled:opacity-70 disabled:cursor-not-allowed"
+                />
+            </div>
+        </div>
+    );
 
     return (
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">MI PERFIL</h1>
             
-            <div className="bg-component-bg backdrop-blur-lg p-6 sm:p-8 rounded-2xl border border-border-color shadow-2xl">
-                <div className="flex flex-col items-center gap-6">
-                    <div className="relative">
-                        <img 
-                            src={avatarPreview || (user.avatarUrl ? user.avatarUrl : `https://ui-avatars.com/api/?name=${formData.name}&background=1A1629&color=F0EEF7&size=128`)} 
-                            alt="Avatar"
-                            className="w-32 h-32 rounded-full object-cover border-4 border-border-color shadow-lg"
-                        />
-                        {isEditing && (
-                            <>
-                                <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
-                                <button onClick={() => avatarInputRef.current.click()} className="absolute bottom-1 right-1 bg-accent text-white w-9 h-9 flex items-center justify-center rounded-full hover:bg-accent-hover transition-colors shadow-md border-2 border-component-bg">
-                                    <FontAwesomeIcon icon={faCamera} size="sm" />
-                                </button>
-                                {user.avatarUrl && (
-                                     <button onClick={handleDeleteAvatar} className="absolute top-1 right-1 bg-red-accent text-white w-9 h-9 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity shadow-md border-2 border-component-bg">
-                                        <FontAwesomeIcon icon={faTrash} size="sm"/>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+                
+                {/* --- Columna Izquierda: Avatar y Acciones --- */}
+                <div className="md:col-span-1 space-y-6">
+                    <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl text-center">
+                        <div className="relative w-32 h-32 mx-auto group">
+                            <img 
+                                src={avatarPreview || (user.avatarUrl ? user.avatarUrl : `https://ui-avatars.com/api/?name=${formData.name}&background=1A1629&color=F0EEF7&size=128`)} 
+                                alt="Avatar"
+                                className="w-full h-full rounded-full object-cover border-4 border-border-color shadow-lg"
+                            />
+                            {isEditing && (
+                                <>
+                                    <input type="file" ref={avatarInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" />
+                                    <button onClick={() => avatarInputRef.current.click()} className="absolute bottom-1 right-1 bg-accent text-white w-9 h-9 flex items-center justify-center rounded-full hover:bg-accent-hover transition-colors shadow-md border-2 border-component-bg" title="Cambiar avatar">
+                                        <FontAwesomeIcon icon={faCamera} size="sm" />
                                     </button>
-                                )}
-                            </>
-                        )}
-                        {!isEditing && !isExempt && (
-                            <span className={`absolute -bottom-0.5 -right-0.5 block text-white text-[8px] font-bold px-1 py-0 rounded-md border-2 border-component-bg ${hasValidSubscription ? 'bg-accent' : 'bg-gray-700'}`}>
-                                {hasValidSubscription ? 'PRO' : 'FREE'}
-                            </span>
-                        )}
+                                    { (user.avatarUrl || avatarPreview) && (
+                                         <button onClick={handleDeleteAvatar} className="absolute top-1 right-1 bg-red-accent text-white w-9 h-9 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity shadow-md border-2 border-component-bg" title="Eliminar avatar">
+                                            <FontAwesomeIcon icon={faTrash} size="sm"/>
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                            {!isEditing && !isExempt && (
+                                <span className={`absolute bottom-1 right-1 block text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md border-2 border-component-bg ${hasValidSubscription ? 'bg-accent' : 'bg-gray-700'}`}>
+                                    {hasValidSubscription ? 'PRO' : 'FREE'}
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="mt-4">
+                            <h2 className="text-2xl font-bold text-text-primary truncate">{user.name}</h2>
+                            <p className="text-sm text-text-secondary truncate">{user.email}</p>
+                            <span className={`mt-3 inline-block text-xs font-bold px-3 py-1 rounded-full uppercase ${roleStyles[user.role] || 'bg-background'}`}>{user.role.replace('_', ' ')}</span>
+                        </div>
                     </div>
 
-                    <div className="w-full">
+                    <div className="bg-component-bg backdrop-blur-lg p-4 rounded-2xl border border-border-color shadow-2xl">
                         {isEditing ? (
-                            <div className="space-y-4 max-w-sm mx-auto">
-                                <div>
-                                    <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">Nombre Completo</label>
-                                    <div className="relative">
-                                        <FontAwesomeIcon icon={faUser} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
-                                        <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="w-full pl-11 pr-4 py-2 bg-background/50 border rounded-lg focus:ring-1 focus:ring-accent text-text-primary transition-colors border-border-color focus:border-accent" />
-                                    </div>
-                                </div>
-                                <div>
-                                     <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">Email</label>
-                                     <div className="relative">
-                                        <FontAwesomeIcon icon={faEnvelope} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
-                                        <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full pl-11 pr-4 py-2 bg-background/50 border rounded-lg focus:ring-1 focus:ring-accent text-text-primary transition-colors border-border-color focus:border-accent" />
-                                    </div>
-                                </div>
+                            <div className="flex justify-center gap-2">
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                <button onClick={handleCancel} disabled={isLoading} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 font-semibold disabled:opacity-50">
+                                    <FontAwesomeIcon icon={faTimes} />
+                                    Cancelar
+                                </button>
+                                <button onClick={handleSaveChanges} disabled={isLoading} className="bg-accent text-white px-4 py-2 rounded-lg shadow-md shadow-accent/20 hover:bg-accent-hover transition-opacity flex items-center justify-center gap-2 font-semibold disabled:opacity-50">
+                                    {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : <><FontAwesomeIcon icon={faSave} /> Guardar</>}
+                                </button>
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         ) : (
-                            <div className="text-center">
-                                <h2 className="text-3xl font-bold text-text-primary">{user.name}</h2>
-                                <p className="text-text-secondary mt-1">{user.email}</p>
-                                <span className={`mt-3 inline-block text-xs font-bold px-3 py-1 rounded-full uppercase ${roleStyles[user.role] || 'bg-background'}`}>{user.role.replace('_', ' ')}</span>
-                            </div>
+                            <button onClick={() => setIsEditing(true)} className="w-full bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 font-semibold">
+                                <FontAwesomeIcon icon={faPencilAlt} />
+                                Editar Perfil
+                            </button>
                         )}
                     </div>
+
+                    {message && <p className="text-sm text-center text-green-accent font-semibold">{message}</p>}
+                    {error && <p className="text-sm text-center text-red-accent font-semibold">{error}</p>}
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-border-color flex justify-center gap-4">
-                    {isEditing ? (
-                        <>
-                            <button onClick={handleCancel} className="bg-component-bg-hover text-text-primary px-6 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center gap-2 font-semibold">
-                                <FontAwesomeIcon icon={faTimes} />
-                                Cancelar
-                            </button>
-                            <button onClick={handleSaveChanges} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity flex items-center gap-2 font-semibold">
-                                <FontAwesomeIcon icon={faSave} />
-                                Guardar
-                            </button>
-                        </>
-                    ) : (
-                        <button onClick={() => setIsEditing(true)} className="bg-accent text-white px-8 py-2.5 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold">Editar Perfil</button>
-                    )}
+                {/* --- Columna Derecha: Formulario de Datos --- */}
+                <div className="md:col-span-2 bg-component-bg backdrop-blur-lg p-6 sm:p-8 rounded-2xl border border-border-color shadow-2xl">
+                    <h3 className="text-lg font-bold text-text-primary mb-6 uppercase">Información de la Cuenta</h3>
+                    <form className="space-y-6" onSubmit={e => { e.preventDefault(); handleSaveChanges(); }}>
+                        <InputField label="Nombre Completo" name="name" value={formData.name} onChange={handleInputChange} icon={faUser} disabled={!isEditing} />
+                        <InputField label="Email" name="email" value={formData.email} onChange={handleInputChange} icon={faEnvelope} disabled={!isEditing} />
+                    </form>
                 </div>
-                {message && <p className="text-sm text-center mt-4 text-green-accent font-semibold">{message}</p>}
-                {error && <p className="text-sm text-center mt-4 text-red-accent font-semibold">{error}</p>}
             </div>
         </div>
     );

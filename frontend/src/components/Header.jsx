@@ -40,10 +40,14 @@ const Header = () => {
     return (
         <>
             {isMenuOpen && createPortal(
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] lg:hidden" aria-hidden="true" />,
+                /* --- INICIO DE LA MODIFICACIÓN --- */
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" aria-hidden="true" />,
+                /* --- FIN DE LA MODIFICACIÓN --- */
                 document.body
             )}
-            <header className="sticky top-0 z-40 bg-component-bg backdrop-blur-lg border-b border-border-color p-4 sm:px-6 lg:px-8 flex items-center justify-between lg:hidden">
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <header className="sticky top-0 z-50 bg-component-bg backdrop-blur-lg border-b border-border-color p-4 sm:px-6 lg:px-8 flex items-center justify-between lg:hidden">
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <div className="flex items-center">
                     <FontAwesomeIcon icon={icon} className="h-6 w-6 text-accent mr-3" />
                     <h1 className="text-xl font-bold text-text-primary">{title}</h1>
@@ -83,7 +87,9 @@ const Header = () => {
                                         leaveTo="transform opacity-0 scale-95"
                                     >
                                         <Portal>
+                                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                             <Menu.Items className="absolute right-4 top-20 mt-2 w-48 origin-top-right divide-y divide-border-color rounded-xl bg-component-bg backdrop-blur-lg shadow-2xl ring-1 ring-border-color focus:outline-none z-50">
+                                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                                                 <div className="px-1 py-1 ">
                                                     <Menu.Item>
                                                         {({ active }) => (

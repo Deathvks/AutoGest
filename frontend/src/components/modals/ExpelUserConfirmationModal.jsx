@@ -1,15 +1,16 @@
 // autogest-app/frontend/src/components/modals/ExpelUserConfirmationModal.jsx
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const ExpelUserConfirmationModal = ({ user, onClose, onConfirmExpel }) => {
     if (!user) return null;
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg/80 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <div className="p-8 text-center">
                     <FontAwesomeIcon icon={faUserSlash} className="w-16 h-16 text-red-accent mx-auto mb-6" />
                     <h2 className="text-2xl font-bold text-text-primary">¿Expulsar Usuario?</h2>
@@ -21,7 +22,9 @@ const ExpelUserConfirmationModal = ({ user, onClose, onConfirmExpel }) => {
                     </p>
                 </div>
 
-                <div className="flex justify-center items-center gap-4 p-6 border-t border-border-color bg-component-bg-hover/50 rounded-b-2xl">
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className="flex justify-center items-center gap-4 p-6 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <button 
                         onClick={onClose}
                         className="w-full bg-component-bg border border-border-color text-text-primary px-4 py-2.5 rounded-lg hover:bg-border-color transition-colors font-semibold"
@@ -39,6 +42,5 @@ const ExpelUserConfirmationModal = ({ user, onClose, onConfirmExpel }) => {
         </div>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 export default ExpelUserConfirmationModal;

@@ -3,23 +3,39 @@ import React, { useContext, useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPalette, faCheck, faEyeDropper } from '@fortawesome/free-solid-svg-icons';
 import { ThemeContext } from '../../context/ThemeContext';
+import { ChromePicker } from 'react-color';
 
-const AppearanceSettings = () => {
+const AppearanceSettings = ({ onPickerToggle }) => {
     const { themes, activeTheme, applyTheme, applyCustomTheme } = useContext(ThemeContext);
     const [customColor, setCustomColor] = useState(activeTheme.accent);
-    const colorPickerRef = useRef(null);
+    const [isPickerVisible, setIsPickerVisible] = useState(false);
+    const pickerRef = useRef(null);
 
     useEffect(() => {
-        // Actualiza el color del picker si el tema cambia a uno predefinido
         if (activeTheme.id !== 'custom') {
             setCustomColor(activeTheme.accent);
         }
     }, [activeTheme]);
 
-    const handleCustomColorInput = (e) => {
-        const newColor = e.target.value;
-        setCustomColor(newColor);
-        applyCustomTheme(newColor);
+    useEffect(() => {
+        onPickerToggle(isPickerVisible);
+    }, [isPickerVisible, onPickerToggle]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+                setIsPickerVisible(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const handleCustomColorChange = (color) => {
+        setCustomColor(color.hex);
+        applyCustomTheme(color.hex);
     };
 
     return (
@@ -45,23 +61,29 @@ const AppearanceSettings = () => {
                     </div>
                 ))}
                 
-                <div className="text-center">
+                <div className={`text-center relative ${isPickerVisible ? 'z-10' : ''}`}>
                     <button
-                        onClick={() => colorPickerRef.current.click()}
+                        onClick={() => setIsPickerVisible(prev => !prev)}
                         className={`w-full h-20 rounded-xl border-2 transition-all duration-200 flex flex-col items-center justify-center gap-2 bg-component-bg ${activeTheme.id === 'custom' ? 'border-accent ring-2 ring-accent' : 'border-border-color hover:border-accent'}`}
                         title="Seleccionar un color personalizado"
                     >
                         <div className="w-8 h-8 rounded-full border border-border-color" style={{ backgroundColor: customColor }}></div>
                         <FontAwesomeIcon icon={faEyeDropper} className="text-text-secondary text-lg" />
-                        <input
-                            type="color"
-                            ref={colorPickerRef}
-                            value={customColor}
-                            onInput={handleCustomColorInput}
-                            className="absolute w-0 h-0 opacity-0"
-                        />
                     </button>
                     <span className="text-xs font-semibold mt-2 block text-text-secondary">Personalizado</span>
+                    
+                    {isPickerVisible && (
+                        // --- INICIO DE LA MODIFICACIÓN ---
+                        <div ref={pickerRef} className="absolute top-full mt-2 left-0 md:left-1/2 md:-translate-x-1/2 z-20">
+                            <ChromePicker
+                                color={customColor}
+                                onChange={handleCustomColorChange}
+                                disableAlpha={true}
+                                className="custom-color-picker"
+                            />
+                        </div>
+                        // --- FIN DE LA MODIFICACIÓN ---
+                    )}
                 </div>
             </div>
             <p className="text-center text-xs text-text-secondary mt-6">Más colores próximamente...</p>

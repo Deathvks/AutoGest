@@ -1,5 +1,5 @@
 // autogest-app/frontend/src/pages/Settings.jsx
-import React from 'react';
+import React, { useState } from 'react'; // <-- AÑADIDO useState
 import VersionIndicator from '../components/VersionIndicator';
 import { APP_NAME } from '../config/version';
 
@@ -18,14 +18,20 @@ const Settings = ({
     businessDataMessage, 
     onLogoutClick 
 }) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+    // --- FIN DE LA MODIFICACIÓN ---
+
     return (
         <div className="max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">AJUSTES</h1>
 
             <div className="space-y-8">
-                <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
-                    <AppearanceSettings />
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className={`bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl relative ${isColorPickerOpen ? 'z-10' : ''}`}>
+                    <AppearanceSettings onPickerToggle={setIsColorPickerOpen} />
                 </div>
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 
                 <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
                     <BusinessDataSettings 

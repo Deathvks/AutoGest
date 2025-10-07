@@ -3,8 +3,9 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const DeleteCarConfirmationModal = ({ car, onClose, onConfirm }) => {
+    if (!car) return null; // Añadida una comprobación por si el coche es nulo
+
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
             <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
@@ -37,6 +38,5 @@ const DeleteCarConfirmationModal = ({ car, onClose, onConfirm }) => {
         </div>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 export default DeleteCarConfirmationModal;

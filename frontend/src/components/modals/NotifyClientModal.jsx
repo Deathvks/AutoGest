@@ -31,7 +31,7 @@ const NotifyClientModal = ({ car, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg/80 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
                 <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
                     <h2 className="text-xl font-bold text-text-primary flex items-center gap-3">
                         <FontAwesomeIcon icon={faPaperPlane} />
@@ -53,7 +53,7 @@ const NotifyClientModal = ({ car, onClose }) => {
                     </div>
                 </div>
 
-                <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-border-color bg-component-bg-hover/50 rounded-b-2xl">
+                <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
                     <button onClick={onClose} className="bg-component-bg border border-border-color text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold uppercase">Cerrar</button>
                     <button onClick={handleSend} className="bg-green-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-green-accent/20 hover:opacity-90 transition-opacity font-semibold flex items-center gap-2 uppercase">
                         <FontAwesomeIcon icon={faPaperPlane} />
