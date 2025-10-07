@@ -4,21 +4,37 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faFileInvoice, faPercentage } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
-import Select from '../Select';
+
+// --- INICIO DE LA MODIFICACIÓN ---
+const InputField = ({ label, name, value, onChange, type = 'text', icon }) => (
+    <div>
+        <label htmlFor={name} className="block text-sm font-semibold text-text-primary mb-1 uppercase">
+            {label}
+        </label>
+        <div className="relative">
+            {icon && (
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+                </div>
+            )}
+            <input
+                id={name}
+                name={name}
+                type={type}
+                value={value}
+                onChange={onChange}
+                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent ${icon ? 'pl-11' : ''}`}
+            />
+        </div>
+    </div>
+);
+// --- FIN DE LA MODIFICACIÓN ---
 
 const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car }) => {
     const { refreshUser } = useContext(AuthContext);
     const [number, setNumber] = useState(defaultNumber);
     const [error, setError] = useState('');
-    const [igicRate, setIgicRate] = useState('7'); // El IGIC por defecto
-    
-    const igicOptions = [
-        { id: '0', name: '0% (Exento)' },
-        { id: '3', name: '3% (Reducido)' },
-        { id: '7', name: '7% (General)' },
-        { id: '9.5', name: '9.5% (Incrementado)' },
-        { id: '13.5', name: '13.5% (Especial)' },
-    ];
+    const [igicRate, setIgicRate] = useState('7');
 
     useEffect(() => {
         setNumber(defaultNumber);
@@ -28,6 +44,12 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
         const num = parseInt(number, 10);
         if (isNaN(num) || num <= 0) {
             setError('El número debe ser un valor positivo.');
+            return;
+        }
+
+        const rate = parseFloat(igicRate);
+        if (type === 'factura' && (isNaN(rate) || rate < 0)) {
+            setError('El IGIC debe ser un número válido.');
             return;
         }
 
@@ -41,7 +63,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             
             await refreshUser();
             
-            onConfirm(type, num, parseFloat(igicRate));
+            onConfirm(type, num, rate);
         } catch (err) {
             setError(err.message || 'Error al actualizar los datos.');
         }
@@ -66,28 +88,27 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                     <p className="text-text-secondary text-center">
                         Introduce el número para la {type === 'proforma' ? 'proforma' : 'factura'} o usa el siguiente número disponible.
                     </p>
-                    <div>
-                        <label htmlFor="pdfNumber" className="block text-sm font-semibold text-text-primary mb-1 uppercase">
-                            Número de {type === 'proforma' ? 'Proforma' : 'Factura'}
-                        </label>
-                        <input
-                            id="pdfNumber"
-                            type="number"
-                            value={number}
-                            onChange={(e) => setNumber(e.target.value)}
-                            className="w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent"
-                        />
-                    </div>
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <InputField
+                        label={`Número de ${type === 'proforma' ? 'Proforma' : 'Factura'}`}
+                        name="pdfNumber"
+                        type="number"
+                        value={number}
+                        onChange={(e) => setNumber(e.target.value)}
+                    />
+                    
                     {type === 'factura' && (
-                        <Select
+                        <InputField
                             label="Porcentaje de IGIC a aplicar"
+                            name="igicRate"
+                            type="number"
                             value={igicRate}
-                            onChange={(value) => setIgicRate(value)}
-                            options={igicOptions}
+                            onChange={(e) => setIgicRate(e.target.value)}
                             icon={faPercentage}
                         />
                     )}
                      {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
 
                 <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-border-color">

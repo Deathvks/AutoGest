@@ -107,21 +107,43 @@ const hexToRgb = (hex) => {
     return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null;
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Función para determinar la luminosidad de un color (de 0 a 255)
 const getColorBrightness = (hex) => {
     try {
         const hexClean = hex.replace(/^#/, '');
         const r = parseInt(hexClean.substring(0, 2), 16);
         const g = parseInt(hexClean.substring(2, 4), 16);
         const b = parseInt(hexClean.substring(4, 6), 16);
-        // Fórmula de luminosidad relativa (YIQ)
         return ((r * 299) + (g * 587) + (b * 114)) / 1000;
     } catch (e) {
-        return 128; // Valor intermedio si falla
+        return 128;
     }
 };
-// --- FIN DE LA MODIFICACIÓN ---
+
+const hexToHsl = (H) => {
+    let r = 0, g = 0, b = 0;
+    if (H.length == 4) {
+      r = "0x" + H[1] + H[1];
+      g = "0x" + H[2] + H[2];
+      b = "0x" + H[3] + H[3];
+    } else if (H.length == 7) {
+      r = "0x" + H[1] + H[2];
+      g = "0x" + H[3] + H[4];
+      b = "0x" + H[5] + H[6];
+    }
+    r /= 255; g /= 255; b /= 255;
+    let cmin = Math.min(r,g,b), cmax = Math.max(r,g,b), delta = cmax - cmin, h = 0, s = 0, l = 0;
+    if (delta == 0) h = 0;
+    else if (cmax == r) h = ((g - b) / delta) % 6;
+    else if (cmax == g) h = (b - r) / delta + 2;
+    else h = (r - g) / delta + 4;
+    h = Math.round(h * 60);
+    if (h < 0) h += 360;
+    l = (cmax + cmin) / 2;
+    s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+    s = +(s * 100).toFixed(1);
+    l = +(l * 100).toFixed(1);
+    return { h, s, l };
+};
 
 const lightenColor = (hex, percent) => {
     try {
@@ -183,34 +205,49 @@ export const ThemeProvider = ({ children }) => {
         const rgbColor = hexToRgb(hexColor);
         if (!rgbColor) return;
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        const brightness = getColorBrightness(hexColor);
-        const isLightColor = brightness > 150; // Umbral de luminosidad (ajustable)
+        const { h, s } = hexToHsl(hexColor);
+        const isProblematicRed = (h <= 15 || h >= 345) && s > 70;
+        
+        let newCustomTheme;
 
-        // Determina si el tema base debe ser claro u oscuro
-        const lastThemeId = localStorage.getItem('app-theme') || 'default-purple';
-        const isBaseLight = themes.find(t => t.id === lastThemeId)?.background.startsWith('#');
-        const baseThemeId = (isBaseLight || isLightColor) ? 'light-standard' : 'default-purple';
-        const base = themes.find(t => t.id === baseThemeId);
-
-        const newCustomTheme = {
-            ...base,
-            id: 'custom',
-            name: 'Personalizado',
-            accent: hexColor,
-            accentHover: isLightColor ? darkenColor(hexColor, 10) : lightenColor(hexColor, 10),
-            accentRgb: rgbColor,
-            background: isLightColor ? base.background : `linear-gradient(-70deg, ${darkenColor(hexColor, 30)}, ${darkenColor(hexColor, 15)})`,
-            circlesBg: isLightColor ? `linear-gradient(120deg, ${lightenColor(hexColor, 20)}, ${hexColor})` : `linear-gradient(120deg, ${darkenColor(hexColor, 10)}, ${lightenColor(hexColor, 10)})`,
-            popupBg: isLightColor ? '#ffffff' : darkenColor(hexColor, 40),
-            // Ajuste dinámico de los colores del texto
-            textPrimary: isLightColor ? '#18181b' : '#f8fafc',
-            textSecondary: isLightColor ? '#71717a' : '#cbd5e1',
-            componentBg: isLightColor ? base.componentBg : 'rgba(255, 255, 255, 0.1)',
-            componentBgHover: isLightColor ? base.componentBgHover : 'rgba(255, 255, 255, 0.15)',
-            border: isLightColor ? base.border : 'rgba(255, 255, 255, 0.2)',
-        };
-        // --- FIN DE LA MODIFICACIÓN ---
+        if (isProblematicRed) {
+            const base = themes.find(t => t.id === 'light-standard');
+            newCustomTheme = {
+                ...base,
+                id: 'custom',
+                name: 'Personalizado',
+                accent: hexColor,
+                accentHover: darkenColor(hexColor, 10),
+                accentRgb: rgbColor,
+                circlesBg: `linear-gradient(120deg, ${lightenColor(hexColor, 20)}, ${hexColor})`,
+            };
+        } else {
+            const brightness = getColorBrightness(hexColor);
+            const isLightColor = brightness > 150;
+    
+            const lastThemeId = localStorage.getItem('app-theme') || 'default-purple';
+            const isBaseLight = themes.find(t => t.id === lastThemeId)?.background.startsWith('#');
+            const baseThemeId = (isBaseLight || isLightColor) ? 'light-standard' : 'default-purple';
+            const base = themes.find(t => t.id === baseThemeId);
+    
+            newCustomTheme = {
+                ...base,
+                id: 'custom',
+                name: 'Personalizado',
+                accent: hexColor,
+                accentHover: isLightColor ? darkenColor(hexColor, 10) : lightenColor(hexColor, 10),
+                accentRgb: rgbColor,
+                background: isLightColor ? base.background : `linear-gradient(-70deg, ${darkenColor(hexColor, 30)}, ${darkenColor(hexColor, 15)})`,
+                circlesBg: isLightColor ? `linear-gradient(120deg, ${lightenColor(hexColor, 20)}, ${hexColor})` : `linear-gradient(120deg, ${darkenColor(hexColor, 10)}, ${lightenColor(hexColor, 10)})`,
+                popupBg: isLightColor ? '#ffffff' : darkenColor(hexColor, 40),
+                textPrimary: isLightColor ? '#18181b' : '#f8fafc',
+                textSecondary: isLightColor ? '#71717a' : '#cbd5e1',
+                componentBg: isLightColor ? base.componentBg : 'rgba(255, 255, 255, 0.1)',
+                componentBgHover: isLightColor ? base.componentBgHover : 'rgba(255, 255, 255, 0.15)',
+                border: isLightColor ? base.border : 'rgba(255, 255, 255, 0.2)',
+                redAccent: isLightColor ? 'rgb(220, 38, 38)' : 'rgb(239, 68, 68)',
+            };
+        }
         
         setCustomTheme(newCustomTheme);
         localStorage.setItem('app-custom-theme', hexColor);

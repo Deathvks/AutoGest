@@ -30,9 +30,7 @@ import LogoutConfirmationModal from './modals/LogoutConfirmationModal';
 import TestDriveModal from './modals/TestDriveModal';
 import ExpelUserConfirmationModal from './modals/ExpelUserConfirmationModal';
 import BusinessDataModal from './modals/BusinessDataModal';
-// --- INICIO DE LA MODIFICACIÓN ---
 import GeneratePdfModal from './modals/GeneratePdfModal';
-// --- FIN DE LA MODIFICACIÓN ---
 
 const AppModals = ({ appState }) => {
     const { logout, user } = useContext(AuthContext);
@@ -62,7 +60,10 @@ const AppModals = ({ appState }) => {
         handleConfirmCancelReservation, handleDeleteNote, handleAddIncident,
         handleDeleteIncident, confirmDeleteIncident, handleResolveIncident,
         handleAddExpense, handleUpdateExpense, confirmDeleteExpense,
-        handleGestoriaPickup, handleGestoriaReturn
+        handleGestoriaPickup, handleGestoriaReturn,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        handleGeneratePdf // Se obtiene el manejador de PDF del estado de la app.
+        // --- FIN DE LA MODIFICACIÓN ---
     } = appState;
 
     return (
@@ -87,13 +88,11 @@ const AppModals = ({ appState }) => {
                 onGestoriaReturnClick={(car) => { setCarToView(null); setCarForGestoriaReturn(car); }}
                 onUpdateCar={handleUpdateCar}
                 onTestDriveClick={(car) => { setCarToView(null); setCarForTestDrive(car); }}
-                // --- INICIO DE LA MODIFICACIÓN ---
                 onGeneratePdfClick={(car, type) => {
                     const nextNumber = type === 'proforma' ? user.proformaCounter : user.invoiceCounter;
                     setPdfModalInfo({ car, type, number: nextNumber });
                     setCarToView(null);
                 }}
-                // --- FIN DE LA MODIFICACIÓN ---
             />
             
             {isAddCarModalOpen && <AddCarModal onClose={() => setAddCarModalOpen(false)} onAdd={handleAddCar} locations={locations} />}
@@ -140,22 +139,21 @@ const AppModals = ({ appState }) => {
             />
             {carForTestDrive && <TestDriveModal car={carForTestDrive} onClose={() => setCarForTestDrive(null)} />}
 
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             {pdfModalInfo && (
                 <GeneratePdfModal
                     isOpen={!!pdfModalInfo}
                     onClose={() => setPdfModalInfo(null)}
+                    // --- INICIO DE LA MODIFICACIÓN ---
                     onConfirm={async (type, number, igicRate) => {
-                        // Lógica de generación de PDF movida a CarDetailsActions, se pasará la función
-                        // Aquí solo cerramos el modal
+                        await handleGeneratePdf(pdfModalInfo.car, type, number, igicRate);
                         setPdfModalInfo(null);
                     }}
+                    // --- FIN DE LA MODIFICACIÓN ---
                     type={pdfModalInfo.type}
                     defaultNumber={pdfModalInfo.number}
                     car={pdfModalInfo.car}
                 />
             )}
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
     );
 };

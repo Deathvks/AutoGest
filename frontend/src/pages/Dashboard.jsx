@@ -177,32 +177,34 @@ const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) =
         };
     }, [expenses, activeTheme]);
     
+    // --- INICIO DE LA MODIFICACIÓN ---
     const statusData = useMemo(() => {
         const statusCounts = cars.reduce((acc, car) => {
             acc[car.status] = (acc[car.status] || 0) + 1;
             return acc;
         }, {});
         
+        const rootStyles = getComputedStyle(document.documentElement);
         const colors = {
-            'En venta': '#60a5fa',
-            'Reservado': '#facc15',
-            'Vendido': '#4ade80',
-            'Taller': '#908CAA',
-            'Otro': '#908CAA'
+            'En venta': rootStyles.getPropertyValue('--color-blue-accent').trim(),
+            'Reservado': rootStyles.getPropertyValue('--color-yellow-accent').trim(),
+            'Vendido': rootStyles.getPropertyValue('--color-green-accent').trim(),
+            'Taller': rootStyles.getPropertyValue('--color-text-secondary').trim(),
         };
-        const borderColor = 'rgb(53, 33, 90)';
+        const borderColor = rootStyles.getPropertyValue('--color-component-bg').trim();
 
         const labels = Object.keys(statusCounts);
         return {
             labels: labels,
             datasets: [{ 
                 data: Object.values(statusCounts), 
-                backgroundColor: labels.map(label => colors[label] || colors['Otro']), 
+                backgroundColor: labels.map(label => colors[label] || colors['Taller']), 
                 borderColor: borderColor,
                 borderWidth: 4,
             }],
         };
-    }, [cars]);
+    }, [cars, activeTheme]); // Se añade activeTheme a las dependencias
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
     const pieOptions = { ...chartOptions, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } } } };
@@ -214,7 +216,6 @@ const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) =
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
                     <StatCard title="INVERSIÓN TOTAL" value={generalStats.totalInvestment} colorClass="text-text-primary" onClick={onTotalInvestmentClick} isClickable={true} />
                     <StatCard title="INGRESOS REALES" value={generalStats.totalRevenue} colorClass="text-green-accent" onClick={onRevenueClick} isClickable={true} />
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <StatCard title="INGRESOS POTENCIALES" value={generalStats.potentialRevenue} colorClass="text-accent" />
                     <StatCard title="GASTOS" value={generalStats.totalExpenses} colorClass="text-red-accent" />
                     <StatCard title="BENEFICIO NETO" value={generalStats.totalProfit} colorClass={generalStats.totalProfit >= 0 ? 'text-green-accent' : 'text-accent'} />
@@ -252,7 +253,6 @@ const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) =
                         <StatCard title="GASTOS DEL MES" value={monthlyStats.totalExpenses} colorClass="text-red-accent" />
                         <StatCard title="BENEFICIO DEL MES" value={monthlyStats.totalProfit} colorClass={monthlyStats.totalProfit >= 0 ? 'text-green-accent' : 'text-accent'} />
                     </div>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
             </div>
             

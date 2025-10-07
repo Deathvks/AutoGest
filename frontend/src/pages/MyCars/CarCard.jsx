@@ -133,10 +133,33 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
 
         <div className="mt-auto flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-border-color">
           <div className="text-center sm:text-left w-full sm:w-auto">
-            <p className="text-xs text-text-secondary uppercase">Precio Venta</p>
-            <p className="text-3xl font-extrabold text-accent">
-              {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
-            </p>
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            {car.status === 'Vendido' && car.salePrice ? (
+              <div className="flex items-baseline gap-4">
+                <div>
+                  <p className="text-xs text-text-secondary uppercase">Precio Vendido</p>
+                  <p className="text-3xl font-extrabold text-green-accent">
+                    {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}
+                  </p>
+                </div>
+                {user && (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && (
+                  <div>
+                    <p className="text-xs text-text-secondary uppercase">Compra</p>
+                    <p className="text-lg font-bold text-text-secondary">
+                      {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs text-text-secondary uppercase">Precio Venta</p>
+                <p className="text-3xl font-extrabold text-accent">
+                  {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
+                </p>
+              </div>
+            )}
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
           </div>
           <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
             {car.status === 'Vendido' && (

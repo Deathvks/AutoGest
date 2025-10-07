@@ -45,10 +45,8 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
 
   return (
     <>
-      {/* --- INICIO DE LA MODIFICACIÓN --- */}
       <div className="flex flex-col xl:flex-row gap-8">
         <aside className="hidden xl:block xl:w-80 flex-shrink-0">
-      {/* --- FIN DE LA MODIFICACIÓN --- */}
           <FilterSidebar cars={cars} filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
         </aside>
 
@@ -72,17 +70,17 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={() => setFilterModalOpen(true)}
-                // --- INICIO DE LA MODIFICACIÓN ---
-                className="w-1/2 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-3 rounded-xl border border-border-color hover:bg-border-color transition-colors xl:hidden"
-                // --- FIN DE LA MODIFICACIÓN ---
+                className="flex-1 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-3 rounded-xl border border-border-color hover:bg-border-color transition-colors xl:hidden"
               >
                 <FontAwesomeIcon icon={faFilter} />
                 <span>Filtros</span>
               </button>
+              {/* --- INICIO DE LA MODIFICACIÓN --- */}
               <button
                 onClick={onAddClick}
-                className="w-1/2 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-3 rounded-xl border border-border-color hover:bg-border-color transition-colors"
+                className="flex-1 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-3 rounded-xl border border-border-color hover:bg-border-color transition-colors"
               >
+              {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <FontAwesomeIcon icon={faPlus} />
                 <span>Añadir</span>
               </button>

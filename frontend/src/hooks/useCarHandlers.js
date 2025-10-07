@@ -1,8 +1,9 @@
 // AutoGest/frontend/src/hooks/useCarHandlers.js
-import { useState, useRef } from 'react';
+import { useState, useRef, useContext } from 'react';
 import api from '../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { AuthContext } from '../context/AuthContext';
 
 export const useCarHandlers = (
     cars,
@@ -11,10 +12,9 @@ export const useCarHandlers = (
     setLocations,
     modalState
 ) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se elimina el estado y la referencia relacionados con el borrado pendiente y el toast.
-    const [toast, setToast] = useState(null); // Aunque se mantiene por si se usa en otro lado, su lógica de borrado se va.
-    // --- FIN DE LA MODIFICACIÓN ---
+    const { user } = useContext(AuthContext); 
+
+    const [toast, setToast] = useState(null);
 
     const generateReservationPDF = (car, depositAmount) => {
         const doc = new jsPDF();
@@ -52,6 +52,112 @@ export const useCarHandlers = (
         return doc.output('blob');
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleGeneratePdf = async (car, type, number, igicRate) => {
+        const doc = new jsPDF();
+        const today = new Date().toLocaleDateString('es-ES');
+        let currentY = 20;
+
+        const title = type === 'proforma' ? 'FACTURA PROFORMA' : 'FACTURA';
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.text(title, 105, currentY, { align: 'center' });
+        currentY += 20;
+
+        const sellerX = 14;
+        const buyerX = 110;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text('DATOS DEL VENDEDOR:', sellerX, currentY);
+        doc.text('DATOS DEL COMPRADOR:', buyerX, currentY);
+        currentY += 6;
+
+        let buyer = {};
+        if (car.buyerDetails) {
+            try {
+                buyer = typeof car.buyerDetails === 'string' ? JSON.parse(car.buyerDetails) : car.buyerDetails;
+            } catch (e) { console.error("Error parsing buyer data:", e); }
+        }
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.text(`NOMBRE Y APELLIDOS: ${user.cif ? user.businessName : user.name}`, sellerX, currentY);
+        doc.text(`DNI / NIE: ${user.cif || user.dni || ''}`, sellerX, currentY + 5);
+        doc.text(`DIRECCIÓN: ${user.address || ''}`, sellerX, currentY + 10);
+        doc.text(`TELÉFONO: ${user.phone || ''}`, sellerX, currentY + 15);
+        doc.text(`EMAIL: ${user.email}`, sellerX, currentY + 20);
+
+        doc.text(`NOMBRE: ${buyer.name || ''} ${buyer.lastName || ''}`, buyerX, currentY);
+        doc.text(`DNI/NIE: ${buyer.dni || ''}`, buyerX, currentY + 5);
+        doc.text(`TELÉFONO: ${buyer.phone || ''}`, buyerX, currentY + 10);
+        doc.text(`EMAIL: ${buyer.email || ''}`, buyerX, currentY + 15);
+        doc.text(`DIRECCIÓN: ${buyer.address || ''}`, buyerX, currentY + 20);
+        currentY += 30;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text('DETALLES:', sellerX, currentY);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.text(`FECHA: ${today}`, sellerX, currentY + 5);
+        doc.text(`Nº FACTURA: ${type.toUpperCase()}-${number}`, sellerX, currentY + 10);
+        currentY += 20;
+
+        const tealColor = [0, 150, 136];
+        const price = parseFloat(type === 'factura' ? car.salePrice : car.price) || 0;
+        const formattedPrice = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(price);
+        const carDescription = `VEHÍCULO ${car.make} ${car.model} CON MATRÍCULA ${car.licensePlate} Y BASTIDOR ${car.vin || ''}`;
+
+        if (type === 'factura' && igicRate > 0) {
+            const basePrice = price / (1 + igicRate / 100);
+            const igicAmount = price - basePrice;
+            const formattedBasePrice = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(basePrice);
+            const formattedIgicAmount = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(igicAmount);
+
+            autoTable(doc, {
+                startY: currentY,
+                head: [['CONCEPTO', 'BASE IMPONIBLE', `IGIC (${igicRate}%)`, 'TOTAL']],
+                body: [[carDescription, formattedBasePrice, formattedIgicAmount, formattedPrice]],
+                foot: [['', '', 'TOTAL A PAGAR:', formattedPrice]],
+                theme: 'grid',
+                headStyles: { fillColor: tealColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+                footStyles: { fillColor: tealColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+                styles: { fontSize: 9, cellPadding: 3 },
+            });
+        } else {
+            autoTable(doc, {
+                startY: currentY,
+                head: [['CONCEPTO', 'TOTAL']],
+                body: [[carDescription, formattedPrice]],
+                foot: [['', 'TOTAL A PAGAR:', formattedPrice]],
+                theme: 'grid',
+                headStyles: { fillColor: tealColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+                footStyles: { fillColor: tealColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+                styles: { fontSize: 9, cellPadding: 3 },
+                columnStyles: { 1: { halign: 'right' } },
+            });
+        }
+
+        currentY = doc.lastAutoTable.finalY + 15;
+
+        if (type === 'proforma') {
+            doc.setFontSize(8);
+            doc.setTextColor(100);
+            doc.text("ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL. ES UN PRESUPUESTO PREVIO A LA FACTURA FINAL.", 105, currentY, { align: 'center' });
+        }
+        
+        const fileName = `${type}_${number}_${car.licensePlate}.pdf`;
+        doc.save(fileName);
+        
+        const pdfBlob = doc.output('blob');
+        const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        const formData = new FormData();
+        formData.append('invoicePdf', pdfFile);
+        
+        await handleUpdateCar(car.id, formData);
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const fetchLocations = async () => {
         try {
             const locationsData = await api.getLocations();
@@ -88,8 +194,6 @@ export const useCarHandlers = (
         }
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se simplifica la función para que el borrado sea inmediato.
     const handleDeleteCar = async (carId) => {
         try {
             await api.deleteCar(carId);
@@ -98,10 +202,8 @@ export const useCarHandlers = (
             modalState.setCarToView(null);
         } catch (error) {
             console.error("Error al eliminar coche:", error);
-            // Opcional: Mostrar un error al usuario si el borrado falla.
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleSellConfirm = async (carId, salePrice, saleDate, buyerDetails) => {
         try {
@@ -228,11 +330,9 @@ export const useCarHandlers = (
         handleAddCar,
         handleUpdateCar,
         handleDeleteCar,
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se elimina handleUndoDelete
+        handleGeneratePdf,
         toast,
         setToast,
-        // --- FIN DE LA MODIFICACIÓN ---
         handleSellConfirm,
         handleReserveConfirm,
         handleConfirmCancelReservation,
