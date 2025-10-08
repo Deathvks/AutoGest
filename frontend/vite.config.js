@@ -1,3 +1,4 @@
+// frontend/vite.config.js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -10,7 +11,6 @@ export default defineConfig({
       '/avatars': 'http://localhost:3001',
       '/uploads': 'http://localhost:3001',
       '/documents': 'http://localhost:3001',
-      '/expenses': 'http://localhost:3001',
     }
   },
   build: {
@@ -23,9 +23,6 @@ export default defineConfig({
         }
       }
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Aumenta el límite de advertencia para el tamaño de los chunks a 1500 kB.
     chunkSizeWarningLimit: 1500,
-    // --- FIN DE LA MODIFICACIÓN ---
   }
 })

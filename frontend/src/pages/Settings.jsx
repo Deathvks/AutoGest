@@ -1,7 +1,8 @@
-// autogest-app/frontend/src/pages/Settings.jsx
-import React, { useState } from 'react'; // <-- AÑADIDO useState
+// frontend/src/pages/Settings.jsx
+import React, { useState, useContext } from 'react'; // <-- AÑADIDO useContext
 import VersionIndicator from '../components/VersionIndicator';
 import { APP_NAME } from '../config/version';
+import { AuthContext } from '../context/AuthContext'; // <-- AÑADIDO
 
 // Importar los nuevos componentes modularizados
 import AppearanceSettings from './Settings/AppearanceSettings';
@@ -18,8 +19,12 @@ const Settings = ({
     businessDataMessage, 
     onLogoutClick 
 }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
+    const { user } = useContext(AuthContext); // <-- AÑADIDO
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Determina si el usuario debe ver la sección de datos de empresa
+    const shouldShowBusinessData = user && (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed' || user.companyId);
     // --- FIN DE LA MODIFICACIÓN ---
 
     return (
@@ -27,18 +32,20 @@ const Settings = ({
             <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">AJUSTES</h1>
 
             <div className="space-y-8">
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <div className={`bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl relative ${isColorPickerOpen ? 'z-10' : ''}`}>
                     <AppearanceSettings onPickerToggle={setIsColorPickerOpen} />
                 </div>
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 
-                <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
-                    <BusinessDataSettings 
-                        onBusinessDataClick={onBusinessDataClick} 
-                        businessDataMessage={businessDataMessage} 
-                    />
-                </div>
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {shouldShowBusinessData && (
+                    <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
+                        <BusinessDataSettings 
+                            onBusinessDataClick={onBusinessDataClick} 
+                            businessDataMessage={businessDataMessage} 
+                        />
+                    </div>
+                )}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                 <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
                     <AccountDataSettings 

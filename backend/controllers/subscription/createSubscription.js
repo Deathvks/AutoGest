@@ -2,8 +2,32 @@
 const { User } = require('../../models');
 const { stripe, getStripeConfig } = require('./stripeConfig');
 
+// Función de utilidad para reintentar la obtención de la factura
+const retrieveInvoiceWithRetry = async (invoiceId, retries = 5, delay = 500) => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const invoice = await stripe.invoices.retrieve(invoiceId, {
+                expand: ['payment_intent']
+            });
+            if (invoice.payment_intent && invoice.payment_intent.client_secret) {
+                console.log(`[CREATE_SUB] Payment Intent encontrado en el intento ${i + 1}.`);
+                return invoice;
+            }
+        } catch (error) {
+            console.error(`[CREATE_SUB] Error recuperando factura en intento ${i + 1}:`, error.message);
+        }
+        
+        const currentDelay = delay * Math.pow(2, i);
+        console.log(`[CREATE_SUB] Intento ${i + 1} fallido (la factura aún no tiene PI). Esperando ${currentDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, currentDelay));
+    }
+    console.error(`[CREATE_SUB] No se pudo encontrar el PI para la factura ${invoiceId} después de ${retries} intentos.`);
+    return null;
+};
+
+// Controlador principal
 exports.createSubscription = async (req, res) => {
-    console.log('[CREATE_SUB] Iniciando el proceso de creación de suscripciones (v6)...');
+    console.log('[CREATE_SUB] Iniciando el proceso de creación de suscripciones (v19)...');
     try {
         const { paymentMethodId } = req.body;
         const userId = req.user.id;
@@ -17,70 +41,78 @@ exports.createSubscription = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-
+        
         let customerId = user.stripeCustomerId;
-        if (!customerId) {
-            const customer = await stripe.customers.create({
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Lógica de "autocuración" con el orden de operaciones corregido (v19 Final)
+        if (customerId) {
+            try {
+                // Paso 1: Adjuntar el método de pago al cliente.
+                await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
+                // Paso 2: Ahora sí, establecerlo como método de pago por defecto.
+                await stripe.customers.update(customerId, {
+                    invoice_settings: { default_payment_method: paymentMethodId },
+                });
+                console.log(`[CREATE_SUB] Método de pago asignado correctamente al cliente existente ${customerId}.`);
+            } catch (error) {
+                if (error.code === 'resource_missing') {
+                    console.warn(`[CREATE_SUB] El cliente ${customerId} o sus datos son obsoletos. Creando un nuevo cliente desde cero.`);
+                    const newCustomer = await stripe.customers.create({
+                        email: user.email,
+                        name: user.name,
+                        payment_method: paymentMethodId,
+                        invoice_settings: { default_payment_method: paymentMethodId },
+                    });
+                    
+                    customerId = newCustomer.id;
+                    await user.update({ stripeCustomerId: customerId });
+                    console.log(`[CREATE_SUB] Nuevo cliente ${customerId} autocreado y método de pago asignado.`);
+                } else {
+                    throw error;
+                }
+            }
+        } else {
+            const newCustomer = await stripe.customers.create({
                 email: user.email,
                 name: user.name,
                 payment_method: paymentMethodId,
                 invoice_settings: { default_payment_method: paymentMethodId },
             });
-            customerId = customer.id;
+            customerId = newCustomer.id;
             await user.update({ stripeCustomerId: customerId });
-        } else {
-            await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
-            await stripe.customers.update(customerId, {
-                invoice_settings: { default_payment_method: paymentMethodId },
-            });
+            console.log(`[CREATE_SUB] Nuevo cliente ${customerId} creado por primera vez.`);
         }
+        // --- FIN DE LA MODIFICACIÓN ---
 
-        console.log(`[CREATE_SUB] Creando suscripción para customer ${customerId} con price ${priceId}...`);
-
-        // --- INICIO DE LA MODIFICACIÓN ---
         const subscription = await stripe.subscriptions.create({
             customer: customerId,
             items: [{ price: priceId }],
-            payment_behavior: 'default_incomplete', // Permite que la suscripción se cree en estado incompleto si se requiere acción
+            payment_behavior: 'default_incomplete',
             payment_settings: { save_default_payment_method: 'on_subscription' },
-            expand: ['latest_invoice.payment_intent'], // Expande el payment_intent para obtener el client_secret
         });
 
-        console.log('[CREATE_SUB] Objeto de suscripción devuelto por Stripe:', JSON.stringify(subscription, null, 2));
-        
-        // Si la suscripción se activa inmediatamente (pago exitoso sin 3DS)
         if (subscription.status === 'active') {
-            console.log('[CREATE_SUB] Suscripción activada inmediatamente.');
-            return res.json({
-                subscriptionId: subscription.id,
-                status: 'active',
-                clientSecret: null,
-            });
+            return res.json({ status: 'active' });
+        }
+        
+        if (subscription.status === 'incomplete' && subscription.latest_invoice) {
+            const invoice = await retrieveInvoiceWithRetry(subscription.latest_invoice);
+            
+            if (invoice && invoice.payment_intent && invoice.payment_intent.client_secret) {
+                return res.json({
+                    subscriptionId: subscription.id,
+                    clientSecret: invoice.payment_intent.client_secret,
+                    requiresAction: true,
+                });
+            }
         }
 
-        // Si la suscripción está incompleta y requiere acción del usuario (3DS)
-        if (subscription.status === 'incomplete' && subscription.latest_invoice && subscription.latest_invoice.payment_intent) {
-            console.log('[CREATE_SUB] Suscripción incompleta, se requiere acción del usuario.');
-            return res.json({
-                subscriptionId: subscription.id,
-                clientSecret: subscription.latest_invoice.payment_intent.client_secret,
-                requiresAction: true,
-            });
-        }
-        
-        // Si llegamos aquí, es un estado inesperado
-        console.error('[CREATE_SUB] FATAL: Estado de suscripción inesperado o falta de payment_intent.');
-        return res.status(500).json({ error: 'Respuesta inesperada de Stripe al crear la suscripción.' });
-        // --- FIN DE LA MODIFICACIÓN ---
+        console.error('[CREATE_SUB] FATAL: No se pudo obtener el client_secret para la suscripción.');
+        return res.status(500).json({ error: 'Respuesta inesperada de Stripe. No se pudo iniciar el pago.' });
 
     } catch (error) {
-        console.error('--- ERROR DETALLADO EN CREATE_SUB ---');
-        console.error('Mensaje:', error.message);
-        console.error('Tipo:', error.type);
-        console.error('Código:', error.code);
-        if (error.raw) console.error('Error Raw:', JSON.stringify(error.raw, null, 2));
-        console.error('Stack:', error.stack);
-        console.error("------------------------------------");
-        res.status(500).json({ error: error.message || 'Error al crear la suscripción. Por favor, revisa los logs del servidor.' });
+        console.error('--- ERROR DETALLADO EN CREATE_SUB ---', error);
+        res.status(500).json({ error: error.message || 'Error al crear la suscripción.' });
     }
 };

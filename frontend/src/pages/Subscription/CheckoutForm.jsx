@@ -1,4 +1,4 @@
-// autogest-app/frontend/src/pages/Subscription/CheckoutForm.jsx
+// frontend/src/pages/Subscription/CheckoutForm.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,7 +12,7 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
     const [processing, setProcessing] = useState(false);
     const [adBlockerDetected, setAdBlockerDetected] = useState(false);
     const [isBraveBrowser, setIsBraveBrowser] = useState(false);
-    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+    const [theme, setTheme] = useState(() => document.documentElement.classList.contains('dark') ? 'dark' : 'light');
 
     useEffect(() => {
         const observer = new MutationObserver(() => {
@@ -33,8 +33,9 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                 fontSmoothing: 'antialiased',
                 fontSize: '16px',
                 '::placeholder': {
-                    color: theme === 'dark' ? '#908CAA' : '#71717a',
+                    color: theme === 'dark' ? '#cbd5e1' : '#27272a',
                 },
+                iconColor: theme === 'dark' ? '#cbd5e1' : '#27272a',
             },
             invalid: {
                 color: theme === 'dark' ? '#f87171' : '#dc2626',
@@ -118,7 +119,7 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
     };
 
     return (
-        <div className="p-8 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl h-full flex flex-col animated-premium-background">
+        <div className="p-8 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl h-full flex flex-col">
             <h3 className="text-xl font-bold text-text-primary mb-2 animate-fade-in-down">COMPLETA TU SUSCRIPCIÓN</h3>
             <p className="text-text-secondary mb-6 animate-fade-in-down" style={{ animationDelay: '150ms' }}>Acceso completo a todas las herramientas por un único pago mensual.</p>
             <form onSubmit={handleSubmit} className="space-y-6 flex-grow flex flex-col">

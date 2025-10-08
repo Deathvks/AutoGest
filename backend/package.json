@@ -8,7 +8,10 @@
     "seed": "node seed.js",
     "clear": "node clear.js",
     "clear-locations": "node clear-locations.js",
-    "clear-invitations": "node clear-invitations.js"
+    "clear-invitations": "node clear-invitations.js",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo",
+    "db:create-migration": "sequelize-cli migration:generate --name"
   },
   "keywords": [],
   "author": "",
@@ -16,9 +19,10 @@
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
-    "express": "^5.1.0",
+    "express": "^4.17.1",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.2",
     "jspdf-autotable": "^5.0.2",
@@ -30,6 +34,7 @@
     "stripe": "^18.5.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "sequelize-cli": "^6.6.2"
   }
 }

@@ -1,12 +1,10 @@
 // autogest-app/backend/index.js
-// La carga de variables de entorno es gestionada por el script 'dev' o por PM2.
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const db = require('./models');
-// --- INICIO DE LA MODIFICACIÓN ---
+const bodyParser = require('body-parser'); // <-- AÑADIDO
 const { processRecurringExpenses } = require('./jobs/recurringExpenses');
-// --- FIN DE LA MODIFICACIÓN ---
 
 // Listeners para capturar cualquier salida inesperada del proceso
 process.on('exit', (code) => {
@@ -43,11 +41,21 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), require('./controllers/subscription/handleWebhook').handleWebhook);
-app.use(express.json());
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se usa bodyParser para las rutas de Express 4
+app.post('/api/subscriptions/webhook', bodyParser.raw({ type: 'application/json' }), require('./controllers/subscription/handleWebhook').handleWebhook);
+app.use(bodyParser.json());
+// --- FIN DE LA MODIFICACIÓN ---
 
-// Servir todos los archivos estáticos desde la carpeta 'public'
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Servir archivos estáticos de la API (imágenes subidas, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Servir la aplicación de frontend (build de producción)
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+// --- FIN DE LA MODIFICACIÓN ---
+
 
 app.get('/', (req, res) => {
     res.send('AutoGest API is running...');
@@ -64,23 +72,26 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/company', companyRoutes);
 
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Catch-all para servir index.html en rutas de frontend y permitir recargar
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+});
+// --- FIN DE LA MODIFICACIÓN ---
+
+
 const PORT = process.env.PORT || 3001;
 
-const syncDatabaseAndStartServer = async () => {
+const startServer = async () => {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      await db.sequelize.sync({ alter: true });
-      console.log('✅ Base de datos sincronizada en modo desarrollo (alter).');
-    } else {
-      await db.sequelize.sync();
-      console.log('✅ Base de datos sincronizada en producción (sin alter).');
-    }
+    // Ya no sincronizamos la base de datos, solo verificamos la conexión.
+    await db.sequelize.authenticate();
+    console.log('✅ Conexión a la base de datos establecida.');
     
     app.listen(PORT, () => {
       console.log(`🚀 Servidor escuchando en el puerto ${PORT}`);
 
-      // --- INICIO DE LA MODIFICACIÓN ---
-      // Ejecutar la tarea de gastos recurrentes al iniciar y luego cada 24 horas
       console.log('[JOBS] Ejecutando tarea de gastos recurrentes al inicio...');
       processRecurringExpenses(); // Ejecuta una vez al arrancar
 
@@ -89,16 +100,12 @@ const syncDatabaseAndStartServer = async () => {
         console.log('[JOBS] Ejecutando tarea programada de gastos recurrentes...');
         processRecurringExpenses();
       }, twentyFourHours); // Se ejecuta cada 24 horas
-      // --- FIN DE LA MODIFICACIÓN ---
     });
 
   } catch (error) {
-    console.error('❌ Error al sincronizar la base de datos:', error);
+    console.error('❌ Error al conectar con la base de datos:', error);
     process.exit(1);
   }
 }
 
-syncDatabaseAndStartServer();
-
-// Se elimina el intervalo vacío anterior que mantenía el proceso vivo.
-// La nueva tarea programada cumplirá una función similar.
+startServer();

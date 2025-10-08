@@ -1,37 +1,52 @@
 // autogest-app/backend/controllers/subscription/stripeConfig.js
-const stripePackage = require('stripe');
+const Stripe = require('stripe');
 
 // --- INICIO DE LA MODIFICACIÓN ---
-console.log('[STRIPE_CONFIG] Loading Stripe configuration...');
-console.log(`[STRIPE_CONFIG] NODE_ENV: ${process.env.NODE_ENV}`);
+// Se ha refactorizado la lógica para que sea más clara y robusta.
+// Se han añadido logs para depurar qué configuración se está cargando.
 
-const stripeKey = process.env.NODE_ENV === 'production'
-    ? process.env.STRIPE_SECRET_KEY_LIVE
+// Determinar el entorno de forma explícita.
+const isProduction = process.env.NODE_ENV === 'production';
+console.log(`[STRIPE_CONFIG] Entorno detectado: ${process.env.NODE_ENV || 'development'}`);
+
+// Seleccionar las claves y el ID de precio según el entorno.
+const secretKey = isProduction 
+    ? process.env.STRIPE_SECRET_KEY_LIVE 
     : process.env.STRIPE_SECRET_KEY_TEST;
 
-if (!stripeKey) {
-    console.error('[STRIPE_CONFIG] FATAL ERROR: Stripe secret key is missing for the current environment.');
-    console.error(`[STRIPE_CONFIG] STRIPE_SECRET_KEY_LIVE is ${process.env.STRIPE_SECRET_KEY_LIVE ? 'defined' : 'UNDEFINED'}`);
-    console.error(`[STRIPE_CONFIG] STRIPE_SECRET_KEY_TEST is ${process.env.STRIPE_SECRET_KEY_TEST ? 'defined' : 'UNDEFINED'}`);
-    
-    // Forzar la salida con un código de error para que PM2 lo registre como un fallo.
-    process.exit(1);
-} else {
-    console.log('[STRIPE_CONFIG] Stripe secret key loaded successfully.');
+const priceId = isProduction 
+    ? process.env.STRIPE_PRICE_ID_LIVE 
+    : process.env.STRIPE_PRICE_ID_TEST;
+
+const webhookSecret = isProduction 
+    ? process.env.STRIPE_WEBHOOK_SECRET_LIVE 
+    : process.env.STRIPE_WEBHOOK_SECRET_TEST;
+
+// Validar que las variables necesarias estén presentes.
+if (!secretKey || !priceId || !webhookSecret) {
+    console.error('--- ERROR CRÍTICO DE CONFIGURACIÓN DE STRIPE ---');
+    if (!secretKey) console.error('Falta la variable de entorno STRIPE_SECRET_KEY');
+    if (!priceId) console.error('Falta la variable de entorno STRIPE_PRICE_ID');
+    if (!webhookSecret) console.error('Falta la variable de entorno STRIPE_WEBHOOK_SECRET');
+    console.error('Asegúrate de que el fichero .env está completo y en la raíz del backend.');
+    process.exit(1); // Detener la aplicación si la configuración es incorrecta.
 }
 
-const stripe = stripePackage(stripeKey);
-// --- FIN DE LA MODIFICACIÓN ---
+console.log(`[STRIPE_CONFIG] Usando Price ID: ${priceId}`);
 
-const getStripeConfig = () => {
-    const isProduction = process.env.NODE_ENV === 'production';
-    return {
-        priceId: isProduction ? process.env.STRIPE_PRICE_ID_LIVE : process.env.STRIPE_PRICE_ID_TEST,
-        webhookSecret: isProduction ? process.env.STRIPE_WEBHOOK_SECRET_LIVE : process.env.STRIPE_WEBHOOK_SECRET_TEST,
-    };
-};
+// Inicializar Stripe con la clave secreta correcta.
+const stripe = new Stripe(secretKey, {
+    apiVersion: '2024-04-10', // Mantén la API version actualizada si es necesario.
+});
+
+// Función para exportar la configuración.
+const getStripeConfig = () => ({
+    priceId,
+    webhookSecret
+});
 
 module.exports = {
     stripe,
-    getStripeConfig,
+    getStripeConfig
 };
+// --- FIN DE LA MODIFICACIÓN ---

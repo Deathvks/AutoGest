@@ -13,8 +13,8 @@ import SubscriptionBenefits from './Subscription/SubscriptionBenefits';
 import CheckoutForm from './Subscription/CheckoutForm';
 import SubscriptionStatus from './Subscription/SubscriptionStatus';
 
-const stripePublishableKey = import.meta.env.PROD 
-    ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE 
+const stripePublishableKey = import.meta.env.PROD
+    ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE
     : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST;
 
 const stripePromise = loadStripe(stripePublishableKey);
@@ -42,7 +42,10 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
             }
 
             try {
+                // Forzamos una sincronización con Stripe antes de comprobar
+                await api.subscriptions.syncSubscription();
                 const freshUser = await api.getMe();
+
                 if (freshUser.subscriptionStatus === 'active') {
                     await refreshSubscriptionStatus();
                     setSubscriptionSuccessModalOpen(true);
@@ -130,22 +133,30 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
                 </div>
             </div>
             <div>
-                {isVerifyingPayment ? (
-                    <div className="p-8 bg-component-bg/80 backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl h-full flex flex-col items-center justify-center">
-                        <FontAwesomeIcon icon={faSpinner} spin size="2x" className="text-accent mb-4" />
-                        <h3 className="text-xl font-bold text-text-primary">VERIFICANDO PAGO...</h3>
-                        <p className="text-text-secondary mt-2 text-center">ESTO PUEDE TARDAR UNOS SEGUNDOS. NO CIERRES ESTA VENTANA.</p>
-                    </div>
-                ) : verificationError ? (
-                    <div className="p-8 bg-component-bg/80 backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl h-full flex flex-col items-center justify-center">
-                        <FontAwesomeIcon icon={faExclamationTriangle} size="2x" className="text-red-accent mb-4" />
-                        <h3 className="text-xl font-bold text-text-primary">ERROR DE VERIFICACIÓN</h3>
-                        <p className="text-text-secondary mt-2 text-center">{verificationError}</p>
-                    </div>
-                ) : (
-                    <CheckoutForm onSuccessfulPayment={handleSuccessfulPayment} />
-                )}
+                 <CheckoutForm onSuccessfulPayment={handleSuccessfulPayment} />
             </div>
+            {/* --- INICIO DE LA MODIFICACIÓN VISUAL --- */}
+            {(isVerifyingPayment || verificationError) && (
+                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
+                    <div className="bg-component-bg/80 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color p-8 text-center">
+                        {isVerifyingPayment && (
+                            <>
+                                <FontAwesomeIcon icon={faSpinner} spin size="2x" className="text-accent mb-4" />
+                                <h3 className="text-xl font-bold text-text-primary">VERIFICANDO PAGO...</h3>
+                                <p className="text-text-secondary mt-2">ESTO PUEDE TARDAR UNOS SEGUNDOS. NO CIERRES ESTA VENTANA.</p>
+                            </>
+                        )}
+                        {verificationError && (
+                             <>
+                                <FontAwesomeIcon icon={faExclamationTriangle} size="2x" className="text-red-accent mb-4" />
+                                <h3 className="text-xl font-bold text-text-primary">ERROR DE VERIFICACIÓN</h3>
+                                <p className="text-text-secondary mt-2">{verificationError}</p>
+                             </>
+                        )}
+                    </div>
+                </div>
+            )}
+            {/* --- FIN DE LA MODIFICACIÓN VISUAL --- */}
         </div>
     );
 };

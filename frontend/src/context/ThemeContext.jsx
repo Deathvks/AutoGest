@@ -1,4 +1,4 @@
-// autogest-app/frontend/src/context/ThemeContext.jsx
+// frontend/src/context/ThemeContext.jsx
 import React, { createContext, useState, useEffect, useMemo } from 'react';
 
 const themes = [
@@ -6,6 +6,7 @@ const themes = [
     {
         name: 'Púrpura (Defecto)',
         id: 'default-purple',
+        isDark: true,
         background: 'linear-gradient(-70deg, rgb(53, 33, 90), rgb(92, 37, 165))',
         componentBg: 'rgba(255, 255, 255, 0.1)',
         componentBgHover: 'rgba(255, 255, 255, 0.15)',
@@ -22,6 +23,7 @@ const themes = [
     {
         name: 'Medianoche',
         id: 'midnight-blue',
+        isDark: true,
         background: 'linear-gradient(-70deg, rgb(17, 24, 39), rgb(30, 41, 59))',
         componentBg: 'rgba(255, 255, 255, 0.08)',
         componentBgHover: 'rgba(255, 255, 255, 0.12)',
@@ -38,6 +40,7 @@ const themes = [
     {
         name: 'Esmeralda',
         id: 'emerald-green',
+        isDark: true,
         background: 'linear-gradient(-70deg, #064e3b, #047857)',
         componentBg: 'rgba(255, 255, 255, 0.1)',
         componentBgHover: 'rgba(255, 255, 255, 0.15)',
@@ -54,6 +57,7 @@ const themes = [
     {
         name: 'Rubí',
         id: 'ruby-red',
+        isDark: true,
         background: 'linear-gradient(-70deg, #7f1d1d, #b91c1c)',
         componentBg: 'rgba(255, 255, 255, 0.1)',
         componentBgHover: 'rgba(255, 255, 255, 0.15)',
@@ -71,6 +75,7 @@ const themes = [
     {
         name: 'Claro (Estándar)',
         id: 'light-standard',
+        isDark: false,
         background: '#f7f7f9',
         componentBg: '#ffffff',
         componentBgHover: '#f1f1f5',
@@ -87,6 +92,7 @@ const themes = [
     {
         name: 'Claro (Azul)',
         id: 'light-blue',
+        isDark: false,
         background: '#f7f7f9',
         componentBg: '#ffffff',
         componentBgHover: '#f1f1f5',
@@ -179,6 +185,25 @@ export const ThemeProvider = ({ children }) => {
     const [activeThemeId, setActiveThemeId] = useState(() => localStorage.getItem('app-theme') || 'default-purple');
     const [customTheme, setCustomTheme] = useState(null);
 
+    const _applyThemeToDOM = (theme) => {
+        const root = document.documentElement;
+        Object.keys(theme).forEach(key => {
+            const cssVarName = `--color-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+            if (key !== 'id' && key !== 'name' && key !== 'isDark') {
+                root.style.setProperty(cssVarName, theme[key]);
+            }
+        });
+
+        if (theme.isDark) {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+
+        document.body.style.background = theme.background;
+        document.body.style.backgroundAttachment = 'fixed';
+    }
+
     const applyTheme = (themeId) => {
         const theme = themes.find(t => t.id === themeId);
         if (!theme) return;
@@ -186,16 +211,7 @@ export const ThemeProvider = ({ children }) => {
         setCustomTheme(null);
         localStorage.removeItem('app-custom-theme');
         
-        const root = document.documentElement;
-        Object.keys(theme).forEach(key => {
-            const cssVarName = `--color-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
-            if (key !== 'id' && key !== 'name') {
-                root.style.setProperty(cssVarName, theme[key]);
-            }
-        });
-
-        document.body.style.background = theme.background;
-        document.body.style.backgroundAttachment = 'fixed';
+        _applyThemeToDOM(theme);
         
         setActiveThemeId(theme.id);
         localStorage.setItem('app-theme', theme.id);
@@ -226,7 +242,7 @@ export const ThemeProvider = ({ children }) => {
             const isLightColor = brightness > 150;
     
             const lastThemeId = localStorage.getItem('app-theme') || 'default-purple';
-            const isBaseLight = themes.find(t => t.id === lastThemeId)?.background.startsWith('#');
+            const isBaseLight = themes.find(t => t.id === lastThemeId)?.isDark === false;
             const baseThemeId = (isBaseLight || isLightColor) ? 'light-standard' : 'default-purple';
             const base = themes.find(t => t.id === baseThemeId);
     
@@ -234,6 +250,7 @@ export const ThemeProvider = ({ children }) => {
                 ...base,
                 id: 'custom',
                 name: 'Personalizado',
+                isDark: !isLightColor && base.isDark,
                 accent: hexColor,
                 accentHover: isLightColor ? darkenColor(hexColor, 10) : lightenColor(hexColor, 10),
                 accentRgb: rgbColor,
@@ -254,15 +271,7 @@ export const ThemeProvider = ({ children }) => {
         setActiveThemeId('custom');
         localStorage.setItem('app-theme', 'custom');
 
-        const root = document.documentElement;
-        Object.keys(newCustomTheme).forEach(key => {
-            const cssVarName = `--color-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
-            if (key !== 'id' && key !== 'name') {
-                root.style.setProperty(cssVarName, newCustomTheme[key]);
-            }
-        });
-        document.body.style.background = newCustomTheme.background;
-        document.body.style.backgroundAttachment = 'fixed';
+        _applyThemeToDOM(newCustomTheme);
     };
 
     useEffect(() => {

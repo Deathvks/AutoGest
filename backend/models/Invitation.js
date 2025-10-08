@@ -35,16 +35,15 @@ const Invitation = sequelize.define('Invitation', {
     }
 }, {
     timestamps: true,
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se añade un nombre explícito al índice para evitar duplicados.
+    // --- ESTA ES LA PARTE QUE FALTA EN TU FICHERO ---
     indexes: [
         {
-            name: 'invitations_token_unique',
+            name: 'invitations_token_unique', // Se le da un nombre al índice
             unique: true,
             fields: ['token']
         }
     ]
-    // --- FIN DE LA MODIFICACIÓN ---
+    // --- FIN DE LA CORRECCIÓN ---
 });
 
 module.exports = Invitation;
