@@ -125,12 +125,12 @@ const Profile = () => {
 
     return (
         <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">MI PERFIL</h1>
+            <h1 className="hidden lg:block text-3xl font-bold text-text-primary tracking-tight mb-8">MI PERFIL</h1>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 
-                {/* --- Columna Izquierda: Avatar y Acciones --- */}
-                <div className="md:col-span-1 space-y-6">
+                {/* --- Avatar Card (Mobile: 1st, Desktop: Top-Left) --- */}
+                <div className="md:col-start-1 md:row-start-1">
                     <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl text-center">
                         <div className="relative w-32 h-32 mx-auto group">
                             <img 
@@ -164,11 +164,24 @@ const Profile = () => {
                             <span className={`mt-3 inline-block text-xs font-bold px-3 py-1 rounded-full uppercase ${roleStyles[user.role] || 'bg-background'}`}>{user.role.replace('_', ' ')}</span>
                         </div>
                     </div>
+                </div>
 
+                {/* --- Form Card (Mobile: 2nd, Desktop: Right) --- */}
+                <div className="md:col-start-2 md:col-span-2 md:row-start-1 md:row-span-2">
+                    <div className="bg-component-bg backdrop-blur-lg p-6 sm:p-8 rounded-2xl border border-border-color shadow-2xl h-full">
+                        <h3 className="text-lg font-bold text-text-primary mb-6 uppercase">Información de la Cuenta</h3>
+                        <form className="space-y-6" onSubmit={e => { e.preventDefault(); handleSaveChanges(); }}>
+                            <InputField label="Nombre Completo" name="name" value={formData.name} onChange={handleInputChange} icon={faUser} disabled={!isEditing} />
+                            <InputField label="Email" name="email" value={formData.email} onChange={handleInputChange} icon={faEnvelope} disabled={!isEditing} />
+                        </form>
+                    </div>
+                </div>
+
+                {/* --- Actions Card (Mobile: 3rd, Desktop: Bottom-Left) --- */}
+                <div className="md:col-start-1 md:row-start-2 md:self-end w-full">
                     <div className="bg-component-bg backdrop-blur-lg p-4 rounded-2xl border border-border-color shadow-2xl">
                         {isEditing ? (
                             <div className="flex justify-center gap-2">
-                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                 <button onClick={handleCancel} disabled={isLoading} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 font-semibold disabled:opacity-50">
                                     <FontAwesomeIcon icon={faTimes} />
                                     Cancelar
@@ -176,7 +189,6 @@ const Profile = () => {
                                 <button onClick={handleSaveChanges} disabled={isLoading} className="bg-accent text-white px-4 py-2 rounded-lg shadow-md shadow-accent/20 hover:bg-accent-hover transition-opacity flex items-center justify-center gap-2 font-semibold disabled:opacity-50">
                                     {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : <><FontAwesomeIcon icon={faSave} /> Guardar</>}
                                 </button>
-                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         ) : (
                             <button onClick={() => setIsEditing(true)} className="w-full bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 font-semibold">
@@ -185,18 +197,8 @@ const Profile = () => {
                             </button>
                         )}
                     </div>
-
-                    {message && <p className="text-sm text-center text-green-accent font-semibold">{message}</p>}
-                    {error && <p className="text-sm text-center text-red-accent font-semibold">{error}</p>}
-                </div>
-
-                {/* --- Columna Derecha: Formulario de Datos --- */}
-                <div className="md:col-span-2 bg-component-bg backdrop-blur-lg p-6 sm:p-8 rounded-2xl border border-border-color shadow-2xl">
-                    <h3 className="text-lg font-bold text-text-primary mb-6 uppercase">Información de la Cuenta</h3>
-                    <form className="space-y-6" onSubmit={e => { e.preventDefault(); handleSaveChanges(); }}>
-                        <InputField label="Nombre Completo" name="name" value={formData.name} onChange={handleInputChange} icon={faUser} disabled={!isEditing} />
-                        <InputField label="Email" name="email" value={formData.email} onChange={handleInputChange} icon={faEnvelope} disabled={!isEditing} />
-                    </form>
+                    {message && <p className="text-sm text-center text-green-accent font-semibold mt-4">{message}</p>}
+                    {error && <p className="text-sm text-center text-red-accent font-semibold mt-4">{error}</p>}
                 </div>
             </div>
         </div>

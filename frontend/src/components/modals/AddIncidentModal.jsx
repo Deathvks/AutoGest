@@ -28,7 +28,7 @@ const AddIncidentModal = ({ car, onClose, onConfirm }) => {
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg/80 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
                 <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
                     <h2 className="text-xl font-bold text-text-primary flex items-center gap-3">
                         <FontAwesomeIcon icon={faExclamationTriangle} />
