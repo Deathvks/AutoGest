@@ -13,6 +13,11 @@ pnpm-lock.yaml
 .DS_Store
 ecosystem.config.js
 
+# --- INICIO DE LA MODIFICACIÓN ---
+# --- Ficheros Públicos / Subidos ---
+/public/
+# --- FIN DE LA MODIFICACIÓN ---
+
 # --- Logs ---
 logs
 *.log
