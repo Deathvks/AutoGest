@@ -52,11 +52,47 @@ export const useCarHandlers = (
         return doc.output('blob');
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleGeneratePdf = async (car, type, number, igicRate) => {
         const doc = new jsPDF();
         const today = new Date().toLocaleDateString('es-ES');
         let currentY = 20;
+
+        // Añadir logo si existe
+        if (user.logoUrl) {
+            const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+            const logoUrl = `${API_BASE_URL}${user.logoUrl}`;
+            try {
+                const response = await fetch(logoUrl);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const logoData = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                    
+                    const img = new Image();
+                    img.src = logoData;
+                    await new Promise(resolve => { img.onload = resolve; });
+
+                    const maxW = 50;
+                    const maxH = 25;
+                    const aspectRatio = img.width / img.height;
+                    let imgWidth = maxW;
+                    let imgHeight = imgWidth / aspectRatio;
+
+                    if (imgHeight > maxH) {
+                        imgHeight = maxH;
+                        imgWidth = imgHeight * aspectRatio;
+                    }
+                    doc.addImage(logoData, 'PNG', 14, 15, imgWidth, imgHeight);
+                    currentY = 15 + imgHeight + 15; // Ajustar la posición Y inicial
+                }
+            } catch (error) {
+                console.error("Error al cargar el logo para el PDF:", error);
+            }
+        }
 
         const title = type === 'proforma' ? 'FACTURA PROFORMA' : 'FACTURA';
         doc.setFont('helvetica', 'bold');
@@ -106,7 +142,9 @@ export const useCarHandlers = (
         const tealColor = [0, 150, 136];
         const price = parseFloat(type === 'factura' ? car.salePrice : car.price) || 0;
         const formattedPrice = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(price);
-        const carDescription = `VEHÍCULO ${car.make} ${car.model} CON MATRÍCULA ${car.licensePlate} Y BASTIDOR ${car.vin || ''}`;
+        const registrationYear = car.registrationDate ? new Date(car.registrationDate).getFullYear() : 'N/A';
+        const carKm = car.km ? new Intl.NumberFormat('es-ES').format(car.km) : 'N/A';
+        const carDescription = `VEHÍCULO ${car.make} ${car.model} (${registrationYear}) CON MATRÍCULA ${car.licensePlate}, BASTIDOR ${car.vin || ''} Y ${carKm} KM.`;
 
         if (type === 'factura' && igicRate > 0) {
             const basePrice = price / (1 + igicRate / 100);
@@ -156,7 +194,6 @@ export const useCarHandlers = (
         
         await handleUpdateCar(car.id, formData);
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const fetchLocations = async () => {
         try {
@@ -204,6 +241,24 @@ export const useCarHandlers = (
             console.error("Error al eliminar coche:", error);
         }
     };
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleDeleteFile = async (fileData) => {
+        const { car, file, fileType } = fileData;
+        try {
+            const formData = new FormData();
+            const filesToRemove = [{ path: file.path, type: fileType }];
+            formData.append('filesToRemove', JSON.stringify(filesToRemove));
+            
+            await handleUpdateCar(car.id, formData);
+
+        } catch (error) {
+            console.error("Error al eliminar el archivo:", error);
+        } finally {
+            modalState.setFileToDelete(null);
+        }
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleSellConfirm = async (carId, salePrice, saleDate, buyerDetails) => {
         try {
@@ -331,6 +386,9 @@ export const useCarHandlers = (
         handleUpdateCar,
         handleDeleteCar,
         handleGeneratePdf,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        handleDeleteFile,
+        // --- FIN DE LA MODIFICACIÓN ---
         toast,
         setToast,
         handleSellConfirm,

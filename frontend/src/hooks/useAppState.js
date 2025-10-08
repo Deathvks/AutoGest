@@ -30,7 +30,8 @@ export const useAppState = () => {
         // --- INICIO DE LA MODIFICACIÓN ---
         handleAddCar, handleUpdateCar, handleDeleteCar, toast, setToast,
         handleSellConfirm, handleReserveConfirm, handleConfirmCancelReservation, handleUpdateCarInsurance,
-        handleDeleteNote, handleGestoriaPickup, handleGestoriaReturn, handleGeneratePdf
+        handleDeleteNote, handleGestoriaPickup, handleGestoriaReturn, handleGeneratePdf,
+        handleDeleteFile
         // --- FIN DE LA MODIFICACIÓN ---
     } = useCarHandlers(cars, setCars, locations, setLocations, modalState);
     
@@ -98,8 +99,9 @@ export const useAppState = () => {
         handleGestoriaPickup,
         handleGestoriaReturn,
         handleSaveBusinessData,
-        // --- INICIO DE LA MODIFICACIÓN ---
         handleGeneratePdf,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        handleDeleteFile,
         // --- FIN DE LA MODIFICACIÓN ---
     };
 };

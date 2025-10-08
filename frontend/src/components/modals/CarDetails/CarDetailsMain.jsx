@@ -8,7 +8,7 @@ import {
 import { DetailItem, MultiFileLinks } from './CarDetailsUtils';
 
 // --- INICIO DE LA MODIFICACIÓN ---
-const CarDetailsMain = ({ car }) => {
+const CarDetailsMain = ({ car, onDeleteFile }) => {
     let tagsToShow = [];
     if (typeof car.tags === 'string') {
         try {
@@ -47,9 +47,9 @@ const CarDetailsMain = ({ car }) => {
                     <DetailItem icon={faFingerprint} label="Nº de Bastidor" value={car.vin || 'N/A'} />
                     <DetailItem icon={faMapMarkerAlt} label="Ubicación" value={car.location || 'N/A'} />
                     <DetailItem icon={faKey} label="Nº de Llaves" value={car.keys || '1'} />
-                    <MultiFileLinks label="Ficha Técnica" icon={faFileLines} filesData={car.technicalSheetUrl} />
-                    <MultiFileLinks label="Permiso de Circulación" icon={faFileLines} filesData={car.registrationCertificateUrl} />
-                    <MultiFileLinks label="Archivos Varios" filesData={car.otherDocumentsUrls} />
+                    <MultiFileLinks label="Ficha Técnica" icon={faFileLines} filesData={car.technicalSheetUrl} car={car} fileType="technicalSheet" onDeleteFile={onDeleteFile} />
+                    <MultiFileLinks label="Permiso de Circulación" icon={faFileLines} filesData={car.registrationCertificateUrl} car={car} fileType="registrationCertificate" onDeleteFile={onDeleteFile} />
+                    <MultiFileLinks label="Archivos Varios" filesData={car.otherDocumentsUrls} car={car} fileType="otherDocuments" onDeleteFile={onDeleteFile} />
                 </div>
             </section>
 

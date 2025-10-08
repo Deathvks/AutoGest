@@ -54,6 +54,18 @@
     @apply focus:outline-none;
   }
 
+  /* --- INICIO DE LA MODIFICACIÓN --- */
+  /* Ocultar las flechas en los inputs de tipo número en todos los navegadores */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+  /* --- FIN DE LA MODIFICACIÓN --- */
+
   body::-webkit-scrollbar {
     display: none;
   }
@@ -235,7 +247,6 @@ body,
   z-index: 1;
 }
 
-/* --- INICIO DE LA MODIFICACIÓN --- */
 /* Estilos definitivos para el selector de color personalizado */
 
 /* Contenedor principal del selector de color */
@@ -251,4 +262,3 @@ body,
 .custom-color-picker .flexbox-fix:last-of-type {
   display: none !important;
 }
-/* --- FIN DE LA MODIFICACIÓN --- */

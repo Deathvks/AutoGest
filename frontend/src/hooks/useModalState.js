@@ -31,8 +31,9 @@ export const useModalState = () => {
     const [isLogoutModalOpen, setLogoutModalOpen] = useState(false);
     const [carForTestDrive, setCarForTestDrive] = useState(null);
     const [userToExpel, setUserToExpel] = useState(null);
+    const [pdfModalInfo, setPdfModalInfo] = useState(null); 
     // --- INICIO DE LA MODIFICACIÓN ---
-    const [pdfModalInfo, setPdfModalInfo] = useState(null); // Nuevo estado para el modal de PDF
+    const [fileToDelete, setFileToDelete] = useState(null);
     // --- FIN DE LA MODIFICACIÓN ---
 
 
@@ -66,8 +67,9 @@ export const useModalState = () => {
         isLogoutModalOpen, setLogoutModalOpen,
         carForTestDrive, setCarForTestDrive,
         userToExpel, setUserToExpel,
+        pdfModalInfo, setPdfModalInfo,
         // --- INICIO DE LA MODIFICACIÓN ---
-        pdfModalInfo, setPdfModalInfo, // Exponer el nuevo estado
+        fileToDelete, setFileToDelete,
         // --- FIN DE LA MODIFICACIÓN ---
     };
 };

@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/CarDetails/CarDetailsUtils.jsx
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperclip, faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { faPaperclip, faFileLines, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 // --- INICIO DE LA MODIFICACIÓN ---
 export const DetailItem = ({ icon, label, value }) => (
@@ -31,7 +31,7 @@ const handleDownload = async (url, filename) => {
     }
 };
 
-export const SingleFileLink = ({ label, icon, fileData }) => {
+export const SingleFileLink = ({ label, icon, fileData, car, fileType, onDeleteFile }) => {
     let file = null;
     if (fileData) {
         try {
@@ -48,14 +48,25 @@ export const SingleFileLink = ({ label, icon, fileData }) => {
                 <span className="font-semibold">{label}</span>
             </div>
             {file && file.path ? (
-                <button
-                    onClick={() => handleDownload(file.path, file.originalname)}
-                    className="text-sm font-bold text-blue-accent hover:underline flex items-center gap-2 text-left w-full uppercase"
-                    title={file.originalname}
-                >
-                    <FontAwesomeIcon icon={faPaperclip} className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{file.originalname}</span>
-                </button>
+                <div className="flex items-center justify-between gap-2 group">
+                    <button
+                        onClick={() => handleDownload(file.path, file.originalname)}
+                        className="text-sm font-bold text-blue-accent hover:underline flex items-center gap-2 text-left w-full uppercase"
+                        title={file.originalname}
+                    >
+                        <FontAwesomeIcon icon={faPaperclip} className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{file.originalname}</span>
+                    </button>
+                    {onDeleteFile && (
+                        <button
+                            onClick={() => onDeleteFile({ car, file, fileType })}
+                            className="text-red-accent/50 hover:text-red-accent opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                            title={`Eliminar ${file.originalname}`}
+                        >
+                            <FontAwesomeIcon icon={faXmark} className="w-3 h-3" />
+                        </button>
+                    )}
+                </div>
             ) : (
                 <p className="font-bold text-text-primary uppercase">No hay archivo</p>
             )}
@@ -63,7 +74,7 @@ export const SingleFileLink = ({ label, icon, fileData }) => {
     );
 };
 
-export const MultiFileLinks = ({ label, icon, filesData }) => {
+export const MultiFileLinks = ({ label, icon, filesData, car, fileType, onDeleteFile }) => {
     let files = [];
     if (filesData) {
         try {
@@ -83,15 +94,25 @@ export const MultiFileLinks = ({ label, icon, filesData }) => {
             {files.length > 0 ? (
                 <div className="flex flex-col gap-1.5">
                     {files.map((file, index) => (
-                        <button
-                            onClick={() => handleDownload(file.path, file.originalname)}
-                            key={index}
-                            className="text-sm font-bold text-blue-accent hover:underline flex items-center gap-2 text-left w-full uppercase"
-                            title={file.originalname}
-                        >
-                            <FontAwesomeIcon icon={faPaperclip} className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">{file.originalname}</span>
-                        </button>
+                        <div key={index} className="flex items-center justify-between gap-2 group">
+                            <button
+                                onClick={() => handleDownload(file.path, file.originalname)}
+                                className="text-sm font-bold text-blue-accent hover:underline flex items-center gap-2 text-left w-full uppercase"
+                                title={file.originalname}
+                            >
+                                <FontAwesomeIcon icon={faPaperclip} className="w-3 h-3 flex-shrink-0" />
+                                <span className="truncate">{file.originalname}</span>
+                            </button>
+                            {onDeleteFile && (
+                                <button
+                                    onClick={() => onDeleteFile({ car, file, fileType })}
+                                    className="text-red-accent/50 hover:text-red-accent opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                    title={`Eliminar ${file.originalname}`}
+                                >
+                                    <FontAwesomeIcon icon={faXmark} className="w-3 h-3" />
+                                </button>
+                            )}
+                        </div>
                     ))}
                 </div>
             ) : (
