@@ -17,7 +17,6 @@ const SubscriptionSuccessModal = ({ isOpen, onClose }) => {
             <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden border border-border-color">
                 <div className="flex-shrink-0 text-center p-8 relative overflow-hidden bg-gradient-to-br from-component-bg to-accent/10">
                     <FontAwesomeIcon icon={faRocket} className="w-20 h-20 text-accent mx-auto mb-4" style={{ animation: 'rocket-liftoff 0.8s ease-out' }} />
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <h2 
                         className="text-3xl font-bold text-text-primary animate-fade-in-down"
                         style={{ animationDelay: '200ms' }}
@@ -32,8 +31,7 @@ const SubscriptionSuccessModal = ({ isOpen, onClose }) => {
                     </p>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6 animate-fade-in-up" style={{ animationDelay: '600ms' }}>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+                <div className="flex-grow overflow-y-auto p-6 animate-fade-in-up no-scrollbar" style={{ animationDelay: '600ms' }}>
                     <h3 className="text-lg font-semibold text-text-primary mb-6 text-center uppercase">Esto es todo lo que ahora puedes hacer:</h3>
                     <SubscriptionBenefits />
                 </div>

@@ -135,10 +135,9 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
             <div>
                  <CheckoutForm onSuccessfulPayment={handleSuccessfulPayment} />
             </div>
-            {/* --- INICIO DE LA MODIFICACIÓN VISUAL --- */}
             {(isVerifyingPayment || verificationError) && (
                  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-                    <div className="bg-component-bg/80 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color p-8 text-center">
+                    <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color p-8 text-center">
                         {isVerifyingPayment && (
                             <>
                                 <FontAwesomeIcon icon={faSpinner} spin size="2x" className="text-accent mb-4" />
@@ -156,7 +155,6 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
                     </div>
                 </div>
             )}
-            {/* --- FIN DE LA MODIFICACIÓN VISUAL --- */}
         </div>
     );
 };
