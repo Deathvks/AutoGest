@@ -56,12 +56,16 @@ const startServer = () => {
             process.send('ready');
         }
     });
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Añadimos un manejador de errores específico para el servidor
+    server.on('error', (err) => {
+        console.error('❌ ERROR DEL SERVIDOR:', err);
+        process.exit(1);
+    });
+    // --- FIN DE LA MODIFICACIÓN ---
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Conectamos a la base de datos y luego iniciamos el servidor.
-// Se elimina db.sequelize.sync() para evitar modificaciones automáticas en producción.
-// La estructura de la base de datos se debe gestionar únicamente con migraciones.
 db.sequelize.authenticate()
     .then(() => {
         console.log('✅ Conexión a la base de datos establecida correctamente.');
@@ -72,27 +76,47 @@ db.sequelize.authenticate()
         console.error('❌ No se pudo conectar a la base de datos:', err);
         process.exit(1);
     });
-// --- FIN DE LA MODIFICACIÓN ---
 
+// --- INICIO DE LA MODIFICACIÓN ---
+// Función de apagado mejorada con async/await y mejor logging
+const gracefulShutdown = async () => {
+    console.log('SIGTERM recibido, iniciando apagado...');
 
-const gracefulShutdown = () => {
-    console.log('Received shutdown message, shutting down gracefully.');
-    if (server) {
-        server.close(() => {
-            console.log('Closed out remaining connections.');
-            db.sequelize.close().then(() => {
-                console.log('Database connection closed.');
-                process.exit(0);
-            });
-        });
-    } else {
-        process.exit(0);
-    }
-
-    setTimeout(() => {
-        console.error('Could not close connections in time, forcefully shutting down');
+    const shutdownTimer = setTimeout(() => {
+        console.error('El apagado se ha demorado más de 8 segundos. Forzando salida.');
         process.exit(1);
-    }, 8000);
+    }, 8000); // 8 segundos de margen
+
+    try {
+        if (server) {
+            console.log('Cerrando servidor HTTP...');
+            await new Promise((resolve, reject) => {
+                server.close((err) => {
+                    if (err) {
+                        console.error('Error al cerrar el servidor HTTP:', err);
+                        return reject(err);
+                    }
+                    resolve();
+                });
+            });
+            console.log('✅ Servidor HTTP cerrado.');
+        }
+
+        if (db && db.sequelize) {
+            console.log('Cerrando conexión con la base de datos...');
+            await db.sequelize.close();
+            console.log('✅ Conexión con la base de datos cerrada.');
+        }
+
+        clearTimeout(shutdownTimer);
+        console.log('✅ Apagado completado con éxito.');
+        process.exit(0);
+
+    } catch (error) {
+        console.error('❌ Error durante el apagado:', error);
+        clearTimeout(shutdownTimer);
+        process.exit(1);
+    }
 };
 
 process.on('message', (msg) => {
@@ -100,5 +124,6 @@ process.on('message', (msg) => {
     gracefulShutdown();
   }
 });
+// --- FIN DE LA MODIFICACIÓN ---
 
 module.exports = app;
