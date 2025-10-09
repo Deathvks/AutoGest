@@ -26,11 +26,40 @@ const getAuthHeadersForFormData = () => {
 
 // --- Funciones Genéricas para Respuestas ---
 
+const handleResponseError = async (response) => {
+    let errorMessage = 'Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo.';
+    try {
+        const error = await response.json();
+        const serverErrorMessage = error.error || errorMessage;
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Lista de palabras clave que indican un error técnico no apto para el usuario.
+        const technicalKeywords = ['stripe', 'sql', 'sequelize', 'unexpected', 'module', 'jwt', 'token', 'route'];
+        const isTechnicalError = technicalKeywords.some(keyword => new RegExp(keyword, 'i').test(serverErrorMessage));
+        
+        // Si no es un error técnico y el estado no es un error de servidor, mostramos el mensaje original.
+        if (!isTechnicalError && response.status < 500) {
+            errorMessage = serverErrorMessage;
+        } else {
+             errorMessage = 'Error inesperado del servidor. Si el problema persiste, contacta con soporte.';
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
+
+    } catch (parseError) {
+        errorMessage = `Error ${response.status}: Ha ocurrido un problema de comunicación con el servidor.`;
+    }
+    
+    throw new Error(errorMessage);
+};
+
+
 // Para rutas PÚBLICAS (Registro)
 const handlePublicResponse = async (response) => {
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error en la petición');
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Usamos la nueva función centralizada de manejo de errores.
+        return handleResponseError(response);
+        // --- FIN DE LA MODIFICACIÓN ---
     }
     return response.json();
 };
@@ -39,20 +68,14 @@ const handlePublicResponse = async (response) => {
 const handleProtectedResponse = async (response) => {
     if (!response.ok) {
         if (response.status === 401) {
-            // El token es inválido, expiró o el usuario ya no existe.
             localStorage.removeItem('authToken');
             window.location.href = '/login';
+            throw new Error('Tu sesión ha caducado. Por favor, inicia sesión de nuevo.');
         }
-        
-        let errorMessage = 'Algo salió mal en el servidor';
-        try {
-            const error = await response.json();
-            errorMessage = error.error || errorMessage;
-        } catch (parseError) {
-            errorMessage = `Error ${response.status}: ${response.statusText || 'Error del servidor'}`;
-        }
-        
-        throw new Error(errorMessage);
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Usamos la nueva función centralizada de manejo de errores.
+        return handleResponseError(response);
+        // --- FIN DE LA MODIFICACIÓN ---
     }
     if (response.status === 204) return null;
     return response.json();
@@ -96,6 +119,11 @@ const api = {
             body: isFormData ? data : JSON.stringify(data),
         }).then(handleProtectedResponse);
     },
+    resetCounters: () => fetch(`${BASE_URL}/auth/profile`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ invoiceCounter: 1, proformaCounter: 1 }),
+    }).then(handleProtectedResponse),
     deleteAvatar: () => fetch(`${BASE_URL}/auth/avatar`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
     deleteLogo: () => fetch(`${BASE_URL}/auth/logo`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
     updatePassword: (passwordData) => fetch(`${BASE_URL}/auth/update-password`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(passwordData) }).then(handleProtectedResponse),
@@ -165,9 +193,7 @@ const api = {
     company: {
         inviteUser: (inviteData) => fetch(`${BASE_URL}/company/invite`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(inviteData) }).then(handleProtectedResponse),
         verifyInvitation: (token) => fetch(`${BASE_URL}/company/invitations/verify/${token}`, { method: 'GET' }).then(handlePublicResponse),
-        // --- INICIO DE LA MODIFICACIÓN ---
         acceptInvitation: (data) => fetch(`${BASE_URL}/company/invitations/accept`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) }).then(handleProtectedResponse),
-        // --- FIN DE LA MODIFICACIÓN ---
         expelUser: (userId) => fetch(`${BASE_URL}/company/users/${userId}/expel`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
     },
 };

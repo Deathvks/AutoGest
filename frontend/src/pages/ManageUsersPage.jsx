@@ -4,11 +4,41 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faPlus, faEdit, faTrash, faUserShield, faUser,
     faEnvelope, faCalendarDay, faCheckCircle, faExclamationTriangle,
-    faPencilAlt, faUserPlus
+    faPencilAlt, faUserPlus, faCrown, faXmark
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
-// --- INICIO DE LA MODIFICACIÓN ---
+const SubscriptionStatusBadge = ({ status, expiry }) => {
+    const statusInfo = {
+        active: { text: 'Activa', icon: faCheckCircle, color: 'text-green-accent' },
+        cancelled: { text: 'Cancelada', icon: faExclamationTriangle, color: 'text-yellow-accent' },
+        past_due: { text: 'Pago Pendiente', icon: faExclamationTriangle, color: 'text-red-accent' },
+        inactive: { text: 'Inactiva', icon: faXmark, color: 'text-text-secondary' },
+    };
+
+    const currentStatus = statusInfo[status] || statusInfo.inactive;
+    const expiryDate = expiry ? new Date(expiry).toLocaleDateString('es-ES') : null;
+
+    // No mostrar nada para roles que no requieren suscripción
+    if (status === null || status === undefined) {
+        return null;
+    }
+
+    return (
+        <div className="flex flex-col items-start">
+            <span className={`flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${currentStatus.color}`}>
+                <FontAwesomeIcon icon={currentStatus.icon} />
+                {currentStatus.text}
+            </span>
+            {(status === 'active' || status === 'cancelled') && expiryDate && (
+                <span className="text-xs text-text-secondary mt-1">
+                    Expira: {expiryDate}
+                </span>
+            )}
+        </div>
+    );
+};
+
 // --- Componente para la vista de Técnico (Estilo Netflix) ---
 const TechnicianView = ({ users, onAddUser, onEditUser, currentUser }) => {
 
@@ -33,7 +63,10 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser }) => {
                 {user.name} {isCurrentUser && '(Tú)'}
             </span>
             {user.isOwner && (
-                <span className="text-xs font-bold text-accent uppercase tracking-wider">Líder del Equipo</span>
+                <span className="text-xs font-bold text-accent uppercase tracking-wider flex items-center gap-1.5">
+                    <FontAwesomeIcon icon={faCrown} />
+                    Líder del Equipo
+                </span>
             )}
         </div>
     );
@@ -55,9 +88,11 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser }) => {
             <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl border border-border-color p-8">
                 <div className="text-center mb-12">
                     <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">Crea tu Equipo</h1>
-                    <p className="mt-4 max-w-2xl text-lg text-text-secondary">
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <p className="mt-4 max-w-2xl mx-auto text-lg text-text-secondary">
                         Para empezar a colaborar, invita a tu primer empleado. Al hacerlo, te convertirás en el propietario del equipo.
                     </p>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
                 <div className="flex flex-wrap justify-center items-start gap-x-4 gap-y-8 sm:gap-x-8">
                     <AddProfileCard onAdd={onAddUser} />
@@ -73,8 +108,8 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser }) => {
         <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl border border-border-color p-8">
             <div className="text-center mb-12">
                 <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">Gestión de Equipo</h1>
-                <p className="mt-4 max-w-2xl text-lg text-text-secondary">
-                    Edita los perfiles y permisos de los miembros de tu equipo.
+                <p className="mt-4 max-w-2xl mx-auto text-lg text-text-secondary">
+                    Gestiona los permisos de los miembros de tu equipo.
                 </p>
             </div>
             <div className="flex flex-wrap justify-center items-start gap-x-4 gap-y-8 sm:gap-x-8">
@@ -161,6 +196,11 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                                     </p>
                                     <VerificationStatus isVerified={user.isVerified} />
                                 </div>
+                                {(user.role === 'technician_subscribed' || (user.role === 'user' && user.subscriptionStatus !== 'inactive')) && (
+                                    <div className="mt-3 pt-3 border-t border-border-color">
+                                        <SubscriptionStatusBadge status={user.subscriptionStatus} expiry={user.subscriptionExpiry} />
+                                    </div>
+                                )}
                                 <div className="flex justify-end items-end pt-3 border-t border-border-color">
                                     <div className="flex items-center gap-2">
                                         <button onClick={() => onEditUser(user)} className="text-text-secondary hover:text-blue-accent transition-colors p-2" title="Editar usuario">
@@ -185,6 +225,7 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                                         <th scope="col" className="px-6 py-4">Nombre</th>
                                         <th scope="col" className="px-6 py-4">Email</th>
                                         <th scope="col" className="px-6 py-4">Rol</th>
+                                        <th scope="col" className="px-6 py-4">Suscripción</th>
                                         <th scope="col" className="px-6 py-4">Verificado</th>
                                         <th scope="col" className="px-6 py-4">Fecha de Creación</th>
                                         <th scope="col" className="px-6 py-4"><span className="sr-only">Acciones</span></th>
@@ -196,6 +237,11 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                                             <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">{user.name}</td>
                                             <td className="px-6 py-4">{user.email}</td>
                                             <td className="px-6 py-4"><RoleBadge role={user.role} /></td>
+                                            <td className="px-6 py-4">
+                                                {(user.role === 'technician_subscribed' || (user.role === 'user' && user.subscriptionStatus !== 'inactive')) ? (
+                                                    <SubscriptionStatusBadge status={user.subscriptionStatus} expiry={user.subscriptionExpiry} />
+                                                ) : 'N/A'}
+                                            </td>
                                             <td className="px-6 py-4"><VerificationStatus isVerified={user.isVerified} /></td>
                                             <td className="px-6 py-4 whitespace-nowrap">{new Date(user.createdAt).toLocaleDateString('es-ES')}</td>
                                             <td className="px-6 py-4 text-right">
@@ -225,7 +271,6 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
         </div>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 
 // --- Componente Principal ---
