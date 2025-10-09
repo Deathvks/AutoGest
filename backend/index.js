@@ -51,26 +51,29 @@ let server;
 
 const startServer = () => {
     server = app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Envía una señal a PM2 para indicarle que la aplicación está lista.
+        console.log(`✅ Servidor iniciado en el puerto ${PORT}`);
         if (process.send) {
             process.send('ready');
         }
-        // --- FIN DE LA MODIFICACIÓN ---
     });
 };
 
-db.sequelize.sync()
+// --- INICIO DE LA MODIFICACIÓN ---
+// Conectamos a la base de datos y luego iniciamos el servidor.
+// Se elimina db.sequelize.sync() para evitar modificaciones automáticas en producción.
+// La estructura de la base de datos se debe gestionar únicamente con migraciones.
+db.sequelize.authenticate()
     .then(() => {
-        console.log('Database synchronized');
+        console.log('✅ Conexión a la base de datos establecida correctamente.');
         startServer();
         scheduleRecurringExpenses();
     })
     .catch(err => {
-        console.error('Unable to connect to the database:', err);
+        console.error('❌ No se pudo conectar a la base de datos:', err);
         process.exit(1);
     });
+// --- FIN DE LA MODIFICACIÓN ---
+
 
 const gracefulShutdown = () => {
     console.log('Received shutdown message, shutting down gracefully.');
@@ -89,17 +92,13 @@ const gracefulShutdown = () => {
     setTimeout(() => {
         console.error('Could not close connections in time, forcefully shutting down');
         process.exit(1);
-    }, 8000); // Aumentamos un poco el margen
+    }, 8000);
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Usamos el sistema de mensajes de PM2, que es más fiable.
 process.on('message', (msg) => {
   if (msg === 'shutdown') {
     gracefulShutdown();
   }
 });
-// Se eliminan los antiguos process.on('SIGTERM', ...) y process.on('SIGINT', ...)
-// --- FIN DE LA MODIFICACIÓN ---
 
 module.exports = app;
