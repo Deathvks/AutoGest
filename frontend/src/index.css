@@ -48,13 +48,22 @@
     color: var(--color-text-secondary);
     scrollbar-width: none;
     -ms-overflow-style: none;
+    /* --- INICIO DE LA MODIFICACIÓN --- */
+    caret-color: transparent;
+    /* --- FIN DE LA MODIFICACIÓN --- */
   }
   
+  /* --- INICIO DE LA MODIFICACIÓN --- */
   input, textarea, select {
     @apply focus:outline-none;
   }
 
-  /* --- INICIO DE LA MODIFICACIÓN --- */
+  /* Restaura el cursor de texto solo para los campos de entrada */
+  input, textarea {
+    caret-color: var(--color-text-primary);
+  }
+  /* --- FIN DE LA MODIFICACIÓN --- */
+
   /* Ocultar las flechas en los inputs de tipo número en todos los navegadores */
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button {
@@ -64,7 +73,6 @@
   input[type=number] {
     -moz-appearance: textfield;
   }
-  /* --- FIN DE LA MODIFICACIÓN --- */
 
   body::-webkit-scrollbar {
     display: none;

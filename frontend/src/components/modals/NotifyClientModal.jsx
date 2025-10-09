@@ -42,7 +42,9 @@ const NotifyClientModal = ({ car, onClose }) => {
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6 space-y-4">
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className="flex-grow overflow-y-auto p-6 space-y-4 no-scrollbar">
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <p className="text-text-secondary text-center">
                         La documentación del <span className="font-bold text-text-primary">{car.make} {car.model}</span> está lista para ser recogida.
                     </p>

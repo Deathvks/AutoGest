@@ -54,7 +54,9 @@ const FilterModal = ({ isOpen, onClose, cars, filters, setFilters, resetFilters 
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6 space-y-4">
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className="flex-grow overflow-y-auto p-6 space-y-4 no-scrollbar">
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <Select
                         label="Marca"
                         value={filters.make}

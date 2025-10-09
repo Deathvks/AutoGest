@@ -168,7 +168,9 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6 space-y-6">
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar">
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <div className="relative flex w-full items-center rounded-full bg-component-bg-hover p-1 border border-border-color overflow-hidden">
                         <span
                             className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${

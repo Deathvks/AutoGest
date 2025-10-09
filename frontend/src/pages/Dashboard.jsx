@@ -66,7 +66,9 @@ const ActivityHistory = () => {
                 </div>
             ) : activityData.activities.length > 0 ? (
                 <>
-                    <div className="space-y-3 flex-grow overflow-y-auto pr-2">
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <div className="space-y-3 flex-grow overflow-y-auto no-scrollbar">
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                         {activityData.activities.map((item, index) => {
                             const { icon, color } = getActivityIcon(item.type);
                             const isClickable = !!item.carId;
@@ -177,7 +179,6 @@ const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) =
         };
     }, [expenses, activeTheme]);
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const statusData = useMemo(() => {
         const statusCounts = cars.reduce((acc, car) => {
             acc[car.status] = (acc[car.status] || 0) + 1;
@@ -203,8 +204,7 @@ const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) =
                 borderWidth: 4,
             }],
         };
-    }, [cars, activeTheme]); // Se añade activeTheme a las dependencias
-    // --- FIN DE LA MODIFICACIÓN ---
+    }, [cars, activeTheme]); 
 
     const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
     const pieOptions = { ...chartOptions, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } } } };
