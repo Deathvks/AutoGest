@@ -36,8 +36,11 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/admin', adminRoutes);
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/avatars', express.static(path.join(__dirname, 'avatars')));
+// --- INICIO DE LA MODIFICACIÓN ---
+// Servir todos los archivos estáticos desde la carpeta 'public'
+// Esto soluciona que se puedan acceder a /uploads, /avatars, /documents, etc.
+app.use(express.static(path.join(__dirname, 'public')));
+// --- FIN DE LA MODIFICACIÓN ---
 
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
@@ -57,13 +60,10 @@ const startServer = () => {
         }
     });
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Añadimos un manejador de errores específico para el servidor
     server.on('error', (err) => {
         console.error('❌ ERROR DEL SERVIDOR:', err);
         process.exit(1);
     });
-    // --- FIN DE LA MODIFICACIÓN ---
 };
 
 db.sequelize.authenticate()
@@ -77,8 +77,6 @@ db.sequelize.authenticate()
         process.exit(1);
     });
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Función de apagado mejorada con async/await y mejor logging
 const gracefulShutdown = async () => {
     console.log('SIGTERM recibido, iniciando apagado...');
 
@@ -124,6 +122,5 @@ process.on('message', (msg) => {
     gracefulShutdown();
   }
 });
-// --- FIN DE LA MODIFICACIÓN ---
 
 module.exports = app;
