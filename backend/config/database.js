@@ -13,22 +13,16 @@ const sequelize = new Sequelize(
         host: process.env.DB_HOST,
         dialect: process.env.DB_DIALECT,
         logging: false,
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se añade una opción global para forzar el motor InnoDB en todas las tablas.
-        // Esto es crucial para asegurar que las claves foráneas (relaciones) funcionen correctamente en MySQL.
         define: {
             engine: 'InnoDB'
         }
-        // --- FIN DE LA MODIFICACIÓN ---
     }
 );
 
-sequelize.authenticate()
-    .then(() => {
-        console.log('✅ Conexión a la base de datos establecida correctamente.');
-    })
-    .catch(err => {
-        console.error('❌ Error al conectar con la base de datos:', err);
-    });
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se elimina la llamada a sequelize.authenticate() de este fichero.
+// La verificación de la conexión se centraliza en index.js para evitar logs duplicados
+// y asegurar que el servidor solo arranque si la base de datos está disponible.
+// --- FIN DE LA MODIFICACIÓN ---
 
 module.exports = sequelize;

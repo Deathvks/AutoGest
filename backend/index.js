@@ -31,16 +31,14 @@ app.use('/api/cars', carRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/locations', locationRoutes);
-app.use('/api/subscription', subscriptionRoutes);
+// --- INICIO DE LA MODIFICACIÓN ---
+app.use('/api/subscriptions', subscriptionRoutes); // Se corrige a plural
+// --- FIN DE LA MODIFICACIÓN ---
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/admin', adminRoutes);
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Servir todos los archivos estáticos desde la carpeta 'public'
-// Esto soluciona que se puedan acceder a /uploads, /avatars, /documents, etc.
 app.use(express.static(path.join(__dirname, 'public')));
-// --- FIN DE LA MODIFICACIÓN ---
 
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
