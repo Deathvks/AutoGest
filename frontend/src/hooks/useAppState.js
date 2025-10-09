@@ -26,7 +26,7 @@ export const useAppState = () => {
     } = useDataFetching();
 
     // 3. Hooks que contienen la lógica de negocio (handlers)
-    const carHandlers = useCarHandlers(setCars, locations, setLocations, modalState);
+    const carHandlers = useCarHandlers(setCars, setLocations, modalState);
     
     const { handleAddExpense, handleUpdateExpense, confirmDeleteExpense } = useExpenseHandlers(
         setExpenses, setAllExpenses, modalState

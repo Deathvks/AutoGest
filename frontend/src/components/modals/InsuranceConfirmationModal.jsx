@@ -6,7 +6,7 @@ import { faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icon
 const InsuranceConfirmationModal = ({ onConfirm, onCancel }) => {
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg/80 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
                 <div className="p-8 text-center">
                     <FontAwesomeIcon icon={faExclamationTriangle} className="w-16 h-16 text-yellow-accent mx-auto mb-6" />
                     <h2 className="text-2xl font-bold text-text-primary">Confirmación Requerida</h2>
@@ -15,7 +15,7 @@ const InsuranceConfirmationModal = ({ onConfirm, onCancel }) => {
                     </p>
                 </div>
 
-                <div className="flex justify-center items-center gap-4 p-6 border-t border-border-color bg-component-bg-hover/50 rounded-b-2xl">
+                <div className="flex justify-center items-center gap-4 p-6 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
                     <button 
                         onClick={onCancel}
                         className="w-full bg-component-bg border border-border-color text-text-primary px-4 py-2.5 rounded-lg hover:bg-border-color transition-colors font-semibold"

@@ -1,11 +1,10 @@
 // autogest-app/frontend/src/components/modals/GeneratePdfModal.jsx
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faFileInvoice, faPercentage } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const InputField = ({ label, name, value, onChange, type = 'text', icon }) => (
     <div>
         <label htmlFor={name} className="block text-sm font-semibold text-text-primary mb-1 uppercase">
@@ -28,17 +27,44 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon }) => (
         </div>
     </div>
 );
-// --- FIN DE LA MODIFICACIÓN ---
+
+const TextareaField = ({ label, name, value, onChange, placeholder }) => {
+    const textareaRef = useRef(null);
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    }, [value]);
+    return (
+        <div>
+            <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">{label}</label>
+            <textarea
+                ref={textareaRef}
+                name={name}
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary/70 resize-none overflow-hidden no-scrollbar"
+                rows="3"
+            />
+        </div>
+    );
+};
 
 const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car }) => {
     const { refreshUser } = useContext(AuthContext);
     const [number, setNumber] = useState(defaultNumber);
     const [error, setError] = useState('');
     const [igicRate, setIgicRate] = useState('7');
+    const [observations, setObservations] = useState('');
 
     useEffect(() => {
-        setNumber(defaultNumber);
-    }, [defaultNumber]);
+        if (isOpen) {
+            setNumber(defaultNumber);
+            setObservations('');
+        }
+    }, [defaultNumber, isOpen]);
 
     const handleConfirm = async () => {
         const num = parseInt(number, 10);
@@ -63,9 +89,9 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             
             await refreshUser();
             
-            onConfirm(type, num, rate);
+            onConfirm(type, num, rate, observations);
         } catch (err) {
-            setError(err.message || 'Error al actualizar los datos.');
+            setError(err.message || 'Error al guardar los datos.');
         }
     };
 
@@ -84,11 +110,10 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6 space-y-6">
+                <div className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar">
                     <p className="text-text-secondary text-center">
                         Introduce el número para la {type === 'proforma' ? 'proforma' : 'factura'} o usa el siguiente número disponible.
                     </p>
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <InputField
                         label={`Número de ${type === 'proforma' ? 'Proforma' : 'Factura'}`}
                         name="pdfNumber"
@@ -107,8 +132,16 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                             icon={faPercentage}
                         />
                     )}
-                     {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+
+                    <TextareaField
+                        label="Observaciones (Opcional)"
+                        name="observations"
+                        value={observations}
+                        onChange={(e) => setObservations(e.target.value)}
+                        placeholder="Añade aquí cualquier aclaración o nota..."
+                    />
+
+                    {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
                 </div>
 
                 <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-border-color">

@@ -151,7 +151,7 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                     className="w-full bg-accent text-white font-semibold py-3 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-wait animate-fade-in-up"
                     style={{ animationDelay: '450ms' }}
                 >
-                    {processing ? <FontAwesomeIcon icon={faSpinner} spin /> : 'SUSCRIBIRME AHORA (1,00€/MES)'}
+                    {processing ? <FontAwesomeIcon icon={faSpinner} spin /> : 'SUSCRIBIRME AHORA (59,90€/MES)'}
                 </button>
             </form>
         </div>

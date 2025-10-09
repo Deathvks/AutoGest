@@ -9,7 +9,7 @@ export const useCarPDF = (setCars, setLocations, modalState) => {
     const { user } = useContext(AuthContext);
     const { handleUpdateCar } = useCarActions(setCars, setLocations, modalState);
 
-    const handleGeneratePdf = async (car, type, number, igicRate) => {
+    const handleGeneratePdf = async (car, type, number, igicRate, observations) => {
         const doc = new jsPDF();
         const today = new Date().toLocaleDateString('es-ES');
         let currentY = 20;
@@ -134,6 +134,21 @@ export const useCarPDF = (setCars, setLocations, modalState) => {
         }
 
         currentY = doc.lastAutoTable.finalY + 15;
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        if (observations && observations.trim() !== '') {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.text('OBSERVACIONES:', sellerX, currentY);
+            currentY += 6;
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            const splitObservations = doc.splitTextToSize(observations, 182);
+            doc.text(splitObservations, 14, currentY);
+            currentY += (splitObservations.length * 5) + 5; // Ajustar el espacio después de las observaciones
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (type === 'proforma') {
             doc.setFontSize(8);

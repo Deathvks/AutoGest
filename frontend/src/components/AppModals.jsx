@@ -31,9 +31,7 @@ import TestDriveModal from './modals/TestDriveModal';
 import ExpelUserConfirmationModal from './modals/ExpelUserConfirmationModal';
 import BusinessDataModal from './modals/BusinessDataModal';
 import GeneratePdfModal from './modals/GeneratePdfModal';
-// --- INICIO DE LA MODIFICACIÓN ---
 import DeleteFileConfirmationModal from './modals/DeleteFileConfirmationModal';
-// --- FIN DE LA MODIFICACIÓN ---
 
 const AppModals = ({ appState }) => {
     const { logout, user } = useContext(AuthContext);
@@ -57,9 +55,7 @@ const AppModals = ({ appState }) => {
         carForTestDrive, setCarForTestDrive,
         userToExpel, setUserToExpel,
         pdfModalInfo, setPdfModalInfo,
-        // --- INICIO DE LA MODIFICACIÓN ---
         fileToDelete, setFileToDelete,
-        // --- FIN DE LA MODIFICACIÓN ---
         handleSaveBusinessData, handleUserAdded, handleUserUpdated,
         handleUserDeleted, handleExpelUser, handleAddCar, handleUpdateCar,
         handleDeleteCar, handleSellConfirm, handleReserveConfirm,
@@ -68,9 +64,7 @@ const AppModals = ({ appState }) => {
         handleAddExpense, handleUpdateExpense, confirmDeleteExpense,
         handleGestoriaPickup, handleGestoriaReturn,
         handleGeneratePdf,
-        // --- INICIO DE LA MODIFICACIÓN ---
-        handleDeleteFile, // Se obtiene el manejador para eliminar ficheros
-        // --- FIN DE LA MODIFICACIÓN ---
+        handleDeleteFile,
     } = appState;
 
     return (
@@ -100,9 +94,7 @@ const AppModals = ({ appState }) => {
                     setPdfModalInfo({ car, type, number: nextNumber });
                     setCarToView(null);
                 }}
-                // --- INICIO DE LA MODIFICACIÓN ---
-                onDeleteFile={setFileToDelete} // Pasar la función para abrir el modal
-                // --- FIN DE LA MODIFICACIÓN ---
+                onDeleteFile={setFileToDelete}
             />
             
             {isAddCarModalOpen && <AddCarModal onClose={() => setAddCarModalOpen(false)} onAdd={handleAddCar} locations={locations} />}
@@ -153,8 +145,8 @@ const AppModals = ({ appState }) => {
                 <GeneratePdfModal
                     isOpen={!!pdfModalInfo}
                     onClose={() => setPdfModalInfo(null)}
-                    onConfirm={async (type, number, igicRate) => {
-                        await handleGeneratePdf(pdfModalInfo.car, type, number, igicRate);
+                    onConfirm={async (type, number, igicRate, observations) => {
+                        await handleGeneratePdf(pdfModalInfo.car, type, number, igicRate, observations);
                         setPdfModalInfo(null);
                     }}
                     type={pdfModalInfo.type}
@@ -163,7 +155,6 @@ const AppModals = ({ appState }) => {
                 />
             )}
             
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             {fileToDelete && (
                 <DeleteFileConfirmationModal
                     fileData={fileToDelete}
@@ -171,7 +162,6 @@ const AppModals = ({ appState }) => {
                     onConfirm={handleDeleteFile}
                 />
             )}
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
     );
 };
