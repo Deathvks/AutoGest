@@ -1,5 +1,6 @@
 // autogest-app/backend/jobs/recurringExpenses.js
 require('dotenv').config();
+const cron = require('node-cron');
 const { Expense } = require('../models');
 const { Op } = require('sequelize');
 const sequelize = require('../config/database');
@@ -45,7 +46,6 @@ const processRecurringExpenses = async () => {
         for (const recurringExpense of recurringExpenses) {
             const t = await sequelize.transaction();
             try {
-                // 1. Crea la nueva instancia del gasto
                 await Expense.create({
                     date: today,
                     category: recurringExpense.category,
@@ -55,13 +55,11 @@ const processRecurringExpenses = async () => {
                     userId: recurringExpense.userId,
                     companyId: recurringExpense.companyId,
                     attachments: recurringExpense.attachments,
-                    isRecurring: false, // El gasto generado no es recurrente
+                    isRecurring: false,
                 }, { transaction: t });
 
-                // 2. Calcula la siguiente fecha para el gasto original
                 const nextDate = calculateNextRecurrence(recurringExpense.nextRecurrenceDate, recurringExpense.recurrenceType, recurringExpense.recurrenceCustomValue);
 
-                // 3. Comprueba si la recurrencia debe terminar
                 if (recurringExpense.recurrenceEndDate && new Date(nextDate) > new Date(recurringExpense.recurrenceEndDate)) {
                     recurringExpense.isRecurring = false;
                     recurringExpense.nextRecurrenceDate = null;
@@ -83,15 +81,31 @@ const processRecurringExpenses = async () => {
     }
 };
 
+// --- INICIO DE LA MODIFICACIÓN ---
+// Nueva función que programa la tarea para que se ejecute una vez al día.
+const scheduleRecurringExpenses = () => {
+    // Se ejecuta todos los días a las 02:00 AM (zona horaria de Canarias)
+    cron.schedule('0 2 * * *', () => {
+        console.log('⏰ Ejecutando la tarea programada de gastos recurrentes...');
+        processRecurringExpenses();
+    }, {
+        scheduled: true,
+        timezone: "Atlantic/Canary"
+    });
+    console.log('✅ Tarea de gastos recurrentes programada para ejecutarse a las 02:00 cada día.');
+};
+// --- FIN DE LA MODIFICACIÓN ---
+
 const runAndExit = async () => {
     await processRecurringExpenses();
     await sequelize.close();
 };
 
-// Permite ejecutar el script directamente desde la terminal
 if (require.main === module) {
     runAndExit();
 }
 
-// Exporta la función principal para poder llamarla desde otros ficheros
-module.exports = { processRecurringExpenses };
+// --- INICIO DE LA MODIFICACIÓN ---
+// Exportamos la función de programación para que index.js pueda llamarla.
+module.exports = { scheduleRecurringExpenses };
+// --- FIN DE LA MODIFICACIÓN ---
