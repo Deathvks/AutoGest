@@ -44,7 +44,6 @@ exports.createSubscription = async (req, res) => {
         
         let customerId = user.stripeCustomerId;
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         // Lógica de "autocuración" con el orden de operaciones corregido (v19 Final)
         if (customerId) {
             try {
@@ -83,14 +82,24 @@ exports.createSubscription = async (req, res) => {
             await user.update({ stripeCustomerId: customerId });
             console.log(`[CREATE_SUB] Nuevo cliente ${customerId} creado por primera vez.`);
         }
-        // --- FIN DE LA MODIFICACIÓN ---
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Calcula el timestamp para el día 1 del próximo mes.
+        const now = new Date();
+        // Aseguramos que la fecha se establece en UTC para evitar problemas de zona horaria.
+        const firstOfNextMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1));
+        const anchorTimestamp = Math.floor(firstOfNextMonth.getTime() / 1000);
 
         const subscription = await stripe.subscriptions.create({
             customer: customerId,
             items: [{ price: priceId }],
             payment_behavior: 'default_incomplete',
             payment_settings: { save_default_payment_method: 'on_subscription' },
+            // Añade el anclaje de facturación y el comportamiento de prorrateo.
+            billing_cycle_anchor: anchorTimestamp,
+            proration_behavior: 'create_prorations',
         });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (subscription.status === 'active') {
             return res.json({ status: 'active' });

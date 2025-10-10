@@ -119,8 +119,10 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
     }
     
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-            <div className="lg:pt-8 animate-fade-in-up">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <div className="order-2 lg:order-1 lg:pt-8 animate-fade-in-up">
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <h2 className="text-3xl lg:text-4xl font-bold text-text-primary tracking-tight">
                     LA HERRAMIENTA DEFINITIVA PARA <span className="text-accent">COMPRA VENTAS DE COCHES</span>
                 </h2>
@@ -132,7 +134,9 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
                     <SubscriptionBenefits />
                 </div>
             </div>
-            <div>
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <div className="order-1 lg:order-2">
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
                  <CheckoutForm onSuccessfulPayment={handleSuccessfulPayment} />
             </div>
             {(isVerifyingPayment || verificationError) && (

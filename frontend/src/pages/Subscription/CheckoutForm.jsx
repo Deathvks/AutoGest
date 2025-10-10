@@ -1,8 +1,8 @@
-// frontend/src/pages/Subscription/CheckoutForm.jsx
+// autogest-app/frontend/src/pages/Subscription/CheckoutForm.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExclamationTriangle, faSpinner, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faSpinner, faShieldAlt, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 
 const CheckoutForm = ({ onSuccessfulPayment }) => {
@@ -125,7 +125,9 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
             <form onSubmit={handleSubmit} className="space-y-6 flex-grow flex flex-col">
                 <div className="flex-grow animate-fade-in-up" style={{ animationDelay: '300ms' }}>
                     {adBlockerDetected && (
-                        <div className="bg-yellow-accent/10 text-yellow-accent p-3 rounded-lg border border-yellow-accent/20 flex items-center gap-3 mb-4">
+                        // --- INICIO DE LA MODIFICACIÓN ---
+                        <div className="bg-yellow-accent/10 text-yellow-accent p-3 rounded-lg flex items-center gap-3 mb-4">
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                             <FontAwesomeIcon icon={faShieldAlt} className="w-5 h-5 flex-shrink-0" />
                             <p className="text-sm font-medium">
                                 {isBraveBrowser
@@ -134,6 +136,14 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                             </p>
                         </div>
                     )}
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <div className="bg-blue-accent/10 text-blue-accent p-3 rounded-lg flex items-start gap-3 mb-4">
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+                        <FontAwesomeIcon icon={faInfoCircle} className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm font-medium">
+                            Se te cobrará la parte proporcional de este mes. Tu suscripción se renovará por el importe completo el día 1 del mes siguiente.
+                        </p>
+                    </div>
                     <label className="block text-sm font-semibold text-text-primary mb-2 uppercase">Datos de la Tarjeta</label>
                     <div className="p-4 bg-component-bg-hover rounded-lg border border-border-color shadow-inner">
                         <CardElement key={theme} options={cardElementOptions} />
