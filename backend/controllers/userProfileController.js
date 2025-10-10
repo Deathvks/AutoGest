@@ -3,7 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
-const { User, Car, Expense, Incident, Location, sequelize, Company } = require('../models');
+// --- INICIO DE LA MODIFICACIÓN ---
+const { User, Car, Expense, Incident, Location, sequelize, Company, Invitation } = require('../models'); // Se añade Invitation
+// --- FIN DE LA MODIFICACIÓN ---
 const { isValidDniNie, isValidCif } = require('../utils/validation');
 
 // Obtener el perfil del usuario actual (GET /api/auth/me)
@@ -54,6 +56,38 @@ exports.getMe = async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor al obtener el perfil.' });
     }
 };
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Obtener la invitación pendiente del usuario actual
+exports.getPendingInvitation = async (req, res) => {
+    try {
+        const invitation = await Invitation.findOne({
+            where: {
+                email: req.user.email,
+                status: 'pending',
+                expiresAt: { [require('sequelize').Op.gt]: new Date() }
+            },
+            include: [{
+                model: Company,
+                attributes: ['name']
+            }]
+        });
+
+        if (!invitation) {
+            return res.status(200).json(null); // No es un error, simplemente no hay invitación
+        }
+
+        res.status(200).json({
+            token: invitation.token,
+            companyName: invitation.Company.name
+        });
+
+    } catch (error) {
+        console.error('Error al obtener la invitación pendiente:', error);
+        res.status(500).json({ error: 'Error al obtener la invitación.' });
+    }
+};
+// --- FIN DE LA MODIFICACIÓN ---
 
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {
@@ -243,13 +277,11 @@ exports.deleteAccount = async (req, res) => {
     try {
         const userId = req.user.id;
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         const ownedCompany = await Company.findOne({ where: { ownerId: userId }, transaction });
         if (ownedCompany) {
             await transaction.rollback();
             return res.status(400).json({ error: `Eres propietario del equipo "${ownedCompany.name}" y no puedes eliminar tu cuenta. Transfiere la propiedad o elimina el equipo primero.` });
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         const cars = await Car.findAll({ where: { userId }, transaction });
         for (const car of cars) {

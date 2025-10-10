@@ -12,6 +12,9 @@ const AuthProvider = ({ children }) => {
     const [subscriptionStatus, setSubscriptionStatus] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [pendingInvitationToken, setPendingInvitationToken] = useState(null);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     // Función para obtener notificaciones
     const fetchNotifications = useCallback(async () => {
@@ -90,6 +93,11 @@ const AuthProvider = ({ children }) => {
             if (response.token) {
                 localStorage.setItem('authToken', response.token);
                 setToken(response.token);
+                // --- INICIO DE LA MODIFICACIÓN ---
+                if (response.invitationToken) {
+                    setPendingInvitationToken(response.invitationToken);
+                }
+                // --- FIN DE LA MODIFICACIÓN ---
                 return true;
             }
         } catch (error) {
@@ -104,6 +112,9 @@ const AuthProvider = ({ children }) => {
         setSubscriptionStatus(null);
         setNotifications([]); // Limpiar notificaciones al salir
         setUnreadCount(0);
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setPendingInvitationToken(null);
+        // --- FIN DE LA MODIFICACIÓN ---
         localStorage.removeItem('authToken');
         window.location.href = '/login';
     };
@@ -168,7 +179,11 @@ const AuthProvider = ({ children }) => {
         notifications,
         unreadCount,
         markAllNotificationsAsRead,
-        fetchNotifications
+        fetchNotifications,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        pendingInvitationToken,
+        setPendingInvitationToken,
+        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     return (

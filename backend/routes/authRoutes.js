@@ -4,9 +4,7 @@ const router = express.Router();
 const userAccountController = require('../controllers/userAccountController');
 const userProfileController = require('../controllers/userProfileController');
 const { protect } = require('../middleware/auth');
-// --- INICIO DE LA MODIFICACIÓN ---
-const profileUpload = require('../middleware/profileUpload'); // Se importa el nuevo middleware
-// --- FIN DE LA MODIFICACIÓN ---
+const profileUpload = require('../middleware/profileUpload');
 
 // Middleware para manejar errores de Multer
 const handleMulterError = (err, req, res, next) => {
@@ -42,13 +40,12 @@ router.post('/reset-password/:token', userAccountController.resetPassword);
 router.get('/me', protect, userProfileController.getMe);
 
 // --- INICIO DE LA MODIFICACIÓN ---
-// Se utiliza el nuevo middleware 'profileUpload' que maneja tanto avatar como logo
-router.put('/profile', protect, profileUpload, handleMulterError, userProfileController.updateProfile);
-
-// Nueva ruta para eliminar el logo de la empresa
-router.delete('/logo', protect, userProfileController.deleteLogo);
+// Nueva ruta para obtener la invitación pendiente del usuario
+router.get('/pending-invitation', protect, userProfileController.getPendingInvitation);
 // --- FIN DE LA MODIFICACIÓN ---
 
+router.put('/profile', protect, profileUpload, handleMulterError, userProfileController.updateProfile);
+router.delete('/logo', protect, userProfileController.deleteLogo);
 router.delete('/avatar', protect, userProfileController.deleteAvatar);
 router.put('/update-password', protect, userProfileController.updatePassword);
 router.delete('/me', protect, userProfileController.deleteAccount);

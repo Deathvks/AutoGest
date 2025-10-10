@@ -1,7 +1,9 @@
 // autogest-app/backend/controllers/userAccountController.js
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+// --- INICIO DE LA MODIFICACIÓN ---
+const { User, Invitation } = require('../models'); // Se añade Invitation
+// --- FIN DE LA MODIFICACIÓN ---
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailUtils');
 const crypto = require('crypto');
 
@@ -81,13 +83,10 @@ exports.login = async (req, res) => {
         const { email, password } = req.body;
         const user = await User.findOne({ where: { email } });
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // 1. Si no hay usuario o la contraseña no coincide, se da un error genérico.
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ error: 'Email o contraseña incorrectos.' });
         }
 
-        // 2. Si las credenciales son correctas, AHORA se comprueba si está verificado.
         if (!user.isVerified) {
             return res.status(401).json({ 
                 error: 'Tu cuenta no ha sido verificada. Por favor, revisa tu correo electrónico.',
@@ -96,11 +95,25 @@ exports.login = async (req, res) => {
             });
         }
 
-        // 3. Si todo es correcto (credenciales y verificación), se genera el token.
         const payload = { id: user.id, role: user.role };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
 
-        res.status(200).json({ token });
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Comprobar si hay una invitación pendiente para este email
+        const pendingInvitation = await Invitation.findOne({
+            where: {
+                email: user.email,
+                status: 'pending',
+                expiresAt: { [require('sequelize').Op.gt]: new Date() }
+            }
+        });
+
+        const response = { token };
+        if (pendingInvitation) {
+            response.invitationToken = pendingInvitation.token;
+        }
+
+        res.status(200).json(response);
         // --- FIN DE LA MODIFICACIÓN ---
 
     } catch (error) {

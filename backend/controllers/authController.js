@@ -9,6 +9,9 @@ module.exports = {
 
   // Funciones de userProfileController
   getMe: userProfileController.getMe,
+  // --- INICIO DE LA MODIFICACIÓN ---
+  getPendingInvitation: userProfileController.getPendingInvitation, // Se añade la nueva función
+  // --- FIN DE LA MODIFICACIÓN ---
   updateProfile: userProfileController.updateProfile,
   deleteAvatar: userProfileController.deleteAvatar,
   updatePassword: userProfileController.updatePassword,
