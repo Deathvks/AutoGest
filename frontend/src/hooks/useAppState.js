@@ -22,21 +22,29 @@ export const useAppState = () => {
         allExpenses, setAllExpenses,
         incidents, setIncidents,
         locations, setLocations,
-        users, setUsers
+        users, setUsers,
+        notifications, // Nuevo estado de notificaciones
+        unreadCount,   // Nuevo estado para el contador de no leídas
+        refreshData,   // Función para refrescar datos
+        markAllNotificationsAsRead, // Nueva función para marcar notificaciones como leídas
     } = useDataFetching();
 
     // 3. Hooks que contienen la lógica de negocio (handlers)
-    const carHandlers = useCarHandlers(setCars, setLocations, modalState);
+    const carHandlers = useCarHandlers({
+        cars, setCars, locations, setLocations, ...modalState, refreshData,
+    });
     
-    const { handleAddExpense, handleUpdateExpense, confirmDeleteExpense } = useExpenseHandlers(
-        setExpenses, setAllExpenses, modalState
-    );
+    const expenseHandlers = useExpenseHandlers({
+        setExpenses, setAllExpenses, ...modalState, refreshData
+    });
     
-    const { handleAddIncident, handleDeleteIncident, confirmDeleteIncident, handleResolveIncident } = useIncidentHandlers(
-        incidents, setIncidents, modalState
-    );
+    const incidentHandlers = useIncidentHandlers({
+        incidents, setIncidents, ...modalState, refreshData
+    });
     
-    const { handleUserAdded, handleUserUpdated, handleUserDeleted, handleExpelUser } = useUserHandlers(setUsers, modalState);
+    const userHandlers = useUserHandlers({
+        setUsers, ...modalState, refreshData
+    });
     
     // Handler específico que necesita acceso al AuthContext
     const handleSaveBusinessData = async (formData) => {
@@ -61,23 +69,19 @@ export const useAppState = () => {
         incidents,
         locations,
         users,
+        notifications, // Se expone el estado de notificaciones
+        unreadCount,   // Se expone el contador
 
         // Todos los estados de los modales
         ...modalState,
         
         // Todos los handlers
         ...carHandlers,
-        handleUserAdded,
-        handleUserUpdated,
-        handleUserDeleted,
-        handleExpelUser,
-        handleAddIncident,
-        handleDeleteIncident,
-        confirmDeleteIncident,
-        handleResolveIncident,
-        handleAddExpense,
-        handleUpdateExpense,
-        confirmDeleteExpense,
+        ...userHandlers,
+        ...incidentHandlers,
+        ...expenseHandlers,
+        markAllNotificationsAsRead, // Se expone el handler de notificaciones
         handleSaveBusinessData,
+        refreshData,
     };
 };

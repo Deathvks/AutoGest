@@ -1,5 +1,5 @@
 // autogest-app/backend/controllers/subscription/handleWebhook.js
-const { User } = require('../../models');
+const { User, Notification } = require('../../models'); // Se añade Notification
 const { stripe, getStripeConfig } = require('./stripeConfig');
 const { sendSubscriptionInvoiceEmail } = require('../../utils/emailUtils');
 
@@ -17,10 +17,7 @@ exports.handleWebhook = async (req, res) => {
 
     const dataObject = event.data.object;
     console.log(`[Webhook] Evento recibido: ${event.type}`);
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Log detallado del objeto de datos completo del evento
     console.log(`[Webhook] Datos del evento (${event.type}):`, JSON.stringify(dataObject, null, 2));
-    // --- FIN DE LA MODIFICACIÓN ---
 
     try {
         let customerId;
@@ -58,6 +55,18 @@ exports.handleWebhook = async (req, res) => {
                         dataObject.invoice_pdf,
                         dataObject.number
                     );
+
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    // Crear notificación para el usuario
+                    await Notification.create({
+                        userId: user.id,
+                        message: 'Tu pago de suscripción se ha procesado con éxito.',
+                        type: 'subscription',
+                        link: dataObject.invoice_pdf // Enlace directo a la factura
+                    });
+                    console.log(`[Webhook] Notificación de pago creada para el usuario ${user.id}.`);
+                    // --- FIN DE LA MODIFICACIÓN ---
+
                 } else {
                     console.warn('[Webhook] No se pudo enviar la factura por email. Faltan datos clave o el estado no es "paid".');
                 }

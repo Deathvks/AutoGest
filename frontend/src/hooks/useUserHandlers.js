@@ -1,10 +1,10 @@
 // AutoGest/frontend/src/hooks/useUserHandlers.js
 import api from '../services/api';
 
-export const useUserHandlers = (
+export const useUserHandlers = ({
     setUsers,
-    modalState
-) => {
+    ...modalState
+}) => {
     const handleUserAdded = (newUser) => {
         setUsers(prev => [newUser, ...prev]);
         modalState.setAddUserModalOpen(false);
@@ -22,10 +22,12 @@ export const useUserHandlers = (
             modalState.setUserToDelete(null);
         } catch (error) {
             console.error("Error al eliminar usuario:", error);
+            // --- INICIO DE LA MODIFICACIÓN ---
+            throw error; // Relanzamos el error para que la UI pueda capturarlo
+            // --- FIN DE LA MODIFICACIÓN ---
         }
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleExpelUser = async (userId) => {
         try {
             await api.company.expelUser(userId);
@@ -36,7 +38,6 @@ export const useUserHandlers = (
             console.error("Error al expulsar usuario:", error);
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     return {
         handleUserAdded,

@@ -1,5 +1,5 @@
 // autogest-app/frontend/src/context/AuthContext.jsx
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext();
@@ -10,13 +10,45 @@ const AuthProvider = ({ children }) => {
     const [isAuthLoading, setIsAuthLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
 
-    const fetchUserAndSubscription = async () => {
+    // Función para obtener notificaciones
+    const fetchNotifications = useCallback(async () => {
+        if (!token) return;
+        try {
+            const fetchedNotifications = await api.notifications.getAll();
+            setNotifications(fetchedNotifications);
+            setUnreadCount(fetchedNotifications.filter(n => !n.isRead).length);
+        } catch (error) {
+            console.error("AuthContext: Failed to fetch notifications:", error);
+        }
+    }, [token]);
+
+    // Función para marcar notificaciones como leídas
+    const markAllNotificationsAsRead = useCallback(async () => {
+        if (unreadCount === 0) return;
+        const originalNotifications = [...notifications];
+        
+        setNotifications(current => current.map(n => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+        
+        try {
+            await api.notifications.markAllAsRead();
+        } catch (err) {
+            console.error('AuthContext: Error marking notifications as read:', err);
+            setNotifications(originalNotifications);
+            setUnreadCount(originalNotifications.filter(n => !n.isRead).length);
+        }
+    }, [notifications, unreadCount]);
+
+    const fetchUserAndSubscription = useCallback(async () => {
         if (token) {
             try {
                 const userData = await api.getMe();
                 setUser(userData);
                 setSubscriptionStatus(userData.subscriptionStatus);
+                await fetchNotifications(); // Se obtienen notificaciones junto al usuario
             } catch (error) {
                 console.error("Token inválido o error al cargar datos, cerrando sesión.", error);
                 logout();
@@ -25,19 +57,16 @@ const AuthProvider = ({ children }) => {
         if (isAuthLoading) {
             setIsAuthLoading(false);
         }
-    };
+    }, [token, fetchNotifications]);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const refreshSubscriptionStatus = async () => {
         setIsRefreshing(true);
         try {
-            // Se asegura de que la obtención de datos se complete antes de continuar
             await fetchUserAndSubscription();
         } finally {
             setIsRefreshing(false);
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
     
     const refreshUser = async () => {
         if (token) {
@@ -53,7 +82,7 @@ const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         fetchUserAndSubscription();
-    }, [token]);
+    }, [fetchUserAndSubscription]);
 
     const login = async (email, password) => {
         try {
@@ -73,6 +102,8 @@ const AuthProvider = ({ children }) => {
         setToken(null);
         setUser(null);
         setSubscriptionStatus(null);
+        setNotifications([]); // Limpiar notificaciones al salir
+        setUnreadCount(0);
         localStorage.removeItem('authToken');
         window.location.href = '/login';
     };
@@ -120,8 +151,28 @@ const AuthProvider = ({ children }) => {
         }
     };
 
+    const value = {
+        token,
+        user,
+        login,
+        logout,
+        register,
+        isAuthLoading,
+        isRefreshing,
+        updateUserProfile,
+        deleteUserAvatar,
+        deleteAccount,
+        subscriptionStatus,
+        refreshSubscriptionStatus,
+        refreshUser,
+        notifications,
+        unreadCount,
+        markAllNotificationsAsRead,
+        fetchNotifications
+    };
+
     return (
-        <AuthContext.Provider value={{ token, user, login, logout, isAuthLoading, isRefreshing, updateUserProfile, deleteUserAvatar, deleteAccount, subscriptionStatus, refreshSubscriptionStatus, refreshUser }}>
+        <AuthContext.Provider value={value}>
             {!isAuthLoading && children}
         </AuthContext.Provider>
     );

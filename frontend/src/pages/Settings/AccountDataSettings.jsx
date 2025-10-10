@@ -1,8 +1,10 @@
-// autogest-app/frontend/src/pages/Settings/AccountDataSettings.jsx
+// frontend/src/pages/Settings/AccountDataSettings.jsx
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faCreditCard } from '@fortawesome/free-solid-svg-icons';
+// --- INICIO DE LA MODIFICACIÓN ---
+import { faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faCreditCard, faCookieBite } from '@fortawesome/free-solid-svg-icons';
+// --- FIN DE LA MODIFICACIÓN ---
 import Papa from 'papaparse';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
@@ -56,6 +58,12 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
         link.click();
         document.body.removeChild(link);
     };
+    
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleManageCookies = () => {
+        window.dispatchEvent(new Event('openCookieConsent'));
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const liquidButtonClass = "bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2";
 
@@ -103,6 +111,17 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                         {exportMessage && <p className="text-sm text-yellow-accent mt-3 font-semibold">{exportMessage}</p>}
                     </div>
 
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <div className="p-6 bg-background/50 rounded-xl border border-border-color">
+                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Privacidad y Cookies</h4>
+                        <p className="text-sm text-text-secondary mb-3">Gestiona tus preferencias de consentimiento de cookies.</p>
+                        <button onClick={handleManageCookies} className={liquidButtonClass}>
+                            <FontAwesomeIcon icon={faCookieBite} />
+                            Gestionar Cookies
+                        </button>
+                    </div>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+
                     {user && (
                         <div className="p-6 bg-background/50 rounded-xl border border-border-color lg:hidden">
                             <h4 className="font-semibold text-text-primary mb-2 uppercase">Suscripción</h4>
@@ -124,7 +143,6 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                         </div>
                     )}
                     
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <div className="p-6 bg-background/50 rounded-xl border border-border-color lg:hidden">
                          <h4 className="font-semibold text-text-primary mb-2 uppercase">Sesión</h4>
                          <button onClick={onLogoutClick} className="w-full sm:w-auto bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2">
@@ -132,7 +150,6 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                             Cerrar Sesión
                         </button>
                     </div>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                     <div className="p-6 bg-red-accent/10 rounded-xl">
                         <h4 className="font-semibold text-red-accent mb-2 uppercase">Zona de Peligro</h4>

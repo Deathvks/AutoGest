@@ -33,7 +33,9 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
     return cars.filter(car => {
       const searchMatch = `${car.make} ${car.model} ${car.licensePlate}`.toLowerCase().includes(searchTerm.toLowerCase());
       const makeMatch = filters.make ? car.make === filters.make : true;
-      const statusMatch = filters.status ? car.status === filters.status : true;
+      // --- INICIO DE LA MODIFICACIÓN ---
+      const statusMatch = filters.status ? car.status === filters.status : car.status !== 'Vendido';
+      // --- FIN DE LA MODIFICACIÓN ---
       const locationMatch = filters.location ? car.location === filters.location : true;
       const minPriceMatch = filters.minPrice ? car.price >= parseFloat(filters.minPrice) : true;
       const maxPriceMatch = filters.maxPrice ? car.price <= parseFloat(filters.maxPrice) : true;
@@ -75,12 +77,10 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
                 <FontAwesomeIcon icon={faFilter} />
                 <span>Filtros</span>
               </button>
-              {/* --- INICIO DE LA MODIFICACIÓN --- */}
               <button
                 onClick={onAddClick}
                 className="flex-1 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-3 rounded-xl border border-border-color hover:bg-border-color transition-colors"
               >
-              {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <FontAwesomeIcon icon={faPlus} />
                 <span>Añadir</span>
               </button>

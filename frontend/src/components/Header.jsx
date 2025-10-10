@@ -1,19 +1,45 @@
 // autogest-app/frontend/src/components/Header.jsx
-import React, { useContext, Fragment, useState, useEffect } from 'react';
+import React, { useContext, Fragment, useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
-    faUser, faCog, faUsersCog, faCreditCard
+    faUser, faCog, faUsersCog, faCreditCard, faBell
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 import { Menu, Transition, Portal } from '@headlessui/react';
+import NotificationsPanel from './NotificationsPanel';
 
 const Header = () => {
     const location = useLocation();
-    const { user, subscriptionStatus } = useContext(AuthContext);
+    const { user, subscriptionStatus, notifications, unreadCount, markAllNotificationsAsRead } = useContext(AuthContext);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const notificationsButtonRef = useRef(null);
+    const notificationsPanelRef = useRef(null);
+
+    // Click outside handler para cerrar el panel de notificaciones
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                notificationsButtonRef.current && !notificationsButtonRef.current.contains(event.target) &&
+                notificationsPanelRef.current && !notificationsPanelRef.current.contains(event.target)
+            ) {
+                setIsNotificationsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleNotificationsToggle = () => {
+        const currentlyOpening = !isNotificationsOpen;
+        setIsNotificationsOpen(currentlyOpening);
+        if (currentlyOpening && unreadCount > 0) {
+            markAllNotificationsAsRead();
+        }
+    };
 
     const getPageInfo = (pathname) => {
         switch (pathname) {
@@ -25,35 +51,52 @@ const Header = () => {
             case '/settings': return { title: 'Ajustes', icon: faCog };
             case '/admin': return { title: 'Gestión', icon: faUsersCog };
             case '/subscription': return { title: 'Suscripción', icon: faCreditCard };
+            case '/notifications': return { title: 'Notificaciones', icon: faBell };
             default: return { title: 'AutoGest', icon: faCar };
         }
     };
 
     const { title, icon } = getPageInfo(location.pathname);
 
+    if (!user) {
+        return null;
+    }
+
     const rolesExemptFromSubscription = ['admin', 'technician'];
-    const isExempt = user && rolesExemptFromSubscription.includes(user.role);
+    const isExempt = rolesExemptFromSubscription.includes(user.role);
 
     const hasValidSubscription = subscriptionStatus === 'active' || 
-        (subscriptionStatus === 'cancelled' && user && new Date(user.subscriptionExpiry) > new Date());
+        (subscriptionStatus === 'cancelled' && new Date(user.subscriptionExpiry) > new Date());
 
     return (
         <>
-            {isMenuOpen && createPortal(
-                /* --- INICIO DE LA MODIFICACIÓN --- */
+            {(isMenuOpen || isNotificationsOpen) && createPortal(
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" aria-hidden="true" />,
-                /* --- FIN DE LA MODIFICACIÓN --- */
                 document.body
             )}
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <header className="sticky top-0 z-50 bg-component-bg backdrop-blur-lg border-b border-border-color p-4 sm:px-6 lg:px-8 flex items-center justify-between lg:hidden">
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <div className="flex items-center">
                     <FontAwesomeIcon icon={icon} className="h-6 w-6 text-accent mr-3" />
                     <h1 className="text-xl font-bold text-text-primary">{title}</h1>
                 </div>
 
-                {user && (
+                <div className="flex items-center space-x-2 sm:space-x-4">
+                    <div>
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        <button
+                            ref={notificationsButtonRef}
+                            onClick={handleNotificationsToggle}
+                            className="relative w-10 h-10 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary transition-colors"
+                            aria-label="Notificaciones"
+                        >
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
+                            <FontAwesomeIcon icon={faBell} className="h-5 w-5" />
+                            {unreadCount > 0 && (
+                                <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-component-bg" />
+                            )}
+                        </button>
+                    </div>
+
                     <Menu as="div" className="relative z-50">
                         {({ open }) => {
                             useEffect(() => {
@@ -87,9 +130,7 @@ const Header = () => {
                                         leaveTo="transform opacity-0 scale-95"
                                     >
                                         <Portal>
-                                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                             <Menu.Items className="absolute right-4 top-20 mt-2 w-48 origin-top-right divide-y divide-border-color rounded-xl bg-component-bg backdrop-blur-lg shadow-2xl ring-1 ring-border-color focus:outline-none z-50">
-                                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                                                 <div className="px-1 py-1 ">
                                                     <Menu.Item>
                                                         {({ active }) => (
@@ -137,8 +178,22 @@ const Header = () => {
                             )
                         }}
                     </Menu>
-                )}
+                </div>
             </header>
+
+            {isNotificationsOpen && createPortal(
+                <div
+                    ref={notificationsPanelRef}
+                    className="fixed left-1/2 -translate-x-1/2 w-[90vw] sm:w-[70vw] max-w-md top-20 z-[60] animate-fade-in-down"
+                >
+                    <NotificationsPanel
+                        notifications={notifications}
+                        onMarkAllRead={markAllNotificationsAsRead}
+                        onClose={() => setIsNotificationsOpen(false)}
+                    />
+                </div>,
+                document.body
+            )}
         </>
     );
 };

@@ -13,7 +13,11 @@ const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const companyRoutes = require('./routes/companyRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const { scheduleRecurringExpenses } = require('./jobs/recurringExpenses');
+// --- INICIO DE LA MODIFICACIÓN ---
+const { scheduleSubscriptionReminders } = require('./jobs/subscriptionReminders');
+// --- FIN DE LA MODIFICACIÓN ---
 
 const app = express();
 
@@ -31,12 +35,11 @@ app.use('/api/cars', carRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/locations', locationRoutes);
-// --- INICIO DE LA MODIFICACIÓN ---
-app.use('/api/subscriptions', subscriptionRoutes); // Se corrige a plural
-// --- FIN DE LA MODIFICACIÓN ---
+app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -69,6 +72,9 @@ db.sequelize.authenticate()
         console.log('✅ Conexión a la base de datos establecida correctamente.');
         startServer();
         scheduleRecurringExpenses();
+        // --- INICIO DE LA MODIFICACIÓN ---
+        scheduleSubscriptionReminders();
+        // --- FIN DE LA MODIFICACIÓN ---
     })
     .catch(err => {
         console.error('❌ No se pudo conectar a la base de datos:', err);

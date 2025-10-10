@@ -6,12 +6,14 @@ import {
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
     faUser, faCog, faSignOutAlt, faUsersCog,
     faCreditCard,
-    faBuilding
+    faBuilding,
+    faBell // Añadido
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
 const Sidebar = ({ onLogoutClick }) => {
-    const { user } = useContext(AuthContext);
+    // Obtenemos 'user' y el nuevo 'unreadCount' del contexto
+    const { user, unreadCount } = useContext(AuthContext);
 
     if (!user) {
         return null;
@@ -19,11 +21,13 @@ const Sidebar = ({ onLogoutClick }) => {
     
     const technicianRoles = ['admin', 'technician', 'technician_subscribed'];
 
+    // Añadimos el nuevo item de notificaciones a la lista
     const navItems = [
         technicianRoles.includes(user.role) && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
         { icon: faCar, text: 'Mis Coches', path: '/cars' },
         { icon: faChartLine, text: 'Ventas', path: '/sales' },
         { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
+        { icon: faBell, text: 'Notificaciones', path: '/notifications', badgeCount: unreadCount }, // Nuevo item
         { icon: faUser, text: 'Perfil', path: '/profile' },
         { icon: faCreditCard, text: 'Suscripción', path: '/subscription' },
     ].filter(Boolean); 
@@ -35,7 +39,8 @@ const Sidebar = ({ onLogoutClick }) => {
         { icon: faCog, text: 'Configuración', path: '/settings' },
     ];
 
-    const NavItem = ({ icon, text, path }) => (
+    // Modificamos NavItem para que acepte 'badgeCount'
+    const NavItem = ({ icon, text, path, badgeCount }) => (
         <NavLink 
             to={path} 
             end
@@ -48,7 +53,12 @@ const Sidebar = ({ onLogoutClick }) => {
             }
         >
             <FontAwesomeIcon icon={icon} className="w-5 h-5 mr-4 transition-transform duration-200 group-hover:scale-110" />
-            <span className="font-semibold">{text}</span>
+            <span className="font-semibold flex-1">{text}</span>
+            {badgeCount > 0 && (
+                <span className="bg-red-accent text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {badgeCount}
+                </span>
+            )}
         </NavLink>
     );
 

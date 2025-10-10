@@ -1,14 +1,13 @@
-// autogest-app/frontend/src/pages/SubscriptionPage.jsx
+// frontend/src/pages/SubscriptionPage.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faSpinner, faExclamationTriangle, faUsersCog } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faSpinner, faExclamationTriangle, faUsersCog, faCookieBite } from '@fortawesome/free-solid-svg-icons';
 
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 
-// Importa los componentes refactorizados
 import SubscriptionBenefits from './Subscription/SubscriptionBenefits';
 import CheckoutForm from './Subscription/CheckoutForm';
 import SubscriptionStatus from './Subscription/SubscriptionStatus';
@@ -21,10 +20,30 @@ const stripePromise = loadStripe(stripePublishableKey);
 
 const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
     const { user, subscriptionStatus, refreshSubscriptionStatus } = useContext(AuthContext);
-
+    
+    const [cookieConsent, setCookieConsent] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
     const [verificationError, setVerificationError] = useState('');
+
+    const getConsentKey = () => {
+        return user ? `cookie_consent_${user.id}` : 'cookie_consent_guest';
+    };
+
+    useEffect(() => {
+        const consentKey = getConsentKey();
+        const consent = localStorage.getItem(consentKey);
+        setCookieConsent(consent);
+        if (user) {
+            setIsLoading(false);
+        }
+    }, [user]);
+
+    const handleAcceptCookiesForPayment = () => {
+        const consentKey = getConsentKey();
+        localStorage.setItem(consentKey, 'accepted');
+        setCookieConsent('accepted');
+    };
 
     const handleSuccessfulPayment = () => {
         setIsVerifyingPayment(true);
@@ -42,7 +61,6 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
             }
 
             try {
-                // Forzamos una sincronización con Stripe antes de comprobar
                 await api.subscriptions.syncSubscription();
                 const freshUser = await api.getMe();
 
@@ -67,12 +85,6 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
         await api.subscriptions.cancelSubscription();
         await refreshSubscriptionStatus();
     };
-
-    useEffect(() => {
-        if (user) {
-            setIsLoading(false);
-        }
-    }, [user]);
 
     if (user.role === 'admin' || user.role === 'technician') {
         return (
@@ -118,11 +130,13 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
         );
     }
     
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const areCookiesAllowedForPayment = cookieConsent === 'accepted' || cookieConsent === 'necessary';
+    // --- FIN DE LA MODIFICACIÓN ---
+    
     return (
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <div className="order-2 lg:order-1 lg:pt-8 animate-fade-in-up">
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <h2 className="text-3xl lg:text-4xl font-bold text-text-primary tracking-tight">
                     LA HERRAMIENTA DEFINITIVA PARA <span className="text-accent">COMPRA VENTAS DE COCHES</span>
                 </h2>
@@ -134,10 +148,28 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
                     <SubscriptionBenefits />
                 </div>
             </div>
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <div className="order-1 lg:order-2">
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
-                 <CheckoutForm onSuccessfulPayment={handleSuccessfulPayment} />
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {areCookiesAllowedForPayment ? (
+                // --- FIN DE LA MODIFICACIÓN ---
+                    <Elements stripe={stripePromise}>
+                        <CheckoutForm onSuccessfulPayment={handleSuccessfulPayment} />
+                    </Elements>
+                ) : (
+                    <div className="p-8 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl h-full flex flex-col items-center justify-center text-center">
+                        <FontAwesomeIcon icon={faCookieBite} className="w-16 h-16 text-yellow-accent mx-auto mb-6" />
+                        <h3 className="text-xl font-bold text-text-primary">Se requiere el consentimiento de cookies</h3>
+                        <p className="text-text-secondary mt-2 mb-6">
+                            Para procesar los pagos de forma segura a través de nuestro proveedor Stripe, es necesario aceptar el uso de cookies.
+                        </p>
+                        <button
+                            onClick={handleAcceptCookiesForPayment}
+                            className="bg-accent text-white font-semibold py-3 px-8 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-all"
+                        >
+                            Aceptar cookies para pagar
+                        </button>
+                    </div>
+                )}
             </div>
             {(isVerifyingPayment || verificationError) && (
                  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
@@ -166,9 +198,7 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
 const SubscriptionPage = ({ setSubscriptionSuccessModalOpen }) => {
     return (
         <div className="max-w-7xl mx-auto">
-            <Elements stripe={stripePromise}>
-                <SubscriptionPageContent setSubscriptionSuccessModalOpen={setSubscriptionSuccessModalOpen} />
-            </Elements>
+            <SubscriptionPageContent setSubscriptionSuccessModalOpen={setSubscriptionSuccessModalOpen} />
         </div>
     );
 };

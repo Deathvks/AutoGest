@@ -24,9 +24,7 @@ exports.getMe = async (req, res) => {
                 include: [{
                     model: User,
                     as: 'owner',
-                    // --- INICIO DE LA MODIFICACIÓN ---
                     attributes: ['businessName', 'cif', 'dni', 'address', 'phone', 'logoUrl', 'invoiceCounter', 'proformaCounter']
-                    // --- FIN DE LA MODIFICACIÓN ---
                 }]
             });
 
@@ -41,9 +39,6 @@ exports.getMe = async (req, res) => {
                     userJson.address = company.owner.address;
                     userJson.phone = company.owner.phone;
                     userJson.logoUrl = company.owner.logoUrl;
-                    // --- INICIO DE LA MODIFICACIÓN ---
-                    // Se elimina la sobreescritura de applyIgic
-                    // --- FIN DE LA MODIFICACIÓN ---
                     userJson.invoiceCounter = company.owner.invoiceCounter;
                     userJson.proformaCounter = company.owner.proformaCounter;
                 }
@@ -63,9 +58,7 @@ exports.getMe = async (req, res) => {
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const { name, email, businessName, dni, cif, address, phone, proformaCounter, invoiceCounter } = req.body;
-        // --- FIN DE LA MODIFICACIÓN ---
         const user = await User.findByPk(req.user.id);
         
         if (!user) {
@@ -91,9 +84,6 @@ exports.updateProfile = async (req, res) => {
         if (phone !== undefined) user.phone = phone;
         if (proformaCounter) user.proformaCounter = proformaCounter;
         if (invoiceCounter) user.invoiceCounter = invoiceCounter;
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se elimina la actualización de applyIgic
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (req.files) {
             if (req.files.avatar) {
@@ -252,6 +242,14 @@ exports.deleteAccount = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
         const userId = req.user.id;
+        
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const ownedCompany = await Company.findOne({ where: { ownerId: userId }, transaction });
+        if (ownedCompany) {
+            await transaction.rollback();
+            return res.status(400).json({ error: `Eres propietario del equipo "${ownedCompany.name}" y no puedes eliminar tu cuenta. Transfiere la propiedad o elimina el equipo primero.` });
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         const cars = await Car.findAll({ where: { userId }, transaction });
         for (const car of cars) {

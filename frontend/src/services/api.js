@@ -32,7 +32,6 @@ const handleResponseError = async (response) => {
         const error = await response.json();
         const serverErrorMessage = error.error || errorMessage;
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         // Lista de palabras clave que indican un error técnico no apto para el usuario.
         const technicalKeywords = ['stripe', 'sql', 'sequelize', 'unexpected', 'module', 'jwt', 'token', 'route'];
         const isTechnicalError = technicalKeywords.some(keyword => new RegExp(keyword, 'i').test(serverErrorMessage));
@@ -43,7 +42,6 @@ const handleResponseError = async (response) => {
         } else {
              errorMessage = 'Error inesperado del servidor. Si el problema persiste, contacta con soporte.';
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
     } catch (parseError) {
         errorMessage = `Error ${response.status}: Ha ocurrido un problema de comunicación con el servidor.`;
@@ -56,10 +54,8 @@ const handleResponseError = async (response) => {
 // Para rutas PÚBLICAS (Registro)
 const handlePublicResponse = async (response) => {
     if (!response.ok) {
-        // --- INICIO DE LA MODIFICACIÓN ---
         // Usamos la nueva función centralizada de manejo de errores.
         return handleResponseError(response);
-        // --- FIN DE LA MODIFICACIÓN ---
     }
     return response.json();
 };
@@ -72,10 +68,8 @@ const handleProtectedResponse = async (response) => {
             window.location.href = '/login';
             throw new Error('Tu sesión ha caducado. Por favor, inicia sesión de nuevo.');
         }
-        // --- INICIO DE LA MODIFICACIÓN ---
         // Usamos la nueva función centralizada de manejo de errores.
         return handleResponseError(response);
-        // --- FIN DE LA MODIFICACIÓN ---
     }
     if (response.status === 204) return null;
     return response.json();
@@ -157,6 +151,12 @@ const api = {
     updateIncident: (incidentId, data) => fetch(`${BASE_URL}/incidents/${incidentId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data) }).then(handleProtectedResponse),
     deleteIncident: (incidentId) => fetch(`${BASE_URL}/incidents/${incidentId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
 
+    // --- Notificaciones (Notifications) ---
+    notifications: {
+        getAll: () => fetch(`${BASE_URL}/notifications`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
+        markAllAsRead: () => fetch(`${BASE_URL}/notifications/read-all`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
+    },
+
     // --- Ubicaciones (Locations) ---
     getLocations: () => fetch(`${BASE_URL}/locations`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
 
@@ -176,9 +176,13 @@ const api = {
             if (endDate) params.append('endDate', endDate);
             return fetch(`${BASE_URL}/dashboard/stats?${params.toString()}`, { headers: getAuthHeaders() }).then(handleProtectedResponse);
         },
-        getActivity: (page = 1) => {
-            return fetch(`${BASE_URL}/dashboard/activity?page=${page}`, { headers: getAuthHeaders() }).then(handleProtectedResponse);
+        // --- INICIO DE LA MODIFICACIÓN ---
+        getActivity: (page = 1, type = '') => {
+            const params = new URLSearchParams({ page });
+            if (type) params.append('type', type);
+            return fetch(`${BASE_URL}/dashboard/activity?${params.toString()}`, { headers: getAuthHeaders() }).then(handleProtectedResponse);
         }
+        // --- FIN DE LA MODIFICACIÓN ---
     },
 
     // --- Suscripciones (Stripe) ---

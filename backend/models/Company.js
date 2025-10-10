@@ -15,6 +15,9 @@ const Company = sequelize.define('Company', {
             model: 'Users',
             key: 'id',
         },
+        // --- INICIO DE LA MODIFICACIÓN ---
+        onDelete: 'CASCADE', // Si se borra el usuario propietario, se borra la empresa.
+        // --- FIN DE LA MODIFICACIÓN ---
         comment: 'ID del usuario que es propietario de la empresa/equipo.'
     },
 }, {

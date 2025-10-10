@@ -1,12 +1,10 @@
 // autogest-app/backend/controllers/companyController.js
-const { User, Company, Invitation, sequelize } = require('../models');
+const { User, Company, Invitation, Notification, sequelize } = require('../models');
 const { sendInvitationEmail, sendSubscriptionPromptEmail } = require('../utils/emailUtils');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
-// --- INICIO DE LA MODIFICACIÓN ---
 const { stripe } = require('../controllers/subscription/stripeConfig');
-// --- FIN DE LA MODIFICACIÓN ---
 
 // Enviar una invitación a un nuevo usuario para unirse a una compañía
 exports.inviteUser = async (req, res) => {
@@ -37,9 +35,6 @@ exports.inviteUser = async (req, res) => {
                 return res.status(400).json({ error: 'Este usuario ya pertenece a un equipo.' });
             }
 
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Se elimina la comprobación que impedía invitar a usuarios con suscripción activa.
-            // --- FIN DE LA MODIFICACIÓN ---
         }
         
         let company;
@@ -79,6 +74,18 @@ exports.inviteUser = async (req, res) => {
             status: 'pending',
             expiresAt,
         }, { transaction });
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Si el usuario invitado ya existe, le creamos una notificación.
+        if (existingUser) {
+            await Notification.create({
+                userId: existingUser.id,
+                message: `${inviter.name} te ha invitado a unirte a su equipo ${company.name}.`,
+                type: 'general', // O un tipo más específico como 'invitation'
+                link: `/accept-invitation/${token}`
+            }, { transaction });
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         await sendInvitationEmail(invitedEmail, token, company.name, inviter.name);
         
@@ -152,8 +159,6 @@ exports.acceptInvitation = async (req, res) => {
             return res.status(400).json({ error: 'Esta cuenta ya pertenece a otro equipo.' });
         }
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Si el usuario tiene una suscripción activa, la cancelamos.
         if (userToUpdate.subscriptionStatus === 'active' && userToUpdate.stripeCustomerId) {
             const subscriptions = await stripe.subscriptions.list({
                 customer: userToUpdate.stripeCustomerId,
@@ -162,17 +167,14 @@ exports.acceptInvitation = async (req, res) => {
             });
 
             if (subscriptions.data.length > 0) {
-                // Cancelar la suscripción inmediatamente
                 await stripe.subscriptions.cancel(subscriptions.data[0].id);
             }
 
-            // Actualizar el estado del usuario
             userToUpdate.previousRole = userToUpdate.role;
             userToUpdate.role = 'user';
             userToUpdate.subscriptionStatus = 'inactive';
             userToUpdate.subscriptionExpiry = null;
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         userToUpdate.companyId = invitation.companyId;
         userToUpdate.businessName = invitation.Company.name;
@@ -180,6 +182,18 @@ exports.acceptInvitation = async (req, res) => {
 
         invitation.status = 'accepted';
         await invitation.save({ transaction });
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Notificar al propietario de la empresa que un nuevo miembro se ha unido
+        const companyOwner = await User.findByPk(invitation.Company.ownerId, { transaction });
+        if (companyOwner) {
+            await Notification.create({
+                userId: companyOwner.id,
+                message: `${userToUpdate.name} se ha unido a tu equipo ${invitation.Company.name}.`,
+                type: 'general'
+            }, { transaction });
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         await transaction.commit();
 
@@ -231,6 +245,15 @@ exports.expelUser = async (req, res) => {
         userToExpel.canManageRoles = false;
         userToExpel.canExpelUsers = false;
         await userToExpel.save({ transaction });
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Notificar al usuario que ha sido expulsado
+        await Notification.create({
+            userId: userToExpel.id,
+            message: `Has sido expulsado del equipo ${company.name}.`,
+            type: 'general',
+        }, { transaction });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         await transaction.commit();
         

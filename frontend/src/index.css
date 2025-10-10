@@ -42,13 +42,6 @@
     --color-circles-bg: linear-gradient(120deg, rgb(135, 60, 141), rgb(182, 85, 107));
   }
 
-  /* --- INICIO DE LA MODIFICACIÓN --- */
-  html {
-    /* Evita efectos de scroll no deseados en móviles como el "pull-to-refresh". */
-    overscroll-behavior: none;
-  }
-  /* --- FIN DE LA MODIFICACIÓN --- */
-
   body {
     background: linear-gradient(-70deg, rgb(53, 33, 90), rgb(92, 37, 165));
     background-attachment: fixed;
@@ -56,32 +49,16 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     caret-color: transparent;
-    /* --- INICIO DE LA MODIFICACIÓN --- */
-    /* Evita que el scroll de un elemento interno se propague al body. */
-    overscroll-behavior: none;
-    /* --- FIN DE LA MODIFICACIÓN --- */
   }
   
   input, textarea, select {
     @apply focus:outline-none;
   }
 
-  /* Restaura el cursor de texto solo para los campos de entrada */
   input, textarea {
     caret-color: var(--color-text-primary);
   }
-  
-  /* Corrige el estilo del autocompletado del navegador */
-  input:-webkit-autofill,
-  input:-webkit-autofill:hover,
-  input:-webkit-autofill:focus,
-  input:-webkit-autofill:active {
-      -webkit-box-shadow: 0 0 0 30px var(--color-component-bg-hover) inset !important;
-      -webkit-text-fill-color: var(--color-text-primary) !important;
-      transition: background-color 5000s ease-in-out 0s;
-  }
 
-  /* Ocultar las flechas en los inputs de tipo número en todos los navegadores */
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
@@ -94,6 +71,23 @@
   body::-webkit-scrollbar {
     display: none;
   }
+
+  /* --- INICIO DE LA MODIFICACIÓN --- */
+  /*
+    Anula los estilos de autocompletado del navegador, que inyectan
+    un fondo de color. Se usa un box-shadow interno para "pintar"
+    sobre el color del navegador y mantener la apariencia del diseño.
+  */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--color-text-primary) !important;
+    -webkit-box-shadow: 0 0 0px 1000px var(--color-component-bg-hover) inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+    caret-color: var(--color-text-primary);
+  }
+  /* --- FIN DE LA MODIFICACIÓN --- */
 }
 
 .circles-container {

@@ -12,7 +12,10 @@ const Profile = lazy(() => import('../pages/Profile'));
 const Settings = lazy(() => import('../pages/Settings'));
 const ManageUsersPage = lazy(() => import('../pages/ManageUsersPage'));
 const SubscriptionPage = lazy(() => import('../pages/SubscriptionPage'));
-const AcceptInvitationPage = lazy(() => import('../pages/AcceptInvitationPage')); // <-- Asegurarse de que esté importado
+const AcceptInvitationPage = lazy(() => import('../pages/AcceptInvitationPage'));
+// --- INICIO DE LA MODIFICACIÓN ---
+const NotificationsPage = lazy(() => import('../pages/NotificationsPage')); // Importa la nueva página
+// --- FIN DE LA MODIFICACIÓN ---
 
 const AppRoutes = ({ appState, onLogoutClick }) => {
     const { user } = useContext(AuthContext);
@@ -70,7 +73,6 @@ const AppRoutes = ({ appState, onLogoutClick }) => {
                     )
                 } 
             />
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <Route 
                 path="/cars" 
                 element={<MyCars 
@@ -84,7 +86,6 @@ const AppRoutes = ({ appState, onLogoutClick }) => {
                     onUpdateInsurance={handleUpdateCarInsurance} 
                 />} 
             />
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
             <Route 
                 path="/sales" 
                 element={<SalesSummary 
@@ -131,6 +132,9 @@ const AppRoutes = ({ appState, onLogoutClick }) => {
                 path="/subscription" 
                 element={<SubscriptionPage setSubscriptionSuccessModalOpen={setSubscriptionSuccessModalOpen} />} 
             />
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <Route path="/notifications" element={<NotificationsPage />} />
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
             <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
             <Route path="*" element={<Navigate to={userHomePath} replace />} />
         </Routes>

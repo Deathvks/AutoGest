@@ -13,9 +13,7 @@ const normalizeSum = (value) => {
 exports.getDashboardStats = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
-        // --- INICIO DE LA MODIFICACIÓN ---
         const userScope = req.user.companyId ? { companyId: req.user.companyId } : { userId: req.user.id };
-        // --- FIN DE LA MODIFICACIÓN ---
         const isMonthlyView = !!(startDate || endDate);
 
         let totalInvestment = 0;
@@ -35,10 +33,8 @@ exports.getDashboardStats = async (req, res) => {
             }
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         const allUserCars = await Car.findAll({ where: userScope });
         const allUserExpenses = await Expense.findAll({ where: userScope });
-        // --- FIN DE LA MODIFICACIÓN ---
         
         const carsInPeriod = isMonthlyView ? allUserCars.filter(c => {
             const createdAt = new Date(c.createdAt);
@@ -100,20 +96,17 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.getActivityHistory = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const userScope = req.user.companyId ? { companyId: req.user.companyId } : { userId: req.user.id };
-        // --- FIN DE LA MODIFICACIÓN ---
         const page = parseInt(req.query.page, 10) || 1;
+        const typeFilter = req.query.type || ''; // <-- Se obtiene el filtro
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         const cars = await Car.findAll({
             where: userScope,
             attributes: ['id', 'make', 'model', 'licensePlate', 'status', 'createdAt', 'updatedAt', 'saleDate', 'reservationExpiry'],
             order: [['updatedAt', 'DESC']],
         });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         let activities = [];
 
@@ -144,12 +137,10 @@ exports.getActivityHistory = async (req, res) => {
             }
         });
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         const expenses = await Expense.findAll({
             where: userScope,
             order: [['date', 'DESC']],
         });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         expenses.forEach(expense => {
             const car = expense.carLicensePlate ? cars.find(c => c.licensePlate === expense.carLicensePlate) : null;
@@ -169,10 +160,19 @@ exports.getActivityHistory = async (req, res) => {
             });
         });
         
-        activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se filtra el array de actividades si se ha proporcionado un 'typeFilter'
+        let filteredActivities = activities;
+        if (typeFilter) {
+            filteredActivities = activities.filter(activity => activity.type === typeFilter);
+        }
+        
+        // Se ordena por fecha DESPUÉS de haber filtrado
+        filteredActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        const paginatedActivities = activities.slice(offset, offset + limit);
-        const totalPages = Math.ceil(activities.length / limit);
+        const paginatedActivities = filteredActivities.slice(offset, offset + limit);
+        const totalPages = Math.ceil(filteredActivities.length / limit);
+        // --- FIN DE LA MODIFICACIÓN ---
 
         res.status(200).json({
             activities: paginatedActivities,

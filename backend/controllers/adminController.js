@@ -1,5 +1,5 @@
 // autogest-app/backend/controllers/adminController.js
-const { User, Company } = require('../models');
+const { User, Company, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
 
 // Obtener todos los usuarios (GET /api/admin/users)
@@ -22,13 +22,10 @@ exports.getAllUsers = async (req, res) => {
             order: [['createdAt', 'DESC']],
         });
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Si el solicitante pertenece a una compañía, identificamos al propietario.
         if (requester.companyId) {
             const company = await Company.findByPk(requester.companyId);
             if (company) {
                 const ownerId = company.ownerId;
-                // Convertimos los usuarios a objetos JSON para poder añadir la propiedad 'isOwner'.
                 users = users.map(user => {
                     const userJson = user.toJSON();
                     userJson.isOwner = (userJson.id === ownerId);
@@ -36,7 +33,6 @@ exports.getAllUsers = async (req, res) => {
                 });
             }
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         res.status(200).json(users);
     } catch (error) {
@@ -111,7 +107,6 @@ exports.updateUser = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
             if (userToUpdate.id === requester.id) {
                 return res.status(403).json({ error: 'Edita tu propio perfil desde la sección "Mi Perfil".' });
@@ -126,22 +121,18 @@ exports.updateUser = async (req, res) => {
                  return res.status(403).json({ error: 'No puedes editar al propietario del equipo.' });
             }
             
-            // Solo el propietario puede cambiar permisos.
             if (!requester.isOwner) {
                 return res.status(403).json({ error: 'No tienes permiso para editar usuarios.' });
             }
 
-            // Un propietario no puede editar nombre/email/pass (solo permisos) desde aquí.
             if (name || email || password || role) {
                 return res.status(403).json({ error: 'Desde aquí, solo puedes modificar los permisos de un usuario.' });
             }
             
-            // Un propietario no puede asignar la gestión de roles a otros.
             if (canManageRoles !== undefined) {
                  return res.status(403).json({ error: 'La gestión de roles no se puede delegar.' });
             }
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         
         if (requester.role === 'admin') {
             userToUpdate.name = name !== undefined ? name : userToUpdate.name;
@@ -184,31 +175,55 @@ exports.updateUser = async (req, res) => {
 
 // Eliminar un usuario (DELETE /api/admin/users/:id)
 exports.deleteUser = async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {
-        const userToDelete = await User.findByPk(req.params.id);
+        const userToDelete = await User.findByPk(req.params.id, { transaction });
         const requester = req.user;
 
         if (!userToDelete) {
+            await transaction.rollback();
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
 
         if (userToDelete.id === requester.id) {
+            await transaction.rollback();
             return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta.' });
         }
         
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Si el usuario a eliminar es propietario de una empresa, disolvemos la empresa.
+        const ownedCompany = await Company.findOne({ where: { ownerId: userToDelete.id }, transaction });
+        if (ownedCompany) {
+            // Desvinculamos a todos los miembros de la empresa.
+            await User.update(
+                { 
+                    companyId: null,
+                    canManageRoles: false,
+                    canExpelUsers: false 
+                },
+                { where: { companyId: ownedCompany.id }, transaction }
+            );
+
+            // Eliminamos la empresa.
+            await ownedCompany.destroy({ transaction });
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
+        
         if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
             if (userToDelete.companyId !== requester.companyId) {
+                await transaction.rollback();
                 return res.status(403).json({ error: 'No puedes eliminar usuarios que no pertenecen a tu empresa.' });
-            }
-            const company = await Company.findOne({ where: { id: requester.companyId } });
-            if (company && userToDelete.id === company.ownerId) {
-                 return res.status(403).json({ error: 'No puedes eliminar al propietario de la empresa.' });
             }
         }
 
-        await userToDelete.destroy();
+        // Finalmente, eliminamos al usuario. Sus datos asociados (coches, gastos, etc.) se borrarán en cascada.
+        await userToDelete.destroy({ transaction });
+        
+        await transaction.commit();
+
         res.status(200).json({ message: 'Usuario eliminado correctamente.' });
     } catch (error) {
+        await transaction.rollback();
         console.error(error);
         res.status(500).json({ error: 'Error al eliminar el usuario.' });
     }

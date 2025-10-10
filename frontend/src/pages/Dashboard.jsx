@@ -1,5 +1,5 @@
 // autogest-app/frontend/src/pages/Dashboard.jsx
-import React, { useState, useEffect, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useMemo, useContext, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
@@ -24,21 +24,52 @@ const ActivityHistory = () => {
     const navigate = useNavigate();
     const [activityData, setActivityData] = useState({ activities: [], currentPage: 1, totalPages: 1 });
     const [isLoading, setIsLoading] = useState(true);
+    const [activeFilter, setActiveFilter] = useState('');
+    const filterContainerRef = useRef(null);
 
-    const fetchActivity = async (page) => {
+    const filters = [
+        { key: '', label: 'Todos' },
+        { key: 'creacion', label: 'Añadidos' },
+        { key: 'venta', label: 'Ventas' },
+        { key: 'reserva', label: 'Reservas' },
+        { key: 'gasto', label: 'Gastos' },
+    ];
+
+    const fetchActivity = useCallback(async (page, filter) => {
         setIsLoading(true);
         try {
-            const data = await api.dashboard.getActivity(page);
+            const data = await api.dashboard.getActivity(page, filter);
             setActivityData(data);
         } catch (error) {
             console.error("Error al cargar el historial:", error);
         } finally {
             setIsLoading(false);
         }
+    }, []);
+    
+    const handleFilterClick = (filterKey) => {
+        setActiveFilter(filterKey);
+        fetchActivity(1, filterKey);
     };
 
     useEffect(() => {
-        fetchActivity(1);
+        fetchActivity(1, '');
+    }, [fetchActivity]);
+
+    useEffect(() => {
+        const el = filterContainerRef.current;
+        if (el) {
+            const onWheel = (e) => {
+                if (e.deltaY === 0) return;
+                e.preventDefault();
+                el.scrollTo({
+                    left: el.scrollLeft + e.deltaY,
+                    behavior: 'smooth'
+                });
+            };
+            el.addEventListener('wheel', onWheel);
+            return () => el.removeEventListener('wheel', onWheel);
+        }
     }, []);
 
     const handleCarClick = (carId) => {
@@ -60,15 +91,30 @@ const ActivityHistory = () => {
     return (
         <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color h-full flex flex-col">
             <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">HISTORIAL DE ACTIVIDAD</h3>
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <div ref={filterContainerRef} className="flex items-center gap-2 mb-4 overflow-x-auto no-scrollbar flex-shrink-0 min-w-0">
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
+                {filters.map(filter => (
+                    <button
+                        key={filter.key}
+                        onClick={() => handleFilterClick(filter.key)}
+                        className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
+                            activeFilter === filter.key
+                                ? 'bg-accent text-white'
+                                : 'bg-component-bg-hover text-text-secondary hover:bg-border-color hover:text-text-primary'
+                        }`}
+                    >
+                        {filter.label}
+                    </button>
+                ))}
+            </div>
             {isLoading ? (
                 <div className="flex-grow flex items-center justify-center text-text-secondary">
                     <FontAwesomeIcon icon={faSpinner} spin size="2x" />
                 </div>
             ) : activityData.activities.length > 0 ? (
                 <>
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <div className="space-y-3 flex-grow overflow-y-auto no-scrollbar">
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                         {activityData.activities.map((item, index) => {
                             const { icon, color } = getActivityIcon(item.type);
                             const isClickable = !!item.carId;
@@ -88,11 +134,11 @@ const ActivityHistory = () => {
                         })}
                     </div>
                     <div className="flex justify-between items-center mt-4 pt-4 border-t border-border-color flex-shrink-0">
-                        <button onClick={() => fetchActivity(activityData.currentPage - 1)} disabled={activityData.currentPage <= 1} className="px-3 py-1.5 rounded-lg bg-component-bg-hover disabled:opacity-50 hover:bg-border-color transition-colors">
+                        <button onClick={() => fetchActivity(activityData.currentPage - 1, activeFilter)} disabled={activityData.currentPage <= 1} className="px-3 py-1.5 rounded-lg bg-component-bg-hover disabled:opacity-50 hover:bg-border-color transition-colors">
                             <FontAwesomeIcon icon={faChevronLeft} />
                         </button>
                         <span className="text-sm font-semibold text-text-secondary">PÁGINA {activityData.currentPage} DE {activityData.totalPages}</span>
-                        <button onClick={() => fetchActivity(activityData.currentPage + 1)} disabled={activityData.currentPage >= activityData.totalPages} className="px-3 py-1.5 rounded-lg bg-component-bg-hover disabled:opacity-50 hover:bg-border-color transition-colors">
+                        <button onClick={() => fetchActivity(activityData.currentPage + 1, activeFilter)} disabled={activityData.currentPage >= activityData.totalPages} className="px-3 py-1.5 rounded-lg bg-component-bg-hover disabled:opacity-50 hover:bg-border-color transition-colors">
                             <FontAwesomeIcon icon={faChevronRight} />
                         </button>
                     </div>

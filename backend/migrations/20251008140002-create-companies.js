@@ -1,3 +1,4 @@
+// autogest-app/backend/migrations/20251008140002-create-companies.js
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
@@ -10,7 +11,9 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 references: { model: 'Users', key: 'id' },
+                // --- INICIO DE LA MODIFICACIÓN ---
                 onDelete: 'CASCADE'
+                // --- FIN DE LA MODIFICACIÓN ---
             },
             createdAt: { allowNull: false, type: Sequelize.DATE },
             updatedAt: { allowNull: false, type: Sequelize.DATE }

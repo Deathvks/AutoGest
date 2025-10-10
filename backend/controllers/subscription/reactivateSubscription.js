@@ -1,5 +1,5 @@
 // autogest-app/backend/controllers/subscription/reactivateSubscription.js
-const { User } = require('../../models');
+const { User, Notification } = require('../../models'); // Se añade Notification
 const { stripe } = require('./stripeConfig');
 
 exports.reactivateSubscription = async (req, res) => {
@@ -9,8 +9,6 @@ exports.reactivateSubscription = async (req, res) => {
             return res.status(404).json({ error: 'Suscripción no encontrada.' });
         }
 
-        // Buscamos la suscripción del usuario. Una suscripción marcada para cancelar
-        // sigue teniendo el estado 'active' hasta que finaliza el período.
         const subscriptions = await stripe.subscriptions.list({
             customer: user.stripeCustomerId,
             status: 'active',
@@ -23,18 +21,24 @@ exports.reactivateSubscription = async (req, res) => {
 
         const subscription = subscriptions.data[0];
 
-        // Verificamos si la suscripción está realmente marcada para cancelar
         if (!subscription.cancel_at_period_end) {
              return res.status(400).json({ error: 'La suscripción no está cancelada.' });
         }
 
-        // Reactivamos la suscripción en Stripe eliminando la bandera de cancelación
         await stripe.subscriptions.update(subscription.id, {
             cancel_at_period_end: false,
         });
 
-        // Actualizamos el estado en nuestra base de datos local
         await user.update({ subscriptionStatus: 'active' });
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Crear la notificación para el usuario
+        await Notification.create({
+            userId: user.id,
+            message: 'Tu suscripción ha sido reactivada con éxito.',
+            type: 'subscription'
+        });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         res.json({ message: 'Tu suscripción ha sido reactivada con éxito.' });
     } catch (error) {

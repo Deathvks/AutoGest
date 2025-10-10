@@ -1,5 +1,6 @@
 // frontend/src/context/ThemeContext.jsx
-import React, { createContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useState, useEffect, useMemo, useContext } from 'react';
+import { AuthContext } from './AuthContext';
 
 const themes = [
     // --- TEMAS OSCUROS ---
@@ -182,8 +183,14 @@ const darkenColor = (hex, percent) => {
 export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-    const [activeThemeId, setActiveThemeId] = useState(() => localStorage.getItem('app-theme') || 'default-purple');
+    const { user } = useContext(AuthContext);
+    const [activeThemeId, setActiveThemeId] = useState('default-purple');
     const [customTheme, setCustomTheme] = useState(null);
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const getThemeKey = (key) => (user ? `${key}_${user.id}` : null);
+    const getConsentKey = () => (user ? `cookie_consent_${user.id}` : null);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const _applyThemeToDOM = (theme) => {
         const root = document.documentElement;
@@ -207,14 +214,26 @@ export const ThemeProvider = ({ children }) => {
     const applyTheme = (themeId) => {
         const theme = themes.find(t => t.id === themeId);
         if (!theme) return;
+
+        const consentKey = getConsentKey();
+        const consent = consentKey ? localStorage.getItem(consentKey) : null;
         
         setCustomTheme(null);
-        localStorage.removeItem('app-custom-theme');
-        
         _applyThemeToDOM(theme);
-        
         setActiveThemeId(theme.id);
-        localStorage.setItem('app-theme', theme.id);
+        
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const themeStorageKey = getThemeKey('app-theme');
+        const customThemeStorageKey = getThemeKey('app-custom-theme');
+
+        if (consent === 'accepted' && themeStorageKey) {
+            if (customThemeStorageKey) localStorage.removeItem(customThemeStorageKey);
+            localStorage.setItem(themeStorageKey, theme.id);
+        } else if (themeStorageKey) {
+            if (customThemeStorageKey) localStorage.removeItem(customThemeStorageKey);
+            localStorage.removeItem(themeStorageKey);
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
     };
     
     const applyCustomTheme = (hexColor) => {
@@ -240,8 +259,11 @@ export const ThemeProvider = ({ children }) => {
         } else {
             const brightness = getColorBrightness(hexColor);
             const isLightColor = brightness > 150;
-    
-            const lastThemeId = localStorage.getItem('app-theme') || 'default-purple';
+            
+            // --- INICIO DE LA MODIFICACIÓN ---
+            const themeStorageKey = getThemeKey('app-theme');
+            const lastThemeId = themeStorageKey ? localStorage.getItem(themeStorageKey) : 'default-purple';
+            // --- FIN DE LA MODIFICACIÓN ---
             const isBaseLight = themes.find(t => t.id === lastThemeId)?.isDark === false;
             const baseThemeId = (isBaseLight || isLightColor) ? 'light-standard' : 'default-purple';
             const base = themes.find(t => t.id === baseThemeId);
@@ -266,31 +288,56 @@ export const ThemeProvider = ({ children }) => {
             };
         }
         
-        setCustomTheme(newCustomTheme);
-        localStorage.setItem('app-custom-theme', hexColor);
-        setActiveThemeId('custom');
-        localStorage.setItem('app-theme', 'custom');
+        const consentKey = getConsentKey();
+        const consent = consentKey ? localStorage.getItem(consentKey) : null;
 
+        setCustomTheme(newCustomTheme);
+        setActiveThemeId('custom');
         _applyThemeToDOM(newCustomTheme);
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const themeStorageKey = getThemeKey('app-theme');
+        const customThemeStorageKey = getThemeKey('app-custom-theme');
+
+        if (consent === 'accepted' && themeStorageKey && customThemeStorageKey) {
+            localStorage.setItem(customThemeStorageKey, hexColor);
+            localStorage.setItem(themeStorageKey, 'custom');
+        } else if (themeStorageKey && customThemeStorageKey) {
+            localStorage.removeItem(customThemeStorageKey);
+            localStorage.removeItem(themeStorageKey);
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     useEffect(() => {
-        const savedThemeId = localStorage.getItem('app-theme');
-        const savedCustomColor = localStorage.getItem('app-custom-theme');
+        const consentKey = getConsentKey();
+        const consent = consentKey ? localStorage.getItem(consentKey) : null;
 
-        if (savedThemeId === 'custom' && savedCustomColor) {
-            applyCustomTheme(savedCustomColor);
+        // --- INICIO DE LA MODIFICACIÓN ---
+        if (user && consent === 'accepted') {
+            const themeStorageKey = getThemeKey('app-theme');
+            const customThemeStorageKey = getThemeKey('app-custom-theme');
+            
+            const savedThemeId = themeStorageKey ? localStorage.getItem(themeStorageKey) : null;
+            const savedCustomColor = customThemeStorageKey ? localStorage.getItem(customThemeStorageKey) : null;
+
+            if (savedThemeId === 'custom' && savedCustomColor) {
+                applyCustomTheme(savedCustomColor);
+            } else {
+                applyTheme(savedThemeId || 'default-purple');
+            }
         } else {
-            applyTheme(savedThemeId || 'default-purple');
+            applyTheme('default-purple');
         }
-    }, []);
+        // --- FIN DE LA MODIFICACIÓN ---
+    }, [user]);
 
     const value = useMemo(() => ({
         themes,
         activeTheme: customTheme || themes.find(t => t.id === activeThemeId) || themes[0],
         applyTheme,
         applyCustomTheme,
-    }), [activeThemeId, customTheme]);
+    }), [activeThemeId, customTheme, user]);
 
     return (
         <ThemeContext.Provider value={value}>
