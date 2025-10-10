@@ -4,6 +4,9 @@ const { sendInvitationEmail, sendSubscriptionPromptEmail } = require('../utils/e
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
+// --- INICIO DE LA MODIFICACIÓN ---
+const { stripe } = require('../controllers/subscription/stripeConfig');
+// --- FIN DE LA MODIFICACIÓN ---
 
 // Enviar una invitación a un nuevo usuario para unirse a una compañía
 exports.inviteUser = async (req, res) => {
@@ -34,10 +37,9 @@ exports.inviteUser = async (req, res) => {
                 return res.status(400).json({ error: 'Este usuario ya pertenece a un equipo.' });
             }
 
-            if (existingUser.subscriptionStatus === 'active') {
-                await transaction.rollback();
-                return res.status(400).json({ error: 'No se puede invitar a un usuario que ya tiene una suscripción activa.' });
-            }
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Se elimina la comprobación que impedía invitar a usuarios con suscripción activa.
+            // --- FIN DE LA MODIFICACIÓN ---
         }
         
         let company;
@@ -150,6 +152,28 @@ exports.acceptInvitation = async (req, res) => {
             return res.status(400).json({ error: 'Esta cuenta ya pertenece a otro equipo.' });
         }
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Si el usuario tiene una suscripción activa, la cancelamos.
+        if (userToUpdate.subscriptionStatus === 'active' && userToUpdate.stripeCustomerId) {
+            const subscriptions = await stripe.subscriptions.list({
+                customer: userToUpdate.stripeCustomerId,
+                status: 'active',
+                limit: 1
+            });
+
+            if (subscriptions.data.length > 0) {
+                // Cancelar la suscripción inmediatamente
+                await stripe.subscriptions.cancel(subscriptions.data[0].id);
+            }
+
+            // Actualizar el estado del usuario
+            userToUpdate.previousRole = userToUpdate.role;
+            userToUpdate.role = 'user';
+            userToUpdate.subscriptionStatus = 'inactive';
+            userToUpdate.subscriptionExpiry = null;
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
+
         userToUpdate.companyId = invitation.companyId;
         userToUpdate.businessName = invitation.Company.name;
         await userToUpdate.save({ transaction });
@@ -198,13 +222,10 @@ exports.expelUser = async (req, res) => {
             return res.status(400).json({ error: 'No puedes expulsarte a ti mismo.' });
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se añade una comprobación para evitar que se pueda expulsar al propietario del equipo.
         if (userToExpel.id === company.ownerId) {
             await transaction.rollback();
             return res.status(403).json({ error: 'No se puede expulsar al propietario del equipo.' });
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         
         userToExpel.companyId = null;
         userToExpel.canManageRoles = false;

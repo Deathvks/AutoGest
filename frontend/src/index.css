@@ -42,18 +42,26 @@
     --color-circles-bg: linear-gradient(120deg, rgb(135, 60, 141), rgb(182, 85, 107));
   }
 
+  /* --- INICIO DE LA MODIFICACIÓN --- */
+  html {
+    /* Evita efectos de scroll no deseados en móviles como el "pull-to-refresh". */
+    overscroll-behavior: none;
+  }
+  /* --- FIN DE LA MODIFICACIÓN --- */
+
   body {
     background: linear-gradient(-70deg, rgb(53, 33, 90), rgb(92, 37, 165));
     background-attachment: fixed;
     color: var(--color-text-secondary);
     scrollbar-width: none;
     -ms-overflow-style: none;
-    /* --- INICIO DE LA MODIFICACIÓN --- */
     caret-color: transparent;
+    /* --- INICIO DE LA MODIFICACIÓN --- */
+    /* Evita que el scroll de un elemento interno se propague al body. */
+    overscroll-behavior: none;
     /* --- FIN DE LA MODIFICACIÓN --- */
   }
   
-  /* --- INICIO DE LA MODIFICACIÓN --- */
   input, textarea, select {
     @apply focus:outline-none;
   }
@@ -62,7 +70,16 @@
   input, textarea {
     caret-color: var(--color-text-primary);
   }
-  /* --- FIN DE LA MODIFICACIÓN --- */
+  
+  /* Corrige el estilo del autocompletado del navegador */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px var(--color-component-bg-hover) inset !important;
+      -webkit-text-fill-color: var(--color-text-primary) !important;
+      transition: background-color 5000s ease-in-out 0s;
+  }
 
   /* Ocultar las flechas en los inputs de tipo número en todos los navegadores */
   input[type=number]::-webkit-inner-spin-button,

@@ -111,7 +111,8 @@ exports.updateUser = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
         
-        if (requester.role === 'technician' || requester.role === 'technician_subscribed' || requester.canExpelUsers) {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
             if (userToUpdate.id === requester.id) {
                 return res.status(403).json({ error: 'Edita tu propio perfil desde la sección "Mi Perfil".' });
             }
@@ -125,31 +126,22 @@ exports.updateUser = async (req, res) => {
                  return res.status(403).json({ error: 'No puedes editar al propietario del equipo.' });
             }
             
-            if (!requester.isOwner && !requester.canManageRoles) {
+            // Solo el propietario puede cambiar permisos.
+            if (!requester.isOwner) {
                 return res.status(403).json({ error: 'No tienes permiso para editar usuarios.' });
             }
 
-            if (name || email || password) {
-                return res.status(403).json({ error: 'Solo puedes modificar los permisos de un usuario.' });
+            // Un propietario no puede editar nombre/email/pass (solo permisos) desde aquí.
+            if (name || email || password || role) {
+                return res.status(403).json({ error: 'Desde aquí, solo puedes modificar los permisos de un usuario.' });
             }
-
-            if (!requester.isOwner && (role !== undefined || canManageRoles !== undefined)) {
-                return res.status(403).json({ error: 'Solo el propietario del equipo puede cambiar roles o asignar permisos de gestión.' });
-            }
-
-            const isOriginalTechnician = userToUpdate.previousRole === 'technician' || userToUpdate.previousRole === 'technician_subscribed';
-            if (isOriginalTechnician && role === 'user') {
-                return res.status(403).json({ error: 'No se puede quitar el rol de técnico a un usuario que ya lo era.' });
-            }
-
-            const allowedRolesToAssign = ['user', 'technician_subscribed'];
-            if (requester.role === 'technician') {
-                allowedRolesToAssign.push('technician');
-            }
-            if (role && !allowedRolesToAssign.includes(role)) {
-                return res.status(403).json({ error: 'No puedes asignar el rol seleccionado.' });
+            
+            // Un propietario no puede asignar la gestión de roles a otros.
+            if (canManageRoles !== undefined) {
+                 return res.status(403).json({ error: 'La gestión de roles no se puede delegar.' });
             }
         }
+        // --- FIN DE LA MODIFICACIÓN ---
         
         if (requester.role === 'admin') {
             userToUpdate.name = name !== undefined ? name : userToUpdate.name;

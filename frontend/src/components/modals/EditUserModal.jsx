@@ -88,7 +88,6 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
 
     const isEditingSelf = currentUser.id === user.id;
     const isCurrentUserAdmin = currentUser.role === 'admin';
-    const canEditPermissions = currentUser.isOwner || currentUser.canManageRoles;
     
     const handleChange = (e) => setUserData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleSelectChange = (name, value) => setUserData(prev => ({ ...prev, [name]: value }));
@@ -106,9 +105,8 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
                 if (userData.password) {
                     dataToUpdate.password = userData.password;
                 }
-            } else if (canEditPermissions) {
+            } else if (currentUser.isOwner) {
                  Object.assign(dataToUpdate, {
-                    canManageRoles: userData.canManageRoles,
                     canExpelUsers: userData.canExpelUsers
                 });
             }
@@ -149,23 +147,14 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
                         </>
                     )}
 
-                    {canEditPermissions && !isCurrentUserAdmin && !isEditingSelf && (
+                    {currentUser.isOwner && !isCurrentUserAdmin && !isEditingSelf && (
                         <div className="pt-4 border-t border-border-color space-y-4">
-                            <ToggleSwitch
-                                label="Gestionar Roles"
-                                icon={faUserShield}
-                                enabled={userData.canManageRoles}
-                                onChange={() => setUserData(prev => ({ ...prev, canManageRoles: !prev.canManageRoles }))}
-                                description="Permite cambiar roles a otros miembros del equipo."
-                                disabled={!currentUser.isOwner}
-                            />
                             <ToggleSwitch
                                 label="Expulsar Miembros"
                                 icon={faUserSlash}
                                 enabled={userData.canExpelUsers}
                                 onChange={() => setUserData(prev => ({ ...prev, canExpelUsers: !prev.canExpelUsers }))}
                                 description="Permite expulsar a otros miembros del equipo."
-                                disabled={!currentUser.isOwner}
                             />
                         </div>
                     )}
@@ -173,10 +162,9 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
                     {error && <p className="mt-4 text-sm text-red-accent text-center font-semibold">{error}</p>}
                 </form>
                 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <div className="flex flex-col-reverse sm:flex-row sm:justify-between items-center gap-3 p-4 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
                     <div className="w-full sm:w-auto">
-                        {canEditPermissions && !isCurrentUserAdmin && !isEditingSelf && (
+                        {(currentUser.isOwner || currentUser.canExpelUsers) && !isCurrentUserAdmin && !isEditingSelf && (
                             <button onClick={handleExpelClick} className="w-full bg-red-accent/10 text-red-accent px-4 py-2 rounded-lg hover:bg-red-accent/20 transition-colors text-sm font-semibold flex items-center justify-center gap-2">
                                 <FontAwesomeIcon icon={faUserSlash} />
                                 Expulsar
@@ -190,7 +178,6 @@ const EditUserModal = ({ user, onClose, onUserUpdated, onExpelUser }) => {
                         </button>
                     </div>
                 </div>
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
         </div>
     );
