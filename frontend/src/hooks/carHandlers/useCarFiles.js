@@ -1,8 +1,12 @@
 // frontend/src/hooks/carHandlers/useCarFiles.js
 import { useCarActions } from './useCarActions';
 
-export const useCarFiles = (setCars, setLocations, modalState) => {
-    const { handleUpdateCar } = useCarActions(setCars, setLocations, modalState);
+export const useCarFiles = ({ setCars, setLocations, modalState }) => {
+    // Se crea un objeto de contexto para pasar todas las dependencias
+    const context = { setCars, setLocations, modalState };
+    
+    // Se llama a useCarActions con el objeto de contexto
+    const { handleUpdateCar } = useCarActions(context);
 
     const handleDeleteFile = async (fileData) => {
         const { car, file, fileType } = fileData;

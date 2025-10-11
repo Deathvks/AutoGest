@@ -10,7 +10,6 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import AcceptInvitationPage from './pages/AcceptInvitationPage';
 import CookiePolicyPage from './pages/CookiePolicyPage';
-import Toast from './components/Toast';
 import CookieConsent from './components/CookieConsent';
 import InvitationModal from './components/modals/InvitationModal';
 
@@ -50,14 +49,11 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <ThemeProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <ThemeProvider>
           <AppContent />
-          {/* --- INICIO DE LA MODIFICACIÓN --- */}
-          {/* Se elimina la línea <Toast /> que causaba el problema */}
-          {/* --- FIN DE LA MODIFICACIÓN --- */}
-        </AuthProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </Router>
   );
 }

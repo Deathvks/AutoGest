@@ -40,7 +40,7 @@ const generateReservationPDF = (car, depositAmount) => {
 };
 
 
-export const useCarStatus = (setCars, modalState) => {
+export const useCarStatus = ({ setCars, modalState }) => { // Se modifica la firma para aceptar un objeto
 
     const handleSellConfirm = async (carId, salePrice, saleDate, buyerDetails) => {
         try {

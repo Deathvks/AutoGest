@@ -39,23 +39,23 @@ const AddIncidentModal = ({ car, onClose, onConfirm }) => {
                     </button>
                 </div>
 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <div className="flex-grow overflow-y-auto p-6 space-y-4 no-scrollbar">
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <p className="text-text-secondary text-center">
                         Añadiendo incidencia para el <span className="font-bold text-text-primary">{car.make} {car.model}</span> ({car.licensePlate}).
                     </p>
                     <div>
                         <label htmlFor="description" className="block text-sm font-semibold text-text-primary mb-1 uppercase">Descripción</label>
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         <textarea
                             ref={textareaRef}
                             id="description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Describe el problema o la incidencia reportada..."
-                            className="w-full px-4 py-2 bg-background/50 border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent resize-none overflow-hidden"
+                            className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary/70 resize-none overflow-hidden"
                             rows="3"
                         />
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                         {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
                     </div>
                 </div>

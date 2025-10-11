@@ -1,8 +1,10 @@
 // autogest-app/frontend/src/hooks/useDataFetching.js
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import api from '../services/api';
+import { AuthContext } from '../context/AuthContext';
 
 export const useDataFetching = () => {
+    const { user } = useContext(AuthContext); // Importamos el usuario del contexto
     const [cars, setCars] = useState([]);
     const [expenses, setExpenses] = useState([]);
     const [allExpenses, setAllExpenses] = useState([]);
@@ -53,21 +55,32 @@ export const useDataFetching = () => {
     
     const fetchAllInitialData = useCallback(async () => {
         try {
+            // --- INICIO DE LA MODIFICACIÓN ---
+            const promises = [
+                fetchData('cars', api.getCars),
+                fetchData('expenses', api.getAllUserExpenses),
+                fetchData('incidents', api.getIncidents),
+                fetchData('locations', api.getLocations),
+                fetchData('notifications', api.notifications.getAll),
+            ];
+
+            // Solo añadimos la petición de usuarios si el rol es el adecuado
+            if (user && (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed' || user.canExpelUsers)) {
+                promises.push(fetchData('users', api.admin.getAllUsers));
+            } else {
+                setLoading(prev => ({ ...prev, users: false })); // Marcamos la carga de usuarios como finalizada
+                setUsers([]); // Nos aseguramos de que no haya datos de usuarios anteriores
+            }
+
             const [
                 carsData,
                 allExpensesData,
                 incidentsData,
                 locationsData,
-                usersData,
                 notificationsData,
-            ] = await Promise.all([
-                fetchData('cars', api.getCars),
-                fetchData('expenses', api.getAllUserExpenses),
-                fetchData('incidents', api.getIncidents),
-                fetchData('locations', api.getLocations),
-                fetchData('users', api.admin.getAllUsers),
-                fetchData('notifications', api.notifications.getAll),
-            ]);
+                usersData, // Puede ser undefined si no se pidió
+            ] = await Promise.all(promises);
+            // --- FIN DE LA MODIFICACIÓN ---
     
             setCars(carsData || []);
             setAllExpenses(allExpensesData || []);
@@ -80,11 +93,13 @@ export const useDataFetching = () => {
         } catch (err) {
             console.error("Error fetching initial data pack:", err);
         }
-    }, [fetchData]);
+    }, [fetchData, user]); // Añadimos user a las dependencias
 
     useEffect(() => {
-        fetchAllInitialData();
-    }, [fetchAllInitialData]);
+        if (user) { // Nos aseguramos de que el usuario exista antes de cargar datos
+            fetchAllInitialData();
+        }
+    }, [fetchAllInitialData, user]); // Añadimos user a las dependencias
 
     const markAllNotificationsAsRead = useCallback(async () => {
         const originalNotifications = notifications;
@@ -130,7 +145,11 @@ export const useDataFetching = () => {
             },
             incidents: async () => setIncidents(await fetchData('incidents', api.getIncidents)),
             locations: async () => setLocations(await fetchData('locations', api.getLocations)),
-            users: async () => setUsers(await fetchData('users', api.admin.getAllUsers)),
+            users: async () => {
+                if (user && (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed' || user.canExpelUsers)) {
+                    setUsers(await fetchData('users', api.admin.getAllUsers));
+                }
+            },
             dashboard: fetchDashboardStats,
             activity: fetchActivity,
             notifications: fetchAllInitialData, // Refresca todo para consistencia
@@ -142,7 +161,7 @@ export const useDataFetching = () => {
                 console.error(`Failed to refresh ${dataType}:`, e);
             }
         }
-    }, [fetchData, fetchDashboardStats, fetchActivity, fetchAllInitialData]);
+    }, [fetchData, fetchDashboardStats, fetchActivity, fetchAllInitialData, user]);
 
     const isDataLoading = loading.cars || loading.expenses || loading.incidents || loading.locations || loading.users;
 

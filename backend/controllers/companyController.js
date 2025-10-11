@@ -1,10 +1,8 @@
 // autogest-app/backend/controllers/companyController.js
 const { User, Company, Invitation, Notification, sequelize } = require('../models');
-const { sendInvitationEmail, sendSubscriptionPromptEmail } = require('../utils/emailUtils');
+const { sendInvitationEmail } = require('../utils/emailUtils');
 const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
-const { stripe } = require('../controllers/subscription/stripeConfig');
 
 // Enviar una invitación a un nuevo usuario para unirse a una compañía
 exports.inviteUser = async (req, res) => {
@@ -34,7 +32,6 @@ exports.inviteUser = async (req, res) => {
                 await transaction.rollback();
                 return res.status(400).json({ error: 'Este usuario ya pertenece a un equipo.' });
             }
-
         }
         
         let company;
@@ -75,17 +72,14 @@ exports.inviteUser = async (req, res) => {
             expiresAt,
         }, { transaction });
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Si el usuario invitado ya existe, le creamos una notificación.
         if (existingUser) {
             await Notification.create({
                 userId: existingUser.id,
                 message: `${inviter.name} te ha invitado a unirte a su equipo ${company.name}.`,
-                type: 'general', // O un tipo más específico como 'invitation'
+                type: 'general',
                 link: `/accept-invitation/${token}`
             }, { transaction });
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         await sendInvitationEmail(invitedEmail, token, company.name, inviter.name);
         
@@ -140,7 +134,7 @@ exports.acceptInvitation = async (req, res) => {
                 status: 'pending',
                 expiresAt: { [Op.gt]: new Date() }
             },
-            include: [{ model: Company, attributes: ['name'] }],
+            include: [{ model: Company, attributes: ['name', 'ownerId'] }],
             transaction
         });
 
@@ -159,22 +153,12 @@ exports.acceptInvitation = async (req, res) => {
             return res.status(400).json({ error: 'Esta cuenta ya pertenece a otro equipo.' });
         }
 
-        if (userToUpdate.subscriptionStatus === 'active' && userToUpdate.stripeCustomerId) {
-            const subscriptions = await stripe.subscriptions.list({
-                customer: userToUpdate.stripeCustomerId,
-                status: 'active',
-                limit: 1
-            });
-
-            if (subscriptions.data.length > 0) {
-                await stripe.subscriptions.cancel(subscriptions.data[0].id);
-            }
-
-            userToUpdate.previousRole = userToUpdate.role;
-            userToUpdate.role = 'user';
-            userToUpdate.subscriptionStatus = 'inactive';
-            userToUpdate.subscriptionExpiry = null;
-        }
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se elimina la lógica anterior que cancelaba la suscripción y cambiaba el rol a 'user'.
+        // Ahora, simplemente se guarda el rol actual para poder restaurarlo si es expulsado.
+        // El rol y la suscripción del usuario se mantienen intactos.
+        userToUpdate.previousRole = userToUpdate.role;
+        // --- FIN DE LA MODIFICACIÓN ---
 
         userToUpdate.companyId = invitation.companyId;
         userToUpdate.businessName = invitation.Company.name;
@@ -183,8 +167,6 @@ exports.acceptInvitation = async (req, res) => {
         invitation.status = 'accepted';
         await invitation.save({ transaction });
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Notificar al propietario de la empresa que un nuevo miembro se ha unido
         const companyOwner = await User.findByPk(invitation.Company.ownerId, { transaction });
         if (companyOwner) {
             await Notification.create({
@@ -193,7 +175,6 @@ exports.acceptInvitation = async (req, res) => {
                 type: 'general'
             }, { transaction });
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         await transaction.commit();
 
@@ -241,19 +222,24 @@ exports.expelUser = async (req, res) => {
             return res.status(403).json({ error: 'No se puede expulsar al propietario del equipo.' });
         }
         
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Al expulsar al usuario, restauramos el rol que tenía antes de unirse al equipo.
+        if (userToExpel.previousRole) {
+            userToExpel.role = userToExpel.previousRole;
+            userToExpel.previousRole = null;
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
+
         userToExpel.companyId = null;
         userToExpel.canManageRoles = false;
         userToExpel.canExpelUsers = false;
         await userToExpel.save({ transaction });
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Notificar al usuario que ha sido expulsado
         await Notification.create({
             userId: userToExpel.id,
             message: `Has sido expulsado del equipo ${company.name}.`,
             type: 'general',
         }, { transaction });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         await transaction.commit();
         

@@ -1,7 +1,7 @@
 // frontend/src/hooks/carHandlers/useCarActions.js
 import api from '../../services/api';
 
-export const useCarActions = (setCars, setLocations, modalState) => {
+export const useCarActions = ({ setCars, setLocations, modalState }) => {
     const fetchLocations = async () => {
         try {
             const locationsData = await api.getLocations();

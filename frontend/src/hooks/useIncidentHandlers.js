@@ -2,9 +2,7 @@
 import api from '../services/api';
 
 export const useIncidentHandlers = (
-    incidents,
-    setIncidents,
-    modalState
+    { incidents, setIncidents, modalState } // Se modifica la firma para aceptar un objeto
 ) => {
     const handleAddIncident = async (car, description) => {
         const incidentData = { 

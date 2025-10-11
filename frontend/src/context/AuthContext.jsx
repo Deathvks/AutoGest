@@ -12,9 +12,7 @@ const AuthProvider = ({ children }) => {
     const [subscriptionStatus, setSubscriptionStatus] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
-    // --- INICIO DE LA MODIFICACIÓN ---
     const [pendingInvitationToken, setPendingInvitationToken] = useState(null);
-    // --- FIN DE LA MODIFICACIÓN ---
 
     // Función para obtener notificaciones
     const fetchNotifications = useCallback(async () => {
@@ -52,6 +50,11 @@ const AuthProvider = ({ children }) => {
                 setUser(userData);
                 setSubscriptionStatus(userData.subscriptionStatus);
                 await fetchNotifications(); // Se obtienen notificaciones junto al usuario
+
+                if (userData && userData.companyId) {
+                    setPendingInvitationToken(null);
+                }
+
             } catch (error) {
                 console.error("Token inválido o error al cargar datos, cerrando sesión.", error);
                 logout();
@@ -95,7 +98,10 @@ const AuthProvider = ({ children }) => {
                 setToken(response.token);
                 // --- INICIO DE LA MODIFICACIÓN ---
                 if (response.invitationToken) {
-                    setPendingInvitationToken(response.invitationToken);
+                    const handledTokens = JSON.parse(localStorage.getItem('handledInvitationTokens') || '[]');
+                    if (!handledTokens.includes(response.invitationToken)) {
+                        setPendingInvitationToken(response.invitationToken);
+                    }
                 }
                 // --- FIN DE LA MODIFICACIÓN ---
                 return true;
@@ -112,9 +118,7 @@ const AuthProvider = ({ children }) => {
         setSubscriptionStatus(null);
         setNotifications([]); // Limpiar notificaciones al salir
         setUnreadCount(0);
-        // --- INICIO DE LA MODIFICACIÓN ---
         setPendingInvitationToken(null);
-        // --- FIN DE LA MODIFICACIÓN ---
         localStorage.removeItem('authToken');
         window.location.href = '/login';
     };
@@ -180,10 +184,8 @@ const AuthProvider = ({ children }) => {
         unreadCount,
         markAllNotificationsAsRead,
         fetchNotifications,
-        // --- INICIO DE LA MODIFICACIÓN ---
         pendingInvitationToken,
         setPendingInvitationToken,
-        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     return (

@@ -1,7 +1,7 @@
 // frontend/src/hooks/carHandlers/useCarData.js
 import api from '../../services/api';
 
-export const useCarData = (setCars, modalState) => {
+export const useCarData = ({ setCars, modalState }) => { // Se modifica la firma para aceptar un objeto
 
     const handleDeleteNote = async (car, noteIdToDelete) => {
         try {

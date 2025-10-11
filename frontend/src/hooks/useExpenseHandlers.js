@@ -1,11 +1,11 @@
 // AutoGest/frontend/src/hooks/useExpenseHandlers.js
 import api from '../services/api';
 
-export const useExpenseHandlers = (
+export const useExpenseHandlers = ({ // Se modifica la firma para aceptar un objeto
     setExpenses,
     setAllExpenses,
     modalState
-) => {
+}) => {
     const handleAddExpense = async (expenseData) => {
         try {
             const newExpense = await api.createExpense(expenseData);

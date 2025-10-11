@@ -39,16 +39,20 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
             return;
         }
 
+        // --- INICIO DE LA MODIFICACIÓN ---
         const d = Math.floor(diff / (1000 * 60 * 60 * 24));
         const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
         const m = Math.floor((diff / 1000 / 60) % 60);
         
-        let timeString = '';
-        if (d > 0) timeString += `${d}d `;
-        if (h > 0 || d > 0) timeString += `${h}h `;
-        timeString += `${m}m`;
+        const parts = [];
+        if (d > 0) parts.push(`${d}d`);
+        if (h > 0) parts.push(`${h}h`);
+        if (m > 0 || (d === 0 && h === 0)) {
+            parts.push(`${m}m`);
+        }
         
-        setRemainingTime(timeString.trim());
+        setRemainingTime(parts.join(' '));
+        // --- FIN DE LA MODIFICACIÓN ---
     }, 1000);
 
     return () => clearInterval(interval);
@@ -133,7 +137,6 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
 
         <div className="mt-auto flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-border-color">
           <div className="text-center sm:text-left w-full sm:w-auto">
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             {car.status === 'Vendido' && car.salePrice ? (
               <div className="flex items-baseline gap-4">
                 <div>
@@ -159,7 +162,6 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
                 </p>
               </div>
             )}
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
           </div>
           <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
             {car.status === 'Vendido' && (

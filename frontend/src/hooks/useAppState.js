@@ -31,19 +31,30 @@ export const useAppState = () => {
 
     // 3. Hooks que contienen la lógica de negocio (handlers)
     const carHandlers = useCarHandlers({
-        cars, setCars, locations, setLocations, ...modalState, refreshData,
+        cars, 
+        setCars, 
+        locations, 
+        setLocations, 
+        modalState,
+        refreshData,
     });
     
     const expenseHandlers = useExpenseHandlers({
-        setExpenses, setAllExpenses, ...modalState, refreshData
+        setExpenses, 
+        setAllExpenses, 
+        modalState,
     });
     
     const incidentHandlers = useIncidentHandlers({
-        incidents, setIncidents, ...modalState, refreshData
+        incidents, 
+        setIncidents, 
+        modalState,
     });
     
     const userHandlers = useUserHandlers({
-        setUsers, ...modalState, refreshData
+        users,
+        setUsers, 
+        modalState,
     });
     
     // Handler específico que necesita acceso al AuthContext

@@ -5,37 +5,40 @@ import { useCarData } from './carHandlers/useCarData';
 import { useCarPDF } from './carHandlers/useCarPDF';
 import { useCarFiles } from './carHandlers/useCarFiles';
 
-export const useCarHandlers = (
+export const useCarHandlers = ({
     setCars,
     setLocations,
     modalState
-) => {
+}) => {
+    // Definimos un objeto con las dependencias para evitar la redundancia
+    const context = { setCars, setLocations, modalState };
+
     const {
         handleAddCar,
         handleUpdateCar,
         handleDeleteCar,
-    } = useCarActions(setCars, setLocations, modalState);
+    } = useCarActions(context);
 
     const {
         handleSellConfirm,
         handleReserveConfirm,
         handleConfirmCancelReservation,
         handleUpdateCarInsurance,
-    } = useCarStatus(setCars, modalState);
+    } = useCarStatus(context);
 
     const {
         handleDeleteNote,
         handleGestoriaPickup,
         handleGestoriaReturn,
-    } = useCarData(setCars, modalState);
+    } = useCarData(context);
 
     const {
         handleGeneratePdf,
-    } = useCarPDF(setCars, setLocations, modalState);
+    } = useCarPDF(context);
 
     const {
         handleDeleteFile,
-    } = useCarFiles(setCars, setLocations, modalState);
+    } = useCarFiles(context);
 
     return {
         handleAddCar,

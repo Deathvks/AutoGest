@@ -10,8 +10,16 @@ const InvitationModal = ({ token, onClose }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isAccepting, setIsAccepting] = useState(false);
     const [error, setError] = useState('');
-    // --- INICIO DE LA MODIFICACIÓN ---
     const { refreshUser, setPendingInvitationToken } = useContext(AuthContext);
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleInvitationHandled = () => {
+        const handledTokens = JSON.parse(localStorage.getItem('handledInvitationTokens') || '[]');
+        if (!handledTokens.includes(token)) {
+            handledTokens.push(token);
+            localStorage.setItem('handledInvitationTokens', JSON.stringify(handledTokens));
+        }
+    };
     // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
@@ -23,6 +31,7 @@ const InvitationModal = ({ token, onClose }) => {
             } catch (err) {
                 setError(err.message || 'La invitación es inválida o ha expirado.');
                 toast.error(err.message || 'La invitación es inválida o ha expirado.');
+                handleInvitationHandled(); // Marcar como manejada incluso si hay error
             } finally {
                 setIsLoading(false);
             }
@@ -36,31 +45,27 @@ const InvitationModal = ({ token, onClose }) => {
     const handleAccept = async () => {
         setIsAccepting(true);
         try {
-            // --- INICIO DE LA MODIFICACIÓN ---
             const response = await api.company.acceptInvitation({ token });
             toast.success('¡Te has unido al equipo con éxito!');
             
-            // Actualizamos los datos del usuario en segundo plano
+            handleInvitationHandled(); // Marcar como manejada
             await refreshUser();
             
-            // Limpiamos el token de invitación pendiente y cerramos el modal
             setPendingInvitationToken(null);
             onClose();
-            // --- FIN DE LA MODIFICACIÓN ---
         } catch (err) {
             toast.error(err.message || 'No se pudo aceptar la invitación.');
             setError(err.message);
+            handleInvitationHandled(); // Marcar como manejada incluso si falla la aceptación
         } finally {
             setIsAccepting(false);
         }
     };
 
     const handleDecline = () => {
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Al rechazar, también limpiamos el token para que no vuelva a aparecer
+        handleInvitationHandled(); // Marcar como manejada
         setPendingInvitationToken(null);
         onClose();
-        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     return (

@@ -5,9 +5,12 @@ import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { useCarActions } from './useCarActions'; 
 
-export const useCarPDF = (setCars, setLocations, modalState) => {
+export const useCarPDF = ({ setCars, setLocations, modalState }) => {
     const { user } = useContext(AuthContext);
-    const { handleUpdateCar } = useCarActions(setCars, setLocations, modalState);
+    
+    // Se pasa el objeto completo (setCars, setLocations, modalState) a useCarActions
+    const context = { setCars, setLocations, modalState };
+    const { handleUpdateCar } = useCarActions(context);
 
     const handleGeneratePdf = async (car, type, number, igicRate, observations) => {
         const doc = new jsPDF();

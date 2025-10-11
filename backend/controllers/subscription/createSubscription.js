@@ -1,5 +1,5 @@
 // autogest-app/backend/controllers/subscription/createSubscription.js
-const { User } = require('../../models');
+const { User, Notification } = require('../../models');
 const { stripe, getStripeConfig } = require('./stripeConfig');
 
 // Función de utilidad para reintentar la obtención de la factura
@@ -83,10 +83,7 @@ exports.createSubscription = async (req, res) => {
             console.log(`[CREATE_SUB] Nuevo cliente ${customerId} creado por primera vez.`);
         }
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Calcula el timestamp para el día 1 del próximo mes.
         const now = new Date();
-        // Aseguramos que la fecha se establece en UTC para evitar problemas de zona horaria.
         const firstOfNextMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1));
         const anchorTimestamp = Math.floor(firstOfNextMonth.getTime() / 1000);
 
@@ -95,13 +92,19 @@ exports.createSubscription = async (req, res) => {
             items: [{ price: priceId }],
             payment_behavior: 'default_incomplete',
             payment_settings: { save_default_payment_method: 'on_subscription' },
-            // Añade el anclaje de facturación y el comportamiento de prorrateo.
             billing_cycle_anchor: anchorTimestamp,
             proration_behavior: 'create_prorations',
         });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (subscription.status === 'active') {
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Crear la notificación para el usuario cuando la suscripción se activa inmediatamente
+            await Notification.create({
+                userId: user.id,
+                message: 'Tu suscripción ha sido activada con éxito.',
+                type: 'subscription'
+            });
+            // --- FIN DE LA MODIFICACIÓN ---
             return res.json({ status: 'active' });
         }
         

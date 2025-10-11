@@ -102,7 +102,7 @@ const AcceptInvitationPage = () => {
         }
         if (status === 'success') {
             return (
-                <div className="text-center text-green-accent bg-green-accent/10 p-6 rounded-xl border border-green-accent/20">
+                <div className="text-center text-green-accent bg-green-accent/10 p-6 rounded-xl">
                     <FontAwesomeIcon icon={faCheckCircle} className="mb-4 text-3xl" />
                     <p className="font-semibold">{success}</p>
                 </div>

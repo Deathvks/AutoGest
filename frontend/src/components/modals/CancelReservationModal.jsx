@@ -3,7 +3,6 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const CancelReservationModal = ({ car, onClose, onConfirm }) => {
     if (!car) return null;
 
@@ -24,7 +23,9 @@ const CancelReservationModal = ({ car, onClose, onConfirm }) => {
                         El <span className="font-semibold text-text-primary">{car.make} {car.model}</span> volverá al estado "En venta".
                     </p>
                 </div>
-                <div className="p-6 border-t border-border-color flex justify-end gap-4 bg-component-bg-hover/50 rounded-b-2xl">
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className="p-6 border-t border-border-color flex justify-center gap-4 bg-component-bg-hover/50 rounded-b-2xl">
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <button
                         onClick={onClose}
                         className="px-5 py-2 text-sm font-semibold text-text-primary bg-component-bg rounded-lg border border-border-color hover:bg-border-color transition-colors"
@@ -42,6 +43,5 @@ const CancelReservationModal = ({ car, onClose, onConfirm }) => {
         </div>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 export default CancelReservationModal;
