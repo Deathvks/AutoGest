@@ -1,8 +1,9 @@
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faCheckDouble, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCheckDouble, faChevronLeft, faChevronRight, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 const timeSince = (date) => {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -20,7 +21,7 @@ const timeSince = (date) => {
 };
 
 const NotificationsPage = ({ cars, setCarToEdit }) => {
-    const { notifications, unreadCount, markAllNotificationsAsRead, setPendingInvitationToken } = useContext(AuthContext);
+    const { notifications, unreadCount, markAllNotificationsAsRead, setPendingInvitationToken, setNotifications, setUnreadCount } = useContext(AuthContext);
     const navigate = useNavigate();
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
@@ -31,8 +32,6 @@ const NotificationsPage = ({ cars, setCarToEdit }) => {
             if (carToEdit) {
                 setCarToEdit(carToEdit);
                 navigate('/cars');
-            } else {
-                console.warn(`Coche con id ${notification.carId} no encontrado.`);
             }
         } else if (notification.link && notification.link.includes('/accept-invitation/')) {
             const token = notification.link.split('/accept-invitation/')[1];
@@ -42,12 +41,42 @@ const NotificationsPage = ({ cars, setCarToEdit }) => {
         }
     };
 
+    const handleDeleteNotification = async (e, notificationId) => {
+        e.stopPropagation();
+        
+        const sorted = [...notifications].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const currentItemsOnPage = sorted.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+        const originalNotifications = [...notifications];
+        const notificationToDelete = originalNotifications.find(n => n.id === notificationId);
+        const newNotifications = originalNotifications.filter(n => n.id !== notificationId);
+        
+        setNotifications(newNotifications);
+        
+        if (notificationToDelete && !notificationToDelete.isRead) {
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+
+        if (currentItemsOnPage.length === 1 && currentPage > 1) {
+            setCurrentPage(prev => prev - 1);
+        }
+
+        try {
+            await api.notifications.delete(notificationId);
+        } catch (error) {
+            setNotifications(originalNotifications);
+            if (notificationToDelete && !notificationToDelete.isRead) {
+                setUnreadCount(prev => prev + 1);
+            }
+        }
+    };
+
     const sortedNotifications = notifications ? [...notifications].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
     
     const totalPages = Math.ceil(sortedNotifications.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    const currentNotifications = sortedNotifications.slice(startIndex, endIndex);
+    const currentNotifications = sortedNotifications.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     
     const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const goToPreviousPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
@@ -78,11 +107,13 @@ const NotificationsPage = ({ cars, setCarToEdit }) => {
                         <ul className="divide-y divide-border-color">
                             {currentNotifications.map(notification => (
                                 <li 
-                                    key={notification.id} 
-                                    onClick={() => handleNotificationClick(notification)}
-                                    className={`p-4 sm:p-6 ${!notification.isRead ? 'bg-accent/5' : ''} ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'cursor-pointer hover:bg-component-bg-hover transition-colors' : ''}`}
+                                    key={notification.id}
+                                    className={`flex items-center gap-4 p-4 sm:p-6 ${!notification.isRead ? 'bg-accent/5' : ''} ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'hover:bg-component-bg-hover transition-colors' : ''}`}
                                 >
-                                    <div className="flex items-start gap-4">
+                                    <div 
+                                        onClick={() => handleNotificationClick(notification)}
+                                        className={`flex-grow flex items-start gap-4 ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'cursor-pointer' : ''}`}
+                                    >
                                         <div className="mt-1">
                                             <FontAwesomeIcon icon={faBell} className={`w-5 h-5 ${notification.isRead ? 'text-text-secondary' : 'text-accent'}`} />
                                         </div>
@@ -94,6 +125,15 @@ const NotificationsPage = ({ cars, setCarToEdit }) => {
                                                 {timeSince(notification.createdAt)}
                                             </p>
                                         </div>
+                                    </div>
+                                    <div className="flex-shrink-0">
+                                        <button
+                                            onClick={(e) => handleDeleteNotification(e, notification.id)}
+                                            className="p-2 text-text-secondary hover:text-red-accent transition-colors"
+                                            title="Eliminar notificación"
+                                        >
+                                            <FontAwesomeIcon icon={faTrashAlt} />
+                                        </button>
                                     </div>
                                 </li>
                             ))}

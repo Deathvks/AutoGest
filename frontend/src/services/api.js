@@ -155,8 +155,9 @@ const api = {
     notifications: {
         getAll: () => fetch(`${BASE_URL}/notifications`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
         markAllAsRead: () => fetch(`${BASE_URL}/notifications/read-all`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
-        // --- INICIO DE LA MODIFICACIÓN ---
         createCarCreationNotification: (data) => fetch(`${BASE_URL}/notifications/car-creation`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) }).then(handleProtectedResponse),
+        // --- INICIO DE LA MODIFICACIÓN ---
+        delete: (id) => fetch(`${BASE_URL}/notifications/${id}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
         // --- FIN DE LA MODIFICACIÓN ---
     },
 
@@ -179,13 +180,11 @@ const api = {
             if (endDate) params.append('endDate', endDate);
             return fetch(`${BASE_URL}/dashboard/stats?${params.toString()}`, { headers: getAuthHeaders() }).then(handleProtectedResponse);
         },
-        // --- INICIO DE LA MODIFICACIÓN ---
         getActivity: (page = 1, type = '') => {
             const params = new URLSearchParams({ page });
             if (type) params.append('type', type);
             return fetch(`${BASE_URL}/dashboard/activity?${params.toString()}`, { headers: getAuthHeaders() }).then(handleProtectedResponse);
         }
-        // --- FIN DE LA MODIFICACIÓN ---
     },
 
     // --- Suscripciones (Stripe) ---

@@ -1,11 +1,10 @@
-// autogest-app/frontend/src/components/NotificationsPanel.jsx
 import React, { useState, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faCircle, faCheckDouble, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCircle, faCheckDouble, faChevronLeft, faChevronRight, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import api from '../services/api';
 
-// Utilidad para formatear el tiempo (ej: "hace 5m", "hace 2h")
 const timeSince = (date) => {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
     let interval = seconds / 31536000;
@@ -21,35 +20,47 @@ const timeSince = (date) => {
     return `${Math.floor(seconds)}s`;
 };
 
-const NotificationItem = ({ notification, onClick }) => (
+const NotificationItem = ({ notification, onClick, onDelete }) => (
     <div 
-        onClick={() => onClick(notification)}
-        className={`flex items-start gap-4 p-3 rounded-lg ${!notification.isRead ? 'bg-accent/5' : ''} ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'cursor-pointer hover:bg-component-bg-hover' : ''}`}
+        className={`flex items-center gap-4 p-3 rounded-lg ${!notification.isRead ? 'bg-accent/5' : ''} ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'hover:bg-component-bg-hover transition-colors' : ''}`}
     >
-        <div className="relative mt-1">
-            <FontAwesomeIcon icon={faBell} className="text-text-secondary" />
-            {!notification.isRead && (
-                <FontAwesomeIcon icon={faCircle} className="absolute -top-1 -right-1 text-accent w-2 h-2" />
-            )}
+        <div
+            onClick={() => onClick(notification)}
+            className={`flex-grow flex items-start gap-4 ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'cursor-pointer' : ''}`}
+        >
+            <div className="relative mt-1">
+                <FontAwesomeIcon icon={faBell} className="text-text-secondary" />
+                {!notification.isRead && (
+                    <FontAwesomeIcon icon={faCircle} className="absolute -top-1 -right-1 text-accent w-2 h-2" />
+                )}
+            </div>
+            <div className="flex-1">
+                <p className={`text-sm ${notification.isRead ? 'text-text-secondary' : 'text-text-primary font-medium'}`}>
+                    {notification.message}
+                </p>
+                <p className="text-xs text-text-secondary mt-1">
+                    {timeSince(notification.createdAt)}
+                </p>
+            </div>
         </div>
-        <div className="flex-1">
-            <p className={`text-sm ${notification.isRead ? 'text-text-secondary' : 'text-text-primary font-medium'}`}>
-                {notification.message}
-            </p>
-            <p className="text-xs text-text-secondary mt-1">
-                {timeSince(notification.createdAt)}
-            </p>
+        <div className="flex-shrink-0">
+            <button
+                onClick={(e) => { e.stopPropagation(); onDelete(notification.id); }}
+                className="p-2 text-text-secondary hover:text-red-accent transition-colors"
+                title="Eliminar notificación"
+            >
+                <FontAwesomeIcon icon={faTrashAlt} />
+            </button>
         </div>
     </div>
 );
 
-const NotificationsPanel = ({ notifications, onMarkAllRead, onClose, cars, setCarToEdit }) => {
-    const { setPendingInvitationToken } = useContext(AuthContext);
+const NotificationsPanel = ({ onMarkAllRead, onClose, cars, setCarToEdit }) => {
+    const { notifications, setNotifications, setUnreadCount, setPendingInvitationToken } = useContext(AuthContext);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 5;
     const navigate = useNavigate();
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleNotificationClick = (notification) => {
         if (notification.type === 'car_creation_pending_price' && notification.carId && cars && setCarToEdit) {
             const carToEdit = cars.find(c => c.id === notification.carId);
@@ -57,8 +68,6 @@ const NotificationsPanel = ({ notifications, onMarkAllRead, onClose, cars, setCa
                 setCarToEdit(carToEdit);
                 onClose(); 
                 navigate('/cars');
-            } else {
-                console.warn(`Coche con id ${notification.carId} no encontrado.`);
             }
         } else if (notification.link && notification.link.includes('/accept-invitation/')) {
             const token = notification.link.split('/accept-invitation/')[1];
@@ -68,7 +77,27 @@ const NotificationsPanel = ({ notifications, onMarkAllRead, onClose, cars, setCa
             }
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
+
+    const handleDeleteNotification = async (notificationId) => {
+        const originalNotifications = [...notifications];
+        const notificationToDelete = originalNotifications.find(n => n.id === notificationId);
+
+        const newNotifications = originalNotifications.filter(n => n.id !== notificationId);
+        setNotifications(newNotifications);
+        
+        if (notificationToDelete && !notificationToDelete.isRead) {
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+
+        try {
+            await api.notifications.delete(notificationId);
+        } catch (error) {
+            setNotifications(originalNotifications);
+            if (notificationToDelete && !notificationToDelete.isRead) {
+                setUnreadCount(prev => prev + 1);
+            }
+        }
+    };
 
     const sortedNotifications = notifications ? [...notifications].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
 
@@ -93,7 +122,12 @@ const NotificationsPanel = ({ notifications, onMarkAllRead, onClose, cars, setCa
                 {currentNotifications && currentNotifications.length > 0 ? (
                     <div className="space-y-1">
                         {currentNotifications.map(notif => (
-                            <NotificationItem key={notif.id} notification={notif} onClick={handleNotificationClick} />
+                            <NotificationItem 
+                                key={notif.id} 
+                                notification={notif} 
+                                onClick={handleNotificationClick} 
+                                onDelete={handleDeleteNotification} 
+                            />
                         ))}
                     </div>
                 ) : (

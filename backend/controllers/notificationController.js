@@ -1,5 +1,5 @@
 // autogest-app/backend/controllers/notificationController.js
-const { Notification, User, Company } = require('../models');
+const { Notification, User } = require('../models');
 
 // Obtener todas las notificaciones del usuario logueado
 exports.getNotifications = async (req, res) => {
@@ -7,7 +7,7 @@ exports.getNotifications = async (req, res) => {
         const notifications = await Notification.findAll({
             where: { userId: req.user.id },
             order: [['createdAt', 'DESC']],
-            limit: 50 // Limitar a las 50 más recientes para no sobrecargar
+            limit: 50
         });
         res.status(200).json(notifications);
     } catch (error) {
@@ -30,7 +30,6 @@ exports.markAllAsRead = async (req, res) => {
     }
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Crear una notificación para el líder del equipo cuando un miembro crea un coche
 exports.createCarCreationNotification = async (req, res) => {
     const { carId, message } = req.body;
@@ -41,24 +40,20 @@ exports.createCarCreationNotification = async (req, res) => {
     }
 
     try {
-        // Encontrar la compañía para obtener el ID del propietario
-        const company = await Company.findByPk(companyId);
+        const owner = await User.findOne({
+            where: {
+                companyId: companyId,
+                isOwner: true,
+            }
+        });
 
-        if (!company || !company.ownerId) {
-            console.log(`No se encontró una compañía o un propietario para la compañía ${companyId}, no se puede notificar.`);
+        if (!owner) {
+            console.log(`No se encontró un propietario para la compañía ${companyId}, no se puede notificar.`);
             return res.status(404).json({ error: 'No se encontró el propietario del equipo.' });
         }
-        
-        const ownerId = company.ownerId;
 
-        // No enviar notificación si el que crea el coche es el propio líder
-        if (req.user.id === ownerId) {
-            return res.status(200).json({ message: 'El propietario ha creado el coche, no se auto-notifica.' });
-        }
-
-        // Crear la notificación para el propietario
         const notification = await Notification.create({
-            userId: ownerId,
+            userId: owner.id,
             message: message,
             type: 'car_creation_pending_price',
             carId: carId,
@@ -69,6 +64,27 @@ exports.createCarCreationNotification = async (req, res) => {
     } catch (error) {
         console.error('Error al crear la notificación de creación de coche:', error);
         res.status(500).json({ error: 'Error interno al crear la notificación.' });
+    }
+};
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Eliminar una notificación específica
+exports.deleteNotification = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        const notification = await Notification.findOne({ where: { id, userId } });
+
+        if (!notification) {
+            return res.status(404).json({ error: 'Notificación no encontrada o no tienes permiso para eliminarla.' });
+        }
+
+        await notification.destroy();
+        res.status(200).json({ message: 'Notificación eliminada correctamente.' });
+    } catch (error) {
+        console.error('Error al eliminar la notificación:', error);
+        res.status(500).json({ error: 'Error al eliminar la notificación.' });
     }
 };
 // --- FIN DE LA MODIFICACIÓN ---

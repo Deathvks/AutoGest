@@ -13,9 +13,12 @@ router.get('/', notificationController.getNotifications);
 // POST /api/notifications/read-all -> Marcar todas como leídas
 router.post('/read-all', notificationController.markAllAsRead);
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // POST /api/notifications/car-creation -> Crear una notificación para el líder del equipo
 router.post('/car-creation', notificationController.createCarCreationNotification);
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// DELETE /api/notifications/:id -> Eliminar una notificación específica
+router.delete('/:id', notificationController.deleteNotification);
 // --- FIN DE LA MODIFICACIÓN ---
 
 module.exports = router;
