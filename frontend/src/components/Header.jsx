@@ -11,7 +11,10 @@ import { AuthContext } from '../context/AuthContext';
 import { Menu, Transition, Portal } from '@headlessui/react';
 import NotificationsPanel from './NotificationsPanel';
 
-const Header = () => {
+// --- INICIO DE LA MODIFICACIÓN ---
+const Header = ({ appState }) => {
+    const { cars, setCarToEdit } = appState;
+    // --- FIN DE LA MODIFICACIÓN ---
     const location = useLocation();
     const { user, subscriptionStatus, notifications, unreadCount, markAllNotificationsAsRead } = useContext(AuthContext);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -82,14 +85,12 @@ const Header = () => {
 
                 <div className="flex items-center space-x-2 sm:space-x-4">
                     <div>
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         <button
                             ref={notificationsButtonRef}
                             onClick={handleNotificationsToggle}
                             className="relative w-10 h-10 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary transition-colors"
                             aria-label="Notificaciones"
                         >
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                             <FontAwesomeIcon icon={faBell} className="h-5 w-5" />
                             {unreadCount > 0 && (
                                 <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-accent ring-2 ring-component-bg" />
@@ -186,11 +187,15 @@ const Header = () => {
                     ref={notificationsPanelRef}
                     className="fixed left-1/2 -translate-x-1/2 w-[90vw] sm:w-[70vw] max-w-md top-20 z-[60] animate-fade-in-down"
                 >
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <NotificationsPanel
                         notifications={notifications}
                         onMarkAllRead={markAllNotificationsAsRead}
                         onClose={() => setIsNotificationsOpen(false)}
+                        cars={cars}
+                        setCarToEdit={setCarToEdit}
                     />
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>,
                 document.body
             )}

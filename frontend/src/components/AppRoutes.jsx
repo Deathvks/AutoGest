@@ -13,9 +13,7 @@ const Settings = lazy(() => import('../pages/Settings'));
 const ManageUsersPage = lazy(() => import('../pages/ManageUsersPage'));
 const SubscriptionPage = lazy(() => import('../pages/SubscriptionPage'));
 const AcceptInvitationPage = lazy(() => import('../pages/AcceptInvitationPage'));
-// --- INICIO DE LA MODIFICACIÓN ---
 const NotificationsPage = lazy(() => import('../pages/NotificationsPage')); // Importa la nueva página
-// --- FIN DE LA MODIFICACIÓN ---
 
 const AppRoutes = ({ appState, onLogoutClick }) => {
     const { user } = useContext(AuthContext);
@@ -47,21 +45,24 @@ const AppRoutes = ({ appState, onLogoutClick }) => {
         businessDataMessage,
         setSubscriptionSuccessModalOpen,
         setUserToExpel,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setCarToEdit,
+        // --- FIN DE LA MODIFICACIÓN ---
     } = appState;
 
     if (!user) {
         return null; // No renderizar nada si el usuario aún no está cargado
     }
 
-    const technicianRoles = ['admin', 'technician', 'technician_subscribed'];
-    const userHomePath = technicianRoles.includes(user.role) ? '/' : '/cars';
+    const canAccessDashboard = user.role === 'admin' || user.isOwner || !user.companyId;
+    const userHomePath = canAccessDashboard ? '/' : '/cars';
 
     return (
         <Routes>
             <Route 
                 path="/" 
                 element={
-                    (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') ? (
+                    canAccessDashboard ? (
                         <Dashboard 
                             cars={cars} 
                             expenses={allExpenses} 
@@ -133,7 +134,10 @@ const AppRoutes = ({ appState, onLogoutClick }) => {
                 element={<SubscriptionPage setSubscriptionSuccessModalOpen={setSubscriptionSuccessModalOpen} />} 
             />
             {/* --- INICIO DE LA MODIFICACIÓN --- */}
-            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route 
+                path="/notifications" 
+                element={<NotificationsPage cars={cars} setCarToEdit={setCarToEdit} />} 
+            />
             {/* --- FIN DE LA MODIFICACIÓN --- */}
             <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
             <Route path="*" element={<Navigate to={userHomePath} replace />} />

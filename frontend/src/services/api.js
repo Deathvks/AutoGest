@@ -155,6 +155,9 @@ const api = {
     notifications: {
         getAll: () => fetch(`${BASE_URL}/notifications`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
         markAllAsRead: () => fetch(`${BASE_URL}/notifications/read-all`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
+        // --- INICIO DE LA MODIFICACIÓN ---
+        createCarCreationNotification: (data) => fetch(`${BASE_URL}/notifications/car-creation`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) }).then(handleProtectedResponse),
+        // --- FIN DE LA MODIFICACIÓN ---
     },
 
     // --- Ubicaciones (Locations) ---

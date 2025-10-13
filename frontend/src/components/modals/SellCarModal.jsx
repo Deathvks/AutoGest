@@ -1,9 +1,9 @@
 // autogest-app/frontend/src/components/modals/SellCarModal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faEuroSign, faCalendarDay, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
+import { AuthContext } from '../../context/AuthContext';
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, icon, required = false }) => (
     <div>
         <label className="block text-sm font-semibold text-text-primary mb-1">
@@ -29,6 +29,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
 );
 
 const SellCarModal = ({ car, onClose, onConfirm }) => {
+    const { user } = useContext(AuthContext);
     const [saleData, setSaleData] = useState({
         salePrice: '',
         saleDate: new Date().toISOString().split('T')[0],
@@ -144,7 +145,9 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                     <div className="text-center mb-6 p-4 bg-background/50 rounded-xl border border-border-color">
                         <p className="text-text-secondary uppercase">Marcando como vendido el <span className="font-bold text-text-primary">{car.make} {car.model} ({car.licensePlate})</span>.</p>
                         <div className="mt-2 flex justify-center gap-4 text-sm">
-                            <p className="text-text-secondary uppercase">Compra: <span className="font-semibold text-text-primary">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</span></p>
+                            {(user.role === 'admin' || user.role === 'technician' || user.isOwner) && (
+                                <p className="text-text-secondary uppercase">Compra: <span className="font-semibold text-text-primary">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</span></p>
+                            )}
                             <p className="text-text-secondary uppercase">Venta: <span className="font-semibold text-text-primary">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}</span></p>
                         </div>
                     </div>
@@ -186,6 +189,5 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
         </div>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 export default SellCarModal;

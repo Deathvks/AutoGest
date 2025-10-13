@@ -27,6 +27,10 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
 
     const [tagInput, setTagInput] = useState('');
     const [showInsuranceConfirm, setShowInsuranceConfirm] = useState(false);
+    
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const fuelOptions = useMemo(() => [ { id: 'Gasolina', name: 'Gasolina' }, { id: 'Diesel', name: 'Diesel' }, { id: 'Híbrido', name: 'Híbrido' }, { id: 'Eléctrico', name: 'Eléctrico' } ], []);
     const transmissionOptions = useMemo(() => [ { id: 'Manual', name: 'Manual' }, { id: 'Automático', name: 'Automático' } ], []);
@@ -102,9 +106,11 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         if (!newCar.make.trim()) errors.make = 'LA MARCA ES OBLIGATORIA';
         if (!newCar.model.trim()) errors.model = 'EL MODELO ES OBLIGATORIO';
         if (!newCar.licensePlate.trim()) errors.licensePlate = 'LA MATRÍCULA ES OBLIGATORIA';
-        if ((user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && !newCar.purchasePrice.trim()) {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        if (canViewSensitiveData && !newCar.purchasePrice.trim()) {
             errors.purchasePrice = 'EL PRECIO DE COMPRA ES OBLIGATORIO';
         }
+        // --- FIN DE LA MODIFICACIÓN ---
         if (!newCar.price.trim()) errors.price = 'EL PRECIO DE VENTA ES OBLIGATORIO';
 
         setFieldErrors(errors);
@@ -135,9 +141,11 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
             Object.keys(finalCarData).forEach(key => {
                 const value = finalCarData[key];
                 if (key === 'tags') formData.append(key, JSON.stringify(value));
-                else if (key === 'purchasePrice' && !value) {
-                    // No hacer nada
+                // --- INICIO DE LA MODIFICACIÓN ---
+                else if (key === 'purchasePrice' && !canViewSensitiveData) {
+                    // No añadir el precio de compra si no hay permisos
                 }
+                // --- FIN DE LA MODIFICACIÓN ---
                 else if (value !== null && value !== undefined && value !== '') formData.append(key, value);
             });
 
@@ -160,9 +168,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
 
     return (
        <>
-           {/* --- INICIO DE LA MODIFICACIÓN --- */}
            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in-up">
-           {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-border-color">
                     <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
                         <h2 className="text-xl font-bold text-text-primary uppercase">Añadir Nuevo Coche</h2>

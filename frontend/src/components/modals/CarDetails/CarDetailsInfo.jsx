@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClock } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../../context/AuthContext';
-import CarPlaceholderImage from '../../../pages/MyCars/CarPlaceholderImage'; // --- INICIO DE LA MODIFICACIÓN ---
+import CarPlaceholderImage from '../../../pages/MyCars/CarPlaceholderImage';
 
 const getStatusChipClass = (status) => {
     switch (status) {
@@ -18,6 +18,10 @@ const CarDetailsInfo = ({ car }) => {
     const { user } = useContext(AuthContext);
     const [remainingTime, setRemainingTime] = useState('');
     const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
+    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         if (!isReservedAndActive) return;
@@ -51,7 +55,6 @@ const CarDetailsInfo = ({ car }) => {
     return (
         <div className="space-y-4">
             <div className="w-full h-auto aspect-video bg-component-bg-hover rounded-xl border-2 border-border-color flex items-center justify-center overflow-hidden">
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 {car.imageUrl ? (
                     <img
                         src={car.imageUrl}
@@ -61,7 +64,6 @@ const CarDetailsInfo = ({ car }) => {
                 ) : (
                     <CarPlaceholderImage car={car} />
                 )}
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
             <div className="bg-component-bg-hover p-6 rounded-xl text-center border border-border-color">
                 <div className="flex flex-col items-center">
@@ -69,11 +71,13 @@ const CarDetailsInfo = ({ car }) => {
                     <p className="text-5xl lg:text-4xl font-extrabold text-accent">
                         {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice || car.price)}
                     </p>
-                    {(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && (
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    {canViewSensitiveData && (
                         <p className="text-sm text-text-secondary mt-2 uppercase">
                             Compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
                         </p>
                     )}
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     {car.status === 'Reservado' && car.reservationDeposit > 0 && (
                         <p className="text-sm font-semibold text-yellow-accent mt-1 uppercase">
                             Reserva: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}

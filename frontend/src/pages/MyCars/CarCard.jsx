@@ -24,6 +24,9 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
 
   const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
   const isLockedForUser = isReservedAndActive && user.role !== 'admin';
+  // --- INICIO DE LA MODIFICACIÓN ---
+  const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
+  // --- FIN DE LA MODIFICACIÓN ---
 
   useEffect(() => {
     if (!isReservedAndActive) return;
@@ -39,7 +42,6 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
             return;
         }
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         const d = Math.floor(diff / (1000 * 60 * 60 * 24));
         const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
         const m = Math.floor((diff / 1000 / 60) % 60);
@@ -52,7 +54,6 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
         }
         
         setRemainingTime(parts.join(' '));
-        // --- FIN DE LA MODIFICACIÓN ---
     }, 1000);
 
     return () => clearInterval(interval);
@@ -145,7 +146,8 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
                     {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}
                   </p>
                 </div>
-                {user && (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && (
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {canViewSensitiveData && (
                   <div>
                     <p className="text-xs text-text-secondary uppercase">Compra</p>
                     <p className="text-lg font-bold text-text-secondary">
@@ -153,6 +155,7 @@ const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCance
                     </p>
                   </div>
                 )}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
               </div>
             ) : (
               <div>

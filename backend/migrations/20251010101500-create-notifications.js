@@ -1,6 +1,4 @@
-// autogest-app/backend/migrations/20251010101500-create-notifications.js
 'use strict';
-
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
@@ -13,29 +11,42 @@ module.exports = {
       },
       message: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: false
       },
+      // --- INICIO DE LA MODIFICACIÓN ---
       type: {
-        type: Sequelize.ENUM('subscription', 'car_created', 'group_created', 'general'),
+        type: Sequelize.ENUM('subscription', 'car_created', 'group_created', 'general', 'car_creation_pending_price'),
         allowNull: false,
-        defaultValue: 'general',
+        defaultValue: 'general'
       },
+      // --- FIN DE LA MODIFICACIÓN ---
       isRead: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false,
+        defaultValue: false
       },
       link: {
         type: Sequelize.STRING,
-        allowNull: true,
+        allowNull: true
       },
+      // --- INICIO DE LA MODIFICACIÓN ---
+      carId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'Cars',
+          key: 'id'
+        },
+        onDelete: 'SET NULL'
+      },
+      // --- FIN DE LA MODIFICACIÓN ---
       userId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: 'Users',
-          key: 'id',
+          key: 'id'
         },
-        onDelete: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       createdAt: {
         allowNull: false,
@@ -47,7 +58,6 @@ module.exports = {
       }
     });
   },
-
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('Notifications');
   }

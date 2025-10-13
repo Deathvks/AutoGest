@@ -7,11 +7,13 @@ const Notification = sequelize.define('Notification', {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
     type: {
-        type: DataTypes.ENUM('subscription', 'car_created', 'group_created', 'general'),
+        type: DataTypes.ENUM('subscription', 'car_created', 'group_created', 'general', 'car_creation_pending_price'),
         allowNull: false,
         defaultValue: 'general',
     },
+    // --- FIN DE LA MODIFICACIÓN ---
     isRead: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
@@ -21,6 +23,17 @@ const Notification = sequelize.define('Notification', {
         allowNull: true,
         comment: 'URL a la que navegar al hacer clic, ej: /cars?open=123',
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    carId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'Cars',
+            key: 'id',
+        },
+        onDelete: 'SET NULL',
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
     userId: {
         type: DataTypes.INTEGER,
         allowNull: false,

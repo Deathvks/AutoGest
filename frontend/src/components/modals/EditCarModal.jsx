@@ -87,6 +87,10 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     const [newOtherDocumentFiles, setNewOtherDocumentFiles] = useState([]);
     const [filesToRemove, setFilesToRemove] = useState([]);
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const fuelOptions = useMemo(() => [ { id: '', name: 'SELECCIONA...' }, { id: 'Gasolina', name: 'Gasolina' }, { id: 'Diesel', name: 'Diesel' }, { id: 'Híbrido', name: 'Híbrido' }, { id: 'Eléctrico', name: 'Eléctrico' } ], []);
     const transmissionOptions = useMemo(() => [ { id: '', name: 'SELECCIONA...' }, { id: 'Manual', name: 'Manual' }, { id: 'Automático', name: 'Automático' } ], []);
     const statusOptions = useMemo(() => [ { id: 'En venta', name: 'En venta' }, { id: 'Vendido', name: 'Vendido' }, { id: 'Reservado', name: 'Reservado' }, { id: 'Taller', name: 'Taller' } ], []);
@@ -106,7 +110,6 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
         }
     };
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleSelectChange = useCallback((name, value) => {
         setEditedCar(prev => ({ ...prev, [name]: value }));
     }, []);
@@ -114,7 +117,6 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     const handleLocationSelect = useCallback((value) => {
         setEditedCar(prev => ({ ...prev, location: value, newLocation: '' }));
     }, []);
-    // --- FIN DE LA MODIFICACIÓN ---
     
     const handleNewLocationInput = (e) => {
         setEditedCar(prev => ({ ...prev, newLocation: e.target.value.toUpperCase(), location: '' }));
@@ -266,9 +268,11 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                                 <InputField label="Nº de Bastidor" name="vin" value={editedCar.vin} onChange={handleChange} icon={faFingerprint} />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && (
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                {canViewSensitiveData && (
                                     <InputField label="Precio de Compra (€)" name="purchasePrice" type="text" inputMode="decimal" value={editedCar.purchasePrice} onChange={handleChange} icon={faEuroSign} required />
                                 )}
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                                 <InputField label="Precio de Venta (€)" name="price" type="text" inputMode="decimal" value={editedCar.price} onChange={handleChange} icon={faEuroSign} required />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -284,7 +288,6 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                                     onChange={(value) => handleChange({ target: { name: 'keys', value } })}
                                 />
                             </div>
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Select label="Ubicación Existente" value={editedCar.location} onChange={handleLocationSelect} options={locationOptions} icon={faMapMarkerAlt} />
                                 <InputField label="o Nueva Ubicación" name="newLocation" value={editedCar.newLocation} onChange={handleNewLocationInput} icon={faMapMarkerAlt} placeholder="ESCRIBE PARA CREAR/ACTUALIZAR" />
@@ -294,7 +297,6 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                                 <Select label="Tipo de Cambio" value={editedCar.transmission} onChange={(value) => handleSelectChange('transmission', value)} options={transmissionOptions} icon={faCogs} />
                             </div>
                             <Select label="Estado" value={editedCar.status} onChange={(value) => handleSelectChange('status', value)} options={statusOptions} icon={faUserShield} />
-                             {/* --- FIN DE LA MODIFICACIÓN --- */}
                             
                             <div>
                                 <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">Etiquetas</label>

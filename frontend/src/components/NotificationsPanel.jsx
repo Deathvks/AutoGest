@@ -2,26 +2,30 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell, faCircle, faCheckDouble, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 // Utilidad para formatear el tiempo (ej: "hace 5m", "hace 2h")
 const timeSince = (date) => {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
     let interval = seconds / 31536000;
-    if (interval > 1) return `${Math.floor(interval)}a`;
+    if (interval > 1) return `hace ${Math.floor(interval)}a`;
     interval = seconds / 2592000;
-    if (interval > 1) return `${Math.floor(interval)}m`;
+    if (interval > 1) return `hace ${Math.floor(interval)}m`;
     interval = seconds / 86400;
-    if (interval > 1) return `${Math.floor(interval)}d`;
+    if (interval > 1) return `hace ${Math.floor(interval)}d`;
     interval = seconds / 3600;
-    if (interval > 1) return `${Math.floor(interval)}h`;
+    if (interval > 1) return `hace ${Math.floor(interval)}h`;
     interval = seconds / 60;
-    if (interval > 1) return `${Math.floor(interval)}m`;
+    if (interval > 1) return `hace ${Math.floor(interval)}m`;
     return `${Math.floor(seconds)}s`;
 };
 
-const NotificationItem = ({ notification }) => (
-    <div className={`flex items-start gap-4 p-3 rounded-lg ${!notification.isRead ? 'bg-accent/5' : ''}`}>
+// --- INICIO DE LA MODIFICACIÓN ---
+const NotificationItem = ({ notification, onClick }) => (
+    <div 
+        onClick={() => onClick(notification)}
+        className={`flex items-start gap-4 p-3 rounded-lg ${!notification.isRead ? 'bg-accent/5' : ''} ${notification.type === 'car_creation_pending_price' ? 'cursor-pointer hover:bg-component-bg-hover' : ''}`}
+    >
         <div className="relative mt-1">
             <FontAwesomeIcon icon={faBell} className="text-text-secondary" />
             {!notification.isRead && (
@@ -39,9 +43,24 @@ const NotificationItem = ({ notification }) => (
     </div>
 );
 
-const NotificationsPanel = ({ notifications, onMarkAllRead, onClose }) => {
+const NotificationsPanel = ({ notifications, onMarkAllRead, onClose, cars, setCarToEdit }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 5;
+    const navigate = useNavigate();
+
+    const handleNotificationClick = (notification) => {
+        if (notification.type === 'car_creation_pending_price' && notification.carId && cars && setCarToEdit) {
+            const carToEdit = cars.find(c => c.id === notification.carId);
+            if (carToEdit) {
+                setCarToEdit(carToEdit);
+                onClose(); // Cierra el panel de notificaciones
+                navigate('/cars');
+            } else {
+                console.warn(`Coche con id ${notification.carId} no encontrado.`);
+            }
+        }
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const sortedNotifications = notifications ? [...notifications].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
 
@@ -66,7 +85,7 @@ const NotificationsPanel = ({ notifications, onMarkAllRead, onClose }) => {
                 {currentNotifications && currentNotifications.length > 0 ? (
                     <div className="space-y-1">
                         {currentNotifications.map(notif => (
-                            <NotificationItem key={notif.id} notification={notif} />
+                            <NotificationItem key={notif.id} notification={notif} onClick={handleNotificationClick} />
                         ))}
                     </div>
                 ) : (

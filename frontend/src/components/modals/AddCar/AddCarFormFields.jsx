@@ -93,9 +93,7 @@ const KeySelector = ({ label, icon, value, onChange }) => (
                     key={num}
                     type="button"
                     onClick={() => onChange(num)}
-                    // --- INICIO DE LA MODIFICACIÓN ---
                     className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${value === num ? 'bg-component-bg text-text-primary shadow-md' : 'hover:bg-border-color'}`}
-                    // --- FIN DE LA MODIFICACIÓN ---
                 >
                     {num}
                 </button>
@@ -106,6 +104,10 @@ const KeySelector = ({ label, icon, value, onChange }) => (
 
 const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmissionOptions, handleChange, handleLocationSelect, handleNewLocationInput, handleSelectChange, handleTagKeyDown, tagInput, setTagInput, removeTag }) => {
     const { user } = useContext(AuthContext); 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
+    // --- FIN DE LA MODIFICACIÓN ---
+
     return(
         <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -118,9 +120,11 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <InputField label="Fecha de Matriculación" name="registrationDate" type="date" value={newCar.registrationDate} onChange={handleChange} icon={faCalendarDay} />
-                {(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed') && (
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {canViewSensitiveData && (
                     <InputField label="Precio de Compra (€)" name="purchasePrice" type="text" inputMode="decimal" value={newCar.purchasePrice} onChange={handleChange} icon={faEuroSign} error={fieldErrors.purchasePrice} required={true} />
                 )}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <InputField label="Precio de Venta (€)" name="price" type="text" inputMode="decimal" value={newCar.price} onChange={handleChange} icon={faEuroSign} error={fieldErrors.price} required={true} />

@@ -100,7 +100,9 @@ const MainLayout = () => {
         <div className="flex h-screen bg-background font-sans text-text-secondary">
             <Sidebar onLogoutClick={() => setLogoutModalOpen(true)} />
             <div className="flex flex-col flex-1 min-w-0">
-                <Header />
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <Header appState={appState} />
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 no-scrollbar">
                     <Suspense fallback={<div className="flex h-full w-full items-center justify-center">Cargando página...</div>}>
                         <AppRoutes 

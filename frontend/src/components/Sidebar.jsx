@@ -19,11 +19,11 @@ const Sidebar = ({ onLogoutClick }) => {
         return null;
     }
     
-    const technicianRoles = ['admin', 'technician', 'technician_subscribed'];
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const canSeeDashboard = user.role === 'admin' || user.isOwner || !user.companyId;
 
-    // Añadimos el nuevo item de notificaciones a la lista
     const navItems = [
-        technicianRoles.includes(user.role) && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
+        canSeeDashboard && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
         { icon: faCar, text: 'Mis Coches', path: '/cars' },
         { icon: faChartLine, text: 'Ventas', path: '/sales' },
         { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
@@ -32,8 +32,9 @@ const Sidebar = ({ onLogoutClick }) => {
         { icon: faCreditCard, text: 'Suscripción', path: '/subscription' },
     ].filter(Boolean); 
 
-    const adminNav = user && (technicianRoles.includes(user.role) || user.canExpelUsers) ? 
+    const adminNav = user && (user.isOwner || user.canExpelUsers) ? 
         { icon: faUsersCog, text: 'Gestión', path: '/admin' } : null;
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const bottomItems = [
         { icon: faCog, text: 'Configuración', path: '/settings' },

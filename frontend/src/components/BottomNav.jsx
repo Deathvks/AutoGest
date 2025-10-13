@@ -16,10 +16,10 @@ const BottomNav = () => {
         return null;
     }
 
-    const technicianRoles = ['admin', 'technician', 'technician_subscribed'];
+    const canSeeDashboard = user.role === 'admin' || user.isOwner || !user.companyId;
 
     const navItems = [
-        technicianRoles.includes(user.role) && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
+        canSeeDashboard && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
         { icon: faCar, text: 'Coches', path: '/cars' },
         { icon: faChartLine, text: 'Ventas', path: '/sales' },
         { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
