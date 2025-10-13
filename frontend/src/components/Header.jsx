@@ -187,7 +187,6 @@ const Header = ({ appState }) => {
                     ref={notificationsPanelRef}
                     className="fixed left-1/2 -translate-x-1/2 w-[90vw] sm:w-[70vw] max-w-md top-20 z-[60] animate-fade-in-down"
                 >
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <NotificationsPanel
                         notifications={notifications}
                         onMarkAllRead={markAllNotificationsAsRead}
@@ -195,7 +194,6 @@ const Header = ({ appState }) => {
                         cars={cars}
                         setCarToEdit={setCarToEdit}
                     />
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>,
                 document.body
             )}

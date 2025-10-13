@@ -5,6 +5,7 @@ export const useUserHandlers = ({
     users,
     setUsers,
     modalState,
+    refreshData, // Se recibe la función para refrescar
 }) => {
     const handleUserAdded = (newUser) => {
         setUsers(prev => [newUser, ...prev]);
@@ -31,9 +32,12 @@ export const useUserHandlers = ({
         try {
             await api.company.expelUser(userId);
             setUsers(prev => prev.filter(u => u.id !== userId));
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Se llama a la función a través del objeto modalState
             modalState.setUserToExpel(null);
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Se refrescan los datos de las notificaciones para que aparezcan en tiempo real.
+            if (refreshData) {
+                await refreshData('notifications');
+            }
             // --- FIN DE LA MODIFICACIÓN ---
         } catch (error) {
             console.error("Error al expulsar usuario:", error);

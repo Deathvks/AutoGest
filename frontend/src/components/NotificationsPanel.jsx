@@ -1,8 +1,9 @@
 // autogest-app/frontend/src/components/NotificationsPanel.jsx
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell, faCircle, faCheckDouble, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 
 // Utilidad para formatear el tiempo (ej: "hace 5m", "hace 2h")
 const timeSince = (date) => {
@@ -20,11 +21,10 @@ const timeSince = (date) => {
     return `${Math.floor(seconds)}s`;
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const NotificationItem = ({ notification, onClick }) => (
     <div 
         onClick={() => onClick(notification)}
-        className={`flex items-start gap-4 p-3 rounded-lg ${!notification.isRead ? 'bg-accent/5' : ''} ${notification.type === 'car_creation_pending_price' ? 'cursor-pointer hover:bg-component-bg-hover' : ''}`}
+        className={`flex items-start gap-4 p-3 rounded-lg ${!notification.isRead ? 'bg-accent/5' : ''} ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'cursor-pointer hover:bg-component-bg-hover' : ''}`}
     >
         <div className="relative mt-1">
             <FontAwesomeIcon icon={faBell} className="text-text-secondary" />
@@ -37,26 +37,34 @@ const NotificationItem = ({ notification, onClick }) => (
                 {notification.message}
             </p>
             <p className="text-xs text-text-secondary mt-1">
-                hace {timeSince(notification.createdAt)}
+                {timeSince(notification.createdAt)}
             </p>
         </div>
     </div>
 );
 
 const NotificationsPanel = ({ notifications, onMarkAllRead, onClose, cars, setCarToEdit }) => {
+    const { setPendingInvitationToken } = useContext(AuthContext);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 5;
     const navigate = useNavigate();
 
+    // --- INICIO DE LA MODIFICACIÓN ---
     const handleNotificationClick = (notification) => {
         if (notification.type === 'car_creation_pending_price' && notification.carId && cars && setCarToEdit) {
             const carToEdit = cars.find(c => c.id === notification.carId);
             if (carToEdit) {
                 setCarToEdit(carToEdit);
-                onClose(); // Cierra el panel de notificaciones
+                onClose(); 
                 navigate('/cars');
             } else {
                 console.warn(`Coche con id ${notification.carId} no encontrado.`);
+            }
+        } else if (notification.link && notification.link.includes('/accept-invitation/')) {
+            const token = notification.link.split('/accept-invitation/')[1];
+            if (token) {
+                setPendingInvitationToken(token);
+                onClose();
             }
         }
     };

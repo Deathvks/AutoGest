@@ -1,5 +1,5 @@
 // autogest-app/backend/controllers/adminController.js
-const { User, Company, sequelize } = require('../models');
+const { User, Company, Notification, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
 
 // Obtener todos los usuarios (GET /api/admin/users)
@@ -98,38 +98,47 @@ exports.createUser = async (req, res) => {
 
 // Actualizar un usuario (PUT /api/admin/users/:id)
 exports.updateUser = async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {
         const { name, email, role, password, canManageRoles, canExpelUsers } = req.body;
-        const userToUpdate = await User.findByPk(req.params.id);
+        const userToUpdate = await User.findByPk(req.params.id, { transaction });
         const requester = req.user;
 
         if (!userToUpdate) {
+            await transaction.rollback();
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
         
         if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
             if (userToUpdate.id === requester.id) {
+                await transaction.rollback();
                 return res.status(403).json({ error: 'Edita tu propio perfil desde la sección "Mi Perfil".' });
             }
 
             if (userToUpdate.companyId !== requester.companyId) {
+                await transaction.rollback();
                 return res.status(403).json({ error: 'No puedes editar usuarios que no pertenecen a tu equipo.' });
             }
 
-            const company = await Company.findOne({ where: { id: requester.companyId } });
+            const company = await Company.findOne({ where: { id: requester.companyId }, transaction });
             if (company && userToUpdate.id === company.ownerId) {
+                 await transaction.rollback();
                  return res.status(403).json({ error: 'No puedes editar al propietario del equipo.' });
             }
             
-            if (!requester.isOwner) {
+            const isRequesterOwner = company && company.ownerId === requester.id;
+            if (!isRequesterOwner) {
+                await transaction.rollback();
                 return res.status(403).json({ error: 'No tienes permiso para editar usuarios.' });
             }
-
+            
             if (name || email || password || role) {
+                await transaction.rollback();
                 return res.status(403).json({ error: 'Desde aquí, solo puedes modificar los permisos de un usuario.' });
             }
             
             if (canManageRoles !== undefined) {
+                 await transaction.rollback();
                  return res.status(403).json({ error: 'La gestión de roles no se puede delegar.' });
             }
         }
@@ -144,8 +153,9 @@ exports.updateUser = async (req, res) => {
         }
 
         if (userToUpdate.id === requester.id && userToUpdate.role === 'admin' && role !== 'admin') {
-            const adminCount = await User.count({ where: { role: 'admin' } });
+            const adminCount = await User.count({ where: { role: 'admin' }, transaction });
             if (adminCount <= 1) {
+                await transaction.rollback();
                 return res.status(400).json({ error: 'No puedes eliminar el rol del último administrador.' });
             }
         }
@@ -157,17 +167,32 @@ exports.updateUser = async (req, res) => {
         if (canManageRoles !== undefined) {
             userToUpdate.canManageRoles = canManageRoles;
         }
+        
         if (canExpelUsers !== undefined) {
+            // --- INICIO DE LA MODIFICACIÓN ---
+            const wasJustGranted = canExpelUsers === true && !userToUpdate.canExpelUsers;
             userToUpdate.canExpelUsers = canExpelUsers;
+
+            if (wasJustGranted) {
+                await Notification.create({
+                    userId: userToUpdate.id,
+                    message: `Se te han concedido permisos para expulsar a otros miembros del equipo.`,
+                    type: 'general'
+                }, { transaction });
+            }
+            // --- FIN DE LA MODIFICACIÓN ---
         }
 
-        await userToUpdate.save();
+        await userToUpdate.save({ transaction });
+        
+        await transaction.commit();
         
         const userResponse = userToUpdate.toJSON();
         delete userResponse.password;
 
         res.status(200).json(userResponse);
     } catch (error) {
+        await transaction.rollback();
         console.error(error);
         res.status(500).json({ error: 'Error al actualizar el usuario.' });
     }
@@ -190,11 +215,8 @@ exports.deleteUser = async (req, res) => {
             return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta.' });
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Si el usuario a eliminar es propietario de una empresa, disolvemos la empresa.
         const ownedCompany = await Company.findOne({ where: { ownerId: userToDelete.id }, transaction });
         if (ownedCompany) {
-            // Desvinculamos a todos los miembros de la empresa.
             await User.update(
                 { 
                     companyId: null,
@@ -204,10 +226,8 @@ exports.deleteUser = async (req, res) => {
                 { where: { companyId: ownedCompany.id }, transaction }
             );
 
-            // Eliminamos la empresa.
             await ownedCompany.destroy({ transaction });
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         
         if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
             if (userToDelete.companyId !== requester.companyId) {
@@ -216,7 +236,6 @@ exports.deleteUser = async (req, res) => {
             }
         }
 
-        // Finalmente, eliminamos al usuario. Sus datos asociados (coches, gastos, etc.) se borrarán en cascada.
         await userToDelete.destroy({ transaction });
         
         await transaction.commit();

@@ -80,10 +80,11 @@ const AcceptInvitationPage = () => {
         if (status === 'error') {
             const isWrongUserError = error.includes('cierra sesión');
             return (
-                <div className="text-center text-red-accent bg-red-accent/10 p-6 rounded-xl border border-red-accent/20">
-                    <FontAwesomeIcon icon={faExclamationTriangle} className="mb-4 text-3xl" />
+                // --- INICIO DE LA MODIFICACIÓN ---
+                <div className="text-center text-red-accent bg-red-accent/10 p-4 rounded-xl">
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="mb-2 text-3xl" />
                     <p className="font-semibold">{error}</p>
-                    <div className="mt-6">
+                    <div className="mt-4">
                         {isWrongUserError ? (
                             <button
                                 onClick={handleLogoutAndSetRedirect}
@@ -102,8 +103,9 @@ const AcceptInvitationPage = () => {
         }
         if (status === 'success') {
             return (
-                <div className="text-center text-green-accent bg-green-accent/10 p-6 rounded-xl">
-                    <FontAwesomeIcon icon={faCheckCircle} className="mb-4 text-3xl" />
+                // --- INICIO DE LA MODIFICACIÓN ---
+                <div className="text-center text-green-accent bg-green-accent/10 p-4 rounded-xl">
+                    <FontAwesomeIcon icon={faCheckCircle} className="mb-2 text-3xl" />
                     <p className="font-semibold">{success}</p>
                 </div>
             );
@@ -117,7 +119,9 @@ const AcceptInvitationPage = () => {
                     <p className="text-center text-text-secondary mt-2">
                         Por favor, inicia sesión en tu cuenta <span className="font-bold text-text-primary">{invitationDetails.email}</span> para aceptar.
                     </p>
-                    <div className="mt-8">
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <div className="mt-6">
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                         <button 
                             onClick={handleLogin} 
                             className="w-full flex items-center justify-center gap-2 rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
@@ -135,7 +139,9 @@ const AcceptInvitationPage = () => {
                     <p className="text-center text-text-secondary">
                         Estás a punto de unirte a <span className="font-bold text-text-primary">{invitationDetails.companyName}</span> con tu cuenta <span className="font-bold text-text-primary">{invitationDetails.email}</span>.
                     </p>
-                    <div className="mt-8">
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <div className="mt-6">
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                         <button onClick={handleAccept} disabled={isLoading} className="w-full flex items-center justify-center gap-2 rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50">
                             {isLoading ? <><FontAwesomeIcon icon={faSpinner} spin className="mr-2" /> UNIENDO...</> : 'Confirmar y Unirme al Equipo'}
                         </button>

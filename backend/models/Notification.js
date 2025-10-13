@@ -23,7 +23,6 @@ const Notification = sequelize.define('Notification', {
         allowNull: true,
         comment: 'URL a la que navegar al hacer clic, ej: /cars?open=123',
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     carId: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -33,7 +32,6 @@ const Notification = sequelize.define('Notification', {
         },
         onDelete: 'SET NULL',
     },
-    // --- FIN DE LA MODIFICACIÓN ---
     userId: {
         type: DataTypes.INTEGER,
         allowNull: false,

@@ -28,7 +28,6 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true
       },
-      // --- INICIO DE LA MODIFICACIÓN ---
       carId: {
         type: Sequelize.INTEGER,
         allowNull: true,
@@ -38,7 +37,6 @@ module.exports = {
         },
         onDelete: 'SET NULL'
       },
-      // --- FIN DE LA MODIFICACIÓN ---
       userId: {
         type: Sequelize.INTEGER,
         allowNull: false,

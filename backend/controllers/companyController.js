@@ -152,14 +152,9 @@ exports.acceptInvitation = async (req, res) => {
             await transaction.rollback();
             return res.status(400).json({ error: 'Esta cuenta ya pertenece a otro equipo.' });
         }
-
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se elimina la lógica anterior que cancelaba la suscripción y cambiaba el rol a 'user'.
-        // Ahora, simplemente se guarda el rol actual para poder restaurarlo si es expulsado.
-        // El rol y la suscripción del usuario se mantienen intactos.
+        
         userToUpdate.previousRole = userToUpdate.role;
-        // --- FIN DE LA MODIFICACIÓN ---
-
+        
         userToUpdate.companyId = invitation.companyId;
         userToUpdate.businessName = invitation.Company.name;
         await userToUpdate.save({ transaction });
@@ -175,6 +170,15 @@ exports.acceptInvitation = async (req, res) => {
                 type: 'general'
             }, { transaction });
         }
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Notificación para el usuario que se une al equipo
+        await Notification.create({
+            userId: userToUpdate.id,
+            message: `¡Bienvenido! Te has unido al equipo ${invitation.Company.name}.`,
+            type: 'general'
+        }, { transaction });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         await transaction.commit();
 
@@ -222,18 +226,37 @@ exports.expelUser = async (req, res) => {
             return res.status(403).json({ error: 'No se puede expulsar al propietario del equipo.' });
         }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Al expulsar al usuario, restauramos el rol que tenía antes de unirse al equipo.
         if (userToExpel.previousRole) {
             userToExpel.role = userToExpel.previousRole;
             userToExpel.previousRole = null;
         }
-        // --- FIN DE LA MODIFICACIÓN ---
-
+        
         userToExpel.companyId = null;
         userToExpel.canManageRoles = false;
         userToExpel.canExpelUsers = false;
         await userToExpel.save({ transaction });
+
+        const isRequesterOwner = requester.id === company.ownerId;
+
+        if (isRequesterOwner) {
+            await Notification.create({
+                userId: requester.id,
+                message: `Has expulsado a ${userToExpel.name} del equipo.`,
+                type: 'general',
+            }, { transaction });
+        } else {
+            await Notification.create({
+                userId: requester.id,
+                message: `Has expulsado a ${userToExpel.name} del equipo.`,
+                type: 'general',
+            }, { transaction });
+
+            await Notification.create({
+                userId: company.ownerId,
+                message: `${requester.name} ha expulsado a ${userToExpel.name} del equipo.`,
+                type: 'general',
+            }, { transaction });
+        }
 
         await Notification.create({
             userId: userToExpel.id,

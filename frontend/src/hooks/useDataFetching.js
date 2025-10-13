@@ -4,7 +4,7 @@ import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 
 export const useDataFetching = () => {
-    const { user } = useContext(AuthContext); // Importamos el usuario del contexto
+    const { user, fetchNotifications, setNotifications, setUnreadCount, markAllNotificationsAsRead } = useContext(AuthContext);
     const [cars, setCars] = useState([]);
     const [expenses, setExpenses] = useState([]);
     const [allExpenses, setAllExpenses] = useState([]);
@@ -13,8 +13,6 @@ export const useDataFetching = () => {
     const [users, setUsers] = useState([]);
     const [dashboardStats, setDashboardStats] = useState(null);
     const [activity, setActivity] = useState({ entries: [], total: 0 });
-    const [notifications, setNotifications] = useState([]);
-    const [unreadCount, setUnreadCount] = useState(0);
 
     const [loading, setLoading] = useState({
         cars: true,
@@ -38,6 +36,16 @@ export const useDataFetching = () => {
         notifications: null,
     });
 
+    useEffect(() => {
+        if (user) {
+            const interval = setInterval(() => {
+                fetchNotifications();
+            }, 30000); 
+
+            return () => clearInterval(interval);
+        }
+    }, [user, fetchNotifications]);
+
     const fetchData = useCallback(async (dataType, apiCall, ...args) => {
         setLoading(prev => ({ ...prev, [dataType]: true }));
         setError(prev => ({ ...prev, [dataType]: null }));
@@ -55,7 +63,6 @@ export const useDataFetching = () => {
     
     const fetchAllInitialData = useCallback(async () => {
         try {
-            // --- INICIO DE LA MODIFICACIÓN ---
             const promises = [
                 fetchData('cars', api.getCars),
                 fetchData('expenses', api.getAllUserExpenses),
@@ -64,12 +71,11 @@ export const useDataFetching = () => {
                 fetchData('notifications', api.notifications.getAll),
             ];
 
-            // Solo añadimos la petición de usuarios si el rol es el adecuado
             if (user && (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed' || user.canExpelUsers)) {
                 promises.push(fetchData('users', api.admin.getAllUsers));
             } else {
-                setLoading(prev => ({ ...prev, users: false })); // Marcamos la carga de usuarios como finalizada
-                setUsers([]); // Nos aseguramos de que no haya datos de usuarios anteriores
+                setLoading(prev => ({ ...prev, users: false }));
+                setUsers([]);
             }
 
             const [
@@ -78,9 +84,8 @@ export const useDataFetching = () => {
                 incidentsData,
                 locationsData,
                 notificationsData,
-                usersData, // Puede ser undefined si no se pidió
+                usersData,
             ] = await Promise.all(promises);
-            // --- FIN DE LA MODIFICACIÓN ---
     
             setCars(carsData || []);
             setAllExpenses(allExpensesData || []);
@@ -93,29 +98,17 @@ export const useDataFetching = () => {
         } catch (err) {
             console.error("Error fetching initial data pack:", err);
         }
-    }, [fetchData, user]); // Añadimos user a las dependencias
+    }, [fetchData, user, setNotifications, setUnreadCount]);
 
     useEffect(() => {
-        if (user) { // Nos aseguramos de que el usuario exista antes de cargar datos
+        if (user) {
             fetchAllInitialData();
         }
-    }, [fetchAllInitialData, user]); // Añadimos user a las dependencias
+    }, [fetchAllInitialData, user]);
 
-    const markAllNotificationsAsRead = useCallback(async () => {
-        const originalNotifications = notifications;
-        const newUnreadCount = 0;
-
-        setNotifications(current => current.map(n => ({ ...n, isRead: true })));
-        setUnreadCount(newUnreadCount);
-        
-        try {
-            await api.notifications.markAllAsRead();
-        } catch (err) {
-            console.error('Error marking notifications as read:', err);
-            setNotifications(originalNotifications);
-            setUnreadCount(originalNotifications.filter(n => !n.isRead).length);
-        }
-    }, [notifications]);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se elimina la función markAllNotificationsAsRead de este hook, ya que ahora se gestiona en AuthContext
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const fetchDashboardStats = useCallback(async (startDate, endDate) => {
         try {
@@ -152,7 +145,7 @@ export const useDataFetching = () => {
             },
             dashboard: fetchDashboardStats,
             activity: fetchActivity,
-            notifications: fetchAllInitialData, // Refresca todo para consistencia
+            notifications: fetchAllInitialData,
         };
         if (refreshMap[dataType]) {
             try {
@@ -175,13 +168,11 @@ export const useDataFetching = () => {
         users, setUsers,
         dashboardStats,
         activity,
-        notifications,
-        unreadCount,
         loading,
         error,
         refreshData,
         fetchDashboardStats,
         fetchActivity,
-        markAllNotificationsAsRead,
+        markAllNotificationsAsRead, // <-- Se mantiene la exportación para que los componentes que lo usan sigan funcionando
     };
 };

@@ -19,7 +19,6 @@ const Sidebar = ({ onLogoutClick }) => {
         return null;
     }
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const canSeeDashboard = user.role === 'admin' || user.isOwner || !user.companyId;
 
     const navItems = [
@@ -34,7 +33,6 @@ const Sidebar = ({ onLogoutClick }) => {
 
     const adminNav = user && (user.isOwner || user.canExpelUsers) ? 
         { icon: faUsersCog, text: 'Gestión', path: '/admin' } : null;
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const bottomItems = [
         { icon: faCog, text: 'Configuración', path: '/settings' },
@@ -56,7 +54,8 @@ const Sidebar = ({ onLogoutClick }) => {
             <FontAwesomeIcon icon={icon} className="w-5 h-5 mr-4 transition-transform duration-200 group-hover:scale-110" />
             <span className="font-semibold flex-1">{text}</span>
             {badgeCount > 0 && (
-                <span className="bg-red-accent text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                // --- INICIO DE LA MODIFICACIÓN ---
+                <span className="bg-accent text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                     {badgeCount}
                 </span>
             )}

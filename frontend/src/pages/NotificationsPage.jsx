@@ -1,8 +1,7 @@
-// frontend/src/pages/NotificationsPage.jsx
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCheckDouble, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 
 const timeSince = (date) => {
@@ -21,10 +20,11 @@ const timeSince = (date) => {
 };
 
 const NotificationsPage = ({ cars, setCarToEdit }) => {
-    const { notifications, unreadCount, markAllNotificationsAsRead } = useContext(AuthContext);
+    const { notifications, unreadCount, markAllNotificationsAsRead, setPendingInvitationToken } = useContext(AuthContext);
     const navigate = useNavigate();
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleNotificationClick = (notification) => {
         if (notification.type === 'car_creation_pending_price' && notification.carId && cars && setCarToEdit) {
             const carToEdit = cars.find(c => c.id === notification.carId);
@@ -34,11 +34,23 @@ const NotificationsPage = ({ cars, setCarToEdit }) => {
             } else {
                 console.warn(`Coche con id ${notification.carId} no encontrado.`);
             }
+        } else if (notification.link && notification.link.includes('/accept-invitation/')) {
+            const token = notification.link.split('/accept-invitation/')[1];
+            if (token) {
+                setPendingInvitationToken(token);
+            }
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const sortedNotifications = notifications ? [...notifications].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
+    
+    const totalPages = Math.ceil(sortedNotifications.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const currentNotifications = sortedNotifications.slice(startIndex, endIndex);
+    
+    const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    const goToPreviousPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -61,33 +73,54 @@ const NotificationsPage = ({ cars, setCarToEdit }) => {
             </div>
 
             {sortedNotifications.length > 0 ? (
-                <div className="bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color overflow-hidden shadow-2xl">
-                    <ul className="divide-y divide-border-color">
-                        {sortedNotifications.map(notification => (
-                            // --- INICIO DE LA MODIFICACIÓN ---
-                            <li 
-                                key={notification.id} 
-                                onClick={() => handleNotificationClick(notification)}
-                                className={`p-4 sm:p-6 ${!notification.isRead ? 'bg-accent/5' : ''} ${notification.type === 'car_creation_pending_price' ? 'cursor-pointer hover:bg-component-bg-hover transition-colors' : ''}`}
+                <>
+                    <div className="bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color overflow-hidden shadow-2xl">
+                        <ul className="divide-y divide-border-color">
+                            {currentNotifications.map(notification => (
+                                <li 
+                                    key={notification.id} 
+                                    onClick={() => handleNotificationClick(notification)}
+                                    className={`p-4 sm:p-6 ${!notification.isRead ? 'bg-accent/5' : ''} ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'cursor-pointer hover:bg-component-bg-hover transition-colors' : ''}`}
+                                >
+                                    <div className="flex items-start gap-4">
+                                        <div className="mt-1">
+                                            <FontAwesomeIcon icon={faBell} className={`w-5 h-5 ${notification.isRead ? 'text-text-secondary' : 'text-accent'}`} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className={`text-sm ${notification.isRead ? 'text-text-secondary' : 'text-text-primary font-medium'}`}>
+                                                {notification.message}
+                                            </p>
+                                            <p className="text-xs text-text-secondary mt-1">
+                                                {timeSince(notification.createdAt)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                     {totalPages > 1 && (
+                        <div className="flex justify-between items-center mt-8">
+                            <button
+                                onClick={goToPreviousPage}
+                                disabled={currentPage === 1}
+                                className="px-4 py-2 rounded-lg bg-component-bg-hover text-text-primary disabled:opacity-50 disabled:cursor-not-allowed hover:bg-border-color transition-colors flex items-center gap-2 font-semibold border border-border-color"
                             >
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
-                                <div className="flex items-start gap-4">
-                                    <div className="mt-1">
-                                        <FontAwesomeIcon icon={faBell} className={`w-5 h-5 ${notification.isRead ? 'text-text-secondary' : 'text-accent'}`} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className={`text-sm ${notification.isRead ? 'text-text-secondary' : 'text-text-primary font-medium'}`}>
-                                            {notification.message}
-                                        </p>
-                                        <p className="text-xs text-text-secondary mt-1">
-                                            {timeSince(notification.createdAt)}
-                                        </p>
-                                    </div>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+                                <FontAwesomeIcon icon={faChevronLeft} />
+                                <span className="hidden sm:inline">Anterior</span>
+                            </button>
+                            <span className="text-text-secondary font-medium text-sm">Página {currentPage} de {totalPages}</span>
+                            <button
+                                onClick={goToNextPage}
+                                disabled={currentPage === totalPages}
+                                className="px-4 py-2 rounded-lg bg-component-bg-hover text-text-primary disabled:opacity-50 disabled:cursor-not-allowed hover:bg-border-color transition-colors flex items-center gap-2 font-semibold border border-border-color"
+                            >
+                                <span className="hidden sm:inline">Siguiente</span>
+                                <FontAwesomeIcon icon={faChevronRight} />
+                            </button>
+                        </div>
+                    )}
+                </>
             ) : (
                 <div className="text-center py-16 px-4 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl">
                     <FontAwesomeIcon icon={faBell} className="text-5xl text-text-secondary/50 mb-4" />

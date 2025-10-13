@@ -14,6 +14,7 @@ const AuthProvider = ({ children }) => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [pendingInvitationToken, setPendingInvitationToken] = useState(null);
 
+    // --- INICIO DE LA MODIFICACIÓN ---
     // Función para obtener notificaciones
     const fetchNotifications = useCallback(async () => {
         if (!token) return;
@@ -25,6 +26,7 @@ const AuthProvider = ({ children }) => {
             console.error("AuthContext: Failed to fetch notifications:", error);
         }
     }, [token]);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     // Función para marcar notificaciones como leídas
     const markAllNotificationsAsRead = useCallback(async () => {
@@ -63,7 +65,7 @@ const AuthProvider = ({ children }) => {
         if (isAuthLoading) {
             setIsAuthLoading(false);
         }
-    }, [token, fetchNotifications]);
+    }, [token, fetchNotifications, isAuthLoading]);
 
     const refreshSubscriptionStatus = async () => {
         setIsRefreshing(true);
@@ -96,14 +98,12 @@ const AuthProvider = ({ children }) => {
             if (response.token) {
                 localStorage.setItem('authToken', response.token);
                 setToken(response.token);
-                // --- INICIO DE LA MODIFICACIÓN ---
                 if (response.invitationToken) {
                     const handledTokens = JSON.parse(localStorage.getItem('handledInvitationTokens') || '[]');
                     if (!handledTokens.includes(response.invitationToken)) {
                         setPendingInvitationToken(response.invitationToken);
                     }
                 }
-                // --- FIN DE LA MODIFICACIÓN ---
                 return true;
             }
         } catch (error) {
@@ -181,7 +181,13 @@ const AuthProvider = ({ children }) => {
         refreshSubscriptionStatus,
         refreshUser,
         notifications,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setNotifications, // Se expone para poder actualizarlo
+        // --- FIN DE LA MODIFICACIÓN ---
         unreadCount,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setUnreadCount, // Se expone para poder actualizarlo
+        // --- FIN DE LA MODIFICACIÓN ---
         markAllNotificationsAsRead,
         fetchNotifications,
         pendingInvitationToken,

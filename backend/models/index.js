@@ -14,7 +14,7 @@ const modelsToLoad = [
   require('./Location'),
   require('./Company'),
   require('./Invitation'),
-  require('./Notification') // --- INICIO DE LA MODIFICACIÓN ---
+  require('./Notification')
 ];
 
 modelsToLoad.forEach(model => {
@@ -29,7 +29,7 @@ Object.keys(db).forEach(modelName => {
 });
 
 // --- Definición de Relaciones ---
-const { User, Car, Expense, Incident, Location, Company, Invitation, Notification } = db; // --- INICIO DE LA MODIFICACIÓN ---
+const { User, Car, Expense, Incident, Location, Company, Invitation, Notification } = db;
 
 // Relaciones de Compañía y Usuario
 Company.belongsTo(User, { as: 'owner', foreignKey: 'ownerId' });
@@ -55,10 +55,14 @@ Invitation.belongsTo(Company, { foreignKey: 'companyId' });
 User.hasMany(Invitation, { as: 'sentInvitations', foreignKey: 'inviterId' });
 Invitation.belongsTo(User, { as: 'inviter', foreignKey: 'inviterId' });
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Relaciones de Notificaciones
 User.hasMany(Notification, { foreignKey: 'userId', onDelete: 'CASCADE' });
 Notification.belongsTo(User, { foreignKey: 'userId' });
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se añade la relación explícita entre Notificación y Coche
+Car.hasMany(Notification, { foreignKey: 'carId', onDelete: 'SET NULL' });
+Notification.belongsTo(Car, { foreignKey: 'carId' });
 // --- FIN DE LA MODIFICACIÓN ---
 
 // Un usuario tiene muchos coches

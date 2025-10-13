@@ -1,5 +1,5 @@
 // autogest-app/backend/controllers/notificationController.js
-const { Notification, User } = require('../models');
+const { Notification, User, Company } = require('../models');
 
 // Obtener todas las notificaciones del usuario logueado
 exports.getNotifications = async (req, res) => {
@@ -41,22 +41,24 @@ exports.createCarCreationNotification = async (req, res) => {
     }
 
     try {
-        // Encontrar al propietario de la compañía
-        const owner = await User.findOne({
-            where: {
-                companyId: companyId,
-                isOwner: true,
-            }
-        });
+        // Encontrar la compañía para obtener el ID del propietario
+        const company = await Company.findByPk(companyId);
 
-        if (!owner) {
-            console.log(`No se encontró un propietario para la compañía ${companyId}, no se puede notificar.`);
+        if (!company || !company.ownerId) {
+            console.log(`No se encontró una compañía o un propietario para la compañía ${companyId}, no se puede notificar.`);
             return res.status(404).json({ error: 'No se encontró el propietario del equipo.' });
+        }
+        
+        const ownerId = company.ownerId;
+
+        // No enviar notificación si el que crea el coche es el propio líder
+        if (req.user.id === ownerId) {
+            return res.status(200).json({ message: 'El propietario ha creado el coche, no se auto-notifica.' });
         }
 
         // Crear la notificación para el propietario
         const notification = await Notification.create({
-            userId: owner.id,
+            userId: ownerId,
             message: message,
             type: 'car_creation_pending_price',
             carId: carId,
