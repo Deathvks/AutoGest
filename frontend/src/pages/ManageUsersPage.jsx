@@ -1,10 +1,11 @@
 // autogest-app/frontend/src/pages/ManageUsersPage.jsx
 import React, { useContext } from 'react';
+import { Link } from 'react-router-dom'; // Se añade Link
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faPlus, faEdit, faTrash, faUserShield, faUser,
     faEnvelope, faCalendarDay, faCheckCircle, faExclamationTriangle,
-    faPencilAlt, faUserPlus, faCrown, faXmark
+    faPencilAlt, faUserPlus, faCrown, faXmark, faLock // Se añade faLock
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
@@ -19,7 +20,6 @@ const SubscriptionStatusBadge = ({ status, expiry }) => {
     const currentStatus = statusInfo[status] || statusInfo.inactive;
     const expiryDate = expiry ? new Date(expiry).toLocaleDateString('es-ES') : null;
 
-    // No mostrar nada para roles que no requieren suscripción
     if (status === null || status === undefined) {
         return null;
     }
@@ -40,7 +40,9 @@ const SubscriptionStatusBadge = ({ status, expiry }) => {
 };
 
 // --- Componente para la vista de Técnico (Estilo Netflix) ---
-const TechnicianView = ({ users, onAddUser, onEditUser, currentUser }) => {
+// --- INICIO DE LA MODIFICACIÓN ---
+const TechnicianView = ({ users, onAddUser, onEditUser, currentUser, isLocked }) => {
+// --- FIN DE LA MODIFICACIÓN ---
 
     const ProfileCard = ({ user, onEdit, isCurrentUser }) => (
         <div className="group w-32 sm:w-40 cursor-pointer flex flex-col items-center gap-2 text-center">
@@ -83,19 +85,38 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser }) => {
         </div>
     );
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const LockedAddCard = () => (
+        <div className="w-32 sm:w-40 flex flex-col items-center gap-2 text-center relative group">
+             <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-component-bg-hover border-2 border-dashed border-border-color flex items-center justify-center opacity-50">
+                <FontAwesomeIcon icon={faUserPlus} className="text-text-secondary text-4xl" />
+            </div>
+            <span className="text-text-secondary font-semibold">Invitar Empleado</span>
+            <div 
+                className="absolute inset-0 flex flex-col items-center justify-center text-center opacity-0 group-hover:opacity-100 transition-opacity bg-component-bg/80 backdrop-blur-sm rounded-full cursor-pointer"
+                onClick={() => document.getElementById('subscribe-link').click()}
+            >
+                <FontAwesomeIcon icon={faLock} className="text-accent text-2xl mb-2" />
+                <span className="text-white text-sm font-semibold">Suscríbete para invitar</span>
+            </div>
+            <Link to="/subscription" id="subscribe-link" className="hidden">Suscribirse</Link>
+        </div>
+    );
+    // --- FIN DE LA MODIFICACIÓN ---
+
     if (!currentUser.companyId) {
         return (
             <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl border border-border-color p-8">
                 <div className="text-center mb-12">
                     <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">Crea tu Equipo</h1>
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <p className="mt-4 max-w-2xl mx-auto text-lg text-text-secondary">
                         Para empezar a colaborar, invita a tu primer empleado. Al hacerlo, te convertirás en el propietario del equipo.
                     </p>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
                 <div className="flex flex-wrap justify-center items-start gap-x-4 gap-y-8 sm:gap-x-8">
-                    <AddProfileCard onAdd={onAddUser} />
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    {isLocked ? <LockedAddCard /> : <AddProfileCard onAdd={onAddUser} />}
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
             </div>
         );
@@ -117,14 +138,15 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser }) => {
                 {teamMembers.map(user => (
                     <ProfileCard key={user.id} user={user} onEdit={onEditUser} currentUser={currentUser} isCurrentUser={user.id === currentUser.id} />
                 ))}
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 {(currentUser.isOwner || currentUser.canManageRoles) && (
-                    <AddProfileCard onAdd={onAddUser} />
+                    isLocked ? <LockedAddCard /> : <AddProfileCard onAdd={onAddUser} />
                 )}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
         </div>
     );
 };
-
 
 // --- Componente para la vista de Administrador (Tabla) ---
 const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) => {
@@ -279,12 +301,20 @@ const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser, onExpelUs
 
     if (!currentUser) return null;
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const isSubscribed = currentUser.subscriptionStatus === 'active';
+    const isTrialing = currentUser.trialExpiresAt && new Date(currentUser.trialExpiresAt) > new Date();
+    const isLocked = !isSubscribed && isTrialing;
+    // --- FIN DE LA MODIFICACIÓN ---
+
     if (currentUser.role === 'admin') {
         return <AdminView users={users} onAddUser={onAddUser} onEditUser={onEditUser} onDeleteUser={onDeleteUser} currentUser={currentUser} />;
     }
 
     if (currentUser.role === 'technician' || currentUser.role === 'technician_subscribed' || (currentUser.role === 'user' && currentUser.canExpelUsers)) {
-        return <TechnicianView users={users} onAddUser={onAddUser} onEditUser={onEditUser} onExpelUser={onExpelUser} currentUser={currentUser} />;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        return <TechnicianView users={users} onAddUser={onAddUser} onEditUser={onEditUser} onExpelUser={onExpelUser} currentUser={currentUser} isLocked={isLocked} />;
+        // --- FIN DE LA MODIFICACIÓN ---
     }
 
     return (

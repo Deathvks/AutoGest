@@ -51,14 +51,12 @@ export const useAppState = () => {
         modalState,
     });
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const userHandlers = useUserHandlers({
         users,
         setUsers, 
         modalState,
         refreshData, // Se pasa la función para refrescar datos
     });
-    // --- FIN DE LA MODIFICACIÓN ---
     
     // Handler específico que necesita acceso al AuthContext
     const handleSaveBusinessData = async (formData) => {

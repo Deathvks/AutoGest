@@ -1,157 +1,164 @@
 // autogest-app/frontend/src/pages/Settings/BusinessDataSettings.jsx
-import React, { useState, useEffect, useContext, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBuilding, faUpload, faTrash, faBuildingCircleCheck, faSave, faIdCard, faMapMarkerAlt, faPhone } from '@fortawesome/free-solid-svg-icons';
+import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSave, faTrash, faImage, faLock } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-
-const ReadOnlyInfoItem = ({ icon, label, value }) => (
-    <div className="flex items-center text-sm">
-        <FontAwesomeIcon icon={icon} className="w-4 h-4 text-text-secondary mr-3 flex-shrink-0" />
-        <span className="font-medium text-text-secondary w-28">{label}:</span>
-        <span className="font-semibold text-text-primary break-words">{value || 'No especificado'}</span>
+const InputField = ({ id, label, value, onChange, disabled }) => (
+    <div>
+        <label htmlFor={id} className="block text-sm font-medium text-text-secondary">{label}</label>
+        <input
+            type="text"
+            id={id}
+            name={id}
+            value={value}
+            onChange={onChange}
+            disabled={disabled}
+            className="mt-1 block w-full px-3 py-2 bg-component-bg border border-border-color rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent sm:text-sm disabled:opacity-50"
+        />
     </div>
 );
 
-const BusinessDataSettings = ({ onBusinessDataClick, businessDataMessage }) => {
-    const { user, updateUserProfile } = useContext(AuthContext);
-    const [logoFile, setLogoFile] = useState(null);
-    const [logoPreview, setLogoPreview] = useState(user?.logoUrl || '');
-    const [logoMessage, setLogoMessage] = useState({ type: '', text: '' });
-    const logoInputRef = useRef(null);
-
-    const canEdit = user.role === 'admin' || user.isOwner;
+const BusinessDataSettings = () => {
+    const { user, updateUserProfile, refreshUser } = useContext(AuthContext);
+    const [formData, setFormData] = useState({
+        businessName: '',
+        cif: '',
+        address: '',
+        phone: '',
+    });
+    const [logoPreview, setLogoPreview] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
-        setLogoPreview(user?.logoUrl || '');
-    }, [user?.logoUrl]);
+        if (user) {
+            setFormData({
+                businessName: user.businessName || '',
+                cif: user.cif || '',
+                address: user.address || '',
+                phone: user.phone || '',
+            });
+            setLogoPreview(user.logoUrl || null);
+        }
+    }, [user]);
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const isSubscribed = user?.subscriptionStatus === 'active';
+    const isLocked = !isSubscribed && user?.role !== 'admin';
+    // --- FIN DE LA MODIFICACIÓN ---
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
     const handleLogoChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 10 * 1024 * 1024) { // 10MB limit
-                setLogoMessage({ type: 'error', text: 'El logo no puede pesar más de 10MB.' });
-                return;
-            }
-            setLogoFile(file);
-            setLogoPreview(URL.createObjectURL(file));
-            setLogoMessage({ type: 'info', text: 'Logo listo para subir. Guarda los cambios para aplicarlo.' });
+            setFormData({ ...formData, logo: file });
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoPreview(reader.result);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
     const handleDeleteLogo = async () => {
-        setLogoMessage({ type: '', text: '' });
         try {
             await api.deleteLogo();
-            updateUserProfile({ ...user, logoUrl: null });
-            setLogoFile(null);
-            setLogoPreview('');
-            setLogoMessage({ type: 'success', text: 'Logo eliminado con éxito.' });
-            setTimeout(() => setLogoMessage({ type: '', text: '' }), 3000);
-        } catch (error) {
-            setLogoMessage({ type: 'error', text: 'Error al eliminar el logo.' });
-        }
-    };
-    
-    const handleSaveChanges = async () => {
-        if (!logoFile) return;
-        const formData = new FormData();
-        formData.append('logo', logoFile);
-        try {
-            await updateUserProfile(formData);
-            setLogoFile(null);
-            setLogoMessage({ type: 'success', text: '¡Logo guardado con éxito!' });
-            setTimeout(() => setLogoMessage({ type: '', text: '' }), 3000);
-        } catch (error) {
-            setLogoMessage({ type: 'error', text: 'Error al guardar el logo.' });
+            setLogoPreview(null);
+            setSuccessMessage('Logo eliminado con éxito.');
+            refreshUser();
+        } catch (err) {
+            setError('Error al eliminar el logo.');
         }
     };
 
-    if (user.role === 'user' && !user.companyId) {
-        return null;
-    }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSaving(true);
+        setError('');
+        setSuccessMessage('');
+        
+        const data = new FormData();
+        Object.keys(formData).forEach(key => {
+            if (formData[key] !== null) {
+                 data.append(key, formData[key]);
+            }
+        });
+    
+        try {
+            await updateUserProfile(data);
+            setSuccessMessage('¡Datos de empresa guardados con éxito!');
+        } catch (err) {
+            setError(err.message || 'Error al guardar los datos.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
-        <div>
-            <h3 className="text-lg font-bold text-text-primary mb-4 uppercase">Datos de Empresa</h3>
-            
-            {canEdit ? (
-                <div className="space-y-6">
-                    <div className="p-6 bg-background/50 rounded-xl border border-border-color">
-                        <p className="text-sm text-text-secondary mb-3">Edita los datos de tu empresa que aparecerán en las facturas y proformas.</p>
-                        <div className="flex items-center gap-4">
-                            <button onClick={onBusinessDataClick} className="bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2 border border-border-color">
-                                <FontAwesomeIcon icon={faBuilding} />
-                                Editar Datos
-                            </button>
-                            {businessDataMessage && (
-                                <span className="text-sm text-green-accent font-semibold">
-                                    {businessDataMessage}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                    <div className="p-6 bg-background/50 rounded-xl border border-border-color">
-                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Logo de la Empresa</h4>
-                        <p className="text-sm text-text-secondary mb-3">Sube el logo para que aparezca en tus facturas (máx 10MB).</p>
-                        <div className="flex items-center gap-4">
-                            <div className="w-20 h-20 rounded-lg bg-background flex items-center justify-center overflow-hidden border border-border-color flex-shrink-0">
-                                {logoPreview ? (
-                                    <img src={logoPreview.startsWith('blob:') ? logoPreview : `${API_BASE_URL}${logoPreview}`} alt="Logo" className="h-full w-full object-contain" />
-                                ) : (
-                                    <FontAwesomeIcon icon={faBuildingCircleCheck} className="text-3xl text-text-secondary" />
-                                )}
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-2">
-                                <input type="file" ref={logoInputRef} onChange={handleLogoChange} className="hidden" accept="image/*" />
-                                <button type="button" onClick={() => logoInputRef.current.click()} className="bg-component-bg-hover text-text-primary font-semibold px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center justify-center gap-2 border border-border-color">
-                                    <FontAwesomeIcon icon={faUpload} /> Cambiar
-                                </button>
-                                {user.logoUrl && (
-                                    <button type="button" onClick={handleDeleteLogo} className="bg-component-bg-hover text-text-primary font-semibold px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center justify-center gap-2 border border-border-color">
-                                        <FontAwesomeIcon icon={faTrash} /> Eliminar
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                        {logoFile && (
-                            <div className="mt-4 flex justify-start">
-                                <button onClick={handleSaveChanges} className="bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2 border border-border-color">
-                                    <FontAwesomeIcon icon={faSave} />
-                                    Guardar Cambios
-                                </button>
-                            </div>
-                        )}
-                        {logoMessage.text && (
-                            <p className={`text-sm mt-3 font-semibold ${logoMessage.type === 'success' ? 'text-green-accent' : (logoMessage.type === 'error' ? 'text-red-accent' : 'text-text-secondary')}`}>
-                                {logoMessage.text}
-                            </p>
-                        )}
-                    </div>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    <p className="text-sm text-text-secondary">Estos son los datos de la empresa a la que perteneces. Contacta con el propietario para realizar cambios.</p>
-                    <div className="space-y-3 bg-background/50 p-4 rounded-xl border border-border-color">
-                        <ReadOnlyInfoItem icon={faBuilding} label="Razón Social" value={user.businessName} />
-                        <ReadOnlyInfoItem icon={faIdCard} label="CIF / NIF" value={user.cif || user.dni} />
-                        <ReadOnlyInfoItem icon={faMapMarkerAlt} label="Dirección" value={user.address} />
-                        <ReadOnlyInfoItem icon={faPhone} label="Teléfono" value={user.phone} />
-                    </div>
-                     <div className="flex items-center gap-4 pt-4">
-                        <h4 className="font-semibold text-text-primary">LOGO:</h4>
-                        <div className="w-20 h-20 rounded-lg bg-background flex items-center justify-center overflow-hidden border border-border-color flex-shrink-0">
-                            {user.logoUrl ? (
-                                <img src={`${API_BASE_URL}${user.logoUrl}`} alt="Logo" className="h-full w-full object-contain" />
-                            ) : (
-                                <FontAwesomeIcon icon={faBuildingCircleCheck} className="text-3xl text-text-secondary" />
-                            )}
-                        </div>
-                    </div>
+        <div className="bg-component-bg p-6 rounded-lg shadow-md border border-border-color relative">
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            {isLocked && (
+                <div className="absolute inset-0 bg-component-bg/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg">
+                    <FontAwesomeIcon icon={faLock} className="text-4xl text-text-secondary mb-4" />
+                    <h3 className="text-xl font-bold text-text-primary">Función Premium</h3>
+                    <p className="text-text-secondary mt-1">
+                        Añade tus datos de empresa para facturas profesionales.
+                    </p>
+                    <Link to="/subscription" className="mt-4 bg-accent text-white px-5 py-2 rounded-lg font-semibold hover:bg-accent-hover transition-colors">
+                        Suscríbete ahora
+                    </Link>
                 </div>
             )}
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <h2 className="text-xl font-bold text-text-primary border-b border-border-color pb-4">Datos de Empresa</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <InputField id="businessName" label="Nombre de la Empresa" value={formData.businessName} onChange={handleChange} disabled={isLocked} />
+                    <InputField id="cif" label="CIF/NIF" value={formData.cif} onChange={handleChange} disabled={isLocked} />
+                    <InputField id="address" label="Dirección" value={formData.address} onChange={handleChange} disabled={isLocked} />
+                    <InputField id="phone" label="Teléfono" value={formData.phone} onChange={handleChange} disabled={isLocked} />
+                </div>
+                
+                <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Logo de la Empresa</label>
+                    <div className="flex items-center gap-4">
+                        {logoPreview ? (
+                            <img src={logoPreview} alt="Logo Preview" className="h-16 w-auto rounded-md object-contain bg-white p-1 border border-border-color" />
+                        ) : (
+                            <div className="h-16 w-16 bg-component-bg-hover border-2 border-dashed border-border-color rounded-md flex items-center justify-center">
+                                <FontAwesomeIcon icon={faImage} className="text-text-secondary" />
+                            </div>
+                        )}
+                        <input type="file" id="logo-upload" className="hidden" onChange={handleLogoChange} accept="image/*" disabled={isLocked}/>
+                        <label htmlFor="logo-upload" className={`cursor-pointer rounded-md border border-border-color bg-component-bg px-3 py-2 text-sm font-semibold text-text-primary shadow-sm hover:bg-component-bg-hover ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            Cambiar
+                        </label>
+                        {logoPreview && (
+                            <button type="button" onClick={handleDeleteLogo} className={`text-sm font-semibold text-red-500 hover:text-red-700 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
+                                <FontAwesomeIcon icon={faTrash} /> Eliminar
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {error && <p className="text-sm text-red-500">{error}</p>}
+                {successMessage && <p className="text-sm text-green-500">{successMessage}</p>}
+
+                <div className="flex justify-end pt-4 border-t border-border-color">
+                    <button type="submit" className="bg-accent text-white font-bold py-2 px-4 rounded-md hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50" disabled={isSaving || isLocked}>
+                        <FontAwesomeIcon icon={faSave} className="mr-2" />
+                        {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+                    </button>
+                </div>
+            </form>
         </div>
     );
 };

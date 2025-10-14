@@ -1,9 +1,7 @@
 // autogest-app/backend/controllers/userAccountController.js
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-// --- INICIO DE LA MODIFICACIÓN ---
 const { User, Invitation } = require('../models'); // Se añade Invitation
-// --- FIN DE LA MODIFICACIÓN ---
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailUtils');
 const crypto = require('crypto');
 
@@ -97,9 +95,9 @@ exports.login = async (req, res) => {
 
         const payload = { id: user.id, role: user.role };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
-
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Comprobar si hay una invitación pendiente para este email
+        
+        const response = { token };
+        
         const pendingInvitation = await Invitation.findOne({
             where: {
                 email: user.email,
@@ -108,13 +106,19 @@ exports.login = async (req, res) => {
             }
         });
 
-        const response = { token };
         if (pendingInvitation) {
             response.invitationToken = pendingInvitation.token;
         }
 
-        res.status(200).json(response);
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Comprobar si el usuario es elegible para el período de prueba
+        const isEligibleForTrial = user.role === 'user' && user.subscriptionStatus === 'inactive' && !user.hasUsedTrial;
+        if (isEligibleForTrial) {
+            response.promptTrial = true;
+        }
         // --- FIN DE LA MODIFICACIÓN ---
+
+        res.status(200).json(response);
 
     } catch (error) {
         console.error(error);
@@ -189,6 +193,38 @@ exports.forceVerification = async (req, res) => {
         res.status(500).json({ error: 'Error al enviar el código de verificación.' });
     }
 };
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Iniciar el período de prueba para el usuario logueado
+exports.startTrial = async (req, res) => {
+    try {
+        const user = await User.findByPk(req.user.id);
+        
+        if (!user) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+        if (user.hasUsedTrial || user.subscriptionStatus === 'active') {
+            return res.status(400).json({ error: 'Este usuario no es elegible para un período de prueba.' });
+        }
+
+        const now = new Date();
+        const trialExpiresAt = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000); // 3 días a partir de ahora
+
+        user.trialStartedAt = now;
+        user.trialExpiresAt = trialExpiresAt;
+        user.hasUsedTrial = true;
+        await user.save();
+
+        const userResponse = user.toJSON();
+        delete userResponse.password;
+
+        res.status(200).json(userResponse);
+    } catch (error) {
+        console.error('Error al iniciar el período de prueba:', error);
+        res.status(500).json({ error: 'Error interno al iniciar el período de prueba.' });
+    }
+};
+// --- FIN DE LA MODIFICACIÓN ---
 
 // @desc    Solicitar restablecimiento de contraseña
 // @route   POST /api/auth/forgot-password

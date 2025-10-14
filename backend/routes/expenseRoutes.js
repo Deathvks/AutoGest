@@ -2,25 +2,22 @@
 const express = require('express');
 const router = express.Router();
 const expenseController = require('../controllers/expenseController');
-const { protect, authorize } = require('../middleware/auth');
+// --- INICIO DE LA MODIFICACIÓN ---
+const { protect, checkSubscription } = require('../middleware/auth');
+// --- FIN DE LA MODIFICACIÓN ---
 const expenseUpload = require('../middleware/expenseUpload');
 
-// GET /api/expenses -> Obtener todos los gastos GENERALES
-router.get('/', protect, expenseController.getAllExpenses);
+// --- INICIO DE LA MODIFICACIÓN ---
+router.route('/')
+    .get(protect, expenseController.getExpenses)
+    .post(protect, checkSubscription, expenseUpload, expenseController.createExpense);
 
-// GET /api/expenses/all -> Obtener TODOS los gastos del usuario
+router.route('/:id')
+    .put(protect, checkSubscription, expenseUpload, expenseController.updateExpense)
+    .delete(protect, checkSubscription, expenseController.deleteExpense);
+// --- FIN DE LA MODIFICACIÓN ---
+
 router.get('/all', protect, expenseController.getAllUserExpenses);
-
-// POST /api/expenses -> Crear un nuevo gasto con posibles archivos adjuntos
-router.post('/', protect, expenseUpload, expenseController.createExpense);
-
-// PUT /api/expenses/:id -> Actualizar un gasto
-router.put('/:id', protect, expenseUpload, expenseController.updateExpense);
-
-// DELETE /api/expenses/:id -> Eliminar un gasto por su ID
-router.delete('/:id', protect, expenseController.deleteExpense);
-
-// GET /api/expenses/car/:licensePlate -> Obtener gastos de un coche por matrícula
 router.get('/car/:licensePlate', protect, expenseController.getExpensesByCarLicensePlate);
 
 module.exports = router;

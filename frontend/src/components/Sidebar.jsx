@@ -1,100 +1,111 @@
 // autogest-app/frontend/src/components/Sidebar.jsx
 import React, { useContext } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-    faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
-    faUser, faCog, faSignOutAlt, faUsersCog,
-    faCreditCard,
-    faBuilding,
-    faBell // Añadido
+    faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, faCog, 
+    faUsersCog, faCreditCard, faSignOutAlt, faLock
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
+import { APP_VERSION } from '../../version'; 
 
 const Sidebar = ({ onLogoutClick }) => {
-    // Obtenemos 'user' y el nuevo 'unreadCount' del contexto
-    const { user, unreadCount } = useContext(AuthContext);
+    const { user } = useContext(AuthContext);
 
-    if (!user) {
-        return null;
-    }
-    
-    const canSeeDashboard = user.role === 'admin' || user.isOwner || !user.companyId;
+    if (!user) return null;
 
-    const navItems = [
-        canSeeDashboard && { icon: faTachometerAlt, text: 'Dashboard', path: '/' },
-        { icon: faCar, text: 'Mis Coches', path: '/cars' },
-        { icon: faChartLine, text: 'Ventas', path: '/sales' },
-        { icon: faFileInvoiceDollar, text: 'Gastos', path: '/expenses' },
-        { icon: faBell, text: 'Notificaciones', path: '/notifications', badgeCount: unreadCount }, // Nuevo item
-        { icon: faUser, text: 'Perfil', path: '/profile' },
-        { icon: faCreditCard, text: 'Suscripción', path: '/subscription' },
-    ].filter(Boolean); 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const isSubscribed = user.subscriptionStatus === 'active';
+    const isTrialActive = user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
 
-    const adminNav = user && (user.isOwner || user.canExpelUsers) ? 
-        { icon: faUsersCog, text: 'Gestión', path: '/admin' } : null;
+    // La gestión está bloqueada si no es admin, no está suscrito y no tiene una prueba activa.
+    const isManagementLocked = user.role !== 'admin' && !isSubscribed && !isTrialActive;
 
-    const bottomItems = [
-        { icon: faCog, text: 'Configuración', path: '/settings' },
-    ];
+    const NavItem = ({ to, icon, children, locked = false }) => {
+        const commonClasses = "flex items-center px-4 py-3 text-sm font-semibold rounded-lg transition-colors duration-200";
+        
+        if (locked) {
+            return (
+                <div 
+                    className={`${commonClasses} text-text-secondary opacity-50 cursor-not-allowed relative group`}
+                    title="Suscríbete para obtener todas las ventajas"
+                >
+                    <FontAwesomeIcon icon={icon} className="w-5 h-5 mr-3" />
+                    <span className="flex-1">{children}</span>
+                    <FontAwesomeIcon icon={faLock} className="w-4 h-4 ml-auto text-text-secondary" />
+                </div>
+            );
+        }
 
-    // Modificamos NavItem para que acepte 'badgeCount'
-    const NavItem = ({ icon, text, path, badgeCount }) => (
-        <NavLink 
-            to={path} 
-            end
-            className={({ isActive }) =>
-                `flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group ${
-                isActive
-                    ? 'bg-white/5 text-text-primary shadow-lg border border-white/10 backdrop-blur-sm'
-                    : 'text-text-secondary hover:bg-component-bg-hover hover:text-text-primary'
-                }`
-            }
-        >
-            <FontAwesomeIcon icon={icon} className="w-5 h-5 mr-4 transition-transform duration-200 group-hover:scale-110" />
-            <span className="font-semibold flex-1">{text}</span>
-            {badgeCount > 0 && (
-                // --- INICIO DE LA MODIFICACIÓN ---
-                <span className="bg-accent text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                    {badgeCount}
-                </span>
-            )}
-        </NavLink>
-    );
+        return (
+            <NavLink
+                to={to}
+                className={({ isActive }) =>
+                    `${commonClasses} ${
+                        isActive
+                            ? 'bg-accent text-white shadow-lg'
+                            : 'text-text-secondary hover:bg-component-bg-hover hover:text-text-primary'
+                    }`
+                }
+            >
+                <FontAwesomeIcon icon={icon} className="w-5 h-5 mr-3" />
+                <span className="flex-1">{children}</span>
+            </NavLink>
+        );
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     return (
-        <aside className="hidden lg:flex lg:flex-col w-72 bg-component-bg p-6 border-r border-border-color">
-            <div className="px-2 mb-8">
-                <div className="flex items-center">
-                    {user.logoUrl && (
-                        <img src={user.logoUrl} alt="Logo" className="h-10 w-auto mr-3 rounded-md" />
-                    )}
-                    <h1 className="text-2xl font-bold text-text-primary">AutoGest</h1>
-                </div>
-                {user.businessName && (
-                    <div className="flex items-center gap-2 text-xs text-text-secondary border-t border-border-color pt-2 mt-2">
-                        <FontAwesomeIcon icon={faBuilding} />
-                        <span className="font-semibold truncate">{user.businessName}</span>
-                    </div>
-                )}
+        <div className="bg-component-bg text-text-primary w-64 flex-shrink-0 flex flex-col border-r border-border-color h-screen sticky top-0">
+            <div className="p-6 text-center border-b border-border-color">
+                <Link to="/" className="text-2xl font-bold text-accent">AutoGest</Link>
             </div>
 
-            <nav className="flex-1 space-y-2">
-                {navItems.map(item => <NavItem key={item.text} {...item} />)}
-                {adminNav && <NavItem {...adminNav} />}
+            <nav className="flex-1 p-4 space-y-2">
+                <NavItem to="/" icon={faTachometerAlt}>Dashboard</NavItem>
+                <NavItem to="/cars" icon={faCar}>Mis Coches</NavItem>
+                <NavItem to="/sales" icon={faChartLine}>Ventas</NavItem>
+                <NavItem to="/expenses" icon={faFileInvoiceDollar}>Gastos</NavItem>
+                
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {(user.role === 'admin' || user.isOwner || (user.companyId && user.canExpelUsers)) && (
+                    <NavItem to="/admin" icon={faUsersCog} locked={isManagementLocked}>
+                        Gestión
+                    </NavItem>
+                )}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
+
+                <NavItem to="/subscription" icon={faCreditCard}>Suscripción</NavItem>
             </nav>
 
-            <div className="space-y-2">
-                {bottomItems.map(item => <NavItem key={item.text} {...item} />)}
-                <button 
-                    onClick={onLogoutClick}
-                    className="flex items-center w-full px-4 py-3 text-sm font-medium text-text-secondary rounded-xl hover:bg-red-accent/10 hover:text-red-accent transition-colors duration-200 group"
-                >
-                    <FontAwesomeIcon icon={faSignOutAlt} className="w-5 h-5 mr-4 transition-transform duration-200 group-hover:scale-110" />
-                    <span className="font-semibold">Cerrar Sesión</span>
-                </button>
+            <div className="p-4 border-t border-border-color">
+                <div className="flex items-center mb-4">
+                    <img 
+                        src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}&background=8b5cf6&color=fff`} 
+                        alt="Avatar" 
+                        className="w-10 h-10 rounded-full object-cover"
+                    />
+                    <div className="ml-3">
+                        <p className="font-semibold text-sm text-text-primary">{user.name}</p>
+                        <p className="text-xs text-text-secondary capitalize">{user.role.replace('_', ' ')}</p>
+                    </div>
+                </div>
+                
+                <div className="space-y-2">
+                    <NavItem to="/settings" icon={faCog}>Ajustes</NavItem>
+                    <button
+                        onClick={onLogoutClick}
+                        className="w-full flex items-center px-4 py-3 text-sm font-semibold text-text-secondary hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors"
+                    >
+                        <FontAwesomeIcon icon={faSignOutAlt} className="w-5 h-5 mr-3" />
+                        Cerrar Sesión
+                    </button>
+                </div>
+                 <div className="text-center mt-4">
+                    <span className="text-xs text-text-secondary opacity-50">Versión {APP_VERSION}</span>
+                </div>
             </div>
-        </aside>
+        </div>
     );
 };
 

@@ -13,9 +13,10 @@ const AuthProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [pendingInvitationToken, setPendingInvitationToken] = useState(null);
-
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Función para obtener notificaciones
+    const [promptTrial, setPromptTrial] = useState(false);
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const fetchNotifications = useCallback(async () => {
         if (!token) return;
         try {
@@ -26,9 +27,7 @@ const AuthProvider = ({ children }) => {
             console.error("AuthContext: Failed to fetch notifications:", error);
         }
     }, [token]);
-    // --- FIN DE LA MODIFICACIÓN ---
 
-    // Función para marcar notificaciones como leídas
     const markAllNotificationsAsRead = useCallback(async () => {
         if (unreadCount === 0) return;
         const originalNotifications = [...notifications];
@@ -51,7 +50,7 @@ const AuthProvider = ({ children }) => {
                 const userData = await api.getMe();
                 setUser(userData);
                 setSubscriptionStatus(userData.subscriptionStatus);
-                await fetchNotifications(); // Se obtienen notificaciones junto al usuario
+                await fetchNotifications();
 
                 if (userData && userData.companyId) {
                     setPendingInvitationToken(null);
@@ -104,6 +103,11 @@ const AuthProvider = ({ children }) => {
                         setPendingInvitationToken(response.invitationToken);
                     }
                 }
+                // --- INICIO DE LA MODIFICACIÓN ---
+                if (response.promptTrial) {
+                    setPromptTrial(true);
+                }
+                // --- FIN DE LA MODIFICACIÓN ---
                 return true;
             }
         } catch (error) {
@@ -116,7 +120,7 @@ const AuthProvider = ({ children }) => {
         setToken(null);
         setUser(null);
         setSubscriptionStatus(null);
-        setNotifications([]); // Limpiar notificaciones al salir
+        setNotifications([]);
         setUnreadCount(0);
         setPendingInvitationToken(null);
         localStorage.removeItem('authToken');
@@ -166,6 +170,19 @@ const AuthProvider = ({ children }) => {
         }
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const startTrial = async () => {
+        try {
+            const updatedUser = await api.startTrial();
+            setUser(updatedUser);
+            setPromptTrial(false);
+        } catch (error) {
+            console.error("Error al iniciar el período de prueba:", error);
+            throw error;
+        }
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const value = {
         token,
         user,
@@ -181,17 +198,17 @@ const AuthProvider = ({ children }) => {
         refreshSubscriptionStatus,
         refreshUser,
         notifications,
-        // --- INICIO DE LA MODIFICACIÓN ---
-        setNotifications, // Se expone para poder actualizarlo
-        // --- FIN DE LA MODIFICACIÓN ---
+        setNotifications, 
         unreadCount,
-        // --- INICIO DE LA MODIFICACIÓN ---
-        setUnreadCount, // Se expone para poder actualizarlo
-        // --- FIN DE LA MODIFICACIÓN ---
+        setUnreadCount, 
         markAllNotificationsAsRead,
         fetchNotifications,
         pendingInvitationToken,
         setPendingInvitationToken,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        promptTrial,
+        startTrial,
+        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     return (

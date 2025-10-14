@@ -38,16 +38,16 @@ router.post('/reset-password/:token', userAccountController.resetPassword);
 
 // --- Rutas de Perfil (Protegidas) ---
 router.get('/me', protect, userProfileController.getMe);
-
-// --- INICIO DE LA MODIFICACIÓN ---
-// Nueva ruta para obtener la invitación pendiente del usuario
-router.get('/pending-invitation', protect, userProfileController.getPendingInvitation);
-// --- FIN DE LA MODIFICACIÓN ---
-
+router.get('/pending-invitation', protect, userProfileController.getPendingInvitation); 
 router.put('/profile', protect, profileUpload, handleMulterError, userProfileController.updateProfile);
 router.delete('/logo', protect, userProfileController.deleteLogo);
 router.delete('/avatar', protect, userProfileController.deleteAvatar);
 router.put('/update-password', protect, userProfileController.updatePassword);
 router.delete('/me', protect, userProfileController.deleteAccount);
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Ruta para iniciar el período de prueba
+router.post('/start-trial', protect, userAccountController.startTrial);
+// --- FIN DE LA MODIFICACIÓN ---
 
 module.exports = router;

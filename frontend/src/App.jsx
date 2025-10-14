@@ -1,61 +1,70 @@
 // autogest-app/frontend/src/App.jsx
-import React, { useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, AuthContext } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
-import MainLayout from './layouts/MainLayout';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import AcceptInvitationPage from './pages/AcceptInvitationPage';
-import CookiePolicyPage from './pages/CookiePolicyPage';
+import React, { useContext, useEffect } from 'react';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { AuthContext } from './context/AuthContext';
+import { useAppState } from './hooks/useAppState';
+import AppRoutes from './components/AppRoutes';
+import AppModals from './components/AppModals';
 import CookieConsent from './components/CookieConsent';
 import InvitationModal from './components/modals/InvitationModal';
 
-function AppContent() {
-  const { token, isAuthLoading, pendingInvitationToken, setPendingInvitationToken } = useContext(AuthContext);
-
-  if (isAuthLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
-        <div className="loader"></div>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <Routes>
-        <Route path="/login" element={!token ? <LoginPage /> : <Navigate to="/" />} />
-        <Route path="/register" element={!token ? <RegisterPage /> : <Navigate to="/" />} />
-        <Route path="/forgot-password" element={!token ? <ForgotPasswordPage /> : <Navigate to="/" />} />
-        <Route path="/reset-password/:token" element={!token ? <ResetPasswordPage /> : <Navigate to="/" />} />
-        <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
-        <Route path="/cookie-policy" element={<CookiePolicyPage />} />
-        <Route path="/*" element={token ? <MainLayout /> : <Navigate to="/login" />} />
-      </Routes>
-      <CookieConsent />
-      {pendingInvitationToken && (
-        <InvitationModal 
-          token={pendingInvitationToken} 
-          onClose={() => setPendingInvitationToken(null)} 
-        />
-      )}
-    </>
-  );
-}
-
 function App() {
-  return (
-    <Router>
-      <AuthProvider>
-        <ThemeProvider>
-          <AppContent />
-        </ThemeProvider>
-      </AuthProvider>
-    </Router>
-  );
+    const { token, user, isAuthLoading, pendingInvitationToken, setPendingInvitationToken } = useContext(AuthContext);
+    const appState = useAppState();
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const { promptTrial } = useContext(AuthContext);
+
+    useEffect(() => {
+        if (promptTrial && user) {
+            appState.setIsTrialModalOpen(true);
+        }
+    }, [promptTrial, user, appState.setIsTrialModalOpen]);
+    // --- FIN DE LA MODIFICACIÓN ---
+    
+    // Lógica para el modal de invitación
+    const handleAcceptInvitation = (invitationToken) => {
+        // ... (lógica existente)
+    };
+
+    const handleDeclineInvitation = () => {
+        if (pendingInvitationToken) {
+            const handledTokens = JSON.parse(localStorage.getItem('handledInvitationTokens') || '[]');
+            if (!handledTokens.includes(pendingInvitationToken)) {
+                localStorage.setItem('handledInvitationTokens', JSON.stringify([...handledTokens, pendingInvitationToken]));
+            }
+        }
+        setPendingInvitationToken(null);
+    };
+
+    if (isAuthLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen bg-background text-text-primary">
+                <div className="flex flex-col items-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4"></div>
+                    <span>Cargando...</span>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <Router>
+            <div className="font-sans">
+                <AppRoutes token={token} user={user} appState={appState} />
+                {token && <AppModals appState={appState} />}
+                <CookieConsent />
+                {pendingInvitationToken && (
+                    <InvitationModal
+                        isOpen={!!pendingInvitationToken}
+                        onAccept={handleAcceptInvitation}
+                        onDecline={handleDeclineInvitation}
+                        token={pendingInvitationToken}
+                    />
+                )}
+            </div>
+        </Router>
+    );
 }
 
 export default App;

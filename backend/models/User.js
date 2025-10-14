@@ -89,7 +89,18 @@ const User = sequelize.define('User', {
         defaultValue: false,
     },
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Se elimina el campo applyIgic
+    trialStartedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
+    trialExpiresAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
+    hasUsedTrial: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
     // --- FIN DE LA MODIFICACIÓN ---
     resetPasswordToken: {
         type: DataTypes.STRING,

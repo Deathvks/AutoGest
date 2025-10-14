@@ -32,8 +32,9 @@ export const useModalState = () => {
     const [carForTestDrive, setCarForTestDrive] = useState(null);
     const [userToExpel, setUserToExpel] = useState(null);
     const [pdfModalInfo, setPdfModalInfo] = useState(null); 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const [fileToDelete, setFileToDelete] = useState(null);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [isTrialModalOpen, setIsTrialModalOpen] = useState(false);
     // --- FIN DE LA MODIFICACIÓN ---
 
 
@@ -68,8 +69,9 @@ export const useModalState = () => {
         carForTestDrive, setCarForTestDrive,
         userToExpel, setUserToExpel,
         pdfModalInfo, setPdfModalInfo,
-        // --- INICIO DE LA MODIFICACIÓN ---
         fileToDelete, setFileToDelete,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        isTrialModalOpen, setIsTrialModalOpen,
         // --- FIN DE LA MODIFICACIÓN ---
     };
 };

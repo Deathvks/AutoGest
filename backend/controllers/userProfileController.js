@@ -3,9 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
-// --- INICIO DE LA MODIFICACIÓN ---
-const { User, Car, Expense, Incident, Location, sequelize, Company, Invitation } = require('../models'); // Se añade Invitation
-// --- FIN DE LA MODIFICACIÓN ---
+const { User, Car, Expense, Incident, Location, sequelize, Company, Invitation } = require('../models');
 const { isValidDniNie, isValidCif } = require('../utils/validation');
 
 // Obtener el perfil del usuario actual (GET /api/auth/me)
@@ -18,6 +16,14 @@ exports.getMe = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Comprobar si el período de prueba ha expirado y el usuario no está suscrito
+        if (user.trialExpiresAt && new Date(user.trialExpiresAt) < new Date() && user.subscriptionStatus === 'inactive') {
+            user.trialExpiresAt = null; // Anulamos la fecha para que no se vuelva a comprobar y quede bloqueado
+            await user.save();
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
 
         const userJson = user.toJSON();
 
@@ -57,7 +63,6 @@ exports.getMe = async (req, res) => {
     }
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Obtener la invitación pendiente del usuario actual
 exports.getPendingInvitation = async (req, res) => {
     try {
@@ -87,7 +92,6 @@ exports.getPendingInvitation = async (req, res) => {
         res.status(500).json({ error: 'Error al obtener la invitación.' });
     }
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {

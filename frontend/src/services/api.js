@@ -104,6 +104,10 @@ const api = {
     forgotPassword: (data) => fetch(`${BASE_URL}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
     resetPassword: (token, data) => fetch(`${BASE_URL}/auth/reset-password/${token}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    startTrial: () => fetch(`${BASE_URL}/auth/start-trial`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
+    // --- FIN DE LA MODIFICACIÓN ---
+
     getMe: () => fetch(`${BASE_URL}/auth/me`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
     updateProfile: (data) => {
         const isFormData = data instanceof FormData;
@@ -156,9 +160,7 @@ const api = {
         getAll: () => fetch(`${BASE_URL}/notifications`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
         markAllAsRead: () => fetch(`${BASE_URL}/notifications/read-all`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
         createCarCreationNotification: (data) => fetch(`${BASE_URL}/notifications/car-creation`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) }).then(handleProtectedResponse),
-        // --- INICIO DE LA MODIFICACIÓN ---
         delete: (id) => fetch(`${BASE_URL}/notifications/${id}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
-        // --- FIN DE LA MODIFICACIÓN ---
     },
 
     // --- Ubicaciones (Locations) ---

@@ -1,50 +1,69 @@
+// autogest-app/backend/middleware/auth.js
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { User } = require('../models');
 
-// Middleware 1: Proteger rutas verificando el token
-exports.protect = async (req, res, next) => {
+// Middleware para proteger rutas verificando el token
+const protect = async (req, res, next) => {
     let token;
-
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
-            // 1. Extraer el token del header
             token = req.headers.authorization.split(' ')[1];
-
-            // 2. Verificar la validez del token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-            // 3. Buscar al usuario por el ID del token
+            
+            // Adjunta el usuario completo al objeto request para uso posterior
             req.user = await User.findByPk(decoded.id, {
                 attributes: { exclude: ['password'] }
             });
 
-            // --- ESTA ES LA CORRECCIÓN CLAVE ---
-            // 4. Si el usuario no se encuentra (fue eliminado), denegar acceso
             if (!req.user) {
-                return res.status(401).json({ error: 'No autorizado, el usuario ya no existe.' });
+                return res.status(401).json({ error: 'No autorizado, usuario no encontrado.' });
             }
-            // ------------------------------------
-
-            next(); // El usuario existe y está autenticado, puede continuar
+            next();
         } catch (error) {
-            console.error(error);
-            return res.status(401).json({ error: 'No autorizado, token inválido.' });
+            console.error('Error de autenticación:', error);
+            res.status(401).json({ error: 'No autorizado, token fallido.' });
         }
     }
-
     if (!token) {
-        return res.status(401).json({ error: 'No autorizado, no se encontró token.' });
+        res.status(401).json({ error: 'No autorizado, no hay token.' });
     }
 };
 
-// Middleware 2: Autorizar por rol de usuario
-exports.authorize = (...roles) => {
-    return (req, res, next) => {
-        if (!roles.includes(req.user.role)) {
-            return res.status(403).json({ 
-                error: `El rol '${req.user.role}' no tiene permiso para realizar esta acción.` 
-            });
-        }
+// Middleware para administradores
+const admin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
         next();
-    };
+    } else {
+        res.status(403).json({ error: 'Acceso denegado. Se requiere rol de administrador.' });
+    }
 };
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Middleware para verificar si el usuario tiene una suscripción activa o un período de prueba válido
+const checkSubscription = (req, res, next) => {
+    const user = req.user;
+
+    // Permite el acceso a administradores y técnicos sin necesidad de suscripción
+    const exemptedRoles = ['admin', 'technician', 'technician_subscribed'];
+    if (exemptedRoles.includes(user.role)) {
+        return next();
+    }
+
+    // Comprueba si la suscripción está activa
+    const isSubscriptionActive = user.subscriptionStatus === 'active';
+    
+    // Comprueba si el período de prueba está activo
+    const isTrialActive = user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
+
+    if (isSubscriptionActive || isTrialActive) {
+        next(); // El usuario tiene acceso
+    } else {
+        res.status(403).json({ 
+            error: 'Acceso denegado. Se requiere una suscripción activa o un período de prueba válido.',
+            subscriptionRequired: true 
+        });
+    }
+};
+// --- FIN DE LA MODIFICACIÓN ---
+
+module.exports = { protect, admin, checkSubscription }; // Se exporta checkSubscription

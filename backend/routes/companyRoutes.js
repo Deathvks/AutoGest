@@ -1,21 +1,23 @@
 // autogest-app/backend/routes/companyRoutes.js
-const express = require('express');
+const express = 'express';
 const router = express.Router();
 const companyController = require('../controllers/companyController');
-const { protect, authorize } = require('../middleware/auth');
-
 // --- INICIO DE LA MODIFICACIÓN ---
-// Se vuelve a añadir 'technician' a la lista de roles autorizados para invitar.
-router.post('/invite', protect, authorize('admin', 'technician', 'technician_subscribed'), companyController.inviteUser);
+const { protect, checkSubscription } = require('../middleware/auth');
 // --- FIN DE LA MODIFICACIÓN ---
 
-// GET /api/company/invitations/verify/:token -> Verifica si un token de invitación es válido (Ruta Pública)
+// --- INICIO DE LA MODIFICACIÓN ---
+// Invitar a un usuario a la empresa del usuario autenticado
+router.post('/invite', protect, checkSubscription, companyController.inviteUser);
+
+// Expulsar a un usuario de la empresa
+router.delete('/users/:userId/expel', protect, checkSubscription, companyController.expelUser);
+// --- FIN DE LA MODIFICACIÓN ---
+
+// Verificar un token de invitación
 router.get('/invitations/verify/:token', companyController.verifyInvitation);
 
-// POST /api/company/invitations/accept -> Acepta una invitación (el usuario debe estar logueado)
+// Aceptar una invitación
 router.post('/invitations/accept', protect, companyController.acceptInvitation);
-
-// DELETE /api/company/users/:userIdToExpel/expel -> Expulsar a un usuario de la compañía
-router.delete('/users/:userIdToExpel/expel', protect, companyController.expelUser);
 
 module.exports = router;

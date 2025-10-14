@@ -5,16 +5,62 @@ import { useLocation, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
-    faUser, faCog, faUsersCog, faCreditCard, faBell
+    faUser, faCog, faUsersCog, faCreditCard, faBell, faRocket // Se añade faRocket
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 import { Menu, Transition, Portal } from '@headlessui/react';
 import NotificationsPanel from './NotificationsPanel';
 
 // --- INICIO DE LA MODIFICACIÓN ---
+const TrialCountdown = ({ expiryDate }) => {
+    const calculateTimeLeft = () => {
+        const difference = +new Date(expiryDate) - +new Date();
+        let timeLeft = {};
+
+        if (difference > 0) {
+            timeLeft = {
+                days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                minutes: Math.floor((difference / 1000 / 60) % 60),
+            };
+        }
+        return timeLeft;
+    };
+
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, 1000 * 60); // Se actualiza cada minuto
+        return () => clearInterval(timer);
+    });
+
+    const formatPlural = (num, word) => `${num} ${word}${num !== 1 ? 's' : ''}`;
+
+    if (!timeLeft.days && !timeLeft.hours && !timeLeft.minutes) {
+        return (
+            <Link to="/subscription" className="text-xs font-semibold text-red-400 animate-pulse">
+                Prueba Expirada
+            </Link>
+        );
+    }
+    
+    return (
+        <Link to="/subscription" className="flex items-center gap-2 text-sm text-text-secondary hover:text-accent transition-colors">
+            <FontAwesomeIcon icon={faRocket} />
+            <span className="font-semibold hidden sm:inline">
+                {timeLeft.days > 0 && `${formatPlural(timeLeft.days, 'día')} y `}
+                {timeLeft.hours > 0 && `${formatPlural(timeLeft.hours, 'hora')}`}
+                {!timeLeft.days && timeLeft.hours <= 0 && `${formatPlural(timeLeft.minutes, 'min')}`}
+            </span>
+        </Link>
+    );
+};
+
 const Header = ({ appState }) => {
     const { cars, setCarToEdit } = appState;
-    // --- FIN DE LA MODIFICACIÓN ---
+// --- FIN DE LA MODIFICACIÓN ---
     const location = useLocation();
     const { user, subscriptionStatus, notifications, unreadCount, markAllNotificationsAsRead } = useContext(AuthContext);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -84,6 +130,11 @@ const Header = ({ appState }) => {
                 </div>
 
                 <div className="flex items-center space-x-2 sm:space-x-4">
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    {user && user.trialExpiresAt && user.subscriptionStatus === 'inactive' && (
+                        <TrialCountdown expiryDate={user.trialExpiresAt} />
+                    )}
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <div>
                         <button
                             ref={notificationsButtonRef}

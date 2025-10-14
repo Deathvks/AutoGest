@@ -1,22 +1,21 @@
+// autogest-app/backend/routes/incidentRoutes.js
 const express = require('express');
 const router = express.Router();
 const incidentController = require('../controllers/incidentController');
-const { protect, authorize } = require('../middleware/auth');
+// --- INICIO DE LA MODIFICACIÓN ---
+const { protect, checkSubscription } = require('../middleware/auth');
+// --- FIN DE LA MODIFICACIÓN ---
 
-// GET /api/incidents -> Obtener todas las incidencias
-router.get('/', protect, incidentController.getAllIncidents);
+// --- INICIO DE LA MODIFICACIÓN ---
+router.route('/')
+    .get(protect, incidentController.getIncidents)
+    .post(protect, checkSubscription, incidentController.createIncident);
 
-// POST /api/incidents -> Crear una nueva incidencia
-router.post('/', protect, incidentController.createIncident);
+router.route('/:id')
+    .put(protect, checkSubscription, incidentController.updateIncident)
+    .delete(protect, checkSubscription, incidentController.deleteIncident);
+// --- FIN DE LA MODIFICACIÓN ---
 
-// PUT /api/incidents/:id -> Actualizar una incidencia
-router.put('/:id', protect, incidentController.updateIncident);
-
-// --- LÍNEA MODIFICADA ---
-// Quitamos authorize('admin') para que los usuarios normales puedan eliminar incidencias
-router.delete('/:id', protect, incidentController.deleteIncident);
-
-// GET /api/incidents/car/:carId -> Obtener incidencias de un coche específico
-router.get('/car/:carId', protect, incidentController.getIncidentsByCarId);
+router.put('/:id/resolve', protect, incidentController.resolveIncident);
 
 module.exports = router;

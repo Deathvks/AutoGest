@@ -32,9 +32,13 @@ import ExpelUserConfirmationModal from './modals/ExpelUserConfirmationModal';
 import BusinessDataModal from './modals/BusinessDataModal';
 import GeneratePdfModal from './modals/GeneratePdfModal';
 import DeleteFileConfirmationModal from './modals/DeleteFileConfirmationModal';
+// --- INICIO DE LA MODIFICACIÓN ---
+import TrialModal from './modals/TrialModal';
+// --- FIN DE LA MODIFICACIÓN ---
 
 const AppModals = ({ appState }) => {
-    const { logout, user } = useContext(AuthContext);
+    const { logout, user, startTrial } = useContext(AuthContext);
+
 
     const {
         incidents, locations, allExpenses, cars, users,
@@ -56,6 +60,9 @@ const AppModals = ({ appState }) => {
         userToExpel, setUserToExpel,
         pdfModalInfo, setPdfModalInfo,
         fileToDelete, setFileToDelete,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        isTrialModalOpen, setIsTrialModalOpen,
+        // --- FIN DE LA MODIFICACIÓN ---
         handleSaveBusinessData, handleUserAdded, handleUserUpdated,
         handleUserDeleted, handleExpelUser, handleAddCar, handleUpdateCar,
         handleDeleteCar, handleSellConfirm, handleReserveConfirm,
@@ -162,6 +169,14 @@ const AppModals = ({ appState }) => {
                     onConfirm={handleDeleteFile}
                 />
             )}
+
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <TrialModal
+                isOpen={isTrialModalOpen}
+                onClose={() => setIsTrialModalOpen(false)}
+                onConfirm={startTrial}
+            />
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
     );
 };
