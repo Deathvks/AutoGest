@@ -92,7 +92,7 @@ const ActivityHistory = () => {
     };
 
     return (
-        <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color xl:h-full flex flex-col">
+        <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color h-full flex flex-col">
             <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">HISTORIAL DE ACTIVIDAD</h3>
             <div ref={filterContainerRef} className="flex items-center gap-2 mb-4 overflow-x-auto no-scrollbar flex-shrink-0 min-w-0">
                 {filters.map(filter => (
@@ -257,10 +257,12 @@ const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) =
     const pieOptions = { ...chartOptions, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } } } };
 
     return (
-        <div className="space-y-12">
+        <div className="space-y-12 sm:pb-16 lg:pb-0">
             <div>
                 <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-4">DASHBOARD GENERAL</h2>
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-6">
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <StatCard title="INVERSIÓN TOTAL" value={generalStats.totalInvestment} colorClass="text-text-primary" onClick={onTotalInvestmentClick} isClickable={true} />
                     <StatCard title="INGRESOS REALES" value={generalStats.totalRevenue} colorClass="text-green-accent" onClick={onRevenueClick} isClickable={true} />
                     <StatCard title="INGRESOS POTENCIALES" value={generalStats.potentialRevenue} colorClass="text-accent" />
