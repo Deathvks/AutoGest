@@ -10,17 +10,19 @@ import { ThemeContext } from '../context/ThemeContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
+// --- INICIO DE LA MODIFICACIÓN ---
 const StatCard = ({ title, value, colorClass, onClick, isClickable }) => (
     <div 
-        className={`bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color flex flex-col justify-center ${isClickable ? 'cursor-pointer transition-all duration-300 hover:border-accent hover:scale-[1.03] hover:shadow-xl' : ''}`}
+        className={`bg-component-bg backdrop-blur-lg p-4 lg:p-6 rounded-2xl shadow-2xl border border-border-color flex flex-col justify-center ${isClickable ? 'cursor-pointer transition-all duration-300 hover:border-accent hover:scale-[1.03] hover:shadow-xl' : ''}`}
         onClick={onClick}
     >
-        <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider">{title}</h3>
-        <p className={`text-2xl xl:text-3xl font-bold mt-2 ${colorClass} whitespace-nowrap`}>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)}</p>
+        <h3 className="text-xs sm:text-sm font-medium text-text-secondary uppercase tracking-wider">{title}</h3>
+        <p className={`text-2xl lg:text-xl xl:text-3xl font-bold mt-2 ${colorClass} whitespace-nowrap`}>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)}</p>
     </div>
 );
+// --- FIN DE LA MODIFICACIÓN ---
 
-// --- INICIO DE LA MODIFICACIÓN ---
+
 const ActivityHistory = () => {
     const navigate = useNavigate();
     const [activityData, setActivityData] = useState({ activities: [], currentPage: 1, totalPages: 1 });
@@ -148,7 +150,6 @@ const ActivityHistory = () => {
         </div>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) => {
     const { activeTheme } = useContext(ThemeContext);
@@ -259,7 +260,7 @@ const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) =
         <div className="space-y-12">
             <div>
                 <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-4">DASHBOARD GENERAL</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-6">
                     <StatCard title="INVERSIÓN TOTAL" value={generalStats.totalInvestment} colorClass="text-text-primary" onClick={onTotalInvestmentClick} isClickable={true} />
                     <StatCard title="INGRESOS REALES" value={generalStats.totalRevenue} colorClass="text-green-accent" onClick={onRevenueClick} isClickable={true} />
                     <StatCard title="INGRESOS POTENCIALES" value={generalStats.potentialRevenue} colorClass="text-accent" />
@@ -318,9 +319,7 @@ const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) =
                     </div>
                 </div>
 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <div className="xl:col-span-1 xl:h-[calc(2*24rem+2rem)]">
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
                      <ActivityHistory />
                 </div>
             </div>
