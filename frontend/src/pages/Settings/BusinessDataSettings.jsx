@@ -4,6 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave, faTrash, faImage, faLock } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
+import { Link } from 'react-router-dom'; // Añadido para el enlace de suscripción
 
 const InputField = ({ id, label, value, onChange, disabled }) => (
     <div>
@@ -47,7 +48,8 @@ const BusinessDataSettings = () => {
 
     // --- INICIO DE LA MODIFICACIÓN ---
     const isSubscribed = user?.subscriptionStatus === 'active';
-    const isLocked = !isSubscribed && user?.role !== 'admin';
+    const isTrialing = user?.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
+    const isLocked = !isSubscribed && isTrialing && user?.role !== 'admin';
     // --- FIN DE LA MODIFICACIÓN ---
 
     const handleChange = (e) => {
@@ -102,7 +104,6 @@ const BusinessDataSettings = () => {
 
     return (
         <div className="bg-component-bg p-6 rounded-lg shadow-md border border-border-color relative">
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             {isLocked && (
                 <div className="absolute inset-0 bg-component-bg/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg">
                     <FontAwesomeIcon icon={faLock} className="text-4xl text-text-secondary mb-4" />
@@ -115,7 +116,6 @@ const BusinessDataSettings = () => {
                     </Link>
                 </div>
             )}
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <h2 className="text-xl font-bold text-text-primary border-b border-border-color pb-4">Datos de Empresa</h2>

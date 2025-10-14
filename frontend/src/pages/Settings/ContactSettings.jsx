@@ -17,10 +17,11 @@ const ContactSettings = () => {
     };
 
     return (
+        // --- INICIO DE LA MODIFICACIÓN ---
         <div>
             <h3 className="text-lg font-bold text-text-primary mb-4 uppercase">Contacto y Soporte</h3>
-            <div className="p-6 bg-background/50 rounded-xl border border-border-color">
-                <p className="text-sm text-text-secondary mb-4">
+            <div className="space-y-4">
+                <p className="text-sm text-text-secondary">
                     ¿Tienes alguna duda, sugerencia o has encontrado un error? Contacta con nuestro equipo de soporte.
                 </p>
                 
@@ -48,6 +49,7 @@ const ContactSettings = () => {
                 </div>
             </div>
         </div>
+        // --- FIN DE LA MODIFICACIÓN ---
     );
 };
 

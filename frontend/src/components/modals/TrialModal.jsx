@@ -1,4 +1,4 @@
-// frontend/src/components/modals/TrialModal.jsx
+// autogest-app/frontend/src/components/modals/TrialModal.jsx
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRocket, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -46,21 +46,28 @@ const TrialModal = ({ isOpen, onConfirm, onClose }) => {
                     </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 p-6 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
-                    <button 
-                        onClick={onClose}
-                        className="w-full sm:w-auto bg-component-bg border border-border-color text-text-primary px-6 py-2.5 rounded-lg hover:bg-border-color transition-colors font-semibold"
-                    >
-                        Quizás más tarde
-                    </button>
-                    <button 
-                        onClick={onConfirm}
-                        className="w-full sm:w-auto bg-accent text-white px-8 py-3 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-all transform hover:scale-105 font-semibold flex items-center justify-center gap-2"
-                    >
-                        <FontAwesomeIcon icon={faRocket} />
-                        Comenzar Prueba Gratuita
-                    </button>
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className="p-6 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
+                    <p className="text-xs text-center text-text-secondary mb-4">
+                        Si decides no empezar ahora, podrás activar la prueba más tarde desde la sección de <strong>Ajustes</strong>.
+                    </p>
+                    <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                        <button 
+                            onClick={onClose}
+                            className="w-full sm:w-auto bg-component-bg border border-border-color text-text-primary px-6 py-3 rounded-lg hover:bg-border-color transition-colors font-semibold whitespace-nowrap"
+                        >
+                            Quizás más tarde
+                        </button>
+                        <button 
+                            onClick={onConfirm}
+                            className="w-full sm:w-auto bg-accent text-white px-6 py-3 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-all transform hover:scale-105 font-semibold flex items-center justify-center gap-2 whitespace-nowrap"
+                        >
+                            <FontAwesomeIcon icon={faRocket} />
+                            Comenzar Prueba Gratuita
+                        </button>
+                    </div>
                 </div>
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
         </div>
     );

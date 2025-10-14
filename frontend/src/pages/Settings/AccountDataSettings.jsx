@@ -2,18 +2,21 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// --- INICIO DE LA MODIFICACIÓN ---
-import { faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faCreditCard, faCookieBite } from '@fortawesome/free-solid-svg-icons';
-// --- FIN DE LA MODIFICACIÓN ---
+import { faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faCreditCard, faCookieBite, faRocket } from '@fortawesome/free-solid-svg-icons';
 import Papa from 'papaparse';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 
-const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDeleteAccountClick }) => {
+const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDeleteAccountClick, onActivateTrialClick }) => {
     const { user } = useContext(AuthContext);
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
     const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
     const [exportMessage, setExportMessage] = useState('');
+
+    const isSubscribed = user.subscriptionStatus === 'active';
+    const isTrialing = user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
+    const canExportData = isSubscribed || isTrialing || user.role === 'admin';
+    const canActivateTrial = !isSubscribed && !user.hasUsedTrial && user.role !== 'admin';
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
@@ -59,39 +62,52 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
         document.body.removeChild(link);
     };
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleManageCookies = () => {
         window.dispatchEvent(new Event('openCookieConsent'));
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const liquidButtonClass = "bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2";
 
     return (
-        <div className="space-y-8">
-            <div>
-                <h3 className="text-lg font-bold text-text-primary mb-4 uppercase">Cuenta y Datos</h3>
-                <div className="space-y-6">
-                    <form onSubmit={handlePasswordSubmit} className="p-6 bg-background/50 rounded-xl border border-border-color">
-                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Cambiar Contraseña</h4>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <input name="currentPassword" type="password" placeholder="Contraseña Actual" value={passwordData.currentPassword} onChange={handlePasswordChange} className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary" />
-                            <input name="newPassword" type="password" placeholder="Nueva Contraseña" value={passwordData.newPassword} onChange={handlePasswordChange} className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary" />
-                        </div>
-                        <div className="mt-4 flex items-center gap-4">
-                            <button type="submit" className={liquidButtonClass}>
-                                <FontAwesomeIcon icon={faKey} />
-                                Actualizar
-                            </button>
-                            {passwordMessage.text && (
-                                <span className={`text-sm font-semibold ${passwordMessage.type === 'success' ? 'text-green-accent' : 'text-red-accent'}`}>
-                                    {passwordMessage.text}
-                                </span>
-                            )}
-                        </div>
-                    </form>
+        <div>
+            <h3 className="text-lg font-bold text-text-primary mb-4 uppercase">Cuenta y Datos</h3>
+            
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <div className="divide-y divide-border-color">
+                <form onSubmit={handlePasswordSubmit} className="py-6">
+                    <h4 className="font-semibold text-text-primary mb-2 uppercase">Cambiar Contraseña</h4>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        <input name="currentPassword" type="password" placeholder="Contraseña Actual" value={passwordData.currentPassword} onChange={handlePasswordChange} className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary" />
+                        <input name="newPassword" type="password" placeholder="Nueva Contraseña" value={passwordData.newPassword} onChange={handlePasswordChange} className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary" />
+                    </div>
+                    <div className="mt-4 flex items-center gap-4">
+                        <button type="submit" className={liquidButtonClass}>
+                            <FontAwesomeIcon icon={faKey} />
+                            Actualizar
+                        </button>
+                        {passwordMessage.text && (
+                            <span className={`text-sm font-semibold ${passwordMessage.type === 'success' ? 'text-green-accent' : 'text-red-accent'}`}>
+                                {passwordMessage.text}
+                            </span>
+                        )}
+                    </div>
+                </form>
 
-                    <div className="p-6 bg-background/50 rounded-xl border border-border-color">
+                {canActivateTrial && (
+                    <div className="py-6">
+                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Prueba Gratuita</h4>
+                        <p className="text-sm text-text-secondary mb-3">
+                            No has usado tu período de prueba de 3 días. ¡Actívalo ahora para desbloquear todas las funciones!
+                        </p>
+                        <button onClick={onActivateTrialClick} className={liquidButtonClass}>
+                            <FontAwesomeIcon icon={faRocket} />
+                            Activar Prueba Gratuita
+                        </button>
+                    </div>
+                )}
+
+                {canExportData && (
+                    <div className="py-6">
                         <h4 className="font-semibold text-text-primary mb-2 uppercase">Exportar Datos</h4>
                         <p className="text-sm text-text-secondary mb-3">Descarga una copia de seguridad de tus datos en formato CSV.</p>
                         <div className="flex flex-wrap gap-2">
@@ -110,57 +126,56 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                         </div>
                         {exportMessage && <p className="text-sm text-yellow-accent mt-3 font-semibold">{exportMessage}</p>}
                     </div>
+                )}
 
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    <div className="p-6 bg-background/50 rounded-xl border border-border-color">
-                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Privacidad y Cookies</h4>
-                        <p className="text-sm text-text-secondary mb-3">Gestiona tus preferencias de consentimiento de cookies.</p>
-                        <button onClick={handleManageCookies} className={liquidButtonClass}>
-                            <FontAwesomeIcon icon={faCookieBite} />
-                            Gestionar Cookies
-                        </button>
+                <div className="py-6">
+                    <h4 className="font-semibold text-text-primary mb-2 uppercase">Privacidad y Cookies</h4>
+                    <p className="text-sm text-text-secondary mb-3">Gestiona tus preferencias de consentimiento de cookies.</p>
+                    <button onClick={handleManageCookies} className={liquidButtonClass}>
+                        <FontAwesomeIcon icon={faCookieBite} />
+                        Gestionar Cookies
+                    </button>
+                </div>
+
+                {user && (
+                    <div className="py-6 lg:hidden">
+                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Suscripción</h4>
+                        <p className="text-sm text-text-secondary mb-3">Gestiona o revisa el plan de suscripción.</p>
+                        <Link to="/subscription" className="inline-flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm">
+                            <FontAwesomeIcon icon={faCreditCard} />
+                            Gestionar Suscripción
+                        </Link>
                     </div>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+                )}
 
-                    {user && (
-                        <div className="p-6 bg-background/50 rounded-xl border border-border-color lg:hidden">
-                            <h4 className="font-semibold text-text-primary mb-2 uppercase">Suscripción</h4>
-                            <p className="text-sm text-text-secondary mb-3">Gestiona o revisa el plan de suscripción.</p>
-                            <Link to="/subscription" className="inline-flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm">
-                                <FontAwesomeIcon icon={faCreditCard} />
-                                Gestionar Suscripción
-                            </Link>
-                        </div>
-                    )}
-
-                    {user && user.role === 'admin' && (
-                        <div className="p-6 bg-background/50 rounded-xl border border-border-color lg:hidden">
-                            <h4 className="font-semibold text-text-primary mb-2 uppercase">Administración</h4>
-                            <Link to="/admin" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm">
-                                <FontAwesomeIcon icon={faUserShield} />
-                                Gestionar Usuarios
-                            </Link>
-                        </div>
-                    )}
-                    
-                    <div className="p-6 bg-background/50 rounded-xl border border-border-color lg:hidden">
-                         <h4 className="font-semibold text-text-primary mb-2 uppercase">Sesión</h4>
-                         <button onClick={onLogoutClick} className="w-full sm:w-auto bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2">
-                            <FontAwesomeIcon icon={faSignOutAlt} />
-                            Cerrar Sesión
-                        </button>
+                {user && user.role === 'admin' && (
+                    <div className="py-6 lg:hidden">
+                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Administración</h4>
+                        <Link to="/admin" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm">
+                            <FontAwesomeIcon icon={faUserShield} />
+                            Gestionar Usuarios
+                        </Link>
                     </div>
+                )}
+                
+                <div className="py-6 lg:hidden">
+                     <h4 className="font-semibold text-text-primary mb-2 uppercase">Sesión</h4>
+                     <button onClick={onLogoutClick} className="w-full sm:w-auto bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2">
+                        <FontAwesomeIcon icon={faSignOutAlt} />
+                        Cerrar Sesión
+                    </button>
+                </div>
 
-                    <div className="p-6 bg-red-accent/10 rounded-xl">
-                        <h4 className="font-semibold text-red-accent mb-2 uppercase">Zona de Peligro</h4>
-                        <p className="text-sm text-red-accent/80 mb-3">La eliminación de tu cuenta es permanente y no se puede deshacer.</p>
-                        <button onClick={onDeleteAccountClick} className="w-full sm:w-auto bg-component-bg-hover text-red-accent font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2">
-                            <FontAwesomeIcon icon={faExclamationTriangle} />
-                            Eliminar Mi Cuenta
-                        </button>
-                    </div>
+                <div className="py-6">
+                    <h4 className="font-semibold text-red-accent mb-2 uppercase">Zona de Peligro</h4>
+                    <p className="text-sm text-red-accent/80 mb-3">La eliminación de tu cuenta es permanente y no se puede deshacer.</p>
+                    <button onClick={onDeleteAccountClick} className="w-full sm:w-auto bg-component-bg-hover text-red-accent font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2">
+                        <FontAwesomeIcon icon={faExclamationTriangle} />
+                        Eliminar Mi Cuenta
+                    </button>
                 </div>
             </div>
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </div>
     );
 };

@@ -40,9 +40,7 @@ const SubscriptionStatusBadge = ({ status, expiry }) => {
 };
 
 // --- Componente para la vista de Técnico (Estilo Netflix) ---
-// --- INICIO DE LA MODIFICACIÓN ---
 const TechnicianView = ({ users, onAddUser, onEditUser, currentUser, isLocked }) => {
-// --- FIN DE LA MODIFICACIÓN ---
 
     const ProfileCard = ({ user, onEdit, isCurrentUser }) => (
         <div className="group w-32 sm:w-40 cursor-pointer flex flex-col items-center gap-2 text-center">
@@ -85,7 +83,6 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser, isLocked })
         </div>
     );
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const LockedAddCard = () => (
         <div className="w-32 sm:w-40 flex flex-col items-center gap-2 text-center relative group">
              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-component-bg-hover border-2 border-dashed border-border-color flex items-center justify-center opacity-50">
@@ -102,7 +99,6 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser, isLocked })
             <Link to="/subscription" id="subscribe-link" className="hidden">Suscribirse</Link>
         </div>
     );
-    // --- FIN DE LA MODIFICACIÓN ---
 
     if (!currentUser.companyId) {
         return (
@@ -114,9 +110,7 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser, isLocked })
                     </p>
                 </div>
                 <div className="flex flex-wrap justify-center items-start gap-x-4 gap-y-8 sm:gap-x-8">
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     {isLocked ? <LockedAddCard /> : <AddProfileCard onAdd={onAddUser} />}
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
             </div>
         );
@@ -138,11 +132,9 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser, isLocked })
                 {teamMembers.map(user => (
                     <ProfileCard key={user.id} user={user} onEdit={onEditUser} currentUser={currentUser} isCurrentUser={user.id === currentUser.id} />
                 ))}
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 {(currentUser.isOwner || currentUser.canManageRoles) && (
                     isLocked ? <LockedAddCard /> : <AddProfileCard onAdd={onAddUser} />
                 )}
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
         </div>
     );
@@ -312,9 +304,7 @@ const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser, onExpelUs
     }
 
     if (currentUser.role === 'technician' || currentUser.role === 'technician_subscribed' || (currentUser.role === 'user' && currentUser.canExpelUsers)) {
-        // --- INICIO DE LA MODIFICACIÓN ---
         return <TechnicianView users={users} onAddUser={onAddUser} onEditUser={onEditUser} onExpelUser={onExpelUser} currentUser={currentUser} isLocked={isLocked} />;
-        // --- FIN DE LA MODIFICACIÓN ---
     }
 
     return (

@@ -16,9 +16,18 @@ import VersionIndicator from '../components/VersionIndicator';
 
 const MainLayout = () => {
     const appState = useAppState();
-    const { isDataLoading, setLogoutModalOpen } = appState;
-    const { user, subscriptionStatus, isRefreshing } = useContext(AuthContext);
+    const { setLogoutModalOpen, isDataLoading } = appState;
+    const { user, subscriptionStatus, isRefreshing, promptTrial } = useContext(AuthContext);
     const location = useLocation();
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se añade la lógica para mostrar el modal de prueba gratuita.
+    useEffect(() => {
+        if (promptTrial && user) {
+            appState.setIsTrialModalOpen(true);
+        }
+    }, [promptTrial, user, appState.setIsTrialModalOpen]);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         const {
@@ -66,7 +75,7 @@ const MainLayout = () => {
             <div className="flex h-screen bg-background font-sans text-text-secondary">
                 <Sidebar onLogoutClick={() => setLogoutModalOpen(true)} />
                 <div className="flex flex-col flex-1 min-w-0">
-                    <Header />
+                    <Header appState={appState} />
                     <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex items-center justify-center no-scrollbar">
                         <div className="w-full max-w-lg space-y-6 rounded-2xl bg-component-bg p-8 text-center shadow-2xl backdrop-blur-lg border border-border-color">
                             <FontAwesomeIcon icon={faUsers} className="text-5xl text-accent mb-4" />
@@ -100,9 +109,7 @@ const MainLayout = () => {
         <div className="flex h-screen bg-background font-sans text-text-secondary">
             <Sidebar onLogoutClick={() => setLogoutModalOpen(true)} />
             <div className="flex flex-col flex-1 min-w-0">
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <Header appState={appState} />
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 no-scrollbar">
                     <Suspense fallback={<div className="flex h-full w-full items-center justify-center">Cargando página...</div>}>
                         <AppRoutes 
