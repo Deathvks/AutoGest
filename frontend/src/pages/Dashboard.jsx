@@ -12,14 +12,15 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
 
 const StatCard = ({ title, value, colorClass, onClick, isClickable }) => (
     <div 
-        className={`bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color ${isClickable ? 'cursor-pointer transition-all duration-300 hover:border-accent hover:scale-[1.03] hover:shadow-xl' : ''}`}
+        className={`bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color flex flex-col justify-center ${isClickable ? 'cursor-pointer transition-all duration-300 hover:border-accent hover:scale-[1.03] hover:shadow-xl' : ''}`}
         onClick={onClick}
     >
         <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider">{title}</h3>
-        <p className={`text-3xl font-bold mt-2 ${colorClass}`}>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)}</p>
+        <p className={`text-2xl xl:text-3xl font-bold mt-2 ${colorClass} whitespace-nowrap`}>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)}</p>
     </div>
 );
 
+// --- INICIO DE LA MODIFICACIÓN ---
 const ActivityHistory = () => {
     const navigate = useNavigate();
     const [activityData, setActivityData] = useState({ activities: [], currentPage: 1, totalPages: 1 });
@@ -89,11 +90,9 @@ const ActivityHistory = () => {
     };
 
     return (
-        <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color h-full flex flex-col">
+        <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color xl:h-full flex flex-col">
             <h3 className="font-semibold text-text-primary mb-4 flex-shrink-0">HISTORIAL DE ACTIVIDAD</h3>
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <div ref={filterContainerRef} className="flex items-center gap-2 mb-4 overflow-x-auto no-scrollbar flex-shrink-0 min-w-0">
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
                 {filters.map(filter => (
                     <button
                         key={filter.key}
@@ -114,7 +113,7 @@ const ActivityHistory = () => {
                 </div>
             ) : activityData.activities.length > 0 ? (
                 <>
-                    <div className="space-y-3 flex-grow overflow-y-auto no-scrollbar">
+                    <div className="space-y-3 flex-grow overflow-y-auto no-scrollbar min-h-[200px]">
                         {activityData.activities.map((item, index) => {
                             const { icon, color } = getActivityIcon(item.type);
                             const isClickable = !!item.carId;
@@ -149,6 +148,7 @@ const ActivityHistory = () => {
         </div>
     );
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) => {
     const { activeTheme } = useContext(ThemeContext);
@@ -259,7 +259,7 @@ const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) =
         <div className="space-y-12">
             <div>
                 <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-4">DASHBOARD GENERAL</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
                     <StatCard title="INVERSIÓN TOTAL" value={generalStats.totalInvestment} colorClass="text-text-primary" onClick={onTotalInvestmentClick} isClickable={true} />
                     <StatCard title="INGRESOS REALES" value={generalStats.totalRevenue} colorClass="text-green-accent" onClick={onRevenueClick} isClickable={true} />
                     <StatCard title="INGRESOS POTENCIALES" value={generalStats.potentialRevenue} colorClass="text-accent" />
@@ -293,7 +293,7 @@ const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) =
                         </div>
                     </div>
 
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <StatCard title="INVERSIÓN DEL MES" value={monthlyStats.totalInvestment} colorClass="text-text-primary" />
                         <StatCard title="INGRESOS DEL MES" value={monthlyStats.totalRevenue} colorClass="text-green-accent" />
                         <StatCard title="GASTOS DEL MES" value={monthlyStats.totalExpenses} colorClass="text-red-accent" />
@@ -318,7 +318,9 @@ const Dashboard = ({ cars, expenses, onTotalInvestmentClick, onRevenueClick }) =
                     </div>
                 </div>
 
-                <div className="xl:col-span-1 h-[32rem] xl:h-[calc(2*24rem+2rem)]">
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className="xl:col-span-1 xl:h-[calc(2*24rem+2rem)]">
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                      <ActivityHistory />
                 </div>
             </div>
