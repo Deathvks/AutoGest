@@ -20,14 +20,12 @@ const MainLayout = () => {
     const { user, subscriptionStatus, isRefreshing, promptTrial } = useContext(AuthContext);
     const location = useLocation();
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     // Se añade la lógica para mostrar el modal de prueba gratuita.
     useEffect(() => {
         if (promptTrial && user) {
             appState.setIsTrialModalOpen(true);
         }
     }, [promptTrial, user, appState.setIsTrialModalOpen]);
-    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         const {
@@ -67,7 +65,10 @@ const MainLayout = () => {
         return <Navigate to="/subscription" replace />;
     }
     
-    const isUnassignedUser = user && user.role === 'user' && !user.companyId;
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const isTrialActive = user && user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
+    const isUnassignedUser = user && user.role === 'user' && !user.companyId && !isTrialActive;
+    // --- FIN DE LA MODIFICACIÓN ---
     const isAllowedUnassignedPath = ['/profile', '/settings', '/subscription'].includes(location.pathname) || location.pathname.startsWith('/accept-invitation');
 
     if (isUnassignedUser && !isAllowedUnassignedPath) {

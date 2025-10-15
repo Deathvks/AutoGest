@@ -96,16 +96,23 @@ const Profile = () => {
         setMessage('');
     };
     
+    // --- INICIO DE LA MODIFICACIÓN ---
     const isExempt = user && (user.role === 'admin' || user.role === 'technician');
     const hasValidSubscription = subscriptionStatus === 'active' || (subscriptionStatus === 'cancelled' && user && new Date(user.subscriptionExpiry) > new Date());
-        
-    const roleStyles = {
-        admin: 'bg-red-accent/10 text-red-accent',
-        user: 'bg-blue-accent/10 text-blue-accent',
-        technician: 'bg-green-accent/10 text-green-accent',
-        technician_subscribed: 'bg-accent/10 text-accent'
+    const isTrialing = user && user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date() && !hasValidSubscription;
+
+    const getStatusInfo = () => {
+        if (isExempt || hasValidSubscription) {
+            return { text: 'Pro', badgeClass: 'bg-accent', textClass: 'bg-accent/10 text-accent' };
+        }
+        if (isTrialing) {
+            return { text: 'Prueba', badgeClass: 'bg-yellow-accent', textClass: 'bg-yellow-accent/10 text-yellow-accent' };
+        }
+        return { text: 'Free', badgeClass: 'bg-gray-700', textClass: 'bg-blue-accent/10 text-blue-accent' };
     };
-    
+    const statusInfo = getStatusInfo();
+    // --- FIN DE LA MODIFICACIÓN ---
+        
     const InputField = ({ label, name, value, onChange, type = 'text', icon, disabled }) => (
         <div>
             <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">{label}</label>
@@ -151,17 +158,21 @@ const Profile = () => {
                                     )}
                                 </>
                             )}
-                            {!isEditing && !isExempt && (
-                                <span className={`absolute bottom-1 right-1 block text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md border-2 border-component-bg ${hasValidSubscription ? 'bg-accent' : 'bg-gray-700'}`}>
-                                    {hasValidSubscription ? 'PRO' : 'FREE'}
+                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                            {!isEditing && (
+                                <span className={`absolute bottom-1 right-1 block text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md border-2 border-component-bg ${statusInfo.badgeClass}`}>
+                                    {statusInfo.text.toUpperCase()}
                                 </span>
                             )}
+                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
 
                         <div className="mt-4">
                             <h2 className="text-2xl font-bold text-text-primary truncate">{user.name}</h2>
                             <p className="text-sm text-text-secondary truncate">{user.email}</p>
-                            <span className={`mt-3 inline-block text-xs font-bold px-3 py-1 rounded-full uppercase ${roleStyles[user.role] || 'bg-background'}`}>{user.role.replace('_', ' ')}</span>
+                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                            <span className={`mt-3 inline-block text-xs font-bold px-3 py-1 rounded-full uppercase ${statusInfo.textClass}`}>{statusInfo.text}</span>
+                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
                     </div>
                 </div>

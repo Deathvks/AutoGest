@@ -45,8 +45,9 @@ const AppRoutes = ({ appState, onLogoutClick }) => {
         businessDataMessage,
         setSubscriptionSuccessModalOpen,
         setUserToExpel,
-        // --- INICIO DE LA MODIFICACIÓN ---
         setCarToEdit,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setIsTrialModalOpen,
         // --- FIN DE LA MODIFICACIÓN ---
     } = appState;
 
@@ -115,6 +116,9 @@ const AppRoutes = ({ appState, onLogoutClick }) => {
                     onBusinessDataClick={() => setIsBusinessDataModalOpen(true)}
                     businessDataMessage={businessDataMessage}
                     onLogoutClick={onLogoutClick}
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    onActivateTrialClick={() => setIsTrialModalOpen(true)}
+                    // --- FIN DE LA MODIFICACIÓN ---
                 />} 
             />
             <Route 
@@ -133,12 +137,10 @@ const AppRoutes = ({ appState, onLogoutClick }) => {
                 path="/subscription" 
                 element={<SubscriptionPage setSubscriptionSuccessModalOpen={setSubscriptionSuccessModalOpen} />} 
             />
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <Route 
                 path="/notifications" 
                 element={<NotificationsPage cars={cars} setCarToEdit={setCarToEdit} />} 
             />
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
             <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
             <Route path="*" element={<Navigate to={userHomePath} replace />} />
         </Routes>

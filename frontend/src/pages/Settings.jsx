@@ -1,8 +1,8 @@
 // frontend/src/pages/Settings.jsx
-import React, { useState, useContext } from 'react'; // <-- AÑADIDO useContext
+import React, { useState, useContext } from 'react';
 import VersionIndicator from '../components/VersionIndicator';
 import { APP_NAME } from '../config/version';
-import { AuthContext } from '../context/AuthContext'; // <-- AÑADIDO
+import { AuthContext } from '../context/AuthContext';
 
 // Importar los nuevos componentes modularizados
 import AppearanceSettings from './Settings/AppearanceSettings';
@@ -17,14 +17,16 @@ const Settings = ({
     onDeleteAccountClick, 
     onBusinessDataClick, 
     businessDataMessage, 
-    onLogoutClick 
+    onLogoutClick,
+    onActivateTrialClick
 }) => {
-    const { user } = useContext(AuthContext); // <-- AÑADIDO
+    const { user } = useContext(AuthContext);
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Determina si el usuario debe ver la sección de datos de empresa
-    const shouldShowBusinessData = user && (user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed' || user.companyId);
+    // Se simplifica la lógica para que siempre se muestre si el usuario está logueado.
+    // El propio componente BusinessDataSettings se encargará de mostrarse bloqueado.
+    const shouldShowBusinessData = !!user;
     // --- FIN DE LA MODIFICACIÓN ---
 
     return (
@@ -36,7 +38,6 @@ const Settings = ({
                     <AppearanceSettings onPickerToggle={setIsColorPickerOpen} />
                 </div>
                 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 {shouldShowBusinessData && (
                     <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
                         <BusinessDataSettings 
@@ -45,7 +46,6 @@ const Settings = ({
                         />
                     </div>
                 )}
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                 <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
                     <AccountDataSettings 
@@ -54,6 +54,7 @@ const Settings = ({
                         incidents={incidents}
                         onLogoutClick={onLogoutClick}
                         onDeleteAccountClick={onDeleteAccountClick}
+                        onActivateTrialClick={onActivateTrialClick}
                     />
                 </div>
 

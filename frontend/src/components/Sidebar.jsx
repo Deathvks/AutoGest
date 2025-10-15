@@ -1,26 +1,63 @@
 // autogest-app/frontend/src/components/Sidebar.jsx
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, faCog, 
-    faUsersCog, faCreditCard, faSignOutAlt, faLock
+    faUsersCog, faCreditCard, faSignOutAlt, faLock, faRocket
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 import { APP_VERSION } from '../config/version'; 
 
+const TrialCountdownSidebar = ({ expiryDate }) => {
+    const calculateTimeLeft = () => {
+        const difference = +new Date(expiryDate) - +new Date();
+        if (difference <= 0) return 'Prueba Expirada';
+
+        const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const h = Math.floor((difference / (1000 * 60 * 60)) % 24);
+        const m = Math.floor((difference / 1000 / 60) % 60);
+
+        if (d > 0) return `Quedan: ${d}d ${h}h`;
+        if (h > 0) return `Quedan: ${h}h ${m}m`;
+        return `Quedan: ${m}m`;
+    };
+
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, 60000); // Se actualiza cada minuto
+
+        return () => clearInterval(timer);
+    });
+
+    return <span className="block text-xs font-bold">{timeLeft}</span>;
+};
+
 const Sidebar = ({ onLogoutClick }) => {
-    const { user } = useContext(AuthContext);
+    const { user, subscriptionStatus } = useContext(AuthContext);
 
     if (!user) return null;
 
-    const isSubscribed = user.subscriptionStatus === 'active';
-    const isTrialActive = user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
+    const isExempt = user.role === 'admin' || user.role === 'technician';
+    const hasValidSubscription = subscriptionStatus === 'active' || (subscriptionStatus === 'cancelled' && user.subscriptionExpiry && new Date(user.subscriptionExpiry) > new Date());
+    const isTrialing = user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date() && !hasValidSubscription;
 
+    const getStatusText = () => {
+        if (isExempt || hasValidSubscription) return 'Pro';
+        if (isTrialing) return 'Prueba';
+        return 'Free';
+    };
+
+    const userStatusText = getStatusText();
+    
     // --- INICIO DE LA MODIFICACIÓN ---
-    // La funcionalidad está bloqueada si no es admin, no está suscrito, y está en período de prueba.
-    // El candado solo se mostrará en este caso.
-    const isManagementLocked = isTrialActive && !isSubscribed && user.role !== 'admin';
+    // La variable isSubscribed se recupera aquí para la lógica de bloqueo.
+    const isSubscribed = subscriptionStatus === 'active';
+    const isManagementLocked = isTrialing && !isSubscribed && user.role !== 'admin';
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const NavItem = ({ to, icon, children, locked = false }) => {
         const commonClasses = "flex items-center px-4 py-3 text-sm font-semibold rounded-lg transition-colors duration-200";
@@ -37,7 +74,6 @@ const Sidebar = ({ onLogoutClick }) => {
                 </div>
             );
         }
-    // --- FIN DE LA MODIFICACIÓN ---
 
         return (
             <NavLink
@@ -77,6 +113,20 @@ const Sidebar = ({ onLogoutClick }) => {
                 <NavItem to="/subscription" icon={faCreditCard}>Suscripción</NavItem>
             </nav>
 
+            {isTrialing && user.subscriptionStatus === 'inactive' && (
+                <div className="px-4 pb-4">
+                    <div className="p-4 rounded-lg bg-accent/10 text-accent">
+                        <div className="flex items-center gap-3">
+                            <FontAwesomeIcon icon={faRocket} className="h-5 w-5" />
+                            <div className="flex-1">
+                                <div className="font-bold text-sm">Prueba Gratuita</div>
+                                <TrialCountdownSidebar expiryDate={user.trialExpiresAt} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="p-4 border-t border-border-color">
                 <div className="space-y-2">
                     <Link 
@@ -90,7 +140,7 @@ const Sidebar = ({ onLogoutClick }) => {
                         />
                         <div className="truncate">
                             <p className="font-semibold text-sm text-text-primary truncate">{user.name}</p>
-                            <p className="text-xs text-text-secondary capitalize truncate">{user.role.replace('_', ' ')}</p>
+                            <p className="text-xs text-text-secondary capitalize truncate">{userStatusText}</p>
                         </div>
                     </Link>
                     

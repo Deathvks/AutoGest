@@ -13,9 +13,7 @@ const AuthProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [pendingInvitationToken, setPendingInvitationToken] = useState(null);
-    // --- INICIO DE LA MODIFICACIÓN ---
     const [promptTrial, setPromptTrial] = useState(false);
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const fetchNotifications = useCallback(async () => {
         if (!token) return;
@@ -103,11 +101,9 @@ const AuthProvider = ({ children }) => {
                         setPendingInvitationToken(response.invitationToken);
                     }
                 }
-                // --- INICIO DE LA MODIFICACIÓN ---
                 if (response.promptTrial) {
                     setPromptTrial(true);
                 }
-                // --- FIN DE LA MODIFICACIÓN ---
                 return true;
             }
         } catch (error) {
@@ -170,18 +166,20 @@ const AuthProvider = ({ children }) => {
         }
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const startTrial = async () => {
         try {
             const updatedUser = await api.startTrial();
             setUser(updatedUser);
             setPromptTrial(false);
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Recargar la página para asegurar que todos los componentes se actualicen con el nuevo estado de prueba
+            window.location.reload();
+            // --- FIN DE LA MODIFICACIÓN ---
         } catch (error) {
             console.error("Error al iniciar el período de prueba:", error);
             throw error;
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const value = {
         token,
@@ -205,10 +203,8 @@ const AuthProvider = ({ children }) => {
         fetchNotifications,
         pendingInvitationToken,
         setPendingInvitationToken,
-        // --- INICIO DE LA MODIFICACIÓN ---
         promptTrial,
         startTrial,
-        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     return (

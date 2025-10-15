@@ -1,11 +1,53 @@
 // frontend/src/pages/Settings/AccountDataSettings.jsx
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faCreditCard, faCookieBite, faRocket } from '@fortawesome/free-solid-svg-icons';
 import Papa from 'papaparse';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
+
+// --- INICIO DE LA MODIFICACIÓN ---
+const TrialCountdownMobile = ({ expiryDate }) => {
+    const calculateTimeLeft = () => {
+        const difference = +new Date(expiryDate) - +new Date();
+        if (difference <= 0) return 'Prueba Expirada';
+
+        const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const h = Math.floor((difference / (1000 * 60 * 60)) % 24);
+        const m = Math.floor((difference / 1000 / 60) % 60);
+
+        if (d > 0) return `Quedan: ${d}d ${h}h`;
+        if (h > 0) return `Quedan: ${h}h ${m}m`;
+        return `Quedan: ${m}m`;
+    };
+
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, 60000);
+
+        return () => clearInterval(timer);
+    });
+
+    return (
+        <div className="lg:hidden py-6">
+            <h4 className="font-semibold text-text-primary mb-2 uppercase">Prueba Gratuita</h4>
+            <div className="p-3 rounded-lg bg-accent/10 text-accent">
+                <div className="flex items-center gap-3">
+                    <FontAwesomeIcon icon={faRocket} className="h-5 w-5" />
+                    <div className="flex-1">
+                        <div className="font-bold text-sm">PRUEBA GRATUITA ACTIVA</div>
+                        <span className="block text-xs font-bold">{timeLeft}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+// --- FIN DE LA MODIFICACIÓN ---
 
 const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDeleteAccountClick, onActivateTrialClick }) => {
     const { user } = useContext(AuthContext);
@@ -72,7 +114,6 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
         <div>
             <h3 className="text-lg font-bold text-text-primary mb-4 uppercase">Cuenta y Datos</h3>
             
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <div className="divide-y divide-border-color">
                 <form onSubmit={handlePasswordSubmit} className="py-6">
                     <h4 className="font-semibold text-text-primary mb-2 uppercase">Cambiar Contraseña</h4>
@@ -92,6 +133,12 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                         )}
                     </div>
                 </form>
+
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {isTrialing && user.subscriptionStatus === 'inactive' && (
+                    <TrialCountdownMobile expiryDate={user.trialExpiresAt} />
+                )}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                 {canActivateTrial && (
                     <div className="py-6">
@@ -175,7 +222,6 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                     </button>
                 </div>
             </div>
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </div>
     );
 };

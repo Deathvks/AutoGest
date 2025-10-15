@@ -5,62 +5,14 @@ import { useLocation, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
-    faUser, faCog, faUsersCog, faCreditCard, faBell, faRocket // Se añade faRocket
+    faUser, faCog, faUsersCog, faCreditCard, faBell, faLock
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 import { Menu, Transition, Portal } from '@headlessui/react';
 import NotificationsPanel from './NotificationsPanel';
 
-// --- INICIO DE LA MODIFICACIÓN ---
-const TrialCountdown = ({ expiryDate }) => {
-    const calculateTimeLeft = () => {
-        const difference = +new Date(expiryDate) - +new Date();
-        let timeLeft = {};
-
-        if (difference > 0) {
-            timeLeft = {
-                days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-                hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-                minutes: Math.floor((difference / 1000 / 60) % 60),
-            };
-        }
-        return timeLeft;
-    };
-
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setTimeLeft(calculateTimeLeft());
-        }, 1000 * 60); // Se actualiza cada minuto
-        return () => clearInterval(timer);
-    });
-
-    const formatPlural = (num, word) => `${num} ${word}${num !== 1 ? 's' : ''}`;
-
-    if (!timeLeft.days && !timeLeft.hours && !timeLeft.minutes) {
-        return (
-            <Link to="/subscription" className="text-xs font-semibold text-red-400 animate-pulse">
-                Prueba Expirada
-            </Link>
-        );
-    }
-    
-    return (
-        <Link to="/subscription" className="flex items-center gap-2 text-sm text-text-secondary hover:text-accent transition-colors">
-            <FontAwesomeIcon icon={faRocket} />
-            <span className="font-semibold hidden sm:inline">
-                {timeLeft.days > 0 && `${formatPlural(timeLeft.days, 'día')} y `}
-                {timeLeft.hours > 0 && `${formatPlural(timeLeft.hours, 'hora')}`}
-                {!timeLeft.days && timeLeft.hours <= 0 && `${formatPlural(timeLeft.minutes, 'min')}`}
-            </span>
-        </Link>
-    );
-};
-
 const Header = ({ appState }) => {
     const { cars, setCarToEdit } = appState;
-// --- FIN DE LA MODIFICACIÓN ---
     const location = useLocation();
     const { user, subscriptionStatus, notifications, unreadCount, markAllNotificationsAsRead } = useContext(AuthContext);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -68,7 +20,10 @@ const Header = ({ appState }) => {
     const notificationsButtonRef = useRef(null);
     const notificationsPanelRef = useRef(null);
 
-    // Click outside handler para cerrar el panel de notificaciones
+    const isSubscribed = subscriptionStatus === 'active';
+    const isTrialActive = user && user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
+    const isManagementLocked = isTrialActive && !isSubscribed && user.role !== 'admin';
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (
@@ -111,11 +66,20 @@ const Header = ({ appState }) => {
         return null;
     }
 
-    const rolesExemptFromSubscription = ['admin', 'technician'];
-    const isExempt = rolesExemptFromSubscription.includes(user.role);
+    const isExempt = user.role === 'admin' || user.role === 'technician';
+    const hasValidSubscription = subscriptionStatus === 'active' || (subscriptionStatus === 'cancelled' && user.subscriptionExpiry && new Date(user.subscriptionExpiry) > new Date());
+    const isTrialing = user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date() && !hasValidSubscription;
 
-    const hasValidSubscription = subscriptionStatus === 'active' || 
-        (subscriptionStatus === 'cancelled' && new Date(user.subscriptionExpiry) > new Date());
+    const getStatusInfo = () => {
+        if (isExempt || hasValidSubscription) {
+            return { text: 'Pro', badgeClass: 'bg-accent' };
+        }
+        if (isTrialing) {
+            return { text: 'Prueba', badgeClass: 'bg-yellow-accent' };
+        }
+        return { text: 'Free', badgeClass: 'bg-gray-700' };
+    };
+    const statusInfo = getStatusInfo();
 
     return (
         <>
@@ -130,11 +94,6 @@ const Header = ({ appState }) => {
                 </div>
 
                 <div className="flex items-center space-x-2 sm:space-x-4">
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    {user && user.trialExpiresAt && user.subscriptionStatus === 'inactive' && (
-                        <TrialCountdown expiryDate={user.trialExpiresAt} />
-                    )}
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <div>
                         <button
                             ref={notificationsButtonRef}
@@ -166,11 +125,11 @@ const Header = ({ appState }) => {
                                             alt="Avatar"
                                             className="w-9 h-9 rounded-full object-cover ring-2 ring-border-color"
                                         />
-                                        {!isExempt && (
-                                            <span className={`absolute -bottom-0.5 -right-0.5 block text-white text-[8px] font-bold px-1 py-0 rounded-md border border-component-bg ${hasValidSubscription ? 'bg-accent' : 'bg-gray-700'}`}>
-                                                {hasValidSubscription ? 'PRO' : 'FREE'}
-                                            </span>
-                                        )}
+                                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                        <span className={`absolute -bottom-1 -right-1 block text-white text-[7px] font-bold px-1 py-0.5 rounded-md border border-component-bg ${statusInfo.badgeClass}`}>
+                                            {statusInfo.text.toUpperCase()}
+                                        </span>
+                                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                                     </Menu.Button>
                                     <Transition
                                         as={Fragment}
@@ -203,11 +162,17 @@ const Header = ({ appState }) => {
                                                         </Menu.Item>
                                                     )}
                                                     {user.isOwner && user.role !== 'admin' && (
-                                                        <Menu.Item>
-                                                            {({ active }) => (
-                                                                <Link to="/admin" className={`${active ? 'bg-component-bg-hover text-text-primary' : 'text-text-secondary'} group flex w-full items-center rounded-lg px-2 py-2 text-sm font-semibold`}>
+                                                        <Menu.Item disabled={isManagementLocked}>
+                                                            {({ active, disabled }) => (
+                                                                <Link
+                                                                    to={disabled ? '#' : '/admin'}
+                                                                    className={`${(active && !disabled) ? 'bg-component-bg-hover text-text-primary' : 'text-text-secondary'} ${disabled ? 'opacity-60 cursor-not-allowed' : ''} group flex w-full items-center rounded-lg px-2 py-2 text-sm font-semibold`}
+                                                                    onClick={(e) => disabled && e.preventDefault()}
+                                                                    title={disabled ? "Función no disponible en la prueba gratuita" : ""}
+                                                                >
                                                                     <FontAwesomeIcon icon={faUsersCog} className="mr-2 h-4 w-4" />
-                                                                    Gestión de Equipo
+                                                                    <span className="flex-1">Gestión de Equipo</span>
+                                                                    {disabled && <FontAwesomeIcon icon={faLock} className="h-3 w-3" />}
                                                                 </Link>
                                                             )}
                                                         </Menu.Item>
