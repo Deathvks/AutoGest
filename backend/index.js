@@ -15,9 +15,8 @@ const companyRoutes = require('./routes/companyRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const { scheduleRecurringExpenses } = require('./jobs/recurringExpenses');
-// --- INICIO DE LA MODIFICACIÓN ---
 const { scheduleSubscriptionReminders } = require('./jobs/subscriptionReminders');
-// --- FIN DE LA MODIFICACIÓN ---
+const subscriptionController = require('./controllers/subscriptionController');
 
 const app = express();
 
@@ -27,6 +26,18 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// La ruta del webhook de Stripe DEBE registrarse ANTES de `express.json()`.
+// Usamos `express.raw` para que el cuerpo de la petición se mantenga como un Buffer,
+// que es lo que Stripe necesita para verificar la firma.
+app.post(
+    '/api/subscriptions/webhook',
+    express.raw({ type: 'application/json' }),
+    subscriptionController.handleWebhook
+);
+// --- FIN DE LA MODIFICACIÓN ---
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -72,9 +83,7 @@ db.sequelize.authenticate()
         console.log('✅ Conexión a la base de datos establecida correctamente.');
         startServer();
         scheduleRecurringExpenses();
-        // --- INICIO DE LA MODIFICACIÓN ---
         scheduleSubscriptionReminders();
-        // --- FIN DE LA MODIFICACIÓN ---
     })
     .catch(err => {
         console.error('❌ No se pudo conectar a la base de datos:', err);

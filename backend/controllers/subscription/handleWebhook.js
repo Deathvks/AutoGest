@@ -4,20 +4,31 @@ const { stripe, getStripeConfig } = require('./stripeConfig');
 const { sendSubscriptionInvoiceEmail } = require('../../utils/emailUtils');
 
 exports.handleWebhook = async (req, res) => {
+    console.log('[WEBHOOK] Petición recibida en el endpoint del webhook.');
     const sig = req.headers['stripe-signature'];
     const { webhookSecret } = getStripeConfig();
+
+    console.log(`[WEBHOOK] ¿Cabecera 'stripe-signature' presente?: ${sig ? 'Sí' : 'No'}`);
+    console.log(`[WEBHOOK] ¿'webhookSecret' cargado?: ${webhookSecret ? 'Sí' : 'No'}`);
+
     let event;
 
     try {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Ahora usamos `req.body` que contiene el Buffer raw gracias a `express.raw()` en index.js
         event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+        // --- FIN DE LA MODIFICACIÓN ---
     } catch (err) {
         console.error(`❌ Error en la firma del webhook: ${err.message}`);
+        // Logueamos el cuerpo como texto para un diagnóstico más claro
+        console.error('[WEBHOOK] Cuerpo de la petición que falló:', req.body.toString('utf8'));
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+    // A partir de aquí, el resto del código usa `event`, que ya está verificado
+    // y contiene el payload parseado en `event.data.object`.
     const dataObject = event.data.object;
-    console.log(`[Webhook] Evento recibido: ${event.type}`);
-    console.log(`[Webhook] Datos del evento (${event.type}):`, JSON.stringify(dataObject, null, 2));
+    console.log(`[Webhook] Evento verificado y recibido: ${event.type}`);
 
     try {
         let customerId;
@@ -56,8 +67,6 @@ exports.handleWebhook = async (req, res) => {
                         dataObject.number
                     );
 
-                    // --- INICIO DE LA MODIFICACIÓN ---
-                    // Crear notificación para el usuario
                     await Notification.create({
                         userId: user.id,
                         message: 'Tu pago de suscripción se ha procesado con éxito.',
@@ -65,7 +74,6 @@ exports.handleWebhook = async (req, res) => {
                         link: dataObject.invoice_pdf // Enlace directo a la factura
                     });
                     console.log(`[Webhook] Notificación de pago creada para el usuario ${user.id}.`);
-                    // --- FIN DE LA MODIFICACIÓN ---
 
                 } else {
                     console.warn('[Webhook] No se pudo enviar la factura por email. Faltan datos clave o el estado no es "paid".');
@@ -260,8 +268,19 @@ exports.handleWebhook = async (req, res) => {
                 break;
             
             case 'customer.subscription.deleted':
-                await user.update({ subscriptionStatus: 'inactive', subscriptionExpiry: null, role: 'user' });
-                console.log(`[Webhook] Suscripción del usuario ${user.id} eliminada. Rol revertido a 'user'.`);
+                const updatePayload = { 
+                    subscriptionStatus: 'inactive', 
+                    subscriptionExpiry: null 
+                };
+                
+                // Solo revierte el rol si era un 'technician_subscribed'.
+                // No afecta a 'admin' o 'technician' normal.
+                if (user.role === 'technician_subscribed') {
+                    updatePayload.role = 'user';
+                }
+
+                await user.update(updatePayload);
+                console.log(`[Webhook] Suscripción del usuario ${user.id} eliminada. Nuevo rol: ${user.role}.`);
                 break;
 
             case 'invoice.payment_failed':

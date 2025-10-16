@@ -18,9 +18,12 @@ router.post('/cancel-subscription', protect, subscriptionController.cancelSubscr
 // Reactivar una suscripción cancelada
 router.post('/reactivate-subscription', protect, subscriptionController.reactivateSubscription);
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Sincronizar el estado de la suscripción manualmente
 router.post('/sync', protect, subscriptionController.syncSubscription);
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se elimina la ruta del webhook de este fichero, ya que se ha movido a index.js
+// para poder usar express.raw() antes de express.json().
 // --- FIN DE LA MODIFICACIÓN ---
 
 module.exports = router;
