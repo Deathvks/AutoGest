@@ -1,4 +1,4 @@
-// autogest-app/frontend/src/pages/Settings/BusinessDataSettings.jsx
+// frontend/src/pages/Settings/BusinessDataSettings.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,9 +6,11 @@ import { faSave, faTrash, faImage, faLock } from '@fortawesome/free-solid-svg-ic
 import api from '../../services/api';
 import { Link } from 'react-router-dom';
 
-const InputField = ({ id, label, value, onChange, disabled }) => (
+const InputField = ({ id, label, value, onChange, disabled, required }) => (
     <div>
-        <label htmlFor={id} className="block text-sm font-medium text-text-secondary">{label}</label>
+        <label htmlFor={id} className="block text-sm font-medium text-text-secondary">
+            {label} {required && <span className="text-red-500">*</span>}
+        </label>
         <input
             type="text"
             id={id}
@@ -36,6 +38,51 @@ const BusinessDataSettings = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+
+    const isValidDniNie = (value) => {
+        const dniRegex = /^([0-9]{8}[A-Z])$/i;
+        const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/i;
+        value = value.toUpperCase();
+        if (!dniRegex.test(value) && !nieRegex.test(value)) return false;
+        const controlChars = 'TRWAGMYFPDXBNJZSQVHLCKE';
+        let number;
+        if (nieRegex.test(value)) {
+            const firstChar = value.charAt(0);
+            let numPrefix;
+            if (firstChar === 'X') numPrefix = '0';
+            else if (firstChar === 'Y') numPrefix = '1';
+            else if (firstChar === 'Z') numPrefix = '2';
+            number = parseInt(numPrefix + value.substring(1, 8), 10);
+        } else {
+            number = parseInt(value.substring(0, 8), 10);
+        }
+        return controlChars.charAt(number % 23) === value.charAt(value.length - 1);
+    };
+
+    const isValidCif = (value) => {
+        value = value.toUpperCase();
+        if (!/^[A-Z][0-9]{8}$/.test(value)) return false;
+        const controlDigit = value.charAt(value.length - 1);
+        const numberPart = value.substring(1, 8);
+        let sum = 0;
+        for (let i = 0; i < numberPart.length; i++) {
+            let num = parseInt(numberPart[i], 10);
+            if (i % 2 === 0) {
+                num *= 2;
+                sum += num < 10 ? num : Math.floor(num / 10) + (num % 10);
+            } else {
+                sum += num;
+            }
+        }
+        const lastDigitOfSum = sum % 10;
+        const calculatedControl = lastDigitOfSum === 0 ? 0 : 10 - lastDigitOfSum;
+        
+        if (/[A-Z]/.test(controlDigit)) {
+            return String.fromCharCode(64 + calculatedControl) === controlDigit;
+        } else {
+            return calculatedControl === parseInt(controlDigit, 10);
+        }
+    };
 
     useEffect(() => {
         if (user) {
@@ -83,24 +130,62 @@ const BusinessDataSettings = () => {
         }
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const validateForm = () => {
+        const missingFields = [];
+
+        if (!formData.address?.trim()) missingFields.push('Dirección Fiscal');
+        if (!formData.phone?.trim()) missingFields.push('Teléfono');
+
+        if (accountType === 'empresa') {
+            if (!formData.businessName?.trim()) missingFields.push('Nombre de la Empresa');
+            if (!formData.cif?.trim()) {
+                missingFields.push('CIF');
+            } else if (!isValidCif(formData.cif)) {
+                setError('El formato del CIF no es válido.');
+                return false;
+            }
+        } else { // particular
+            if (!formData.name?.trim()) missingFields.push('Nombre y Apellidos');
+            if (!formData.dni?.trim()) {
+                missingFields.push('DNI/NIE');
+            } else if (!isValidDniNie(formData.dni)) {
+                setError('El formato del DNI/NIE no es válido.');
+                return false;
+            }
+        }
+
+        if (missingFields.length > 0) {
+            const fieldsString = missingFields.join(', ');
+            setError(`Los siguientes campos son obligatorios: ${fieldsString}.`);
+            return false;
+        }
+
+        setError('');
+        return true;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSaving(true);
         setError('');
         setSuccessMessage('');
+
+        if (!validateForm()) {
+            return;
+        }
+        
+        setIsSaving(true);
         
         const data = new FormData();
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Limpiar campos no necesarios según el tipo de cuenta
         if (accountType === 'empresa') {
             data.append('businessName', formData.businessName);
             data.append('cif', formData.cif);
-            data.append('dni', ''); // Limpiar DNI
-        } else { // particular
+            data.append('dni', ''); 
+        } else { 
             data.append('name', formData.name);
             data.append('dni', formData.dni);
-            data.append('cif', ''); // Limpiar CIF
+            data.append('cif', ''); 
         }
 
         data.append('address', formData.address);
@@ -108,7 +193,6 @@ const BusinessDataSettings = () => {
         if (formData.logo) {
             data.append('logo', formData.logo);
         }
-        // --- FIN DE LA MODIFICACIÓN ---
     
         try {
             await updateUserProfile(data);
@@ -119,6 +203,7 @@ const BusinessDataSettings = () => {
             setIsSaving(false);
         }
     };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     return (
         <div className="bg-component-bg p-6 rounded-lg shadow-md border border-border-color relative">
@@ -135,14 +220,13 @@ const BusinessDataSettings = () => {
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                 <h2 className="text-xl font-bold text-text-primary border-b border-border-color pb-4">Datos de Facturación</h2>
                 
-                <div className="relative flex w-full max-w-sm mx-auto items-center rounded-full bg-component-bg-hover p-1 border border-border-color overflow-hidden">
+                <div className="relative grid grid-cols-2 w-full max-w-sm mx-auto items-center rounded-full bg-component-bg-hover p-1 border border-border-color">
                     <span
-                        className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
-                            accountType === 'particular' ? 'translate-x-[96%]' : 'translate-x-0'
+                        className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
+                            accountType === 'particular' ? 'translate-x-[calc(100%+8px)]' : 'translate-x-0'
                         }`}
                         style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                     />
@@ -150,8 +234,8 @@ const BusinessDataSettings = () => {
                         type="button"
                         onClick={() => setAccountType('empresa')}
                         disabled={isLocked}
-                        className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${
-                            accountType === 'empresa' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                        className={`relative z-10 rounded-full py-2 text-xs font-semibold transition-colors duration-300 whitespace-nowrap text-center ${
+                            accountType === 'empresa' ? 'text-text-primary' : 'text-text-secondary'
                         }`}
                     >
                         EMPRESA
@@ -160,8 +244,8 @@ const BusinessDataSettings = () => {
                         type="button"
                         onClick={() => setAccountType('particular')}
                         disabled={isLocked}
-                        className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${
-                            accountType === 'particular' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                        className={`relative z-10 rounded-full py-2 text-xs font-semibold transition-colors duration-300 whitespace-nowrap text-center ${
+                            accountType === 'particular' ? 'text-text-primary' : 'text-text-secondary'
                         }`}
                     >
                         AUTÓNOMO / PARTICULAR
@@ -171,19 +255,18 @@ const BusinessDataSettings = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {accountType === 'empresa' ? (
                         <>
-                            <InputField id="businessName" label="Nombre de la Empresa" value={formData.businessName} onChange={handleChange} disabled={isLocked} />
-                            <InputField id="cif" label="CIF" value={formData.cif} onChange={handleChange} disabled={isLocked} />
+                            <InputField id="businessName" label="Nombre de la Empresa" value={formData.businessName} onChange={handleChange} disabled={isLocked} required />
+                            <InputField id="cif" label="CIF" value={formData.cif} onChange={handleChange} disabled={isLocked} required />
                         </>
                     ) : (
                         <>
-                            <InputField id="name" label="Nombre y Apellidos" value={formData.name} onChange={handleChange} disabled={isLocked} />
-                            <InputField id="dni" label="DNI/NIE" value={formData.dni} onChange={handleChange} disabled={isLocked} />
+                            <InputField id="name" label="Nombre y Apellidos" value={formData.name} onChange={handleChange} disabled={isLocked} required />
+                            <InputField id="dni" label="DNI/NIE" value={formData.dni} onChange={handleChange} disabled={isLocked} required />
                         </>
                     )}
-                    <InputField id="address" label="Dirección Fiscal" value={formData.address} onChange={handleChange} disabled={isLocked} />
-                    <InputField id="phone" label="Teléfono" value={formData.phone} onChange={handleChange} disabled={isLocked} />
+                    <InputField id="address" label="Dirección Fiscal" value={formData.address} onChange={handleChange} disabled={isLocked} required />
+                    <InputField id="phone" label="Teléfono" value={formData.phone} onChange={handleChange} disabled={isLocked} required />
                 </div>
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 
                 <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1">Logo de la Empresa</label>
