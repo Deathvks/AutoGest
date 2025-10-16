@@ -8,9 +8,14 @@ import CarCard from './MyCars/CarCard';
 import FilterSidebar from './MyCars/FilterSidebar';
 
 const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance, onAddIncidentClick }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  // --- INICIO DE LA MODIFICACIÓN ---
+  const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem('carSearchTerm') || '');
   const [isFilterModalOpen, setFilterModalOpen] = useState(false);
-  const [filters, setFilters] = useState({ make: '', status: '', location: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
+  const [filters, setFilters] = useState(() => {
+    const savedFilters = sessionStorage.getItem('carFilters');
+    return savedFilters ? JSON.parse(savedFilters) : { make: '', status: '', location: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' };
+  });
+  // --- FIN DE LA MODIFICACIÓN ---
   const location = useLocation();
 
   useEffect(() => {
@@ -24,18 +29,28 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
     }
   }, [location.state, cars, onViewDetailsClick]);
 
+  // --- INICIO DE LA MODIFICACIÓN ---
+  useEffect(() => {
+    sessionStorage.setItem('carSearchTerm', searchTerm);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    sessionStorage.setItem('carFilters', JSON.stringify(filters));
+  }, [filters]);
+
   const resetFilters = () => {
     setFilters({ make: '', status: '', location: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' });
     setSearchTerm('');
+    sessionStorage.removeItem('carFilters');
+    sessionStorage.removeItem('carSearchTerm');
   };
+  // --- FIN DE LA MODIFICACIÓN ---
 
   const filteredCars = useMemo(() => {
     return cars.filter(car => {
       const searchMatch = `${car.make} ${car.model} ${car.licensePlate}`.toLowerCase().includes(searchTerm.toLowerCase());
       const makeMatch = filters.make ? car.make === filters.make : true;
-      // --- INICIO DE LA MODIFICACIÓN ---
       const statusMatch = filters.status ? car.status === filters.status : car.status !== 'Vendido';
-      // --- FIN DE LA MODIFICACIÓN ---
       const locationMatch = filters.location ? car.location === filters.location : true;
       const minPriceMatch = filters.minPrice ? car.price >= parseFloat(filters.minPrice) : true;
       const maxPriceMatch = filters.maxPrice ? car.price <= parseFloat(filters.maxPrice) : true;
