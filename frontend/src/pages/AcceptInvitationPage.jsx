@@ -10,7 +10,7 @@ const AcceptInvitationPage = () => {
     const { token } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { user, logout } = useContext(AuthContext);
+    const { user, logout, refreshUser } = useContext(AuthContext);
 
     const [invitationDetails, setInvitationDetails] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +28,11 @@ const AcceptInvitationPage = () => {
                 setInvitationDetails(details);
 
                 if (!user) {
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    // Si el usuario no está logueado, guardamos el token y lo mandamos a login.
+                    localStorage.setItem('pendingInvitationToken', token);
                     setStatus('needsLogin');
+                    // --- FIN DE LA MODIFICACIÓN ---
                 } else if (user.email.toLowerCase() !== details.email.toLowerCase()) {
                     setError(`Esta invitación es para ${details.email}. Por favor, cierra sesión e inicia sesión con la cuenta correcta.`);
                     setStatus('error');
@@ -52,10 +56,12 @@ const AcceptInvitationPage = () => {
             const response = await api.company.acceptInvitation({ token });
             setSuccess(response.message || '¡Te has unido al equipo! Serás redirigido a la aplicación.');
             setStatus('success');
+            if (response.user) {
+                await refreshUser();
+            }
             setTimeout(() => {
                 navigate('/cars');
-                window.location.reload();
-            }, 3000);
+            }, 2000);
         } catch (err) {
             setError(err.message || 'No se pudo completar la acción.');
             setStatus('error');
@@ -65,7 +71,11 @@ const AcceptInvitationPage = () => {
     };
     
     const handleLogin = () => {
-        navigate('/login', { state: { from: location } });
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Al ir a login, guardamos la ruta actual para volver aquí después.
+        localStorage.setItem('loginRedirect', location.pathname);
+        navigate('/login');
+        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     const handleLogoutAndSetRedirect = () => {
@@ -80,7 +90,6 @@ const AcceptInvitationPage = () => {
         if (status === 'error') {
             const isWrongUserError = error.includes('cierra sesión');
             return (
-                // --- INICIO DE LA MODIFICACIÓN ---
                 <div className="text-center text-red-accent bg-red-accent/10 p-4 rounded-xl">
                     <FontAwesomeIcon icon={faExclamationTriangle} className="mb-2 text-3xl" />
                     <p className="font-semibold">{error}</p>
@@ -103,7 +112,6 @@ const AcceptInvitationPage = () => {
         }
         if (status === 'success') {
             return (
-                // --- INICIO DE LA MODIFICACIÓN ---
                 <div className="text-center text-green-accent bg-green-accent/10 p-4 rounded-xl">
                     <FontAwesomeIcon icon={faCheckCircle} className="mb-2 text-3xl" />
                     <p className="font-semibold">{success}</p>
@@ -119,9 +127,7 @@ const AcceptInvitationPage = () => {
                     <p className="text-center text-text-secondary mt-2">
                         Por favor, inicia sesión en tu cuenta <span className="font-bold text-text-primary">{invitationDetails.email}</span> para aceptar.
                     </p>
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <div className="mt-6">
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                         <button 
                             onClick={handleLogin} 
                             className="w-full flex items-center justify-center gap-2 rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
@@ -139,9 +145,7 @@ const AcceptInvitationPage = () => {
                     <p className="text-center text-text-secondary">
                         Estás a punto de unirte a <span className="font-bold text-text-primary">{invitationDetails.companyName}</span> con tu cuenta <span className="font-bold text-text-primary">{invitationDetails.email}</span>.
                     </p>
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <div className="mt-6">
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                         <button onClick={handleAccept} disabled={isLoading} className="w-full flex items-center justify-center gap-2 rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50">
                             {isLoading ? <><FontAwesomeIcon icon={faSpinner} spin className="mr-2" /> UNIENDO...</> : 'Confirmar y Unirme al Equipo'}
                         </button>

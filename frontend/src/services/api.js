@@ -104,9 +104,7 @@ const api = {
     forgotPassword: (data) => fetch(`${BASE_URL}/auth/forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
     resetPassword: (token, data) => fetch(`${BASE_URL}/auth/reset-password/${token}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(handlePublicResponse),
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     startTrial: () => fetch(`${BASE_URL}/auth/start-trial`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
-    // --- FIN DE LA MODIFICACIÓN ---
 
     getMe: () => fetch(`${BASE_URL}/auth/me`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
     updateProfile: (data) => {
@@ -195,7 +193,10 @@ const api = {
         getSubscriptionStatus: () => fetch(`${BASE_URL}/subscriptions/status`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
         cancelSubscription: () => fetch(`${BASE_URL}/subscriptions/cancel-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
         reactivateSubscription: () => fetch(`${BASE_URL}/subscriptions/reactivate-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
-        syncSubscription: () => fetch(`${BASE_URL}/subscriptions/sync`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse)
+        syncSubscription: () => fetch(`${BASE_URL}/subscriptions/sync`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
+        // --- INICIO DE LA MODIFICACIÓN ---
+        createCustomerPortalSession: () => fetch(`${BASE_URL}/subscriptions/create-customer-portal-session`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
+        // --- FIN DE LA MODIFICACIÓN ---
     },
 
     company: {

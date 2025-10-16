@@ -1,7 +1,9 @@
 // autogest-app/frontend/src/pages/Subscription/SubscriptionStatus.jsx
 import React, { useState, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faExclamationTriangle, faTimesCircle, faSpinner, faUndo } from '@fortawesome/free-solid-svg-icons';
+// --- INICIO DE LA MODIFICACIÓN ---
+import { faCheckCircle, faExclamationTriangle, faTimesCircle, faSpinner, faUndo, faCreditCard } from '@fortawesome/free-solid-svg-icons';
+// --- FIN DE LA MODIFICACIÓN ---
 import CancelSubscriptionModal from '../../components/modals/CancelSubscriptionModal';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
@@ -13,6 +15,26 @@ const SubscriptionStatus = ({ status, expiry, onCancel }) => {
     const [cancelError, setCancelError] = useState('');
     const [isReactivating, setIsReactivating] = useState(false); 
     const [reactivateError, setReactivateError] = useState('');
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [isPortalLoading, setIsPortalLoading] = useState(false);
+    const [portalError, setPortalError] = useState('');
+
+    const handleManageSubscription = async () => {
+        setIsPortalLoading(true);
+        setPortalError('');
+        try {
+            const response = await api.subscriptions.createCustomerPortalSession();
+            if (response.url) {
+                window.location.href = response.url;
+            }
+        } catch (error) {
+            setPortalError(error.message || 'No se pudo abrir el portal de gestión. Inténtalo de nuevo.');
+            setTimeout(() => setPortalError(''), 5000);
+        } finally {
+            setIsPortalLoading(false);
+        }
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleCancelClick = () => {
         setCancelError('');
@@ -78,30 +100,50 @@ const SubscriptionStatus = ({ status, expiry, onCancel }) => {
                 <div className="mt-6 animate-fade-in-up" style={{ animationDelay: '450ms' }}>
                     {status === 'active' && (
                         <>
-                            <button
-                                onClick={handleCancelClick}
-                                disabled={isCancelling}
-                                className="bg-red-accent/10 text-red-accent font-semibold py-2 px-6 rounded-lg hover:bg-red-accent/20 transition-colors disabled:opacity-50"
-                            >
-                                {isCancelling ? <FontAwesomeIcon icon={faSpinner} spin /> : 'CANCELAR SUSCRIPCIÓN'}
-                            </button>
-                            {cancelError && (
-                                <p className="text-red-accent text-sm mt-3">{cancelError}</p>
-                            )}
+                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                <button
+                                    onClick={handleManageSubscription}
+                                    disabled={isPortalLoading}
+                                    className="w-full sm:w-auto bg-blue-accent/10 text-blue-accent font-semibold py-2 px-6 rounded-lg hover:bg-blue-accent/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isPortalLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : <><FontAwesomeIcon icon={faCreditCard} /> GESTIONAR SUSCRIPCIÓN</>}
+                                </button>
+                                <button
+                                    onClick={handleCancelClick}
+                                    disabled={isCancelling}
+                                    className="w-full sm:w-auto bg-red-accent/10 text-red-accent font-semibold py-2 px-6 rounded-lg hover:bg-red-accent/20 transition-colors disabled:opacity-50"
+                                >
+                                    {isCancelling ? <FontAwesomeIcon icon={faSpinner} spin /> : 'CANCELAR SUSCRIPCIÓN'}
+                                </button>
+                            </div>
+                            {cancelError && <p className="text-red-accent text-sm mt-3">{cancelError}</p>}
+                            {portalError && <p className="text-red-accent text-sm mt-3">{portalError}</p>}
+                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </>
                     )}
                     {status === 'cancelled' && (
                          <>
-                            <button
-                                onClick={handleReactivate}
-                                disabled={isReactivating}
-                                className="bg-green-accent/10 text-green-accent font-semibold py-2 px-6 rounded-lg hover:bg-green-accent/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
-                            >
-                                {isReactivating ? <FontAwesomeIcon icon={faSpinner} spin /> : <><FontAwesomeIcon icon={faUndo} /> REACTIVAR SUSCRIPCIÓN</>}
-                            </button>
-                            {reactivateError && (
-                                <p className="text-red-accent text-sm mt-3">{reactivateError}</p>
-                            )}
+                             {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                <button
+                                    onClick={handleManageSubscription}
+                                    disabled={isPortalLoading}
+                                    className="w-full sm:w-auto bg-blue-accent/10 text-blue-accent font-semibold py-2 px-6 rounded-lg hover:bg-blue-accent/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isPortalLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : <><FontAwesomeIcon icon={faCreditCard} /> GESTIONAR SUSCRIPCIÓN</>}
+                                </button>
+                                <button
+                                    onClick={handleReactivate}
+                                    disabled={isReactivating}
+                                    className="w-full sm:w-auto bg-green-accent/10 text-green-accent font-semibold py-2 px-6 rounded-lg hover:bg-green-accent/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isReactivating ? <FontAwesomeIcon icon={faSpinner} spin /> : <><FontAwesomeIcon icon={faUndo} /> REACTIVAR SUSCRIPCIÓN</>}
+                                </button>
+                            </div>
+                            {reactivateError && <p className="text-red-accent text-sm mt-3">{reactivateError}</p>}
+                            {portalError && <p className="text-red-accent text-sm mt-3">{portalError}</p>}
+                             {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </>
                     )}
                 </div>

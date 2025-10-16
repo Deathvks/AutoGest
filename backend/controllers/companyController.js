@@ -171,18 +171,23 @@ exports.acceptInvitation = async (req, res) => {
             }, { transaction });
         }
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Notificación para el usuario que se une al equipo
         await Notification.create({
             userId: userToUpdate.id,
             message: `¡Bienvenido! Te has unido al equipo ${invitation.Company.name}.`,
             type: 'general'
         }, { transaction });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         await transaction.commit();
 
-        res.status(200).json({ message: '¡Te has unido al equipo con éxito! Ya puedes iniciar sesión.' });
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se devuelve el usuario actualizado sin la contraseña
+        const userResponse = userToUpdate.toJSON();
+        delete userResponse.password;
+        res.status(200).json({ 
+            message: '¡Te has unido al equipo con éxito!',
+            user: userResponse 
+        });
+        // --- FIN DE LA MODIFICACIÓN ---
 
     } catch (error) {
         await transaction.rollback();

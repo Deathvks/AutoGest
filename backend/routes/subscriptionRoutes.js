@@ -22,8 +22,11 @@ router.post('/reactivate-subscription', protect, subscriptionController.reactiva
 router.post('/sync', protect, subscriptionController.syncSubscription);
 
 // --- INICIO DE LA MODIFICACIÓN ---
+// Crear una sesión para el portal de cliente de Stripe
+router.post('/create-customer-portal-session', protect, subscriptionController.createCustomerPortalSession);
+// --- FIN DE LA MODIFICACIÓN ---
+
 // Se elimina la ruta del webhook de este fichero, ya que se ha movido a index.js
 // para poder usar express.raw() antes de express.json().
-// --- FIN DE LA MODIFICACIÓN ---
 
 module.exports = router;
