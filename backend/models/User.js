@@ -57,6 +57,24 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    companyAddress: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    companyPhone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    personalAddress: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    personalPhone: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
     subscriptionStatus: {
         type: DataTypes.ENUM('inactive', 'active', 'cancelled', 'past_due'),
         allowNull: false,
@@ -88,7 +106,6 @@ const User = sequelize.define('User', {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     trialStartedAt: {
         type: DataTypes.DATE,
         allowNull: true,
@@ -101,7 +118,6 @@ const User = sequelize.define('User', {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     },
-    // --- FIN DE LA MODIFICACIÓN ---
     resetPasswordToken: {
         type: DataTypes.STRING,
         allowNull: true,

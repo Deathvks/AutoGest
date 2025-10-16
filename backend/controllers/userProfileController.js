@@ -1,8 +1,8 @@
 // autogest-app/backend/controllers/userProfileController.js
-const fs = 'fs';
-const path = 'path';
+const fs = require('fs');
+const path = require('path');
 const bcrypt = require('bcryptjs');
-const validator = 'validator';
+const validator = require('validator');
 const { User, Car, Expense, Incident, Location, sequelize, Company, Invitation } = require('../models');
 const { isValidDniNie, isValidCif } = require('../utils/validation');
 const { stripe } = require('./subscription/stripeConfig');
@@ -19,20 +19,18 @@ exports.getMe = async (req, res) => {
         }
 
         if (user.trialExpiresAt && new Date(user.trialExpiresAt) < new Date() && user.subscriptionStatus === 'inactive') {
-            user.trialExpiresAt = null; // Anulamos la fecha para que no se vuelva a comprobar y quede bloqueado
+            user.trialExpiresAt = null;
             await user.save();
         }
 
         const userJson = user.toJSON();
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Si el usuario pertenece a una compañía, se obtienen los datos del propietario.
         if (user.companyId) {
             const company = await Company.findByPk(user.companyId, {
                 include: [{
                     model: User,
                     as: 'owner',
-                    attributes: ['businessName', 'cif', 'dni', 'address', 'phone', 'logoUrl', 'invoiceCounter', 'proformaCounter']
+                    attributes: ['businessName', 'cif', 'dni', 'address', 'phone', 'logoUrl', 'invoiceCounter', 'proformaCounter', 'companyAddress', 'companyPhone', 'personalAddress', 'personalPhone']
                 }]
             });
 
@@ -40,8 +38,8 @@ exports.getMe = async (req, res) => {
                 const isOwner = user.id === company.ownerId;
                 userJson.isOwner = isOwner;
 
-                // Si el usuario NO es el propietario, se sobrescriben sus datos de facturación con los del propietario.
                 if (!isOwner && company.owner) {
+                    // Si es miembro, hereda todos los datos de facturación del propietario.
                     userJson.businessName = company.owner.businessName;
                     userJson.cif = company.owner.cif;
                     userJson.dni = company.owner.dni;
@@ -50,14 +48,17 @@ exports.getMe = async (req, res) => {
                     userJson.logoUrl = company.owner.logoUrl;
                     userJson.invoiceCounter = company.owner.invoiceCounter;
                     userJson.proformaCounter = company.owner.proformaCounter;
+                    // También heredan los datos específicos para que el frontend los muestre correctamente
+                    userJson.companyAddress = company.owner.companyAddress;
+                    userJson.companyPhone = company.owner.companyPhone;
+                    userJson.personalAddress = company.owner.personalAddress;
+                    userJson.personalPhone = company.owner.personalPhone;
                 }
                  return res.status(200).json(userJson);
             }
         }
         
-        // Si no pertenece a una compañía, se considera "propietario" de sus propios datos.
         userJson.isOwner = !user.companyId;
-        // --- FIN DE LA MODIFICACIÓN ---
         res.status(200).json(userJson);
 
     } catch (error) {
@@ -82,7 +83,7 @@ exports.getPendingInvitation = async (req, res) => {
         });
 
         if (!invitation) {
-            return res.status(200).json(null); // No es un error, simplemente no hay invitación
+            return res.status(200).json(null);
         }
 
         res.status(200).json({
@@ -99,11 +100,18 @@ exports.getPendingInvitation = async (req, res) => {
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {
     try {
-        const { name, email, businessName, dni, cif, address, phone, proformaCounter, invoiceCounter } = req.body;
+        const { name, email, businessName, dni, cif, companyAddress, personalAddress, companyPhone, personalPhone, proformaCounter, invoiceCounter } = req.body;
         const user = await User.findByPk(req.user.id);
         
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
+
+        if (user.companyId) {
+            const company = await Company.findByPk(user.companyId);
+            if (company && company.ownerId !== user.id) {
+                return res.status(403).json({ error: 'No tienes permiso para modificar los datos de facturación del equipo.' });
+            }
         }
 
         if (dni && !isValidDniNie(dni)) {
@@ -116,26 +124,31 @@ exports.updateProfile = async (req, res) => {
             return res.status(400).json({ error: 'El formato del email no es válido.' });
         }
 
-        if (name && name.trim() !== '') {
-            user.name = name;
-        }
-
-        if (email && email.trim() !== '') {
-            user.email = email;
-        }
+        if (name && name.trim() !== '') user.name = name;
+        if (email && email.trim() !== '') user.email = email;
         
-        if (cif && cif.trim() !== '') { // Si se envía CIF, es una empresa
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Lógica para guardar los datos de forma independiente
+        const accountType = (cif && cif.trim() !== '') ? 'empresa' : 'particular';
+
+        if (accountType === 'empresa') {
             user.businessName = businessName;
             user.cif = cif;
-            user.dni = null; // Limpiar DNI
-        } else if (dni && dni.trim() !== '') { // Si se envía DNI, es particular/autónomo
+            user.dni = null; // Limpia el DNI si se guardan datos de empresa
+            if (companyAddress !== undefined) user.companyAddress = companyAddress;
+            if (companyPhone !== undefined) user.companyPhone = companyPhone;
+        } else { // 'particular'
             user.dni = dni;
-            user.businessName = user.name; // Usar el nombre personal como nombre de negocio
-            user.cif = null; // Limpiar CIF
+            user.businessName = name; // El nombre de negocio es el nombre del autónomo
+            user.cif = null; // Limpia el CIF
+            if (personalAddress !== undefined) user.personalAddress = personalAddress;
+            if (personalPhone !== undefined) user.personalPhone = personalPhone;
         }
         
-        if (address !== undefined) user.address = address;
-        if (phone !== undefined) user.phone = phone;
+        // También actualizamos los campos genéricos para compatibilidad o uso general
+        user.address = accountType === 'empresa' ? companyAddress : personalAddress;
+        user.phone = accountType === 'empresa' ? companyPhone : personalPhone;
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (proformaCounter) user.proformaCounter = proformaCounter;
         if (invoiceCounter) user.invoiceCounter = invoiceCounter;
@@ -145,57 +158,47 @@ exports.updateProfile = async (req, res) => {
                 const oldAvatarUrl = user.avatarUrl;
                 const newAvatarUrl = `/avatars/${req.files.avatar[0].filename}`;
                 user.avatarUrl = newAvatarUrl;
-
                 if (oldAvatarUrl && oldAvatarUrl !== newAvatarUrl) {
                     const oldAvatarFilename = path.basename(oldAvatarUrl);
                     const oldAvatarFilePath = path.join(__dirname, '..', 'public', 'avatars', oldAvatarFilename);
-                    if (fs.existsSync(oldAvatarFilePath)) {
-                        fs.unlinkSync(oldAvatarFilePath);
-                    }
+                    if (fs.existsSync(oldAvatarFilePath)) fs.unlinkSync(oldAvatarFilePath);
                 }
             }
             if (req.files.logo) {
                 const oldLogoUrl = user.logoUrl;
                 const newLogoUrl = `/avatars/${req.files.logo[0].filename}`;
                 user.logoUrl = newLogoUrl;
-
                 if (oldLogoUrl && oldLogoUrl !== newLogoUrl) {
                     const oldLogoFilename = path.basename(oldLogoUrl);
                     const oldLogoFilePath = path.join(__dirname, '..', 'public', 'avatars', oldLogoFilename);
-                    if (fs.existsSync(oldLogoFilePath)) {
-                        fs.unlinkSync(oldLogoFilePath);
-                    }
+                    if (fs.existsSync(oldLogoFilePath)) fs.unlinkSync(oldLogoFilePath);
                 }
             }
         }
 
         await user.save();
 
-        const userResponse = user.toJSON();
-        delete userResponse.password;
+        const updatedUser = await User.findByPk(user.id, {
+            attributes: { exclude: ['password'] }
+        });
+        const userResponse = updatedUser.toJSON();
+        
+        if (userResponse.companyId) {
+            const company = await Company.findByPk(userResponse.companyId);
+            if (company) {
+                userResponse.isOwner = userResponse.id === company.ownerId;
+            }
+        } else {
+            userResponse.isOwner = true;
+        }
 
         res.status(200).json(userResponse);
+
     } catch (error) {
         console.error('Error en updateProfile:', error);
-        
-        if (error.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ 
-                error: 'El archivo es demasiado grande. El tamaño máximo permitido es 10MB.' 
-            });
-        }
-        
-        if (error.code === 'LIMIT_UNEXPECTED_FILE') {
-            return res.status(400).json({ 
-                error: 'Tipo de archivo no permitido. Solo se aceptan imágenes.' 
-            });
-        }
-        
-        if (error.message && error.message.includes('Solo se permiten')) {
-            return res.status(400).json({ 
-                error: error.message 
-            });
-        }
-        
+        if (error.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: 'El archivo es demasiado grande. El tamaño máximo permitido es 10MB.' });
+        if (error.code === 'LIMIT_UNEXPECTED_FILE') return res.status(400).json({ error: 'Tipo de archivo no permitido. Solo se aceptan imágenes.' });
+        if (error.message && error.message.includes('Solo se permiten')) return res.status(400).json({ error: error.message });
         res.status(500).json({ error: 'Error interno del servidor al actualizar el perfil.' });
     }
 };
@@ -207,9 +210,7 @@ exports.deleteAvatar = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
-
         const avatarUrlToDelete = user.avatarUrl;
-
         if (avatarUrlToDelete) {
             const avatarFilename = path.basename(avatarUrlToDelete);
             const avatarFilePath = path.join(__dirname, '..', 'public', 'avatars', avatarFilename);
@@ -217,13 +218,10 @@ exports.deleteAvatar = async (req, res) => {
                 fs.unlinkSync(avatarFilePath);
             }
         }
-
         user.avatarUrl = null;
         await user.save();
-        
         const userResponse = user.toJSON();
         delete userResponse.password;
-
         res.status(200).json(userResponse);
     } catch (error) {
         console.error(error);
@@ -238,9 +236,7 @@ exports.deleteLogo = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
-
         const logoUrlToDelete = user.logoUrl;
-
         if (logoUrlToDelete) {
             const logoFilename = path.basename(logoUrlToDelete);
             const logoFilePath = path.join(__dirname, '..', 'public', 'avatars', logoFilename);
@@ -248,13 +244,10 @@ exports.deleteLogo = async (req, res) => {
                 fs.unlinkSync(logoFilePath);
             }
         }
-
         user.logoUrl = null;
         await user.save();
-        
         const userResponse = user.toJSON();
         delete userResponse.password;
-
         res.status(200).json(userResponse);
     } catch (error) {
         console.error(error);
@@ -266,25 +259,20 @@ exports.deleteLogo = async (req, res) => {
 exports.updatePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
-
         const user = await User.findByPk(req.user.id);
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
-
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) {
             return res.status(401).json({ error: 'La contraseña actual es incorrecta.' });
         }
-
         if (!newPassword || newPassword.length < 6) {
             return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres.' });
         }
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(newPassword, salt);
-
         await user.save();
-
         res.status(200).json({ message: 'Contraseña actualizada con éxito.' });
     } catch (error) {
         console.error(error);
@@ -297,27 +285,18 @@ exports.deleteAccount = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
         const userId = req.user.id;
-        const user = req.user; // El objeto user completo ya está en req.user
-        
-        // 1. Cancelar suscripción en Stripe
+        const user = req.user;
         if (user.stripeCustomerId) {
-            const subscriptions = await stripe.subscriptions.list({
-                customer: user.stripeCustomerId,
-                status: 'active',
-                limit: 100 // Obtener todas las suscripciones activas
-            });
-
+            const subscriptions = await stripe.subscriptions.list({ customer: user.stripeCustomerId, status: 'active', limit: 100 });
             for (const subscription of subscriptions.data) {
                 await stripe.subscriptions.cancel(subscription.id);
             }
         }
-        
         const ownedCompany = await Company.findOne({ where: { ownerId: userId }, transaction });
         if (ownedCompany) {
             await transaction.rollback();
             return res.status(400).json({ error: `Eres propietario del equipo "${ownedCompany.name}" y no puedes eliminar tu cuenta. Transfiere la propiedad o elimina el equipo primero.` });
         }
-
         const cars = await Car.findAll({ where: { userId }, transaction });
         for (const car of cars) {
             if (car.imageUrl) {
@@ -331,26 +310,18 @@ exports.deleteAccount = async (req, res) => {
                 if (fs.existsSync(docFilePath)) fs.unlinkSync(docFilePath);
             }
         }
-
         await Incident.destroy({ where: { carId: cars.map(c => c.id) }, transaction });
         await Expense.destroy({ where: { carLicensePlate: cars.map(c => c.licensePlate) }, transaction });
         await Car.destroy({ where: { userId }, transaction });
         await Location.destroy({ where: { userId }, transaction });
-        
         if (req.user.avatarUrl) {
             const avatarFilename = path.basename(req.user.avatarUrl);
             const avatarFilePath = path.join(__dirname, '..', 'public', 'avatars', avatarFilename);
-            if (fs.existsSync(avatarFilePath)) {
-                fs.unlinkSync(avatarFilePath);
-            }
+            if (fs.existsSync(avatarFilePath)) fs.unlinkSync(avatarFilePath);
         }
-
         await User.destroy({ where: { id: userId }, transaction });
-
         await transaction.commit();
-
         res.status(200).json({ message: 'Cuenta eliminada permanentemente con éxito.' });
-
     } catch (error) {
         await transaction.rollback();
         console.error('Error al eliminar la cuenta:', error);

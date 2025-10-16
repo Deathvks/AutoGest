@@ -119,20 +119,23 @@ const BusinessDataSettings = () => {
     
             const storedData = getStoredFormData(user.id);
     
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Se leen los datos de los campos específicos de la base de datos
             const newEmpresaData = {
                 businessName: user.businessName || storedData?.empresa?.businessName || '',
                 cif: user.cif || storedData?.empresa?.cif || '',
-                address: user.companyAddress || user.address || storedData?.empresa?.address || '',
-                phone: user.companyPhone || user.phone || storedData?.empresa?.phone || '',
+                address: user.companyAddress || storedData?.empresa?.address || '',
+                phone: user.companyPhone || storedData?.empresa?.phone || '',
                 logo: null
             };
     
             const newParticularData = {
                 name: user.name || storedData?.particular?.name || '',
                 dni: user.dni || storedData?.particular?.dni || '',
-                address: user.personalAddress || user.address || storedData?.particular?.address || '',
-                phone: user.personalPhone || user.phone || storedData?.particular?.phone || '',
+                address: user.personalAddress || storedData?.particular?.address || '',
+                phone: user.personalPhone || storedData?.particular?.phone || '',
             };
+            // --- FIN DE LA MODIFICACIÓN ---
     
             setEmpresaFormData(newEmpresaData);
             setParticularFormData(newParticularData);
@@ -143,11 +146,9 @@ const BusinessDataSettings = () => {
 
     const isSubscribed = user?.subscriptionStatus === 'active';
     const isTrialing = user?.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
-    // --- INICIO DE LA MODIFICACIÓN ---
     const isTeamMember = user?.companyId && !user.isOwner;
     const isLockedByTrial = !isSubscribed && isTrialing && user?.role !== 'admin';
     const isLocked = isLockedByTrial || isTeamMember;
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -237,6 +238,8 @@ const BusinessDataSettings = () => {
 
         const data = new FormData();
         
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se envían los datos con los nombres de los campos específicos
         if (accountType === 'empresa') {
             data.append('businessName', empresaFormData.businessName);
             data.append('cif', empresaFormData.cif);
@@ -254,6 +257,7 @@ const BusinessDataSettings = () => {
             data.append('businessName', particularFormData.name);
             data.append('cif', '');
         }
+        // --- FIN DE LA MODIFICACIÓN ---
     
         try {
             await updateUserProfile(data);

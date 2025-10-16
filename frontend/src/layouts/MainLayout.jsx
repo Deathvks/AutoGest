@@ -12,14 +12,14 @@ import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import AppRoutes from '../components/AppRoutes';
 import AppModals from '../components/AppModals';
-import VersionIndicator from '../components/VersionIndicator';
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se elimina la importación del componente de versión
+// --- FIN DE LA MODIFICACIÓN ---
 
 const MainLayout = () => {
     const appState = useAppState();
     const { setLogoutModalOpen, isDataLoading } = appState;
-    // --- INICIO DE LA MODIFICACIÓN ---
     const { user, subscriptionStatus, isRefreshing, promptTrial, isTrialActive } = useContext(AuthContext);
-    // --- FIN DE LA MODIFICACIÓN ---
     const location = useLocation();
 
     // Se añade la lógica para mostrar el modal de prueba gratuita.
@@ -67,9 +67,7 @@ const MainLayout = () => {
         return <Navigate to="/subscription" replace />;
     }
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const isUnassignedUser = user && user.role === 'user' && !user.companyId && !isTrialActive;
-    // --- FIN DE LA MODIFICACIÓN ---
     const isAllowedUnassignedPath = ['/profile', '/settings', '/subscription'].includes(location.pathname) || location.pathname.startsWith('/accept-invitation');
 
     if (isUnassignedUser && !isAllowedUnassignedPath) {
@@ -122,7 +120,9 @@ const MainLayout = () => {
                 </main>
             </div>
             <BottomNav />
-            <VersionIndicator className="hidden lg:block fixed bottom-4 right-4 bg-component-bg/50 px-2 py-1 rounded-lg border border-border-color text-xs" />
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            {/* Se elimina el indicador de versión de esta parte del layout */}
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
             <AppModals appState={appState} />
         </div>
     );
