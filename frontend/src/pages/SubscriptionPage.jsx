@@ -19,7 +19,9 @@ const stripePublishableKey = import.meta.env.PROD
 const stripePromise = loadStripe(stripePublishableKey);
 
 const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
-    const { user, subscriptionStatus, refreshSubscriptionStatus } = useContext(AuthContext);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const { user, subscriptionStatus, refreshSubscriptionStatus, setPromptTrial } = useContext(AuthContext);
+    // --- FIN DE LA MODIFICACIÓN ---
     
     const [cookieConsent, setCookieConsent] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -46,6 +48,9 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
     };
 
     const handleSuccessfulPayment = () => {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setPromptTrial(false); // Evita que el modal de prueba aparezca
+        // --- FIN DE LA MODIFICACIÓN ---
         setIsVerifyingPayment(true);
         setVerificationError('');
 
@@ -130,9 +135,7 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
         );
     }
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const areCookiesAllowedForPayment = cookieConsent === 'accepted' || cookieConsent === 'necessary';
-    // --- FIN DE LA MODIFICACIÓN ---
     
     return (
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
@@ -149,9 +152,7 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
                 </div>
             </div>
             <div className="order-1 lg:order-2">
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 {areCookiesAllowedForPayment ? (
-                // --- FIN DE LA MODIFICACIÓN ---
                     <Elements stripe={stripePromise}>
                         <CheckoutForm onSuccessfulPayment={handleSuccessfulPayment} />
                     </Elements>

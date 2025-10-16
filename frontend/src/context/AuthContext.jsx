@@ -14,6 +14,38 @@ const AuthProvider = ({ children }) => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [pendingInvitationToken, setPendingInvitationToken] = useState(null);
     const [promptTrial, setPromptTrial] = useState(false);
+    const [trialTimeLeft, setTrialTimeLeft] = useState(null);
+    const [isTrialActive, setIsTrialActive] = useState(false);
+
+    useEffect(() => {
+        if (user?.trialExpiresAt && user.subscriptionStatus !== 'active') {
+            const calculateTimeLeft = () => {
+                const difference = +new Date(user.trialExpiresAt) - +new Date();
+                if (difference > 0) {
+                    setIsTrialActive(true);
+                    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+                    const minutes = Math.floor((difference / 1000 / 60) % 60);
+                    const seconds = Math.floor((difference / 1000) % 60);
+                    return { days, hours, minutes, seconds };
+                }
+                setIsTrialActive(false);
+                setTrialTimeLeft(null);
+                // Forzar actualización del estado del usuario cuando el tiempo expira
+                setUser(prevUser => ({ ...prevUser, trialExpiresAt: null }));
+                return null;
+            };
+
+            const timer = setInterval(() => {
+                setTrialTimeLeft(calculateTimeLeft());
+            }, 1000);
+
+            return () => clearInterval(timer);
+        } else {
+            setIsTrialActive(false);
+            setTrialTimeLeft(null);
+        }
+    }, [user]);
 
     const fetchNotifications = useCallback(async () => {
         if (!token) return;
@@ -171,10 +203,7 @@ const AuthProvider = ({ children }) => {
             const updatedUser = await api.startTrial();
             setUser(updatedUser);
             setPromptTrial(false);
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Recargar la página para asegurar que todos los componentes se actualicen con el nuevo estado de prueba
             window.location.reload();
-            // --- FIN DE LA MODIFICACIÓN ---
         } catch (error) {
             console.error("Error al iniciar el período de prueba:", error);
             throw error;
@@ -205,6 +234,11 @@ const AuthProvider = ({ children }) => {
         setPendingInvitationToken,
         promptTrial,
         startTrial,
+        trialTimeLeft,
+        isTrialActive,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setPromptTrial,
+        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     return (

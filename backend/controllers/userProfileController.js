@@ -1,10 +1,13 @@
 // autogest-app/backend/controllers/userProfileController.js
-const fs = require('fs');
-const path = require('path');
+const fs = 'fs';
+const path = 'path';
 const bcrypt = require('bcryptjs');
-const validator = require('validator');
+const validator = 'validator';
 const { User, Car, Expense, Incident, Location, sequelize, Company, Invitation } = require('../models');
 const { isValidDniNie, isValidCif } = require('../utils/validation');
+// --- INICIO DE LA MODIFICACIÓN ---
+const { stripe } = require('./subscription/stripeConfig');
+// --- FIN DE LA MODIFICACIÓN ---
 
 // Obtener el perfil del usuario actual (GET /api/auth/me)
 exports.getMe = async (req, res) => {
@@ -17,13 +20,10 @@ exports.getMe = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Comprobar si el período de prueba ha expirado y el usuario no está suscrito
         if (user.trialExpiresAt && new Date(user.trialExpiresAt) < new Date() && user.subscriptionStatus === 'inactive') {
             user.trialExpiresAt = null; // Anulamos la fecha para que no se vuelva a comprobar y quede bloqueado
             await user.save();
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         const userJson = user.toJSON();
 
@@ -113,8 +113,6 @@ exports.updateProfile = async (req, res) => {
             return res.status(400).json({ error: 'El formato del email no es válido.' });
         }
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Actualiza el nombre personal solo si se proporciona y no está vacío.
         if (name && name.trim() !== '') {
             user.name = name;
         }
@@ -123,13 +121,11 @@ exports.updateProfile = async (req, res) => {
             user.email = email;
         }
         
-        // Lógica para empresa o particular
         if (cif && cif.trim() !== '') { // Si se envía CIF, es una empresa
             user.businessName = businessName;
             user.cif = cif;
             user.dni = null; // Limpiar DNI
         } else if (dni && dni.trim() !== '') { // Si se envía DNI, es particular/autónomo
-            // user.name ya se actualizó arriba si se proporcionó
             user.dni = dni;
             user.businessName = user.name; // Usar el nombre personal como nombre de negocio
             user.cif = null; // Limpiar CIF
@@ -138,10 +134,8 @@ exports.updateProfile = async (req, res) => {
         if (address !== undefined) user.address = address;
         if (phone !== undefined) user.phone = phone;
 
-        // Solo actualizar contadores si se proporcionan explícitamente
         if (proformaCounter) user.proformaCounter = proformaCounter;
         if (invoiceCounter) user.invoiceCounter = invoiceCounter;
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (req.files) {
             if (req.files.avatar) {
@@ -300,6 +294,22 @@ exports.deleteAccount = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
         const userId = req.user.id;
+        const user = req.user; // El objeto user completo ya está en req.user
+        
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // 1. Cancelar suscripción en Stripe
+        if (user.stripeCustomerId) {
+            const subscriptions = await stripe.subscriptions.list({
+                customer: user.stripeCustomerId,
+                status: 'active',
+                limit: 100 // Obtener todas las suscripciones activas
+            });
+
+            for (const subscription of subscriptions.data) {
+                await stripe.subscriptions.cancel(subscription.id);
+            }
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
         
         const ownedCompany = await Company.findOne({ where: { ownerId: userId }, transaction });
         if (ownedCompany) {

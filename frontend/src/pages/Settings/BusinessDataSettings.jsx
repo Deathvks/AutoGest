@@ -6,7 +6,6 @@ import { faSave, faTrash, faImage, faLock } from '@fortawesome/free-solid-svg-ic
 import api from '../../services/api';
 import { Link } from 'react-router-dom';
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const getStoredFormData = (userId) => {
     if (!userId) return null;
     const stored = localStorage.getItem(`businessDataFormData_${userId}`);
@@ -26,7 +25,6 @@ const setStoredFormData = (userId, data) => {
         console.error("Failed to store form data", e);
     }
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 
 const InputField = ({ id, label, value, onChange, disabled, required }) => (
@@ -119,9 +117,7 @@ const BusinessDataSettings = () => {
             const isCompany = user.cif && !user.dni;
             setAccountType(isCompany ? 'empresa' : 'particular');
     
-            // --- INICIO DE LA MODIFICACIÓN ---
             const storedData = getStoredFormData(user.id);
-            // --- FIN DE LA MODIFICACIÓN ---
     
             const newEmpresaData = {
                 businessName: user.businessName || storedData?.empresa?.businessName || '',
@@ -230,12 +226,10 @@ const BusinessDataSettings = () => {
         
         setIsSaving(true);
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         setStoredFormData(user.id, {
             empresa: { ...empresaFormData, logo: null },
             particular: particularFormData
         });
-        // --- FIN DE LA MODIFICACIÓN ---
 
         const data = new FormData();
         
@@ -253,6 +247,7 @@ const BusinessDataSettings = () => {
             data.append('dni', particularFormData.dni);
             data.append('personalAddress', particularFormData.address);
             data.append('personalPhone', particularFormData.phone);
+            data.append('businessName', particularFormData.name);
             data.append('cif', '');
         }
     
@@ -269,12 +264,14 @@ const BusinessDataSettings = () => {
     return (
         <div className="bg-component-bg p-6 rounded-lg shadow-md border border-border-color relative">
             {isLocked && (
-                <div className="absolute inset-0 bg-component-bg/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg">
+                // --- INICIO DE LA MODIFICACIÓN ---
+                <div className="absolute inset-0 bg-component-bg/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg text-center p-4">
                     <FontAwesomeIcon icon={faLock} className="text-4xl text-text-secondary mb-4" />
                     <h3 className="text-xl font-bold text-text-primary">Función Premium</h3>
                     <p className="text-text-secondary mt-1">
                         Añade tus datos de empresa para facturas profesionales.
                     </p>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <Link to="/subscription" className="mt-4 bg-accent text-white px-5 py-2 rounded-lg font-semibold hover:bg-accent-hover transition-colors">
                         Suscríbete ahora
                     </Link>
@@ -284,6 +281,7 @@ const BusinessDataSettings = () => {
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                 <h2 className="text-xl font-bold text-text-primary border-b border-border-color pb-4">Datos de Facturación</h2>
                 
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <div className="relative grid grid-cols-2 w-full max-w-sm mx-auto items-center rounded-full bg-component-bg-hover p-1 border border-border-color">
                     <span
                         className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
@@ -309,9 +307,10 @@ const BusinessDataSettings = () => {
                             accountType === 'particular' ? 'text-text-primary' : 'text-text-secondary'
                         }`}
                     >
-                        AUTÓNOMO / PARTICULAR
+                        AUTÓNOMO
                     </button>
                 </div>
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {accountType === 'empresa' ? (

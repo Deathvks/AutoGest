@@ -1,63 +1,54 @@
 // autogest-app/frontend/src/components/Sidebar.jsx
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, faCog, 
-    faUsersCog, faCreditCard, faSignOutAlt, faLock, faRocket
+    faUsersCog, faCreditCard, faSignOutAlt, faLock, faRocket, faBell
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 import { APP_VERSION } from '../config/version'; 
 
-const TrialCountdownSidebar = ({ expiryDate }) => {
-    const calculateTimeLeft = () => {
-        const difference = +new Date(expiryDate) - +new Date();
-        if (difference <= 0) return 'Prueba Expirada';
+const TrialCountdownSidebar = () => {
+    const { trialTimeLeft } = useContext(AuthContext);
 
-        const d = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const h = Math.floor((difference / (1000 * 60 * 60)) % 24);
-        const m = Math.floor((difference / 1000 / 60) % 60);
+    if (!trialTimeLeft) {
+        return <span className="block text-xs font-bold">Prueba Expirada</span>;
+    }
 
-        if (d > 0) return `Quedan: ${d}d ${h}h`;
-        if (h > 0) return `Quedan: ${h}h ${m}m`;
-        return `Quedan: ${m}m`;
-    };
+    const { days, hours, minutes, seconds } = trialTimeLeft;
+    let timeLeftString = '';
+    if (days > 0) {
+        timeLeftString = `Quedan: ${days}d ${hours}h`;
+    } else if (hours > 0) {
+        timeLeftString = `Quedan: ${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+        timeLeftString = `Quedan: ${minutes}m ${seconds}s`;
+    } else {
+        timeLeftString = `Quedan: ${seconds}s`;
+    }
 
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setTimeLeft(calculateTimeLeft());
-        }, 60000); // Se actualiza cada minuto
-
-        return () => clearInterval(timer);
-    });
-
-    return <span className="block text-xs font-bold">{timeLeft}</span>;
+    return <span className="block text-xs font-bold">{timeLeftString}</span>;
 };
 
 const Sidebar = ({ onLogoutClick }) => {
-    const { user, subscriptionStatus } = useContext(AuthContext);
+    const { user, subscriptionStatus, isTrialActive } = useContext(AuthContext);
 
     if (!user) return null;
 
     const isExempt = user.role === 'admin' || user.role === 'technician';
     const hasValidSubscription = subscriptionStatus === 'active' || (subscriptionStatus === 'cancelled' && user.subscriptionExpiry && new Date(user.subscriptionExpiry) > new Date());
-    const isTrialing = user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date() && !hasValidSubscription;
-
+    
     const getStatusText = () => {
         if (isExempt || hasValidSubscription) return 'Pro';
-        if (isTrialing) return 'Prueba';
+        if (isTrialActive) return 'Prueba';
         return 'Free';
     };
 
     const userStatusText = getStatusText();
     
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // La variable isSubscribed se recupera aquí para la lógica de bloqueo.
     const isSubscribed = subscriptionStatus === 'active';
-    const isManagementLocked = isTrialing && !isSubscribed && user.role !== 'admin';
-    // --- FIN DE LA MODIFICACIÓN ---
+    const isManagementLocked = isTrialActive && !isSubscribed && user.role !== 'admin';
 
     const NavItem = ({ to, icon, children, locked = false }) => {
         const commonClasses = "flex items-center px-4 py-3 text-sm font-semibold rounded-lg transition-colors duration-200";
@@ -109,18 +100,20 @@ const Sidebar = ({ onLogoutClick }) => {
                         Gestión
                     </NavItem>
                 )}
-
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <NavItem to="/notifications" icon={faBell}>Notificaciones</NavItem>
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <NavItem to="/subscription" icon={faCreditCard}>Suscripción</NavItem>
             </nav>
 
-            {isTrialing && user.subscriptionStatus === 'inactive' && (
+            {isTrialActive && !hasValidSubscription && (
                 <div className="px-4 pb-4">
                     <div className="p-4 rounded-lg bg-accent/10 text-accent">
                         <div className="flex items-center gap-3">
                             <FontAwesomeIcon icon={faRocket} className="h-5 w-5" />
                             <div className="flex-1">
                                 <div className="font-bold text-sm">Prueba Gratuita</div>
-                                <TrialCountdownSidebar expiryDate={user.trialExpiresAt} />
+                                <TrialCountdownSidebar />
                             </div>
                         </div>
                     </div>

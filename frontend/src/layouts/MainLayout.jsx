@@ -17,7 +17,9 @@ import VersionIndicator from '../components/VersionIndicator';
 const MainLayout = () => {
     const appState = useAppState();
     const { setLogoutModalOpen, isDataLoading } = appState;
-    const { user, subscriptionStatus, isRefreshing, promptTrial } = useContext(AuthContext);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const { user, subscriptionStatus, isRefreshing, promptTrial, isTrialActive } = useContext(AuthContext);
+    // --- FIN DE LA MODIFICACIÓN ---
     const location = useLocation();
 
     // Se añade la lógica para mostrar el modal de prueba gratuita.
@@ -66,7 +68,6 @@ const MainLayout = () => {
     }
     
     // --- INICIO DE LA MODIFICACIÓN ---
-    const isTrialActive = user && user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
     const isUnassignedUser = user && user.role === 'user' && !user.companyId && !isTrialActive;
     // --- FIN DE LA MODIFICACIÓN ---
     const isAllowedUnassignedPath = ['/profile', '/settings', '/subscription'].includes(location.pathname) || location.pathname.startsWith('/accept-invitation');

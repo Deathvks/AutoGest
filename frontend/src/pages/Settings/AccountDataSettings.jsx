@@ -1,5 +1,5 @@
-// frontend/src/pages/Settings/AccountDataSettings.jsx
-import React, { useState, useContext, useEffect } from 'react';
+// autogest-app/frontend/src/pages/Settings/AccountDataSettings.jsx
+import React, { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faKey, faFileExport, faExclamationTriangle, faSignOutAlt, faUserShield, faCreditCard, faCookieBite, faRocket } from '@fortawesome/free-solid-svg-icons';
@@ -7,30 +7,24 @@ import Papa from 'papaparse';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 
-// --- INICIO DE LA MODIFICACIÓN ---
-const TrialCountdownMobile = ({ expiryDate }) => {
-    const calculateTimeLeft = () => {
-        const difference = +new Date(expiryDate) - +new Date();
-        if (difference <= 0) return 'Prueba Expirada';
+const TrialCountdownMobile = () => {
+    const { trialTimeLeft } = useContext(AuthContext);
 
-        const d = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const h = Math.floor((difference / (1000 * 60 * 60)) % 24);
-        const m = Math.floor((difference / 1000 / 60) % 60);
+    if (!trialTimeLeft) {
+        return <span className="block text-xs font-bold">Prueba Expirada</span>;
+    }
 
-        if (d > 0) return `Quedan: ${d}d ${h}h`;
-        if (h > 0) return `Quedan: ${h}h ${m}m`;
-        return `Quedan: ${m}m`;
-    };
-
-    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setTimeLeft(calculateTimeLeft());
-        }, 60000);
-
-        return () => clearInterval(timer);
-    });
+    const { days, hours, minutes, seconds } = trialTimeLeft;
+    let timeLeftString = '';
+    if (days > 0) {
+        timeLeftString = `Quedan: ${days}d ${hours}h`;
+    } else if (hours > 0) {
+        timeLeftString = `Quedan: ${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+        timeLeftString = `Quedan: ${minutes}m ${seconds}s`;
+    } else {
+        timeLeftString = `Quedan: ${seconds}s`;
+    }
 
     return (
         <div className="lg:hidden py-6">
@@ -40,24 +34,22 @@ const TrialCountdownMobile = ({ expiryDate }) => {
                     <FontAwesomeIcon icon={faRocket} className="h-5 w-5" />
                     <div className="flex-1">
                         <div className="font-bold text-sm">PRUEBA GRATUITA ACTIVA</div>
-                        <span className="block text-xs font-bold">{timeLeft}</span>
+                        <span className="block text-xs font-bold">{timeLeftString}</span>
                     </div>
                 </div>
             </div>
         </div>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDeleteAccountClick, onActivateTrialClick }) => {
-    const { user } = useContext(AuthContext);
+    const { user, isTrialActive } = useContext(AuthContext);
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
     const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
     const [exportMessage, setExportMessage] = useState('');
 
     const isSubscribed = user.subscriptionStatus === 'active';
-    const isTrialing = user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
-    const canExportData = isSubscribed || isTrialing || user.role === 'admin';
+    const canExportData = isSubscribed || isTrialActive || user.role === 'admin';
     const canActivateTrial = !isSubscribed && !user.hasUsedTrial && user.role !== 'admin';
 
     const handlePasswordChange = (e) => {
@@ -134,11 +126,9 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                     </div>
                 </form>
 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                {isTrialing && user.subscriptionStatus === 'inactive' && (
-                    <TrialCountdownMobile expiryDate={user.trialExpiresAt} />
+                {isTrialActive && !isSubscribed && (
+                    <TrialCountdownMobile />
                 )}
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                 {canActivateTrial && (
                     <div className="py-6">
