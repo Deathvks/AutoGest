@@ -39,25 +39,29 @@ const admin = (req, res, next) => {
 };
 
 // --- INICIO DE LA MODIFICACIÓN ---
-// Middleware para verificar si el usuario tiene una suscripción activa o un período de prueba válido
+// Middleware para verificar si el usuario tiene una suscripción activa, un período de prueba válido, o pertenece a un equipo.
 const checkSubscription = (req, res, next) => {
     const user = req.user;
 
-    // Permite el acceso a administradores y técnicos sin necesidad de suscripción
-    const exemptedRoles = ['admin', 'technician', 'technician_subscribed'];
+    // 1. Permite el acceso a administradores y técnicos sin suscripción.
+    const exemptedRoles = ['admin', 'technician'];
     if (exemptedRoles.includes(user.role)) {
         return next();
     }
 
-    // Comprueba si la suscripción está activa
+    // 2. Si el usuario pertenece a una compañía, se asume que opera bajo la suscripción del propietario.
+    if (user.companyId) {
+        return next();
+    }
+
+    // 3. Si no pertenece a una compañía, debe tener su propia suscripción o prueba.
     const isSubscriptionActive = user.subscriptionStatus === 'active';
-    
-    // Comprueba si el período de prueba está activo
     const isTrialActive = user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
 
     if (isSubscriptionActive || isTrialActive) {
-        next(); // El usuario tiene acceso
+        next(); // El usuario tiene acceso por sí mismo.
     } else {
+        // 4. Si ninguna condición se cumple, se deniega el acceso.
         res.status(403).json({ 
             error: 'Acceso denegado. Se requiere una suscripción activa o un período de prueba válido.',
             subscriptionRequired: true 
@@ -66,4 +70,4 @@ const checkSubscription = (req, res, next) => {
 };
 // --- FIN DE LA MODIFICACIÓN ---
 
-module.exports = { protect, admin, checkSubscription }; // Se exporta checkSubscription
+module.exports = { protect, admin, checkSubscription };

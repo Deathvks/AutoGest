@@ -111,9 +111,15 @@ exports.verifyInvitation = async (req, res) => {
             return res.status(404).json({ error: 'El enlace de invitación es inválido o ha expirado.' });
         }
 
+        const userToJoin = await User.findOne({ where: { email: invitation.email } });
+        const isTrialActive = userToJoin ? (userToJoin.trialExpiresAt && new Date(userToJoin.trialExpiresAt) > new Date()) : false;
+        const hasUsedTrial = userToJoin ? userToJoin.hasUsedTrial : false;
+
         res.status(200).json({
             email: invitation.email,
-            companyName: invitation.Company.name
+            companyName: invitation.Company.name,
+            isTrialActive,
+            hasUsedTrial,
         });
 
     } catch (error) {
@@ -157,6 +163,12 @@ exports.acceptInvitation = async (req, res) => {
         
         userToUpdate.companyId = invitation.companyId;
         userToUpdate.businessName = invitation.Company.name;
+
+        if (userToUpdate.trialExpiresAt && new Date(userToUpdate.trialExpiresAt) > new Date()) {
+            userToUpdate.trialStartedAt = null;
+            userToUpdate.trialExpiresAt = null;
+        }
+
         await userToUpdate.save({ transaction });
 
         invitation.status = 'accepted';
@@ -179,15 +191,12 @@ exports.acceptInvitation = async (req, res) => {
 
         await transaction.commit();
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se devuelve el usuario actualizado sin la contraseña
         const userResponse = userToUpdate.toJSON();
         delete userResponse.password;
         res.status(200).json({ 
             message: '¡Te has unido al equipo con éxito!',
             user: userResponse 
         });
-        // --- FIN DE LA MODIFICACIÓN ---
 
     } catch (error) {
         await transaction.rollback();
@@ -200,7 +209,9 @@ exports.acceptInvitation = async (req, res) => {
 exports.expelUser = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
-        const { userIdToExpel } = req.params;
+        // --- INICIO DE LA CORRECCIÓN ---
+        const { userId } = req.params; // Corregido de userIdToExpel a userId
+        // --- FIN DE LA CORRECCIÓN ---
         const requester = req.user;
 
         if (!requester.companyId) {
@@ -213,8 +224,10 @@ exports.expelUser = async (req, res) => {
             await transaction.rollback();
             return res.status(403).json({ error: 'No tienes permiso para expulsar a miembros de este equipo.' });
         }
-
-        const userToExpel = await User.findByPk(userIdToExpel, { transaction });
+        
+        // --- INICIO DE LA CORRECCIÓN ---
+        const userToExpel = await User.findByPk(userId, { transaction }); // Corregido de userIdToExpel a userId
+        // --- FIN DE LA CORRECCIÓN ---
 
         if (!userToExpel || userToExpel.companyId !== requester.companyId) {
             await transaction.rollback();

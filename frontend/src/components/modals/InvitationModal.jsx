@@ -10,9 +10,10 @@ const InvitationModal = ({ token, onClose }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isAccepting, setIsAccepting] = useState(false);
     const [error, setError] = useState('');
-    const { refreshUser, setPendingInvitationToken } = useContext(AuthContext);
-
     // --- INICIO DE LA MODIFICACIÓN ---
+    const { refreshUser, setPendingInvitationToken, setPromptTrial } = useContext(AuthContext);
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const handleInvitationHandled = () => {
         const handledTokens = JSON.parse(localStorage.getItem('handledInvitationTokens') || '[]');
         if (!handledTokens.includes(token)) {
@@ -20,7 +21,6 @@ const InvitationModal = ({ token, onClose }) => {
             localStorage.setItem('handledInvitationTokens', JSON.stringify(handledTokens));
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         const verifyInvitation = async () => {
@@ -50,6 +50,11 @@ const InvitationModal = ({ token, onClose }) => {
             
             handleInvitationHandled(); // Marcar como manejada
             await refreshUser();
+            
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Oculta el modal de prueba si estaba abierto al aceptar la invitación
+            setPromptTrial(false);
+            // --- FIN DE LA MODIFICACIÓN ---
             
             setPendingInvitationToken(null);
             onClose();
@@ -99,6 +104,18 @@ const InvitationModal = ({ token, onClose }) => {
                         <p className="text-center text-text-secondary mb-6">
                             Has sido invitado a unirte al equipo{' '}
                             <span className="font-bold text-accent">{invitation.companyName}</span>.
+                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                            {invitation.isTrialActive && (
+                                <span className="block mt-3 text-xs text-yellow-accent bg-yellow-accent/10 p-2 rounded-lg border border-yellow-accent/20">
+                                    <strong>¡Atención!</strong> Al unirte, tu período de prueba finalizará. Si abandonas el equipo, necesitarás una suscripción.
+                                </span>
+                            )}
+                             {!invitation.isTrialActive && !invitation.hasUsedTrial && (
+                                <span className="block mt-3 text-xs text-blue-accent bg-blue-accent/10 p-2 rounded-lg border border-blue-accent/20">
+                                    <strong>Nota:</strong> Si en el futuro abandonas el equipo, aún podrás disfrutar de tu prueba gratuita de 3 días.
+                                </span>
+                            )}
+                             {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </p>
                         <div className="flex justify-center space-x-4">
                             <button

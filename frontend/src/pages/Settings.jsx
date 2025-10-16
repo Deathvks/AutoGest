@@ -24,12 +24,11 @@ const Settings = ({
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
     // --- INICIO DE LA MODIFICACIÓN ---
-    // La lógica ahora comprueba si el usuario está suscrito, en período de prueba o es admin.
-    // Si no cumple ninguna de estas condiciones, el componente de datos de facturación no se mostrará.
+    // Se añade la condición `user?.companyId` para que los miembros de un equipo vean los datos de facturación.
     const isSubscribed = user?.subscriptionStatus === 'active';
     const isTrialing = user?.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
     const isAdmin = user?.role === 'admin';
-    const shouldShowBusinessData = isSubscribed || isTrialing || isAdmin;
+    const shouldShowBusinessData = isSubscribed || isTrialing || isAdmin || user?.companyId;
     // --- FIN DE LA MODIFICACIÓN ---
 
     return (

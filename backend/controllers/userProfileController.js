@@ -5,9 +5,7 @@ const bcrypt = require('bcryptjs');
 const validator = 'validator';
 const { User, Car, Expense, Incident, Location, sequelize, Company, Invitation } = require('../models');
 const { isValidDniNie, isValidCif } = require('../utils/validation');
-// --- INICIO DE LA MODIFICACIÓN ---
 const { stripe } = require('./subscription/stripeConfig');
-// --- FIN DE LA MODIFICACIÓN ---
 
 // Obtener el perfil del usuario actual (GET /api/auth/me)
 exports.getMe = async (req, res) => {
@@ -27,6 +25,8 @@ exports.getMe = async (req, res) => {
 
         const userJson = user.toJSON();
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Si el usuario pertenece a una compañía, se obtienen los datos del propietario.
         if (user.companyId) {
             const company = await Company.findByPk(user.companyId, {
                 include: [{
@@ -36,11 +36,12 @@ exports.getMe = async (req, res) => {
                 }]
             });
 
-            if (company && company.owner) {
+            if (company) {
                 const isOwner = user.id === company.ownerId;
                 userJson.isOwner = isOwner;
 
-                if (!isOwner) {
+                // Si el usuario NO es el propietario, se sobrescriben sus datos de facturación con los del propietario.
+                if (!isOwner && company.owner) {
                     userJson.businessName = company.owner.businessName;
                     userJson.cif = company.owner.cif;
                     userJson.dni = company.owner.dni;
@@ -50,11 +51,13 @@ exports.getMe = async (req, res) => {
                     userJson.invoiceCounter = company.owner.invoiceCounter;
                     userJson.proformaCounter = company.owner.proformaCounter;
                 }
-                return res.status(200).json(userJson);
+                 return res.status(200).json(userJson);
             }
         }
         
+        // Si no pertenece a una compañía, se considera "propietario" de sus propios datos.
         userJson.isOwner = !user.companyId;
+        // --- FIN DE LA MODIFICACIÓN ---
         res.status(200).json(userJson);
 
     } catch (error) {
@@ -296,7 +299,6 @@ exports.deleteAccount = async (req, res) => {
         const userId = req.user.id;
         const user = req.user; // El objeto user completo ya está en req.user
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         // 1. Cancelar suscripción en Stripe
         if (user.stripeCustomerId) {
             const subscriptions = await stripe.subscriptions.list({
@@ -309,7 +311,6 @@ exports.deleteAccount = async (req, res) => {
                 await stripe.subscriptions.cancel(subscription.id);
             }
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         
         const ownedCompany = await Company.findOne({ where: { ownerId: userId }, transaction });
         if (ownedCompany) {

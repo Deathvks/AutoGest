@@ -32,7 +32,7 @@ const TrialCountdownSidebar = () => {
 };
 
 const Sidebar = ({ onLogoutClick }) => {
-    const { user, subscriptionStatus, isTrialActive } = useContext(AuthContext);
+    const { user, subscriptionStatus, isTrialActive, unreadCount } = useContext(AuthContext);
 
     if (!user) return null;
 
@@ -50,7 +50,7 @@ const Sidebar = ({ onLogoutClick }) => {
     const isSubscribed = subscriptionStatus === 'active';
     const isManagementLocked = isTrialActive && !isSubscribed && user.role !== 'admin';
 
-    const NavItem = ({ to, icon, children, locked = false }) => {
+    const NavItem = ({ to, icon, children, locked = false, count }) => {
         const commonClasses = "flex items-center px-4 py-3 text-sm font-semibold rounded-lg transition-colors duration-200";
         
         if (locked) {
@@ -79,6 +79,11 @@ const Sidebar = ({ onLogoutClick }) => {
             >
                 <FontAwesomeIcon icon={icon} className="w-5 h-5 mr-3" />
                 <span className="flex-1">{children}</span>
+                {count > 0 && (
+                    <span className="bg-white/20 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center ml-auto">
+                        {count}
+                    </span>
+                )}
             </NavLink>
         );
     };
@@ -100,9 +105,7 @@ const Sidebar = ({ onLogoutClick }) => {
                         Gestión
                     </NavItem>
                 )}
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                <NavItem to="/notifications" icon={faBell}>Notificaciones</NavItem>
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
+                <NavItem to="/notifications" icon={faBell} count={unreadCount}>Notificaciones</NavItem>
                 <NavItem to="/subscription" icon={faCreditCard}>Suscripción</NavItem>
             </nav>
 
@@ -133,7 +136,12 @@ const Sidebar = ({ onLogoutClick }) => {
                         />
                         <div className="truncate">
                             <p className="font-semibold text-sm text-text-primary truncate">{user.name}</p>
-                            <p className="text-xs text-text-secondary capitalize truncate">{userStatusText}</p>
+                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                            <p className="text-xs text-text-secondary capitalize truncate">
+                                {userStatusText}
+                                {user.companyId && user.businessName && ` / ${user.businessName}`}
+                            </p>
+                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
                     </Link>
                     

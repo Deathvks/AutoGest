@@ -112,7 +112,11 @@ exports.login = async (req, res) => {
 
         // --- INICIO DE LA MODIFICACIÓN ---
         // Comprobar si el usuario es elegible para el período de prueba
-        const isEligibleForTrial = user.role === 'user' && user.subscriptionStatus === 'inactive' && !user.hasUsedTrial;
+        const isEligibleForTrial = user.role === 'user' 
+            && user.subscriptionStatus === 'inactive' 
+            && !user.hasUsedTrial 
+            && !user.companyId; // <-- AÑADIDO: No debe pertenecer a una compañía
+            
         if (isEligibleForTrial) {
             response.promptTrial = true;
         }
@@ -194,7 +198,6 @@ exports.forceVerification = async (req, res) => {
     }
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Iniciar el período de prueba para el usuario logueado
 exports.startTrial = async (req, res) => {
     try {
@@ -224,7 +227,6 @@ exports.startTrial = async (req, res) => {
         res.status(500).json({ error: 'Error interno al iniciar el período de prueba.' });
     }
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 // @desc    Solicitar restablecimiento de contraseña
 // @route   POST /api/auth/forgot-password

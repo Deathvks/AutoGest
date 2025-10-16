@@ -247,6 +247,15 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
             doc.text(splitObservations, 14, finalY);
         }
         
+        if (type === 'proforma') {
+            const pageHeight = doc.internal.pageSize.getHeight();
+            doc.setFontSize(8);
+            doc.setTextColor(secondaryColor);
+            doc.setFont(undefined, 'italic');
+            const proformaDisclaimer = "ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL. ES UN PRESUPUESTO PREVIO A LA FACTURA FINAL";
+            doc.text(proformaDisclaimer, 105, pageHeight - 10, { align: 'center' });
+        }
+        
         const fileName = `${type}_${number}_${car.licensePlate}.pdf`;
         doc.save(fileName);
         

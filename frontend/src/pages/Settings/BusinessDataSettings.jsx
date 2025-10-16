@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faTrash, faImage, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faSave, faTrash, faImage, faLock, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import { Link } from 'react-router-dom';
 
@@ -122,16 +122,16 @@ const BusinessDataSettings = () => {
             const newEmpresaData = {
                 businessName: user.businessName || storedData?.empresa?.businessName || '',
                 cif: user.cif || storedData?.empresa?.cif || '',
-                address: user.companyAddress || storedData?.empresa?.address || '',
-                phone: user.companyPhone || storedData?.empresa?.phone || '',
+                address: user.companyAddress || user.address || storedData?.empresa?.address || '',
+                phone: user.companyPhone || user.phone || storedData?.empresa?.phone || '',
                 logo: null
             };
     
             const newParticularData = {
                 name: user.name || storedData?.particular?.name || '',
                 dni: user.dni || storedData?.particular?.dni || '',
-                address: user.personalAddress || storedData?.particular?.address || '',
-                phone: user.personalPhone || storedData?.particular?.phone || '',
+                address: user.personalAddress || user.address || storedData?.particular?.address || '',
+                phone: user.personalPhone || user.phone || storedData?.particular?.phone || '',
             };
     
             setEmpresaFormData(newEmpresaData);
@@ -143,7 +143,11 @@ const BusinessDataSettings = () => {
 
     const isSubscribed = user?.subscriptionStatus === 'active';
     const isTrialing = user?.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
-    const isLocked = !isSubscribed && isTrialing && user?.role !== 'admin';
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const isTeamMember = user?.companyId && !user.isOwner;
+    const isLockedByTrial = !isSubscribed && isTrialing && user?.role !== 'admin';
+    const isLocked = isLockedByTrial || isTeamMember;
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -264,24 +268,28 @@ const BusinessDataSettings = () => {
     return (
         <div className="bg-component-bg p-6 rounded-lg shadow-md border border-border-color relative">
             {isLocked && (
-                // --- INICIO DE LA MODIFICACIÓN ---
                 <div className="absolute inset-0 bg-component-bg/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg text-center p-4">
-                    <FontAwesomeIcon icon={faLock} className="text-4xl text-text-secondary mb-4" />
-                    <h3 className="text-xl font-bold text-text-primary">Función Premium</h3>
+                    <FontAwesomeIcon icon={isTeamMember ? faInfoCircle : faLock} className="text-4xl text-text-secondary mb-4" />
+                    <h3 className="text-xl font-bold text-text-primary">
+                        {isTeamMember ? 'Datos del Equipo' : 'Función Premium'}
+                    </h3>
                     <p className="text-text-secondary mt-1">
-                        Añade tus datos de empresa para facturas profesionales.
+                        {isTeamMember 
+                            ? 'Estás viendo los datos de facturación del equipo al que perteneces. Solo el propietario puede modificarlos.'
+                            : 'Añade tus datos de empresa para facturas profesionales.'
+                        }
                     </p>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
-                    <Link to="/subscription" className="mt-4 bg-accent text-white px-5 py-2 rounded-lg font-semibold hover:bg-accent-hover transition-colors">
-                        Suscríbete ahora
-                    </Link>
+                    {!isTeamMember && (
+                         <Link to="/subscription" className="mt-4 bg-accent text-white px-5 py-2 rounded-lg font-semibold hover:bg-accent-hover transition-colors">
+                            Suscríbete ahora
+                        </Link>
+                    )}
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                 <h2 className="text-xl font-bold text-text-primary border-b border-border-color pb-4">Datos de Facturación</h2>
                 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <div className="relative grid grid-cols-2 w-full max-w-sm mx-auto items-center rounded-full bg-component-bg-hover p-1 border border-border-color">
                     <span
                         className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
@@ -310,7 +318,6 @@ const BusinessDataSettings = () => {
                         AUTÓNOMO
                     </button>
                 </div>
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {accountType === 'empresa' ? (

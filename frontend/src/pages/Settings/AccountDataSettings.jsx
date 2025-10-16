@@ -1,4 +1,4 @@
-// autogest-app/frontend/src/pages/Settings/AccountDataSettings.jsx
+// frontend/src/pages/Settings/AccountDataSettings.jsx
 import React, { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -49,8 +49,10 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
     const [exportMessage, setExportMessage] = useState('');
 
     const isSubscribed = user.subscriptionStatus === 'active';
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const canActivateTrial = !isSubscribed && !user.hasUsedTrial && user.role !== 'admin' && !user.companyId;
+    // --- FIN DE LA MODIFICACIÓN ---
     const canExportData = isSubscribed || isTrialActive || user.role === 'admin';
-    const canActivateTrial = !isSubscribed && !user.hasUsedTrial && user.role !== 'admin';
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
