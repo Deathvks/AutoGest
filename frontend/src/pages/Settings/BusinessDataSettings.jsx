@@ -6,8 +6,10 @@ import { faSave, faTrash, faImage, faLock } from '@fortawesome/free-solid-svg-ic
 import api from '../../services/api';
 import { Link } from 'react-router-dom';
 
-const getStoredFormData = () => {
-    const stored = localStorage.getItem('businessDataFormData');
+// --- INICIO DE LA MODIFICACIÓN ---
+const getStoredFormData = (userId) => {
+    if (!userId) return null;
+    const stored = localStorage.getItem(`businessDataFormData_${userId}`);
     try {
         return stored ? JSON.parse(stored) : null;
     } catch (e) {
@@ -16,13 +18,16 @@ const getStoredFormData = () => {
     }
 };
 
-const setStoredFormData = (data) => {
+const setStoredFormData = (userId, data) => {
+    if (!userId) return;
     try {
-        localStorage.setItem('businessDataFormData', JSON.stringify(data));
+        localStorage.setItem(`businessDataFormData_${userId}`, JSON.stringify(data));
     } catch (e) {
         console.error("Failed to store form data", e);
     }
 };
+// --- FIN DE LA MODIFICACIÓN ---
+
 
 const InputField = ({ id, label, value, onChange, disabled, required }) => (
     <div>
@@ -109,41 +114,29 @@ const BusinessDataSettings = () => {
         }
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     useEffect(() => {
         if (user) {
             const isCompany = user.cif && !user.dni;
             setAccountType(isCompany ? 'empresa' : 'particular');
     
-            const storedData = getStoredFormData();
+            // --- INICIO DE LA MODIFICACIÓN ---
+            const storedData = getStoredFormData(user.id);
+            // --- FIN DE LA MODIFICACIÓN ---
     
             const newEmpresaData = {
-                businessName: user.businessName || '',
-                cif: user.cif || '',
-                address: user.address || '',
-                phone: user.phone || '',
+                businessName: user.businessName || storedData?.empresa?.businessName || '',
+                cif: user.cif || storedData?.empresa?.cif || '',
+                address: user.companyAddress || storedData?.empresa?.address || '',
+                phone: user.companyPhone || storedData?.empresa?.phone || '',
                 logo: null
             };
     
             const newParticularData = {
-                name: user.name || '',
-                dni: user.dni || '',
-                address: user.address || '',
-                phone: user.phone || '',
+                name: user.name || storedData?.particular?.name || '',
+                dni: user.dni || storedData?.particular?.dni || '',
+                address: user.personalAddress || storedData?.particular?.address || '',
+                phone: user.personalPhone || storedData?.particular?.phone || '',
             };
-    
-            if (!newEmpresaData.businessName && storedData?.empresa?.businessName) {
-                newEmpresaData.businessName = storedData.empresa.businessName;
-            }
-            if (!newEmpresaData.cif && storedData?.empresa?.cif) {
-                newEmpresaData.cif = storedData.empresa.cif;
-            }
-            if (!newParticularData.name && storedData?.particular?.name) {
-                newParticularData.name = storedData.particular.name;
-            }
-            if (!newParticularData.dni && storedData?.particular?.dni) {
-                newParticularData.dni = storedData.particular.dni;
-            }
     
             setEmpresaFormData(newEmpresaData);
             setParticularFormData(newParticularData);
@@ -151,7 +144,6 @@ const BusinessDataSettings = () => {
             setLogoPreview(user.logoUrl || null);
         }
     }, [user]);
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const isSubscribed = user?.subscriptionStatus === 'active';
     const isTrialing = user?.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
@@ -163,15 +155,9 @@ const BusinessDataSettings = () => {
         if (accountType === 'empresa') {
             const updatedData = { ...empresaFormData, [name]: value };
             setEmpresaFormData(updatedData);
-            if (name === 'address' || name === 'phone') {
-                setParticularFormData({ ...particularFormData, [name]: value });
-            }
         } else {
             const updatedData = { ...particularFormData, [name]: value };
             setParticularFormData(updatedData);
-            if (name === 'address' || name === 'phone') {
-                setEmpresaFormData({ ...empresaFormData, [name]: value });
-            }
         }
     };
 
@@ -244,29 +230,29 @@ const BusinessDataSettings = () => {
         
         setIsSaving(true);
         
-        setStoredFormData({
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setStoredFormData(user.id, {
             empresa: { ...empresaFormData, logo: null },
             particular: particularFormData
         });
+        // --- FIN DE LA MODIFICACIÓN ---
 
         const data = new FormData();
         
         if (accountType === 'empresa') {
             data.append('businessName', empresaFormData.businessName);
             data.append('cif', empresaFormData.cif);
-            data.append('address', empresaFormData.address);
-            data.append('phone', empresaFormData.phone);
+            data.append('companyAddress', empresaFormData.address);
+            data.append('companyPhone', empresaFormData.phone);
             if (empresaFormData.logo) {
                 data.append('logo', empresaFormData.logo);
             }
-            data.append('name', '');
-            data.append('dni', '');
+            data.append('dni', ''); 
         } else {
             data.append('name', particularFormData.name);
             data.append('dni', particularFormData.dni);
-            data.append('address', particularFormData.address);
-            data.append('phone', particularFormData.phone);
-            data.append('businessName', '');
+            data.append('personalAddress', particularFormData.address);
+            data.append('personalPhone', particularFormData.phone);
             data.append('cif', '');
         }
     

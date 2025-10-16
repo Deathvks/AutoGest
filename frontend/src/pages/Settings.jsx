@@ -24,9 +24,12 @@ const Settings = ({
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Se simplifica la lógica para que siempre se muestre si el usuario está logueado.
-    // El propio componente BusinessDataSettings se encargará de mostrarse bloqueado.
-    const shouldShowBusinessData = !!user;
+    // La lógica ahora comprueba si el usuario está suscrito, en período de prueba o es admin.
+    // Si no cumple ninguna de estas condiciones, el componente de datos de facturación no se mostrará.
+    const isSubscribed = user?.subscriptionStatus === 'active';
+    const isTrialing = user?.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
+    const isAdmin = user?.role === 'admin';
+    const shouldShowBusinessData = isSubscribed || isTrialing || isAdmin;
     // --- FIN DE LA MODIFICACIÓN ---
 
     return (

@@ -114,23 +114,31 @@ exports.updateProfile = async (req, res) => {
         }
 
         // --- INICIO DE LA MODIFICACIÓN ---
-        if (name !== undefined) user.name = name;
-        if (email !== undefined) user.email = email;
+        // Actualiza el nombre personal solo si se proporciona y no está vacío.
+        if (name && name.trim() !== '') {
+            user.name = name;
+        }
+
+        if (email && email.trim() !== '') {
+            user.email = email;
+        }
         
         // Lógica para empresa o particular
-        if (cif) { // Si se envía CIF, es una empresa
+        if (cif && cif.trim() !== '') { // Si se envía CIF, es una empresa
             user.businessName = businessName;
             user.cif = cif;
             user.dni = null; // Limpiar DNI
-        } else if (dni) { // Si se envía DNI, es particular/autónomo
-            user.name = name;
+        } else if (dni && dni.trim() !== '') { // Si se envía DNI, es particular/autónomo
+            // user.name ya se actualizó arriba si se proporcionó
             user.dni = dni;
-            user.businessName = name; // Guardar nombre personal en businessName también
+            user.businessName = user.name; // Usar el nombre personal como nombre de negocio
             user.cif = null; // Limpiar CIF
         }
         
         if (address !== undefined) user.address = address;
         if (phone !== undefined) user.phone = phone;
+
+        // Solo actualizar contadores si se proporcionan explícitamente
         if (proformaCounter) user.proformaCounter = proformaCounter;
         if (invoiceCounter) user.invoiceCounter = invoiceCounter;
         // --- FIN DE LA MODIFICACIÓN ---
