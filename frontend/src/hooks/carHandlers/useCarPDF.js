@@ -8,16 +8,28 @@ import { useCarActions } from './useCarActions';
 export const useCarPDF = ({ setCars, setLocations, modalState }) => {
     const { user } = useContext(AuthContext);
     
-    // Se pasa el objeto completo (setCars, setLocations, modalState) a useCarActions
     const context = { setCars, setLocations, modalState };
     const { handleUpdateCar } = useCarActions(context);
 
-    const handleGeneratePdf = async (car, type, number, igicRate, observations) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const handleGeneratePdf = async (car, type, number, igicRate, observations, paymentMethod, clientData) => {
         const doc = new jsPDF();
-        const today = new Date().toLocaleDateString('es-ES');
+        const today = new Date();
+
+        // --- Estilos y Colores ---
+        const primaryColor = '#1a1a1a'; // Casi negro para títulos
+        const secondaryColor = '#555555'; // Gris para texto normal
+        const headerFooterBg = '#1a1a1a';
+        const headerFooterText = '#ffffff';
+
+        // --- Fuentes (Asegúrate de que estas fuentes estén disponibles o cámbialas por fuentes estándar)
+        doc.addFont('js/libs/helvetica/Helvetica.ttf', 'Helvetica', 'normal');
+        doc.addFont('js/libs/helvetica/Helvetica-Bold.ttf', 'Helvetica', 'bold');
+
+        // --- Cabecera ---
         let currentY = 20;
 
-        // Añadir logo si existe
+        // Logo (si existe)
         if (user.logoUrl) {
             const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
             const logoUrl = `${API_BASE_URL}${user.logoUrl}`;
@@ -47,116 +59,157 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
                         imgWidth = imgHeight * aspectRatio;
                     }
                     doc.addImage(logoData, 'PNG', 14, 15, imgWidth, imgHeight);
-                    currentY = 15 + imgHeight + 15; // Ajustar la posición Y inicial
                 }
             } catch (error) {
                 console.error("Error al cargar el logo para el PDF:", error);
             }
         }
-
-        const title = type === 'proforma' ? 'FACTURA PROFORMA' : 'FACTURA';
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.text(title, 105, currentY, { align: 'center' });
-        currentY += 20;
-
-        const sellerX = 14;
-        const buyerX = 110;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
-        doc.text('DATOS DEL VENDEDOR:', sellerX, currentY);
-        doc.text('DATOS DEL COMPRADOR:', buyerX, currentY);
-        currentY += 6;
-
-        let buyer = {};
-        if (car.buyerDetails) {
-            try {
-                buyer = typeof car.buyerDetails === 'string' ? JSON.parse(car.buyerDetails) : car.buyerDetails;
-            } catch (e) { console.error("Error parsing buyer data:", e); }
-        }
         
-        doc.setFont('helvetica', 'normal');
+        // Datos del vendedor (derecha)
+        doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9);
-        doc.text(`NOMBRE Y APELLIDOS: ${user.cif ? user.businessName : user.name}`, sellerX, currentY);
-        doc.text(`DNI / NIE: ${user.cif || user.dni || ''}`, sellerX, currentY + 5);
-        doc.text(`DIRECCIÓN: ${user.address || ''}`, sellerX, currentY + 10);
-        doc.text(`TELÉFONO: ${user.phone || ''}`, sellerX, currentY + 15);
-        doc.text(`EMAIL: ${user.email}`, sellerX, currentY + 20);
+        doc.setTextColor(secondaryColor);
+        doc.text(user.businessName || user.name, 200, 15, { align: 'right' });
+        doc.text(user.cif || user.dni || '', 200, 20, { align: 'right' });
+        doc.text(user.phone || '', 200, 25, { align: 'right' });
+        doc.text(user.address || '', 200, 30, { align: 'right' });
+        doc.text(user.email || '', 200, 35, { align: 'right' });
 
-        doc.text(`NOMBRE: ${buyer.name || ''} ${buyer.lastName || ''}`, buyerX, currentY);
-        doc.text(`DNI/NIE: ${buyer.dni || ''}`, buyerX, currentY + 5);
-        doc.text(`TELÉFONO: ${buyer.phone || ''}`, buyerX, currentY + 10);
-        doc.text(`EMAIL: ${buyer.email || ''}`, buyerX, currentY + 15);
-        doc.text(`DIRECCIÓN: ${buyer.address || ''}`, buyerX, currentY + 20);
-        currentY += 30;
+        currentY = 55;
 
-        doc.setFont('helvetica', 'bold');
+        // --- Título de la Factura ---
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(28);
+        doc.setTextColor(primaryColor);
+        const title = type === 'proforma' ? 'FACTURA PROFORMA' : 'FACTURA';
+        doc.text(title, 105, currentY, { align: 'center' });
+        currentY += 5;
+        
+        doc.setFont('Helvetica', 'normal');
         doc.setFontSize(10);
-        doc.text('DETALLES:', sellerX, currentY);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.text(`FECHA: ${today}`, sellerX, currentY + 5);
-        doc.text(`Nº FACTURA: ${type.toUpperCase()}-${number}`, sellerX, currentY + 10);
+        doc.setTextColor(secondaryColor);
+        doc.text(today.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }), 105, currentY, { align: 'center' });
+
         currentY += 20;
 
-        const tealColor = [0, 150, 136];
+        // --- Datos Cliente y Factura ---
+        const sellerX = 14;
+        const buyerX = 120;
+
+        doc.setFontSize(9);
+        doc.setTextColor(primaryColor);
+
+        const buyerName = clientData.businessName || `${clientData.name || ''} ${clientData.lastName || ''}`;
+        const buyerId = clientData.cif || clientData.dni || '';
+
+        doc.text(`FACTURA PARA: ${buyerName}`, sellerX, currentY);
+        doc.text(`NÚMERO:`, buyerX, currentY);
+        doc.setFont('Helvetica', 'bold');
+        doc.text(`${type.toUpperCase()}-${number}`, buyerX + 25, currentY);
+        currentY += 5;
+
+        doc.setFont('Helvetica', 'normal');
+        doc.text(buyerId, sellerX, currentY);
+        doc.text(`FECHA:`, buyerX, currentY);
+        doc.setFont('Helvetica', 'bold');
+        doc.text(today.toLocaleDateString('es-ES'), buyerX + 25, currentY);
+        currentY += 5;
+        
+        doc.setFont('Helvetica', 'normal');
+        doc.text(clientData.address || '', sellerX, currentY);
+        doc.text(`VENCIMIENTO:`, buyerX, currentY);
+        doc.setFont('Helvetica', 'bold');
+        doc.text('En el recibo', buyerX + 25, currentY);
+        currentY += 5;
+
+        doc.setFont('Helvetica', 'normal');
+        doc.text(clientData.phone || '', sellerX, currentY);
+        currentY += 5;
+        doc.text(clientData.email || '', sellerX, currentY);
+        currentY += 15;
+
+
+        // --- Tabla de Conceptos ---
         const price = parseFloat(type === 'factura' ? car.salePrice : car.price) || 0;
         const formattedPrice = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(price);
-        const registrationYear = car.registrationDate ? new Date(car.registrationDate).getFullYear() : 'N/A';
-        const carKm = car.km ? new Intl.NumberFormat('es-ES').format(car.km) : 'N/A';
-        const carDescription = `VEHÍCULO ${car.make} ${car.model} (${registrationYear}) CON MATRÍCULA ${car.licensePlate}, BASTIDOR ${car.vin || ''} Y ${carKm} KM.`;
+        const carDescription = `VEHÍCULO ${car.make} ${car.model}`;
+
+        autoTable(doc, {
+            startY: currentY,
+            head: [['Descripción', 'Cantidad', 'Precio por unida', 'Importe']],
+            body: [[carDescription, '1', formattedPrice, formattedPrice]],
+            theme: 'plain',
+            headStyles: { fillColor: headerFooterBg, textColor: headerFooterText, fontStyle: 'bold' },
+            styles: { fontSize: 10, cellPadding: 3 },
+            columnStyles: {
+                0: { cellWidth: 90 },
+                1: { halign: 'center' },
+                2: { halign: 'right' },
+                3: { halign: 'right', fontStyle: 'bold' }
+            }
+        });
+
+        currentY = doc.lastAutoTable.finalY;
+
+        // --- Totales ---
+        let total = price;
+        let subtotal = price;
+        let igicAmount = 0;
 
         if (type === 'factura' && igicRate > 0) {
-            const basePrice = price / (1 + igicRate / 100);
-            const igicAmount = price - basePrice;
-            const formattedBasePrice = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(basePrice);
-            const formattedIgicAmount = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(igicAmount);
-
-            autoTable(doc, {
-                startY: currentY,
-                head: [['CONCEPTO', 'BASE IMPONIBLE', `IGIC (${igicRate}%)`, 'TOTAL']],
-                body: [[carDescription, formattedBasePrice, formattedIgicAmount, formattedPrice]],
-                foot: [['', '', 'TOTAL A PAGAR:', formattedPrice]],
-                theme: 'grid',
-                headStyles: { fillColor: tealColor, textColor: [255, 255, 255], fontStyle: 'bold' },
-                footStyles: { fillColor: tealColor, textColor: [255, 255, 255], fontStyle: 'bold' },
-                styles: { fontSize: 9, cellPadding: 3 },
-            });
-        } else {
-            autoTable(doc, {
-                startY: currentY,
-                head: [['CONCEPTO', 'TOTAL']],
-                body: [[carDescription, formattedPrice]],
-                foot: [['', '', 'TOTAL A PAGAR:', formattedPrice]],
-                theme: 'grid',
-                headStyles: { fillColor: tealColor, textColor: [255, 255, 255], fontStyle: 'bold' },
-                footStyles: { fillColor: tealColor, textColor: [255, 255, 255], fontStyle: 'bold' },
-                styles: { fontSize: 9, cellPadding: 3 },
-                columnStyles: { 1: { halign: 'right' } },
-            });
+            subtotal = price / (1 + igicRate / 100);
+            igicAmount = price - subtotal;
         }
 
-        currentY = doc.lastAutoTable.finalY + 15;
+        const totalsData = [
+            ['SUBTOTAL:', new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(subtotal)],
+            ['TOTAL:', new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total)],
+            ['PAGADA:', new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(0)],
+        ];
 
-        // --- INICIO DE LA MODIFICACIÓN ---
-        if (observations && observations.trim() !== '') {
-            doc.setFont('helvetica', 'bold');
+        autoTable(doc, {
+            startY: currentY + 2,
+            body: totalsData,
+            theme: 'plain',
+            styles: { fontSize: 10, cellPadding: 2 },
+            columnStyles: { 0: { halign: 'right', fontStyle: 'bold' } , 1: { halign: 'right' }},
+            tableWidth: 'wrap',
+            margin: { left: 125 }
+        });
+        currentY = doc.lastAutoTable.finalY;
+
+        // Total por pagar
+        doc.setFillColor(headerFooterBg);
+        doc.rect(125, currentY + 1, 71, 10, 'F');
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(headerFooterText);
+        doc.text('TOTAL POR PAGAR', 130, currentY + 7.5);
+        doc.text(new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total), 196, currentY + 7.5, { align: 'right' });
+        
+        currentY += 20;
+
+        // --- Métodos de pago y Comentarios ---
+        doc.setTextColor(primaryColor);
+        
+        if (paymentMethod && paymentMethod.trim() !== '') {
+            doc.setFont('Helvetica', 'bold');
             doc.setFontSize(10);
-            doc.text('OBSERVACIONES:', sellerX, currentY);
-            currentY += 6;
-            
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            const splitObservations = doc.splitTextToSize(observations, 182);
-            doc.text(splitObservations, 14, currentY);
-            currentY += (splitObservations.length * 5) + 5; // Ajustar el espacio después de las observaciones
+            doc.text('Métodos de pago', sellerX, currentY);
+            currentY += 5;
+            doc.setFont('Helvetica', 'normal');
+            doc.text(paymentMethod, sellerX, currentY);
+            currentY += 10;
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
-        if (type === 'proforma') {
-            doc.setFontSize(8);
-            doc.setTextColor(100);
-            doc.text("ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL. ES UN PRESUPUESTO PREVIO A LA FACTURA FINAL.", 105, currentY, { align: 'center' });
+        if (observations && observations.trim() !== '') {
+            doc.setFont('Helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.text('Comentarios', sellerX, currentY);
+            currentY += 5;
+            doc.setFont('Helvetica', 'normal');
+            const splitObservations = doc.splitTextToSize(observations, 182);
+            doc.text(splitObservations, sellerX, currentY);
         }
         
         const fileName = `${type}_${number}_${car.licensePlate}.pdf`;
@@ -169,6 +222,7 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         
         await handleUpdateCar(car.id, formData);
     };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     return {
         handleGeneratePdf,

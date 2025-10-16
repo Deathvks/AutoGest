@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faTags, faCar, faCalendarDay, faChevronLeft, faChevronRight, faCalendarWeek } from '@fortawesome/free-solid-svg-icons';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import CarPlaceholderImage from './MyCars/CarPlaceholderImage';
 import { AuthContext } from '../context/AuthContext';
 
@@ -14,17 +14,25 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
         const savedMonth = sessionStorage.getItem('salesSummaryMonth');
         return savedMonth ? new Date(savedMonth) : new Date();
     });
-    const [viewMode, setViewMode] = useState('monthly'); // 'monthly' or 'all'
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [viewMode, setViewMode] = useState(() => {
+        return sessionStorage.getItem('salesSummaryViewMode') || 'monthly';
+    }); // 'monthly' or 'all'
+    // --- FIN DE LA MODIFICACIÓN ---
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
-    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         sessionStorage.setItem('salesSummaryMonth', currentMonth.toISOString());
     }, [currentMonth]);
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    useEffect(() => {
+        sessionStorage.setItem('salesSummaryViewMode', viewMode);
+    }, [viewMode]);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const changeMonth = (amount) => {
         setCurrentMonth(prevDate => {
@@ -53,7 +61,6 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                 return true; // Modo 'all'
             })
             .map(car => {
-                // --- INICIO DE LA MODIFICACIÓN ---
                 const associatedExpenses = expenses.filter(
                     exp => exp.carLicensePlate === car.licensePlate
                 );
@@ -68,7 +75,6 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                 
                 const profit = (parseFloat(car.salePrice) || 0) - (parseFloat(car.purchasePrice) || 0) - totalExpenses;
                 return { ...car, totalExpenses, profit };
-                // --- FIN DE LA MODIFICACIÓN ---
             })
             .sort((a, b) => new Date(b.saleDate || b.updatedAt) - new Date(a.saleDate || a.updatedAt));
     }, [cars, expenses, currentMonth, viewMode, canViewSensitiveData]);
@@ -94,7 +100,6 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
         
         doc.text(title, 14, 16);
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         const head = canViewSensitiveData
             ? [['Modelo', 'Matrícula', 'Precio Compra', 'Gastos', 'Precio Venta', 'Beneficio/Pérdida']]
             : [['Modelo', 'Matrícula', 'Gastos', 'Precio Venta']];
@@ -114,7 +119,6 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                 new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.totalExpenses),
                 new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)
               ]);
-        // --- FIN DE LA MODIFICACIÓN ---
 
         autoTable(doc, {
             startY: 20,
@@ -221,7 +225,6 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                     </div>
                                 </div>
                                 
-                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                 <div className={`grid ${canViewSensitiveData ? 'grid-cols-3' : 'grid-cols-2'} items-center pt-3 border-t border-border-color text-xs`}>
                                     {canViewSensitiveData && (
                                         <div className="text-left">
@@ -238,7 +241,6 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                         <p className="text-text-primary font-medium">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}</p>
                                     </div>
                                 </div>
-                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         ))}
                     </div>
@@ -250,7 +252,6 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                     <tr>
                                         <th scope="col" className="px-6 py-4">Coche</th>
                                         <th scope="col" className="px-6 py-4 whitespace-nowrap">Matrícula</th>
-                                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                         {canViewSensitiveData && (
                                             <th scope="col" className="px-6 py-4 whitespace-nowrap">Precio Compra</th>
                                         )}
@@ -259,7 +260,6 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                         {canViewSensitiveData && (
                                             <th scope="col" className="px-6 py-4 whitespace-nowrap">Beneficio/Pérdida</th>
                                         )}
-                                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border-color">
@@ -293,7 +293,6 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                                     {car.licensePlate}
                                                 </span>
                                             </td>
-                                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                             {canViewSensitiveData && (
                                                 <td className="px-6 py-4 font-medium text-text-primary whitespace-nowrap">
                                                     {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
@@ -310,7 +309,6 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                                     {car.profit >= 0 ? '+' : ''}{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.profit)}
                                                 </td>
                                             )}
-                                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                                         </tr>
                                     ))}
                                 </tbody>

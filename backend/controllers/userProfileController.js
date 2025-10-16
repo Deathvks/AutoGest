@@ -113,15 +113,27 @@ exports.updateProfile = async (req, res) => {
             return res.status(400).json({ error: 'El formato del email no es válido.' });
         }
 
+        // --- INICIO DE LA MODIFICACIÓN ---
         if (name !== undefined) user.name = name;
         if (email !== undefined) user.email = email;
-        if (businessName !== undefined) user.businessName = businessName;
-        if (dni !== undefined) user.dni = dni || null;
-        if (cif !== undefined) user.cif = cif || null;
+        
+        // Lógica para empresa o particular
+        if (cif) { // Si se envía CIF, es una empresa
+            user.businessName = businessName;
+            user.cif = cif;
+            user.dni = null; // Limpiar DNI
+        } else if (dni) { // Si se envía DNI, es particular/autónomo
+            user.name = name;
+            user.dni = dni;
+            user.businessName = name; // Guardar nombre personal en businessName también
+            user.cif = null; // Limpiar CIF
+        }
+        
         if (address !== undefined) user.address = address;
         if (phone !== undefined) user.phone = phone;
         if (proformaCounter) user.proformaCounter = proformaCounter;
         if (invoiceCounter) user.invoiceCounter = invoiceCounter;
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (req.files) {
             if (req.files.avatar) {

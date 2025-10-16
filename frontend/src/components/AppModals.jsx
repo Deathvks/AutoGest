@@ -32,9 +32,7 @@ import ExpelUserConfirmationModal from './modals/ExpelUserConfirmationModal';
 import BusinessDataModal from './modals/BusinessDataModal';
 import GeneratePdfModal from './modals/GeneratePdfModal';
 import DeleteFileConfirmationModal from './modals/DeleteFileConfirmationModal';
-// --- INICIO DE LA MODIFICACIÓN ---
 import TrialModal from './modals/TrialModal';
-// --- FIN DE LA MODIFICACIÓN ---
 
 const AppModals = ({ appState }) => {
     const { logout, user, startTrial } = useContext(AuthContext);
@@ -60,9 +58,7 @@ const AppModals = ({ appState }) => {
         userToExpel, setUserToExpel,
         pdfModalInfo, setPdfModalInfo,
         fileToDelete, setFileToDelete,
-        // --- INICIO DE LA MODIFICACIÓN ---
         isTrialModalOpen, setIsTrialModalOpen,
-        // --- FIN DE LA MODIFICACIÓN ---
         handleSaveBusinessData, handleUserAdded, handleUserUpdated,
         handleUserDeleted, handleExpelUser, handleAddCar, handleUpdateCar,
         handleDeleteCar, handleSellConfirm, handleReserveConfirm,
@@ -152,10 +148,12 @@ const AppModals = ({ appState }) => {
                 <GeneratePdfModal
                     isOpen={!!pdfModalInfo}
                     onClose={() => setPdfModalInfo(null)}
-                    onConfirm={async (type, number, igicRate, observations) => {
-                        await handleGeneratePdf(pdfModalInfo.car, type, number, igicRate, observations);
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    onConfirm={async (type, number, igicRate, observations, paymentMethod, clientData) => {
+                        await handleGeneratePdf(pdfModalInfo.car, type, number, igicRate, observations, paymentMethod, clientData);
                         setPdfModalInfo(null);
                     }}
+                    // --- FIN DE LA MODIFICACIÓN ---
                     type={pdfModalInfo.type}
                     defaultNumber={pdfModalInfo.number}
                     car={pdfModalInfo.car}
@@ -170,13 +168,11 @@ const AppModals = ({ appState }) => {
                 />
             )}
 
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             <TrialModal
                 isOpen={isTrialModalOpen}
                 onClose={() => setIsTrialModalOpen(false)}
                 onConfirm={startTrial}
             />
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
     );
 };

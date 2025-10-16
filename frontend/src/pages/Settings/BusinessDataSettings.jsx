@@ -4,7 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave, faTrash, faImage, faLock } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
-import { Link } from 'react-router-dom'; // Añadido para el enlace de suscripción
+import { Link } from 'react-router-dom';
 
 const InputField = ({ id, label, value, onChange, disabled }) => (
     <div>
@@ -23,7 +23,10 @@ const InputField = ({ id, label, value, onChange, disabled }) => (
 
 const BusinessDataSettings = () => {
     const { user, updateUserProfile, refreshUser } = useContext(AuthContext);
+    const [accountType, setAccountType] = useState('empresa');
     const [formData, setFormData] = useState({
+        name: '',
+        dni: '',
         businessName: '',
         cif: '',
         address: '',
@@ -37,20 +40,21 @@ const BusinessDataSettings = () => {
     useEffect(() => {
         if (user) {
             setFormData({
+                name: user.name || '',
+                dni: user.dni || '',
                 businessName: user.businessName || '',
                 cif: user.cif || '',
                 address: user.address || '',
                 phone: user.phone || '',
             });
+            setAccountType(user.cif ? 'empresa' : 'particular');
             setLogoPreview(user.logoUrl || null);
         }
     }, [user]);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const isSubscribed = user?.subscriptionStatus === 'active';
     const isTrialing = user?.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
     const isLocked = !isSubscribed && isTrialing && user?.role !== 'admin';
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -86,15 +90,29 @@ const BusinessDataSettings = () => {
         setSuccessMessage('');
         
         const data = new FormData();
-        Object.keys(formData).forEach(key => {
-            if (formData[key] !== null) {
-                 data.append(key, formData[key]);
-            }
-        });
+        
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Limpiar campos no necesarios según el tipo de cuenta
+        if (accountType === 'empresa') {
+            data.append('businessName', formData.businessName);
+            data.append('cif', formData.cif);
+            data.append('dni', ''); // Limpiar DNI
+        } else { // particular
+            data.append('name', formData.name);
+            data.append('dni', formData.dni);
+            data.append('cif', ''); // Limpiar CIF
+        }
+
+        data.append('address', formData.address);
+        data.append('phone', formData.phone);
+        if (formData.logo) {
+            data.append('logo', formData.logo);
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
     
         try {
             await updateUserProfile(data);
-            setSuccessMessage('¡Datos de empresa guardados con éxito!');
+            setSuccessMessage('¡Datos de facturación guardados con éxito!');
         } catch (err) {
             setError(err.message || 'Error al guardar los datos.');
         } finally {
@@ -118,14 +136,54 @@ const BusinessDataSettings = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                <h2 className="text-xl font-bold text-text-primary border-b border-border-color pb-4">Datos de Empresa</h2>
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <h2 className="text-xl font-bold text-text-primary border-b border-border-color pb-4">Datos de Facturación</h2>
                 
+                <div className="relative flex w-full max-w-sm mx-auto items-center rounded-full bg-component-bg-hover p-1 border border-border-color overflow-hidden">
+                    <span
+                        className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
+                            accountType === 'particular' ? 'translate-x-[96%]' : 'translate-x-0'
+                        }`}
+                        style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setAccountType('empresa')}
+                        disabled={isLocked}
+                        className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${
+                            accountType === 'empresa' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                        }`}
+                    >
+                        EMPRESA
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setAccountType('particular')}
+                        disabled={isLocked}
+                        className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${
+                            accountType === 'particular' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                        }`}
+                    >
+                        AUTÓNOMO / PARTICULAR
+                    </button>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputField id="businessName" label="Nombre de la Empresa" value={formData.businessName} onChange={handleChange} disabled={isLocked} />
-                    <InputField id="cif" label="CIF/NIF" value={formData.cif} onChange={handleChange} disabled={isLocked} />
-                    <InputField id="address" label="Dirección" value={formData.address} onChange={handleChange} disabled={isLocked} />
+                    {accountType === 'empresa' ? (
+                        <>
+                            <InputField id="businessName" label="Nombre de la Empresa" value={formData.businessName} onChange={handleChange} disabled={isLocked} />
+                            <InputField id="cif" label="CIF" value={formData.cif} onChange={handleChange} disabled={isLocked} />
+                        </>
+                    ) : (
+                        <>
+                            <InputField id="name" label="Nombre y Apellidos" value={formData.name} onChange={handleChange} disabled={isLocked} />
+                            <InputField id="dni" label="DNI/NIE" value={formData.dni} onChange={handleChange} disabled={isLocked} />
+                        </>
+                    )}
+                    <InputField id="address" label="Dirección Fiscal" value={formData.address} onChange={handleChange} disabled={isLocked} />
                     <InputField id="phone" label="Teléfono" value={formData.phone} onChange={handleChange} disabled={isLocked} />
                 </div>
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 
                 <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1">Logo de la Empresa</label>

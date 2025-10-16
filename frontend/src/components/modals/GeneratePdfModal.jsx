@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/GeneratePdfModal.jsx
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faFileInvoice, faPercentage } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faFileInvoice, faPercentage, faCreditCard, faUser, faBuilding, faIdCard, faPhone, faEnvelope, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 
@@ -58,13 +58,36 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
     const [error, setError] = useState('');
     const [igicRate, setIgicRate] = useState('7');
     const [observations, setObservations] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('');
+    const [clientType, setClientType] = useState('particular');
+    const [clientData, setClientData] = useState({});
 
     useEffect(() => {
         if (isOpen) {
             setNumber(defaultNumber);
             setObservations('');
+            setPaymentMethod('');
+            
+            let buyer = {};
+            if (car.buyerDetails) {
+                try {
+                    buyer = typeof car.buyerDetails === 'string' ? JSON.parse(car.buyerDetails) : car.buyerDetails;
+                } catch (e) { console.error("Error parsing buyer data:", e); }
+            }
+            setClientData({
+                name: buyer.name || '',
+                lastName: buyer.lastName || '',
+                dni: buyer.dni || '',
+                businessName: buyer.businessName || '',
+                cif: buyer.cif || '',
+                phone: buyer.phone || '',
+                email: buyer.email || '',
+                address: buyer.address || '',
+            });
+            setClientType(buyer.cif ? 'empresa' : 'particular');
+
         }
-    }, [defaultNumber, isOpen]);
+    }, [defaultNumber, isOpen, car]);
 
     const handleConfirm = async () => {
         const num = parseInt(number, 10);
@@ -82,24 +105,28 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
         try {
             const fieldToUpdate = type === 'proforma' ? 'proformaCounter' : 'invoiceCounter';
             const numberField = type === 'proforma' ? 'proformaNumber' : 'invoiceNumber';
-
-            await api.updateCar(car.id, { [numberField]: num });
+            
+            await api.updateCar(car.id, { [numberField]: num, buyerDetails: JSON.stringify(clientData) });
             
             await api.updateProfile({ [fieldToUpdate]: num + 1 });
             
             await refreshUser();
             
-            onConfirm(type, num, rate, observations);
+            onConfirm(type, num, rate, observations, paymentMethod, clientData);
         } catch (err) {
             setError(err.message || 'Error al guardar los datos.');
         }
+    };
+    
+    const handleClientDataChange = (e) => {
+        setClientData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col border border-border-color">
+            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-border-color">
                 <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
                     <h2 className="text-xl font-bold text-text-primary flex items-center gap-3">
                         <FontAwesomeIcon icon={faFileInvoice} />
@@ -111,9 +138,6 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                 </div>
 
                 <div className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar">
-                    <p className="text-text-secondary text-center">
-                        Introduce el número para la {type === 'proforma' ? 'proforma' : 'factura'} o usa el siguiente número disponible.
-                    </p>
                     <InputField
                         label={`Número de ${type === 'proforma' ? 'Proforma' : 'Factura'}`}
                         name="pdfNumber"
@@ -121,6 +145,48 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                         value={number}
                         onChange={(e) => setNumber(e.target.value)}
                     />
+
+                    <div className="pt-4 border-t border-border-color">
+                         <h3 className="text-lg font-semibold text-text-primary mb-4">Datos del Cliente</h3>
+                         <div className="relative flex w-full items-center rounded-full bg-component-bg-hover p-1 border border-border-color overflow-hidden mb-4">
+                            <span
+                                className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
+                                    clientType === 'empresa' ? 'translate-x-[96%]' : 'translate-x-0'
+                                }`}
+                                style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+                            />
+                            <button type="button" onClick={() => setClientType('particular')} className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${clientType === 'particular' ? 'text-text-primary' : 'text-text-secondary'}`}>
+                                PARTICULAR / AUTÓNOMO
+                            </button>
+                             <button type="button" onClick={() => setClientType('empresa')} className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${clientType === 'empresa' ? 'text-text-primary' : 'text-text-secondary'}`}>
+                                EMPRESA
+                            </button>
+                        </div>
+                        
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        <div className="space-y-4">
+                            {clientType === 'particular' ? (
+                                <>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <InputField label="Nombre" name="name" value={clientData.name} onChange={handleClientDataChange} icon={faUser} />
+                                        <InputField label="Apellidos" name="lastName" value={clientData.lastName} onChange={handleClientDataChange} />
+                                    </div>
+                                    <InputField label="DNI / NIE" name="dni" value={clientData.dni} onChange={handleClientDataChange} icon={faIdCard} />
+                                </>
+                            ) : (
+                                <>
+                                     <InputField label="Razón Social" name="businessName" value={clientData.businessName} onChange={handleClientDataChange} icon={faBuilding} />
+                                     <InputField label="CIF" name="cif" value={clientData.cif} onChange={handleClientDataChange} icon={faFileInvoice} />
+                                </>
+                            )}
+                             <InputField label="Dirección" name="address" value={clientData.address} onChange={handleClientDataChange} icon={faMapMarkerAlt} />
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <InputField label="Teléfono" name="phone" value={clientData.phone} onChange={handleClientDataChange} icon={faPhone} />
+                                <InputField label="Email" name="email" value={clientData.email} onChange={handleClientDataChange} icon={faEnvelope} />
+                            </div>
+                        </div>
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
+                    </div>
                     
                     {type === 'factura' && (
                         <InputField
@@ -132,6 +198,15 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                             icon={faPercentage}
                         />
                     )}
+                    
+                    <InputField
+                        label="Métodos de Pago (Opcional)"
+                        name="paymentMethod"
+                        type="text"
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        icon={faCreditCard}
+                    />
 
                     <TextareaField
                         label="Observaciones (Opcional)"
