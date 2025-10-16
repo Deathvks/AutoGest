@@ -6,6 +6,24 @@ import { faSave, faTrash, faImage, faLock } from '@fortawesome/free-solid-svg-ic
 import api from '../../services/api';
 import { Link } from 'react-router-dom';
 
+const getStoredFormData = () => {
+    const stored = localStorage.getItem('businessDataFormData');
+    try {
+        return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+        console.error("Failed to parse stored form data", e);
+        return null;
+    }
+};
+
+const setStoredFormData = (data) => {
+    try {
+        localStorage.setItem('businessDataFormData', JSON.stringify(data));
+    } catch (e) {
+        console.error("Failed to store form data", e);
+    }
+};
+
 const InputField = ({ id, label, value, onChange, disabled, required }) => (
     <div>
         <label htmlFor={id} className="block text-sm font-medium text-text-secondary">
@@ -26,14 +44,21 @@ const InputField = ({ id, label, value, onChange, disabled, required }) => (
 const BusinessDataSettings = () => {
     const { user, updateUserProfile, refreshUser } = useContext(AuthContext);
     const [accountType, setAccountType] = useState('empresa');
-    const [formData, setFormData] = useState({
-        name: '',
-        dni: '',
+    
+    const [empresaFormData, setEmpresaFormData] = useState({
         businessName: '',
         cif: '',
         address: '',
         phone: '',
+        logo: null
     });
+    const [particularFormData, setParticularFormData] = useState({
+        name: '',
+        dni: '',
+        address: '',
+        phone: '',
+    });
+
     const [logoPreview, setLogoPreview] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
@@ -84,33 +109,76 @@ const BusinessDataSettings = () => {
         }
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
     useEffect(() => {
         if (user) {
-            setFormData({
-                name: user.name || '',
-                dni: user.dni || '',
+            const isCompany = user.cif && !user.dni;
+            setAccountType(isCompany ? 'empresa' : 'particular');
+    
+            const storedData = getStoredFormData();
+    
+            const newEmpresaData = {
                 businessName: user.businessName || '',
                 cif: user.cif || '',
                 address: user.address || '',
                 phone: user.phone || '',
-            });
-            setAccountType(user.cif ? 'empresa' : 'particular');
+                logo: null
+            };
+    
+            const newParticularData = {
+                name: user.name || '',
+                dni: user.dni || '',
+                address: user.address || '',
+                phone: user.phone || '',
+            };
+    
+            if (!newEmpresaData.businessName && storedData?.empresa?.businessName) {
+                newEmpresaData.businessName = storedData.empresa.businessName;
+            }
+            if (!newEmpresaData.cif && storedData?.empresa?.cif) {
+                newEmpresaData.cif = storedData.empresa.cif;
+            }
+            if (!newParticularData.name && storedData?.particular?.name) {
+                newParticularData.name = storedData.particular.name;
+            }
+            if (!newParticularData.dni && storedData?.particular?.dni) {
+                newParticularData.dni = storedData.particular.dni;
+            }
+    
+            setEmpresaFormData(newEmpresaData);
+            setParticularFormData(newParticularData);
+    
             setLogoPreview(user.logoUrl || null);
         }
     }, [user]);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const isSubscribed = user?.subscriptionStatus === 'active';
     const isTrialing = user?.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
     const isLocked = !isSubscribed && isTrialing && user?.role !== 'admin';
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+
+        if (accountType === 'empresa') {
+            const updatedData = { ...empresaFormData, [name]: value };
+            setEmpresaFormData(updatedData);
+            if (name === 'address' || name === 'phone') {
+                setParticularFormData({ ...particularFormData, [name]: value });
+            }
+        } else {
+            const updatedData = { ...particularFormData, [name]: value };
+            setParticularFormData(updatedData);
+            if (name === 'address' || name === 'phone') {
+                setEmpresaFormData({ ...empresaFormData, [name]: value });
+            }
+        }
     };
 
     const handleLogoChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setFormData({ ...formData, logo: file });
+            setEmpresaFormData({ ...empresaFormData, logo: file });
             const reader = new FileReader();
             reader.onloadend = () => {
                 setLogoPreview(reader.result);
@@ -130,26 +198,26 @@ const BusinessDataSettings = () => {
         }
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const validateForm = () => {
         const missingFields = [];
+        const data = accountType === 'empresa' ? empresaFormData : particularFormData;
 
-        if (!formData.address?.trim()) missingFields.push('Dirección Fiscal');
-        if (!formData.phone?.trim()) missingFields.push('Teléfono');
+        if (!data.address?.trim()) missingFields.push('Dirección Fiscal');
+        if (!data.phone?.trim()) missingFields.push('Teléfono');
 
         if (accountType === 'empresa') {
-            if (!formData.businessName?.trim()) missingFields.push('Nombre de la Empresa');
-            if (!formData.cif?.trim()) {
+            if (!data.businessName?.trim()) missingFields.push('Nombre de la Empresa');
+            if (!data.cif?.trim()) {
                 missingFields.push('CIF');
-            } else if (!isValidCif(formData.cif)) {
+            } else if (!isValidCif(data.cif)) {
                 setError('El formato del CIF no es válido.');
                 return false;
             }
         } else { // particular
-            if (!formData.name?.trim()) missingFields.push('Nombre y Apellidos');
-            if (!formData.dni?.trim()) {
+            if (!data.name?.trim()) missingFields.push('Nombre y Apellidos');
+            if (!data.dni?.trim()) {
                 missingFields.push('DNI/NIE');
-            } else if (!isValidDniNie(formData.dni)) {
+            } else if (!isValidDniNie(data.dni)) {
                 setError('El formato del DNI/NIE no es válido.');
                 return false;
             }
@@ -164,34 +232,42 @@ const BusinessDataSettings = () => {
         setError('');
         return true;
     };
-
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccessMessage('');
-
+    
         if (!validateForm()) {
             return;
         }
         
         setIsSaving(true);
         
+        setStoredFormData({
+            empresa: { ...empresaFormData, logo: null },
+            particular: particularFormData
+        });
+
         const data = new FormData();
         
         if (accountType === 'empresa') {
-            data.append('businessName', formData.businessName);
-            data.append('cif', formData.cif);
-            data.append('dni', ''); 
-        } else { 
-            data.append('name', formData.name);
-            data.append('dni', formData.dni);
-            data.append('cif', ''); 
-        }
-
-        data.append('address', formData.address);
-        data.append('phone', formData.phone);
-        if (formData.logo) {
-            data.append('logo', formData.logo);
+            data.append('businessName', empresaFormData.businessName);
+            data.append('cif', empresaFormData.cif);
+            data.append('address', empresaFormData.address);
+            data.append('phone', empresaFormData.phone);
+            if (empresaFormData.logo) {
+                data.append('logo', empresaFormData.logo);
+            }
+            data.append('name', '');
+            data.append('dni', '');
+        } else {
+            data.append('name', particularFormData.name);
+            data.append('dni', particularFormData.dni);
+            data.append('address', particularFormData.address);
+            data.append('phone', particularFormData.phone);
+            data.append('businessName', '');
+            data.append('cif', '');
         }
     
         try {
@@ -203,7 +279,6 @@ const BusinessDataSettings = () => {
             setIsSaving(false);
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     return (
         <div className="bg-component-bg p-6 rounded-lg shadow-md border border-border-color relative">
@@ -226,7 +301,7 @@ const BusinessDataSettings = () => {
                 <div className="relative grid grid-cols-2 w-full max-w-sm mx-auto items-center rounded-full bg-component-bg-hover p-1 border border-border-color">
                     <span
                         className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
-                            accountType === 'particular' ? 'translate-x-[calc(100%+8px)]' : 'translate-x-0'
+                            accountType === 'particular' ? 'translate-x-full' : 'translate-x-0'
                         }`}
                         style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                     />
@@ -255,17 +330,19 @@ const BusinessDataSettings = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {accountType === 'empresa' ? (
                         <>
-                            <InputField id="businessName" label="Nombre de la Empresa" value={formData.businessName} onChange={handleChange} disabled={isLocked} required />
-                            <InputField id="cif" label="CIF" value={formData.cif} onChange={handleChange} disabled={isLocked} required />
+                            <InputField id="businessName" label="Nombre de la Empresa" value={empresaFormData.businessName} onChange={handleChange} disabled={isLocked} required />
+                            <InputField id="cif" label="CIF" value={empresaFormData.cif} onChange={handleChange} disabled={isLocked} required />
+                            <InputField id="address" label="Dirección Fiscal" value={empresaFormData.address} onChange={handleChange} disabled={isLocked} required />
+                            <InputField id="phone" label="Teléfono" value={empresaFormData.phone} onChange={handleChange} disabled={isLocked} required />
                         </>
                     ) : (
                         <>
-                            <InputField id="name" label="Nombre y Apellidos" value={formData.name} onChange={handleChange} disabled={isLocked} required />
-                            <InputField id="dni" label="DNI/NIE" value={formData.dni} onChange={handleChange} disabled={isLocked} required />
+                            <InputField id="name" label="Nombre y Apellidos" value={particularFormData.name} onChange={handleChange} disabled={isLocked} required />
+                            <InputField id="dni" label="DNI/NIE" value={particularFormData.dni} onChange={handleChange} disabled={isLocked} required />
+                            <InputField id="address" label="Dirección Fiscal" value={particularFormData.address} onChange={handleChange} disabled={isLocked} required />
+                            <InputField id="phone" label="Teléfono" value={particularFormData.phone} onChange={handleChange} disabled={isLocked} required />
                         </>
                     )}
-                    <InputField id="address" label="Dirección Fiscal" value={formData.address} onChange={handleChange} disabled={isLocked} required />
-                    <InputField id="phone" label="Teléfono" value={formData.phone} onChange={handleChange} disabled={isLocked} required />
                 </div>
                 
                 <div>
@@ -278,12 +355,12 @@ const BusinessDataSettings = () => {
                                 <FontAwesomeIcon icon={faImage} className="text-text-secondary" />
                             </div>
                         )}
-                        <input type="file" id="logo-upload" className="hidden" onChange={handleLogoChange} accept="image/*" disabled={isLocked}/>
-                        <label htmlFor="logo-upload" className={`cursor-pointer rounded-md border border-border-color bg-component-bg px-3 py-2 text-sm font-semibold text-text-primary shadow-sm hover:bg-component-bg-hover ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        <input type="file" id="logo-upload" className="hidden" onChange={handleLogoChange} accept="image/*" disabled={isLocked || accountType === 'particular'}/>
+                        <label htmlFor="logo-upload" className={`cursor-pointer rounded-md border border-border-color bg-component-bg px-3 py-2 text-sm font-semibold text-text-primary shadow-sm hover:bg-component-bg-hover ${isLocked || accountType === 'particular' ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             Cambiar
                         </label>
                         {logoPreview && (
-                            <button type="button" onClick={handleDeleteLogo} className={`text-sm font-semibold text-red-500 hover:text-red-700 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
+                            <button type="button" onClick={handleDeleteLogo} className={`text-sm font-semibold text-red-500 hover:text-red-700 ${isLocked || accountType === 'particular' ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked || accountType === 'particular'}>
                                 <FontAwesomeIcon icon={faTrash} /> Eliminar
                             </button>
                         )}
