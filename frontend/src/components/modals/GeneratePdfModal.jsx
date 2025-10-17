@@ -60,7 +60,19 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
     const [observations, setObservations] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('');
     const [clientType, setClientType] = useState('particular');
-    const [clientData, setClientData] = useState({});
+    const [clientData, setClientData] = useState({
+        name: '',
+        lastName: '',
+        dni: '',
+        businessName: '',
+        cif: '',
+        phone: '',
+        email: '',
+        streetAddress: '',
+        postalCode: '',
+        city: '',
+        province: '',
+    });
 
     useEffect(() => {
         if (isOpen) {
@@ -74,7 +86,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                     buyer = typeof car.buyerDetails === 'string' ? JSON.parse(car.buyerDetails) : car.buyerDetails;
                 } catch (e) { console.error("Error parsing buyer data:", e); }
             }
-            // --- INICIO DE LA MODIFICACIÓN ---
+            
             setClientData({
                 name: buyer.name || '',
                 lastName: buyer.lastName || '',
@@ -88,7 +100,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                 city: buyer.city || '',
                 province: buyer.province || '',
             });
-            // --- FIN DE LA MODIFICACIÓN ---
+            
             setClientType(buyer.cif ? 'empresa' : 'particular');
 
         }
@@ -161,7 +173,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                                 style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                             />
                             <button type="button" onClick={() => setClientType('particular')} className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${clientType === 'particular' ? 'text-text-primary' : 'text-text-secondary'}`}>
-                                PARTICULAR / AUTÓNOMO
+                                AUTÓNOMO
                             </button>
                              <button type="button" onClick={() => setClientType('empresa')} className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${clientType === 'empresa' ? 'text-text-primary' : 'text-text-secondary'}`}>
                                 EMPRESA
@@ -183,7 +195,6 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                                      <InputField label="CIF" name="cif" value={clientData.cif} onChange={handleClientDataChange} icon={faFileInvoice} />
                                 </>
                             )}
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                              <InputField label="Dirección" name="streetAddress" value={clientData.streetAddress} onChange={handleClientDataChange} icon={faMapMarkerAlt} />
                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <InputField label="Código Postal" name="postalCode" value={clientData.postalCode} onChange={handleClientDataChange} />
@@ -194,7 +205,6 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                                 <InputField label="Teléfono" name="phone" value={clientData.phone} onChange={handleClientDataChange} icon={faPhone} />
                                 <InputField label="Email" name="email" value={clientData.email} onChange={handleClientDataChange} icon={faEnvelope} />
                             </div>
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
                     </div>
                     
