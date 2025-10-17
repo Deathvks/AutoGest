@@ -74,6 +74,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                     buyer = typeof car.buyerDetails === 'string' ? JSON.parse(car.buyerDetails) : car.buyerDetails;
                 } catch (e) { console.error("Error parsing buyer data:", e); }
             }
+            // --- INICIO DE LA MODIFICACIÓN ---
             setClientData({
                 name: buyer.name || '',
                 lastName: buyer.lastName || '',
@@ -82,8 +83,12 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                 cif: buyer.cif || '',
                 phone: buyer.phone || '',
                 email: buyer.email || '',
-                address: buyer.address || '',
+                streetAddress: buyer.streetAddress || buyer.address || '',
+                postalCode: buyer.postalCode || '',
+                city: buyer.city || '',
+                province: buyer.province || '',
             });
+            // --- FIN DE LA MODIFICACIÓN ---
             setClientType(buyer.cif ? 'empresa' : 'particular');
 
         }
@@ -163,7 +168,6 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                             </button>
                         </div>
                         
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         <div className="space-y-4">
                             {clientType === 'particular' ? (
                                 <>
@@ -179,13 +183,19 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                                      <InputField label="CIF" name="cif" value={clientData.cif} onChange={handleClientDataChange} icon={faFileInvoice} />
                                 </>
                             )}
-                             <InputField label="Dirección" name="address" value={clientData.address} onChange={handleClientDataChange} icon={faMapMarkerAlt} />
+                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                             <InputField label="Dirección" name="streetAddress" value={clientData.streetAddress} onChange={handleClientDataChange} icon={faMapMarkerAlt} />
+                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <InputField label="Código Postal" name="postalCode" value={clientData.postalCode} onChange={handleClientDataChange} />
+                                <InputField label="Ciudad" name="city" value={clientData.city} onChange={handleClientDataChange} />
+                            </div>
+                            <InputField label="Provincia" name="province" value={clientData.province} onChange={handleClientDataChange} />
                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <InputField label="Teléfono" name="phone" value={clientData.phone} onChange={handleClientDataChange} icon={faPhone} />
                                 <InputField label="Email" name="email" value={clientData.email} onChange={handleClientDataChange} icon={faEnvelope} />
                             </div>
+                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </div>
                     
                     {type === 'factura' && (

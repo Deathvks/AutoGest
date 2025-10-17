@@ -11,7 +11,6 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
     const context = { setCars, setLocations, modalState };
     const { handleUpdateCar } = useCarActions(context);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const handleGeneratePdf = async (car, type, number, igicRate, observations, paymentMethod, clientData) => {
         const doc = new jsPDF();
         const today = new Date();
@@ -21,7 +20,7 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         const primaryColor = '#1a1a1a';
         const secondaryColor = '#555555';
         const headerFooterText = '#ffffff';
-        const tableHeaderBg = 'rgb(5, 5, 5)'; // Color más oscuro para la cabecera de la tabla
+        const tableHeaderBg = 'rgb(5, 5, 5)';
 
         // --- Degradado del Header ---
         const headerGradient = doc.context2d.createLinearGradient(0, 0, doc.internal.pageSize.getWidth(), 0);
@@ -34,7 +33,6 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
 
 
         // --- Cabecera ---
-        // Logo o "AutoGest"
         if (user.logoUrl) {
             const logoUrl = `${API_BASE_URL}${user.logoUrl}`;
             try {
@@ -76,7 +74,6 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
             doc.text("AutoGest", 14, 35);
         }
         
-        // Datos del vendedor (derecha)
         doc.setFontSize(9);
         doc.setTextColor(headerFooterText);
         doc.text(user.businessName || user.name, 200, 25, { align: 'right' });
@@ -87,7 +84,6 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
 
         let currentY = 95;
 
-        // Título del documento (fuera del header)
         doc.setFontSize(28);
         doc.setTextColor(primaryColor);
         doc.setFont(undefined, 'bold');
@@ -99,24 +95,42 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         doc.setFontSize(10);
         doc.setTextColor(secondaryColor);
         doc.text(today.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }), 105, currentY, { align: 'center' });
-
         currentY += 20;
 
-        // --- Datos Cliente y Factura ---
         doc.setFontSize(9);
         doc.setTextColor(primaryColor);
 
         const buyerName = clientData.businessName || `${clientData.name || ''} ${clientData.lastName || ''}`;
         const buyerId = clientData.cif || clientData.dni || '';
         
+        const addressParts = [
+            clientData.streetAddress,
+            clientData.postalCode,
+            clientData.city,
+            clientData.province
+        ].filter(part => part && part.trim() !== '');
+        const fullAddress = addressParts.join(', ');
+        
         doc.setFont(undefined, 'bold');
         doc.text(`FACTURA PARA:`, 14, currentY);
         doc.setFont(undefined, 'normal');
-        doc.text(buyerName, 14, currentY + 5);
-        if (buyerId) doc.text(buyerId, 14, currentY + 10);
-        if (clientData.address) doc.text(clientData.address, 14, currentY + 15);
-        if (clientData.phone) doc.text(clientData.phone, 14, currentY + 20);
-        if (clientData.email) doc.text(clientData.email, 14, currentY + 25);
+        
+        let clientDetailsY = currentY + 5;
+        doc.text(buyerName, 14, clientDetailsY);
+        clientDetailsY += 5;
+
+        if (buyerId) { doc.text(buyerId, 14, clientDetailsY); clientDetailsY += 5; }
+        
+        // --- INICIO DE LA MODIFICACIÓN ---
+        if (fullAddress) {
+            const splitAddress = doc.splitTextToSize(fullAddress, 90);
+            doc.text(splitAddress, 14, clientDetailsY);
+            clientDetailsY += (splitAddress.length * 5);
+        }
+        // --- FIN DE LA MODIFICACIÓN ---
+
+        if (clientData.phone) { doc.text(clientData.phone, 14, clientDetailsY); clientDetailsY += 5; }
+        if (clientData.email) { doc.text(clientData.email, 14, clientDetailsY); }
         
         doc.setFont(undefined, 'normal');
         doc.text(`NÚMERO:`, 120, currentY);
@@ -132,14 +146,11 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         doc.text(`VENCIMIENTO:`, 120, currentY + 10);
         doc.setFont(undefined, 'bold');
         doc.text('En el recibo', 150, currentY + 10);
-
         currentY += 35;
 
-
-        // --- Tabla de Conceptos ---
         const price = parseFloat(type === 'factura' ? car.salePrice : car.price) || 0;
         const formattedPrice = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(price);
-        const carDescription = `VEHÍCULO ${car.make} ${car.model}`;
+        const carDescription = `VEHÍCULO ${car.make} ${car.model} (${car.licensePlate})\nN/BASTIDOR: ${car.vin || 'No especificado'}`;
 
         autoTable(doc, {
             startY: currentY,
@@ -157,7 +168,6 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         });
         currentY = doc.lastAutoTable.finalY;
 
-        // --- Totales ---
         let total = price;
         let subtotal = price;
         let igicAmount = 0;
@@ -167,6 +177,8 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
            subtotal = price / (1 + rate / 100);
            igicAmount = price - subtotal;
         }
+        
+        const paidAmount = type === 'factura' ? total : 0;
 
         const totalsData = [
             ['SUBTOTAL:', new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(subtotal)],
@@ -178,7 +190,7 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
 
         totalsData.push(
             ['TOTAL:', new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total)],
-            ['PAGADA:', new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(0)],
+            ['PAGADA:', new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(paidAmount)],
         );
 
         autoTable(doc, {
@@ -192,7 +204,6 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         });
         currentY = doc.lastAutoTable.finalY;
 
-        // Total por pagar con degradado
         const footerGradient = doc.context2d.createLinearGradient(125, 0, 125 + 71, 0);
         footerGradient.addColorStop(0, 'rgb(5, 5, 5)');
         footerGradient.addColorStop(0.33, 'rgb(39, 39, 39)');
@@ -204,12 +215,17 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         doc.setFont(undefined, 'bold');
         doc.setFontSize(10);
         doc.setTextColor(headerFooterText);
-        doc.text('TOTAL POR PAGAR', 130, currentY + 7.5);
-        doc.text(new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total), 196, currentY + 7.5, { align: 'right' });
+        
+        if (type === 'proforma') {
+            doc.text('TOTAL POR PAGAR', 130, currentY + 7.5);
+            doc.text(new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total), 196, currentY + 7.5, { align: 'right' });
+        } else {
+            doc.text('TOTAL FACTURA', 130, currentY + 7.5);
+            doc.text(new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total), 196, currentY + 7.5, { align: 'right' });
+        }
         
         let finalY = currentY + 20;
 
-        // --- Métodos de pago y Comentarios ---
         doc.setTextColor(primaryColor);
         
         if (paymentMethod && paymentMethod.trim() !== '') {
@@ -266,7 +282,6 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         
         await handleUpdateCar(car.id, formData);
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     return {
         handleGeneratePdf,

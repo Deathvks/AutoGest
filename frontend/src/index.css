@@ -72,7 +72,7 @@
     display: none;
   }
 
-  /* --- INICIO DE LA MODIFICACIÓN --- */
+  /* --- INICIO DE LA MODIFICACIÓN ANTERIOR --- */
   /*
     Anula los estilos de autocompletado del navegador, que inyectan
     un fondo de color. Se usa un box-shadow interno para "pintar"
@@ -86,6 +86,21 @@
     -webkit-box-shadow: 0 0 0px 1000px var(--color-component-bg-hover) inset !important;
     transition: background-color 5000s ease-in-out 0s;
     caret-color: var(--color-text-primary);
+  }
+  /* --- FIN DE LA MODIFICACIÓN ANTERIOR --- */
+
+  /* --- INICIO DE LA MODIFICACIÓN --- */
+  /* Añade un efecto de "iluminación" a los textos principales al pasar el ratón.
+    Se aplica una transición suave para el cambio de color y la sombra del texto.
+  */
+  .text-text-primary,
+  .text-text-secondary {
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+  }
+  .text-text-primary:hover,
+  .text-text-secondary:hover {
+    color: var(--color-accent);
+    text-shadow: 0 0 5px var(--color-accent-soft-glow);
   }
   /* --- FIN DE LA MODIFICACIÓN --- */
 }
