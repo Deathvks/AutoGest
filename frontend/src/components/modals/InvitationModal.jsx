@@ -10,9 +10,7 @@ const InvitationModal = ({ token, onClose }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isAccepting, setIsAccepting] = useState(false);
     const [error, setError] = useState('');
-    // --- INICIO DE LA MODIFICACIÓN ---
-    const { refreshUser, setPendingInvitationToken, setPromptTrial } = useContext(AuthContext);
-    // --- FIN DE LA MODIFICACIÓN ---
+    const { setPendingInvitationToken, setPromptTrial } = useContext(AuthContext);
 
     const handleInvitationHandled = () => {
         const handledTokens = JSON.parse(localStorage.getItem('handledInvitationTokens') || '[]');
@@ -45,24 +43,23 @@ const InvitationModal = ({ token, onClose }) => {
     const handleAccept = async () => {
         setIsAccepting(true);
         try {
-            const response = await api.company.acceptInvitation({ token });
+            await api.company.acceptInvitation({ token });
             toast.success('¡Te has unido al equipo con éxito!');
             
-            handleInvitationHandled(); // Marcar como manejada
-            await refreshUser();
+            handleInvitationHandled();
             
             // --- INICIO DE LA MODIFICACIÓN ---
-            // Oculta el modal de prueba si estaba abierto al aceptar la invitación
-            setPromptTrial(false);
+            // Forzamos una recarga completa de la aplicación redirigiendo a la página principal.
+            // Esto asegura que todo el estado del usuario (contexto, etc.) se actualice.
+            window.location.href = '/';
             // --- FIN DE LA MODIFICACIÓN ---
-            
-            setPendingInvitationToken(null);
-            onClose();
+
         } catch (err) {
             toast.error(err.message || 'No se pudo aceptar la invitación.');
             setError(err.message);
-            handleInvitationHandled(); // Marcar como manejada incluso si falla la aceptación
+            handleInvitationHandled();
         } finally {
+            // Aunque la página recargará, mantenemos esto por si la redirección falla.
             setIsAccepting(false);
         }
     };
@@ -104,18 +101,16 @@ const InvitationModal = ({ token, onClose }) => {
                         <p className="text-center text-text-secondary mb-6">
                             Has sido invitado a unirte al equipo{' '}
                             <span className="font-bold text-accent">{invitation.companyName}</span>.
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                             {invitation.isTrialActive && (
                                 <span className="block mt-3 text-xs text-yellow-accent bg-yellow-accent/10 p-2 rounded-lg border border-yellow-accent/20">
                                     <strong>¡Atención!</strong> Al unirte, tu período de prueba finalizará. Si abandonas el equipo, necesitarás una suscripción.
                                 </span>
                             )}
                              {!invitation.isTrialActive && !invitation.hasUsedTrial && (
-                                <span className="block mt-3 text-xs text-blue-accent bg-blue-accent/10 p-2 rounded-lg border border-blue-accent/20">
+                                <span className="block mt-3 text-xs text-blue-accent bg-blue-accent/10 p-3 rounded-lg">
                                     <strong>Nota:</strong> Si en el futuro abandonas el equipo, aún podrás disfrutar de tu prueba gratuita de 3 días.
                                 </span>
                             )}
-                             {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </p>
                         <div className="flex justify-center space-x-4">
                             <button

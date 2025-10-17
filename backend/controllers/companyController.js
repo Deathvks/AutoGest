@@ -114,13 +114,21 @@ exports.verifyInvitation = async (req, res) => {
         const userToJoin = await User.findOne({ where: { email: invitation.email } });
         const isTrialActive = userToJoin ? (userToJoin.trialExpiresAt && new Date(userToJoin.trialExpiresAt) > new Date()) : false;
         const hasUsedTrial = userToJoin ? userToJoin.hasUsedTrial : false;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const userExists = !!userToJoin; // Añadimos esta variable
+        // --- FIN DE LA MODIFICACIÓN ---
 
+        // --- INICIO DE LA MODIFICACIÓN ---
         res.status(200).json({
-            email: invitation.email,
-            companyName: invitation.Company.name,
-            isTrialActive,
-            hasUsedTrial,
+            data: { // Envolvemos la respuesta en un objeto 'data' para consistencia con otras respuestas de la API
+                email: invitation.email,
+                companyName: invitation.Company.name,
+                isTrialActive,
+                hasUsedTrial,
+                userExists, // La devolvemos en la respuesta
+            }
         });
+        // --- FIN DE LA MODIFICACIÓN ---
 
     } catch (error) {
         console.error('Error al verificar el token:', error);
@@ -195,7 +203,7 @@ exports.acceptInvitation = async (req, res) => {
         delete userResponse.password;
         res.status(200).json({ 
             message: '¡Te has unido al equipo con éxito!',
-            user: userResponse 
+            data: { user: userResponse } // Envolvemos la respuesta en un objeto 'data'
         });
 
     } catch (error) {
@@ -209,9 +217,7 @@ exports.acceptInvitation = async (req, res) => {
 exports.expelUser = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
-        // --- INICIO DE LA CORRECCIÓN ---
-        const { userId } = req.params; // Corregido de userIdToExpel a userId
-        // --- FIN DE LA CORRECCIÓN ---
+        const { userId } = req.params;
         const requester = req.user;
 
         if (!requester.companyId) {
@@ -225,9 +231,7 @@ exports.expelUser = async (req, res) => {
             return res.status(403).json({ error: 'No tienes permiso para expulsar a miembros de este equipo.' });
         }
         
-        // --- INICIO DE LA CORRECCIÓN ---
-        const userToExpel = await User.findByPk(userId, { transaction }); // Corregido de userIdToExpel a userId
-        // --- FIN DE LA CORRECCIÓN ---
+        const userToExpel = await User.findByPk(userId, { transaction });
 
         if (!userToExpel || userToExpel.companyId !== requester.companyId) {
             await transaction.rollback();

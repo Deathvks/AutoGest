@@ -128,12 +128,14 @@ const AuthProvider = ({ children }) => {
                 localStorage.setItem('authToken', response.token);
                 setToken(response.token);
 
-                // --- INICIO DE LA MODIFICACIÓN ---
-                // Verifica si ya estamos en un flujo de invitación por enlace directo.
-                const directLinkToken = localStorage.getItem('pendingInvitationToken');
-
-                if (response.invitationToken && !directLinkToken) {
-                // --- FIN DE LA MODIFICACIÓN ---
+                const pendingInvitationJSON = localStorage.getItem('pendingInvitation');
+                if (pendingInvitationJSON) {
+                    const pendingInvitation = JSON.parse(pendingInvitationJSON);
+                    if (pendingInvitation.email === email) {
+                        setPendingInvitationToken(pendingInvitation.token);
+                    }
+                    localStorage.removeItem('pendingInvitation');
+                } else if (response.invitationToken) {
                     const handledTokens = JSON.parse(localStorage.getItem('handledInvitationTokens') || '[]');
                     if (!handledTokens.includes(response.invitationToken)) {
                         setPendingInvitationToken(response.invitationToken);
@@ -220,6 +222,9 @@ const AuthProvider = ({ children }) => {
     const value = {
         token,
         user,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        setUser, // Exponemos la función para actualizar el usuario directamente
+        // --- FIN DE LA MODIFICACIÓN ---
         login,
         logout,
         register,

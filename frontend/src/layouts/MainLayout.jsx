@@ -22,12 +22,17 @@ const MainLayout = () => {
     const { user, subscriptionStatus, isRefreshing, promptTrial, isTrialActive } = useContext(AuthContext);
     const location = useLocation();
 
-    // Se añade la lógica para mostrar el modal de prueba gratuita.
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se ajusta la lógica para que el modal de prueba no aparezca si el usuario ya está en un equipo.
     useEffect(() => {
-        if (promptTrial && user) {
+        if (promptTrial && user && !user.companyId) {
             appState.setIsTrialModalOpen(true);
+        } else {
+            // Se asegura de cerrar el modal si el usuario se une a un equipo
+            appState.setIsTrialModalOpen(false);
         }
-    }, [promptTrial, user, appState.setIsTrialModalOpen]);
+    }, [promptTrial, user, user?.companyId, appState.setIsTrialModalOpen]);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         const {
