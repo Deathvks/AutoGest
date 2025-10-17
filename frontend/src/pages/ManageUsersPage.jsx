@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faPlus, faEdit, faTrash, faUserShield, faUser,
     faEnvelope, faCalendarDay, faCheckCircle, faExclamationTriangle,
-    faPencilAlt, faUserPlus, faCrown, faXmark, faLock // Se añade faLock
+    faPencilAlt, faUserPlus, faCrown, faXmark, faLock, faRocket
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
@@ -38,6 +38,31 @@ const SubscriptionStatusBadge = ({ status, expiry }) => {
         </div>
     );
 };
+
+// --- INICIO DE LA MODIFICACIÓN ---
+const TrialStatusBadge = ({ trialExpiresAt }) => {
+    if (!trialExpiresAt || new Date(trialExpiresAt) < new Date()) {
+        return null;
+    }
+
+    const endDate = new Date(trialExpiresAt);
+    const now = new Date();
+    const diffTime = Math.abs(endDate - now);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return (
+        <div className="flex flex-col items-start">
+            <span className="flex items-center gap-1.5 text-xs font-medium whitespace-nowrap text-yellow-accent">
+                <FontAwesomeIcon icon={faRocket} />
+                En Prueba
+            </span>
+            <span className="text-xs text-text-secondary mt-1">
+                Quedan: {diffDays} día(s)
+            </span>
+        </div>
+    );
+};
+// --- FIN DE LA MODIFICACIÓN ---
 
 // --- Componente para la vista de Técnico (Estilo Netflix) ---
 const TechnicianView = ({ users, onAddUser, onEditUser, currentUser, isLocked }) => {
@@ -210,11 +235,17 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                                     </p>
                                     <VerificationStatus isVerified={user.isVerified} />
                                 </div>
-                                {(user.role === 'technician_subscribed' || (user.role === 'user' && user.subscriptionStatus !== 'inactive')) && (
-                                    <div className="mt-3 pt-3 border-t border-border-color">
-                                        <SubscriptionStatusBadge status={user.subscriptionStatus} expiry={user.subscriptionExpiry} />
-                                    </div>
-                                )}
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                <div className="mt-3 pt-3 border-t border-border-color">
+                                    {user.trialExpiresAt ? (
+                                        <TrialStatusBadge trialExpiresAt={user.trialExpiresAt} />
+                                    ) : (
+                                        (user.role === 'technician_subscribed' || (user.role === 'user' && user.subscriptionStatus !== 'inactive')) && (
+                                            <SubscriptionStatusBadge status={user.subscriptionStatus} expiry={user.subscriptionExpiry} />
+                                        )
+                                    )}
+                                </div>
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                                 <div className="flex justify-end items-end pt-3 border-t border-border-color">
                                     <div className="flex items-center gap-2">
                                         <button onClick={() => onEditUser(user)} className="text-text-secondary hover:text-blue-accent transition-colors p-2" title="Editar usuario">
@@ -252,9 +283,15 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                                             <td className="px-6 py-4">{user.email}</td>
                                             <td className="px-6 py-4"><RoleBadge role={user.role} /></td>
                                             <td className="px-6 py-4">
-                                                {(user.role === 'technician_subscribed' || (user.role === 'user' && user.subscriptionStatus !== 'inactive')) ? (
-                                                    <SubscriptionStatusBadge status={user.subscriptionStatus} expiry={user.subscriptionExpiry} />
-                                                ) : 'N/A'}
+                                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                                {user.trialExpiresAt ? (
+                                                    <TrialStatusBadge trialExpiresAt={user.trialExpiresAt} />
+                                                ) : (
+                                                    (user.role === 'technician_subscribed' || (user.role === 'user' && user.subscriptionStatus !== 'inactive')) ? (
+                                                        <SubscriptionStatusBadge status={user.subscriptionStatus} expiry={user.subscriptionExpiry} />
+                                                    ) : 'N/A'
+                                                )}
+                                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                                             </td>
                                             <td className="px-6 py-4"><VerificationStatus isVerified={user.isVerified} /></td>
                                             <td className="px-6 py-4 whitespace-nowrap">{new Date(user.createdAt).toLocaleDateString('es-ES')}</td>
@@ -293,11 +330,9 @@ const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser, onExpelUs
 
     if (!currentUser) return null;
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const isSubscribed = currentUser.subscriptionStatus === 'active';
     const isTrialing = currentUser.trialExpiresAt && new Date(currentUser.trialExpiresAt) > new Date();
     const isLocked = !isSubscribed && isTrialing;
-    // --- FIN DE LA MODIFICACIÓN ---
 
     if (currentUser.role === 'admin') {
         return <AdminView users={users} onAddUser={onAddUser} onEditUser={onEditUser} onDeleteUser={onDeleteUser} currentUser={currentUser} />;
