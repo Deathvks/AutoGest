@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/EditExpenseModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faEuroSign, faCalendarDays, faTag, faPaperclip, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faEuroSign, faCalendarDays, faTag, faPaperclip, faSync, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select';
 
 const InputField = ({ label, name, value, onChange, type = 'text', icon, placeholder }) => (
@@ -44,12 +44,10 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
         customCategory: '',
         amount: expense.amount || '',
         description: expense.description || '',
-        // --- INICIO DE LA MODIFICACIÓN ---
         isRecurring: expense.isRecurring || false,
         recurrenceType: expense.recurrenceType || 'monthly',
         recurrenceCustomValue: expense.recurrenceCustomValue || '',
         recurrenceEndDate: expense.recurrenceEndDate ? new Date(expense.recurrenceEndDate).toISOString().split('T')[0] : '',
-        // --- FIN DE LA MODIFICACIÓN ---
     });
     const [attachments, setAttachments] = useState([]);
     const [error, setError] = useState('');
@@ -63,14 +61,12 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
         { id: 'Otros', name: 'Otros' },
     ];
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const recurrenceOptions = [
         { id: 'daily', name: 'Diariamente' },
         { id: 'weekly', name: 'Semanalmente' },
         { id: 'monthly', name: 'Mensualmente' },
         { id: 'custom', name: 'Personalizado (días)' },
     ];
-    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         const isStandardCategory = categoryOptions.some(opt => opt.id === expense.category);
@@ -82,10 +78,8 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        // --- INICIO DE LA MODIFICACIÓN ---
         const finalValue = type === 'checkbox' ? checked : value;
         setEditedExpense(prev => ({ ...prev, [name]: finalValue }));
-        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     const handleSelectChange = (name, value) => {
@@ -106,7 +100,6 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
             formData.append('amount', editedExpense.amount);
             formData.append('description', editedExpense.description);
 
-            // --- INICIO DE LA MODIFICACIÓN ---
             formData.append('isRecurring', editedExpense.isRecurring);
             if (editedExpense.isRecurring) {
                 formData.append('recurrenceType', editedExpense.recurrenceType);
@@ -117,7 +110,6 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                     formData.append('recurrenceEndDate', editedExpense.recurrenceEndDate);
                 }
             }
-            // --- FIN DE LA MODIFICACIÓN ---
 
             attachments.forEach(file => {
                 formData.append('attachments', file);
@@ -159,7 +151,6 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                     <InputField label="Importe (€)" name="amount" type="number" value={editedExpense.amount} onChange={handleChange} icon={faEuroSign} />
                     <TextareaField label="Descripción (Opcional)" name="description" value={editedExpense.description} onChange={handleChange} placeholder="Detalles del gasto..." />
 
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <div className="space-y-4 pt-4 border-t border-border-color">
                         <div className="flex items-center">
                             <input
@@ -168,10 +159,18 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                                 id="isRecurringEdit"
                                 checked={editedExpense.isRecurring}
                                 onChange={handleChange}
-                                className="h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent"
+                                className="sr-only peer"
                             />
-                            <label htmlFor="isRecurringEdit" className="ml-3 block text-sm font-semibold text-text-primary">
-                                Gasto Recurrente
+                            <label
+                                htmlFor="isRecurringEdit"
+                                className="flex items-center cursor-pointer"
+                            >
+                                <div className="w-5 h-5 bg-component-bg-hover border-2 border-border-color rounded-md flex items-center justify-center transition-colors peer-checked:bg-accent peer-checked:border-accent peer-focus:ring-2 peer-focus:ring-accent peer-focus:ring-offset-2 peer-focus:ring-offset-component-bg">
+                                    <FontAwesomeIcon icon={faCheck} className={`h-3 w-3 text-white transition-opacity ${editedExpense.isRecurring ? 'opacity-100' : 'opacity-0'}`} />
+                                </div>
+                                <span className="ml-3 text-sm font-semibold text-text-primary select-none">
+                                    Gasto Recurrente
+                                </span>
                             </label>
                         </div>
 
@@ -204,7 +203,6 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                             </div>
                         )}
                     </div>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                     <div>
                         <label className="block text-sm font-semibold text-text-primary mb-1">Adjuntar Nuevos Archivos</label>

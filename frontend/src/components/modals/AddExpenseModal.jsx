@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/AddExpenseModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faEuroSign, faCalendarDays, faTag, faPaperclip, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faEuroSign, faCalendarDays, faTag, faPaperclip, faSync, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select';
 
 const InputField = ({ label, name, value, onChange, type = 'text', icon, placeholder }) => (
@@ -46,12 +46,10 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
         amount: '',
         description: '',
         carLicensePlate: car ? car.licensePlate : null,
-        // --- INICIO DE LA MODIFICACIÓN ---
         isRecurring: false,
         recurrenceType: 'monthly',
         recurrenceCustomValue: '',
         recurrenceEndDate: '',
-        // --- FIN DE LA MODIFICACIÓN ---
     });
     const [attachments, setAttachments] = useState([]);
     const [error, setError] = useState('');
@@ -65,21 +63,17 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
         { id: 'Otros', name: 'Otros' },
     ];
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const recurrenceOptions = [
         { id: 'daily', name: 'Diariamente' },
         { id: 'weekly', name: 'Semanalmente' },
         { id: 'monthly', name: 'Mensualmente' },
         { id: 'custom', name: 'Personalizado (días)' },
     ];
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        // --- INICIO DE LA MODIFICACIÓN ---
         const finalValue = type === 'checkbox' ? checked : value;
         setNewExpense(prev => ({ ...prev, [name]: finalValue }));
-        // --- FIN DE LA MODIFICACIÓN ---
     };
 
     const handleSelectChange = (name, value) => {
@@ -103,7 +97,6 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
             setError("El importe debe ser un número válido y mayor que cero.");
             return false;
         }
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (newExpense.isRecurring) {
             if (!newExpense.recurrenceType) {
                 setError("Debes seleccionar un tipo de recurrencia.");
@@ -114,7 +107,6 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
                 return false;
             }
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         setError('');
         return true;
     };
@@ -135,7 +127,6 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
                 formData.append('carLicensePlate', newExpense.carLicensePlate);
             }
 
-            // --- INICIO DE LA MODIFICACIÓN ---
             formData.append('isRecurring', newExpense.isRecurring);
             if (newExpense.isRecurring) {
                 formData.append('recurrenceType', newExpense.recurrenceType);
@@ -146,7 +137,6 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
                     formData.append('recurrenceEndDate', newExpense.recurrenceEndDate);
                 }
             }
-            // --- FIN DE LA MODIFICACIÓN ---
 
             attachments.forEach(file => {
                 formData.append('attachments', file);
@@ -196,7 +186,6 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
                     <InputField label="Importe (€)" name="amount" type="number" value={newExpense.amount} onChange={handleChange} icon={faEuroSign} />
                     <TextareaField label="Descripción (Opcional)" name="description" value={newExpense.description} onChange={handleChange} placeholder="Detalles del gasto..." />
 
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <div className="space-y-4 pt-4 border-t border-border-color">
                         <div className="flex items-center">
                             <input
@@ -205,10 +194,18 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
                                 id="isRecurring"
                                 checked={newExpense.isRecurring}
                                 onChange={handleChange}
-                                className="h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent"
+                                className="sr-only peer"
                             />
-                            <label htmlFor="isRecurring" className="ml-3 block text-sm font-semibold text-text-primary">
-                                Gasto Recurrente
+                            <label
+                                htmlFor="isRecurring"
+                                className="flex items-center cursor-pointer"
+                            >
+                                <div className="w-5 h-5 bg-component-bg-hover border-2 border-border-color rounded-md flex items-center justify-center transition-colors peer-checked:bg-accent peer-checked:border-accent peer-focus:ring-2 peer-focus:ring-accent peer-focus:ring-offset-2 peer-focus:ring-offset-component-bg">
+                                    <FontAwesomeIcon icon={faCheck} className={`h-3 w-3 text-white transition-opacity ${newExpense.isRecurring ? 'opacity-100' : 'opacity-0'}`} />
+                                </div>
+                                <span className="ml-3 text-sm font-semibold text-text-primary select-none">
+                                    Gasto Recurrente
+                                </span>
                             </label>
                         </div>
 
@@ -241,7 +238,6 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
                             </div>
                         )}
                     </div>
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                     <div>
                         <label className="block text-sm font-semibold text-text-primary mb-1">Adjuntar Archivos</label>
