@@ -1,5 +1,5 @@
 // autogest-app/backend/controllers/notificationController.js
-const { Notification, User } = require('../models');
+const { Notification, User, Company } = require('../models');
 
 // Obtener todas las notificaciones del usuario logueado
 exports.getNotifications = async (req, res) => {
@@ -40,12 +40,18 @@ exports.createCarCreationNotification = async (req, res) => {
     }
 
     try {
-        const owner = await User.findOne({
-            where: {
-                companyId: companyId,
-                isOwner: true,
-            }
-        });
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // 1. Encontrar la compañía para obtener el ownerId
+        const company = await Company.findByPk(companyId);
+
+        if (!company) {
+            console.log(`No se encontró una compañía con ID ${companyId}, no se puede notificar.`);
+            return res.status(404).json({ error: 'No se encontró el equipo.' });
+        }
+
+        // 2. Usar el ownerId para encontrar al usuario propietario
+        const owner = await User.findByPk(company.ownerId);
+        // --- FIN DE LA MODIFICACIÓN ---
 
         if (!owner) {
             console.log(`No se encontró un propietario para la compañía ${companyId}, no se puede notificar.`);
@@ -67,7 +73,6 @@ exports.createCarCreationNotification = async (req, res) => {
     }
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Eliminar una notificación específica
 exports.deleteNotification = async (req, res) => {
     try {
@@ -87,4 +92,3 @@ exports.deleteNotification = async (req, res) => {
         res.status(500).json({ error: 'Error al eliminar la notificación.' });
     }
 };
-// --- FIN DE LA MODIFICACIÓN ---

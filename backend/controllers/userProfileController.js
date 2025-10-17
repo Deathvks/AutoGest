@@ -39,6 +39,7 @@ exports.getMe = async (req, res) => {
                 userJson.isOwner = isOwner;
 
                 if (!isOwner && company.owner) {
+                    // --- INICIO DE LA MODIFICACIÓN ---
                     // Si es miembro, hereda todos los datos de facturación del propietario.
                     userJson.businessName = company.owner.businessName;
                     userJson.cif = company.owner.cif;
@@ -53,6 +54,7 @@ exports.getMe = async (req, res) => {
                     userJson.companyPhone = company.owner.companyPhone;
                     userJson.personalAddress = company.owner.personalAddress;
                     userJson.personalPhone = company.owner.personalPhone;
+                    // --- FIN DE LA MODIFICACIÓN ---
                 }
                  return res.status(200).json(userJson);
             }
@@ -139,7 +141,8 @@ exports.updateProfile = async (req, res) => {
             if (companyPhone !== undefined) user.companyPhone = companyPhone;
         } else { // 'particular'
             user.dni = dni;
-            user.businessName = name; // El nombre de negocio es el nombre del autónomo
+            // Si se actualiza el nombre, también se actualiza el businessName para autónomos
+            user.businessName = name || user.name;
             user.cif = null; // Limpia el CIF
             if (personalAddress !== undefined) user.personalAddress = personalAddress;
             if (personalPhone !== undefined) user.personalPhone = personalPhone;
