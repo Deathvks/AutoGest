@@ -125,9 +125,7 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
             <form onSubmit={handleSubmit} className="space-y-6 flex-grow flex flex-col">
                 <div className="flex-grow animate-fade-in-up" style={{ animationDelay: '300ms' }}>
                     {adBlockerDetected && (
-                        // --- INICIO DE LA MODIFICACIÓN ---
                         <div className="bg-yellow-accent/10 text-yellow-accent p-3 rounded-lg flex items-center gap-3 mb-4">
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                             <FontAwesomeIcon icon={faShieldAlt} className="w-5 h-5 flex-shrink-0" />
                             <p className="text-sm font-medium">
                                 {isBraveBrowser
@@ -138,12 +136,12 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                     )}
                     {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     <div className="bg-blue-accent/10 text-blue-accent p-3 rounded-lg flex items-start gap-3 mb-4">
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                         <FontAwesomeIcon icon={faInfoCircle} className="w-5 h-5 flex-shrink-0 mt-0.5" />
                         <p className="text-sm font-medium">
-                            Se te cobrará la parte proporcional de este mes. Tu suscripción se renovará por el importe completo el día 1 del mes siguiente.
+                            Se te cobrará la parte proporcional de este mes. Tu suscripción se renovará por 59,90€ el día 1 del mes siguiente.
                         </p>
                     </div>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <label className="block text-sm font-semibold text-text-primary mb-2 uppercase">Datos de la Tarjeta</label>
                     <div className="p-4 bg-component-bg-hover rounded-lg border border-border-color shadow-inner">
                         <CardElement key={theme} options={cardElementOptions} />
@@ -155,14 +153,16 @@ const CheckoutForm = ({ onSuccessfulPayment }) => {
                         {error}
                     </div>
                 )}
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <button
                     type="submit"
                     disabled={!stripe || processing}
                     className="w-full bg-accent text-white font-semibold py-3 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-wait animate-fade-in-up"
                     style={{ animationDelay: '450ms' }}
                 >
-                    {processing ? <FontAwesomeIcon icon={faSpinner} spin /> : 'SUSCRIBIRME AHORA (79,90€/MES)'}
+                    {processing ? <FontAwesomeIcon icon={faSpinner} spin /> : 'SUSCRIBIRME AHORA'}
                 </button>
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </form>
         </div>
     );
