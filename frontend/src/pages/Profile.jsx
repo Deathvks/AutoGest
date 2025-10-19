@@ -96,7 +96,6 @@ const Profile = () => {
         setMessage('');
     };
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const isExempt = user && (user.role === 'admin' || user.role === 'technician');
     const hasValidSubscription = subscriptionStatus === 'active' || (subscriptionStatus === 'cancelled' && user && new Date(user.subscriptionExpiry) > new Date());
     const isTrialing = user && user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date() && !hasValidSubscription;
@@ -111,7 +110,6 @@ const Profile = () => {
         return { text: 'Free', badgeClass: 'bg-gray-700', textClass: 'bg-blue-accent/10 text-blue-accent' };
     };
     const statusInfo = getStatusInfo();
-    // --- FIN DE LA MODIFICACIÓN ---
         
     const InputField = ({ label, name, value, onChange, type = 'text', icon, disabled }) => (
         <div>
@@ -136,8 +134,7 @@ const Profile = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 
-                {/* --- Avatar Card (Mobile: 1st, Desktop: Top-Left) --- */}
-                <div className="md:col-start-1 md:row-start-1">
+                <div className="md:col-span-1">
                     <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl text-center">
                         <div className="relative w-32 h-32 mx-auto group">
                             <img 
@@ -158,58 +155,50 @@ const Profile = () => {
                                     )}
                                 </>
                             )}
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                             {!isEditing && (
                                 <span className={`absolute bottom-1 right-1 block text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md border-2 border-component-bg ${statusInfo.badgeClass}`}>
                                     {statusInfo.text.toUpperCase()}
                                 </span>
                             )}
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
 
                         <div className="mt-4">
                             <h2 className="text-2xl font-bold text-text-primary truncate">{user.name}</h2>
                             <p className="text-sm text-text-secondary truncate">{user.email}</p>
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                             <span className={`mt-3 inline-block text-xs font-bold px-3 py-1 rounded-full uppercase ${statusInfo.textClass}`}>{statusInfo.text}</span>
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                         </div>
                     </div>
                 </div>
 
-                {/* --- Form Card (Mobile: 2nd, Desktop: Right) --- */}
-                <div className="md:col-start-2 md:col-span-2 md:row-start-1 md:row-span-2">
+                <div className="md:col-span-2">
                     <div className="bg-component-bg backdrop-blur-lg p-6 sm:p-8 rounded-2xl border border-border-color shadow-2xl h-full">
                         <h3 className="text-lg font-bold text-text-primary mb-6 uppercase">Información de la Cuenta</h3>
                         <form className="space-y-6" onSubmit={e => { e.preventDefault(); handleSaveChanges(); }}>
                             <InputField label="Nombre Completo" name="name" value={formData.name} onChange={handleInputChange} icon={faUser} disabled={!isEditing} />
                             <InputField label="Email" name="email" value={formData.email} onChange={handleInputChange} icon={faEnvelope} disabled={!isEditing} />
+                             {isEditing ? (
+                                <div className="flex justify-end gap-2 pt-4">
+                                    <button type="button" onClick={handleCancel} disabled={isLoading} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 font-semibold disabled:opacity-50">
+                                        <FontAwesomeIcon icon={faTimes} />
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" disabled={isLoading} className="bg-accent text-white px-4 py-2 rounded-lg shadow-md shadow-accent/20 hover:bg-accent-hover transition-opacity flex items-center justify-center gap-2 font-semibold disabled:opacity-50">
+                                        {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : <><FontAwesomeIcon icon={faSave} /> Guardar</>}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex justify-end pt-4">
+                                    <button type="button" onClick={() => setIsEditing(true)} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 font-semibold">
+                                        <FontAwesomeIcon icon={faPencilAlt} />
+                                        Editar Perfil
+                                    </button>
+                                </div>
+                            )}
                         </form>
+                        
+                        {message && <p className="text-sm text-center text-green-accent font-semibold mt-4">{message}</p>}
+                        {error && <p className="text-sm text-center text-red-accent font-semibold mt-4">{error}</p>}
                     </div>
-                </div>
-
-                {/* --- Actions Card (Mobile: 3rd, Desktop: Bottom-Left) --- */}
-                <div className="md:col-start-1 md:row-start-2 md:self-end w-full">
-                    <div className="bg-component-bg backdrop-blur-lg p-4 rounded-2xl border border-border-color shadow-2xl">
-                        {isEditing ? (
-                            <div className="flex justify-center gap-2">
-                                <button onClick={handleCancel} disabled={isLoading} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 font-semibold disabled:opacity-50">
-                                    <FontAwesomeIcon icon={faTimes} />
-                                    Cancelar
-                                </button>
-                                <button onClick={handleSaveChanges} disabled={isLoading} className="bg-accent text-white px-4 py-2 rounded-lg shadow-md shadow-accent/20 hover:bg-accent-hover transition-opacity flex items-center justify-center gap-2 font-semibold disabled:opacity-50">
-                                    {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : <><FontAwesomeIcon icon={faSave} /> Guardar</>}
-                                </button>
-                            </div>
-                        ) : (
-                            <button onClick={() => setIsEditing(true)} className="w-full bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 font-semibold">
-                                <FontAwesomeIcon icon={faPencilAlt} />
-                                Editar Perfil
-                            </button>
-                        )}
-                    </div>
-                    {message && <p className="text-sm text-center text-green-accent font-semibold mt-4">{message}</p>}
-                    {error && <p className="text-sm text-center text-red-accent font-semibold mt-4">{error}</p>}
                 </div>
             </div>
         </div>
