@@ -3,41 +3,92 @@ import api from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const generateReservationPDF = (car, depositAmount) => {
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se añade buyerDetails como parámetro y se actualiza el contenido del PDF
+const generateReservationPDF = (car, depositAmount, buyerDetails) => {
     const doc = new jsPDF();
-    
+    const today = new Date().toLocaleDateString('es-ES');
+    let currentY = 20;
+
     doc.setFontSize(18);
-    doc.text("CONTRATO DE RESERVA DE VEHÍCULO", 105, 20, { align: 'center' });
+    doc.text("CONTRATO DE RESERVA DE VEHÍCULO", 105, currentY, { align: 'center' });
+    currentY += 10;
+    doc.setFontSize(10);
+    doc.text(`Fecha: ${today}`, 196, currentY, { align: 'right' });
+
+    currentY += 15;
+
     doc.setFontSize(12);
-    doc.text("DATOS DEL CLIENTE", 14, 40);
+    doc.text("DATOS DEL CLIENTE", 14, currentY);
     doc.setLineWidth(0.5);
-    doc.line(14, 42, 196, 42);
-    doc.text("Nombre y Apellidos:", 14, 50); doc.line(60, 50, 196, 50);
-    doc.text("DNI/NIE:", 14, 60); doc.line(40, 60, 100, 60);
-    doc.text("Firma:", 120, 60); doc.line(135, 60, 196, 60);
-    doc.text("DATOS DEL VEHÍCULO", 14, 80);
-    doc.line(14, 82, 196, 82);
-    
+    doc.line(14, currentY + 2, 196, currentY + 2);
+
+    // Construir la dirección completa
+    const addressParts = [
+        buyerDetails.streetAddress,
+        buyerDetails.postalCode,
+        buyerDetails.city,
+        buyerDetails.province
+    ].filter(part => part && part.trim() !== '');
+    const fullAddress = addressParts.join(', ');
+
     autoTable(doc, {
-        startY: 85, theme: 'grid', headStyles: { fillColor: [41, 128, 185] },
+        startY: currentY + 5,
+        theme: 'plain',
         body: [
-            ['Marca', car.make], ['Modelo', car.model], ['Matrícula', car.licensePlate],
+            ['Nombre:', `${buyerDetails.name} ${buyerDetails.lastName}`],
+            ['DNI/NIE:', buyerDetails.dni],
+            ['Teléfono:', buyerDetails.phone || 'No especificado'],
+            ['Email:', buyerDetails.email || 'No especificado'],
+            ['Dirección:', fullAddress || 'No especificada'] // Dirección añadida
+        ],
+        styles: { fontSize: 11 },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } }
+    });
+
+    currentY = doc.lastAutoTable.finalY + 15;
+
+    doc.text("DATOS DEL VEHÍCULO", 14, currentY);
+    doc.line(14, currentY + 2, 196, currentY + 2);
+
+    autoTable(doc, {
+        startY: currentY + 5,
+        theme: 'grid',
+        headStyles: { fillColor: [41, 128, 185] },
+        body: [
+            ['Marca', car.make || ''],
+            ['Modelo', car.model || ''],
+            ['Matrícula', car.licensePlate || ''],
             ['Nº de Bastidor (VIN)', car.vin || 'No especificado'],
             ['Precio de Venta', `${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}`]
         ],
-        styles: { fontSize: 10 }, columnStyles: { 0: { fontStyle: 'bold' } }
+        styles: { fontSize: 10 },
+        columnStyles: { 0: { fontStyle: 'bold' } }
     });
 
-    let finalY = doc.lastAutoTable.finalY;
-    doc.text("CONDICIONES DE LA RESERVA", 14, finalY + 15);
-    doc.line(14, finalY + 17, 196, finalY + 17);
-    const legalText = `El cliente entrega la cantidad de ${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(depositAmount)} en concepto de señal y reserva para el vehículo arriba referenciado. Esta cantidad constituye un compromiso de compra. En caso de que el cliente desista de la compra, esta cantidad no será devuelta, ya que el vehículo entra en un proceso de preparación para su posterior entrega, siendo retirado de la venta al público.`;
+    currentY = doc.lastAutoTable.finalY + 15; // Ajustado el espacio
+
+    doc.setFontSize(12); // Tamaño ajustado
+    doc.text("CONDICIONES DE LA RESERVA", 14, currentY);
+    doc.line(14, currentY + 2, 196, currentY + 2);
+
+    currentY += 8; // Ajustado el espacio
+
+    // Texto legal actualizado para usar el nombre del cliente
+    const legalText = `El cliente D./Dña. ${buyerDetails.name} ${buyerDetails.lastName}, con DNI/NIE ${buyerDetails.dni}, entrega la cantidad de ${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(depositAmount)} en concepto de señal y reserva para el vehículo arriba referenciado. Esta cantidad constituye un compromiso de compra. En caso de que el cliente desista de la compra, esta cantidad no será devuelta, ya que el vehículo entra en un proceso de preparación para su posterior entrega, siendo retirado de la venta al público.`;
     doc.setFontSize(10);
-    const splitText = doc.splitTextToSize(legalText, 182);
-    doc.text(splitText, 14, finalY + 25);
+    const splitText = doc.splitTextToSize(legalText, 182); // Ancho ajustado
+    doc.text(splitText, 14, currentY);
+
+    currentY += (splitText.length * 5) + 20; // Calcular la altura del texto y añadir espacio
+
+    // Líneas de firma
+    doc.text("Firma del Cliente:", 14, currentY);
+    doc.line(55, currentY, 196, currentY); // Línea más larga
 
     return doc.output('blob');
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 
 export const useCarStatus = ({ setCars, modalState }) => { // Se modifica la firma para aceptar un objeto
@@ -51,13 +102,19 @@ export const useCarStatus = ({ setCars, modalState }) => { // Se modifica la fir
         } catch (error) { console.error("Error al vender el coche:", error); }
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se añade buyerDetails como parámetro para pasarlo a generateReservationPDF
     const handleReserveConfirm = async (carToUpdate, newNoteContent, depositAmount, reservationDurationInHours, buyerDetails) => {
+    // --- FIN DE LA MODIFICACIÓN ---
         try {
-            const pdfBlob = generateReservationPDF(carToUpdate, depositAmount);
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Se pasa buyerDetails a la función de generación de PDF
+            const pdfBlob = generateReservationPDF(carToUpdate, depositAmount, buyerDetails);
+            // --- FIN DE LA MODIFICACIÓN ---
             if (!pdfBlob) return;
 
             const formData = new FormData();
-            
+
             let existingNotes = [];
             if (carToUpdate.notes) {
                 try {

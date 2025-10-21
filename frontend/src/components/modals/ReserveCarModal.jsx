@@ -1,12 +1,12 @@
 // autogest-app/frontend/src/components/modals/ReserveCarModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faEuroSign, faClock, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faEuroSign, faClock, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt, faBuilding, faRoad } from '@fortawesome/free-solid-svg-icons'; // Added faBuilding, faRoad
 
 const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, required = false, placeholder = '', className = '' }) => (
     <div>
         {label && (
-            <label className="block text-sm font-semibold text-text-primary mb-1">
+            <label className="block text-sm font-semibold text-text-primary mb-1 uppercase"> {/* Added uppercase */}
                 {label}
                 {required && <span className="text-red-accent ml-1">*</span>}
             </label>
@@ -40,7 +40,7 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
     }, [value]);
     return (
         <div>
-            <label className="block text-sm font-semibold text-text-primary mb-1">{label}</label>
+            <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">{label}</label> {/* Added uppercase */}
             <textarea ref={textareaRef} name={name} value={value} onChange={onChange} placeholder={placeholder} className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary/70 resize-none overflow-hidden" rows="3" />
         </div>
     );
@@ -81,15 +81,20 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
     const [duration, setDuration] = useState('24');
     const [durationUnit, setDurationUnit] = useState('hours');
     const [error, setError] = useState('');
-    
+
+    // --- INICIO DE LA MODIFICACIÓN ---
     const [buyerData, setBuyerData] = useState({
         name: '',
         lastName: '',
         dni: '',
         phone: '',
         email: '',
-        address: '',
+        streetAddress: '', // Campo renombrado
+        postalCode: '',    // Nuevo campo
+        city: '',          // Nuevo campo
+        province: '',      // Nuevo campo
     });
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const isValidDniNie = (value) => {
         const dniRegex = /^([0-9]{8}[A-Z])$/i;
@@ -126,10 +131,13 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
         const depositAmount = parseFloat(parseNumber(deposit));
         let durationValue = parseInt(duration, 10);
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Actualizada la validación y mensaje de error
         if (!deposit || !buyerData.name.trim() || !buyerData.lastName.trim() || !buyerData.dni.trim() || !buyerData.phone.trim() || !buyerData.email.trim()) {
-            setError("Los campos de reserva y los datos del comprador (excepto dirección) son obligatorios.");
+            setError("Los campos de reserva y los datos básicos del comprador (nombre, apellidos, DNI/NIE, teléfono, email) son obligatorios.");
             return;
         }
+        // --- FIN DE LA MODIFICACIÓN ---
         if (isNaN(depositAmount) || depositAmount <= 0) {
             setError("El importe de la reserva debe ser un número válido y mayor que cero.");
             return;
@@ -149,7 +157,7 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
         }
 
         const reservationDurationInHours = durationUnit === 'days' ? durationValue * 24 : durationValue;
-        
+
         onConfirm(car, notes, depositAmount, reservationDurationInHours, buyerData);
     };
 
@@ -162,7 +170,7 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
-                
+
                 <div className="flex-grow overflow-y-auto p-6 no-scrollbar">
                     <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-6">
                         <div className="text-center">
@@ -170,7 +178,7 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                         </div>
 
                         <div>
-                            <h3 className="text-lg font-semibold text-text-primary mb-3">Datos de la Reserva</h3>
+                            <h3 className="text-lg font-semibold text-text-primary mb-3 uppercase">Datos de la Reserva</h3> {/* Added uppercase */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <InputField
                                     label="Importe de Reserva (€)"
@@ -183,7 +191,7 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                                     required={true}
                                 />
                                 <div>
-                                    <label className="block text-sm font-semibold text-text-primary mb-1">
+                                    <label className="block text-sm font-semibold text-text-primary mb-1 uppercase"> {/* Added uppercase */}
                                         Duración
                                         <span className="text-red-accent ml-1">*</span>
                                     </label>
@@ -203,7 +211,7 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                         </div>
 
                         <div>
-                            <h3 className="text-lg font-semibold text-text-primary mb-3 pt-4 border-t border-border-color">Datos del Comprador</h3>
+                            <h3 className="text-lg font-semibold text-text-primary mb-3 pt-4 border-t border-border-color uppercase">Datos del Comprador</h3> {/* Added uppercase */}
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <InputField label="Nombre" name="name" value={buyerData.name} onChange={handleChange} required={true} icon={faUser} />
@@ -214,10 +222,18 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                                     <InputField label="Teléfono" name="phone" value={buyerData.phone} onChange={handleChange} required={true} icon={faPhone} />
                                 </div>
                                 <InputField label="Correo Electrónico" name="email" value={buyerData.email} onChange={handleChange} type="email" required={true} icon={faEnvelope} />
-                                <InputField label="Dirección (Opcional)" name="address" value={buyerData.address} onChange={handleChange} icon={faMapMarkerAlt} required={false} />
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                {/* Añadidos los nuevos campos de dirección */}
+                                <InputField label="Dirección (Calle, Número, Piso)" name="streetAddress" value={buyerData.streetAddress} onChange={handleChange} icon={faMapMarkerAlt} required={false} />
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <InputField label="Código Postal" name="postalCode" value={buyerData.postalCode} onChange={handleChange} icon={faMapMarkerAlt} required={false} />
+                                    <InputField label="Ciudad" name="city" value={buyerData.city} onChange={handleChange} icon={faBuilding} required={false} />
+                                    <InputField label="Provincia" name="province" value={buyerData.province} onChange={handleChange} icon={faRoad} required={false} />
+                                </div>
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         </div>
-                        
+
                         <TextareaField
                             label="Anotaciones (Opcional)"
                             name="notes"
@@ -228,10 +244,10 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                         {error && <p className="text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
                     </form>
                 </div>
-                
+
                 <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-border-color">
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold">CANCELAR</button>
-                    <button onClick={handleConfirm} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold">CONFIRMAR RESERVA</button>
+                    <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold uppercase">CANCELAR</button> {/* Added uppercase */}
+                    <button onClick={handleConfirm} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold uppercase">CONFIRMAR RESERVA</button> {/* Added uppercase */}
                 </div>
             </div>
         </div>
