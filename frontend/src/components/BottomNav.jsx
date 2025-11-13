@@ -8,7 +8,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const BottomNav = () => {
     const { user } = useContext(AuthContext);
 
@@ -31,7 +30,9 @@ const BottomNav = () => {
             to={path} 
             end
             className={({ isActive }) =>
-                `flex flex-col items-center justify-center w-full pt-2 pb-1 text-xs font-medium transition-colors duration-200 relative ${
+                // --- INICIO DE LA MODIFICACIÓN ---
+                `flex flex-col items-center justify-center w-full pt-2 pb-[calc(0.25rem+env(safe-area-inset-bottom))] text-xs font-medium transition-colors duration-200 relative ${
+                // --- FIN DE LA MODIFICACIÓN ---
                 isActive
                     ? 'text-accent'
                     : 'text-text-secondary hover:text-accent'
@@ -58,6 +59,5 @@ const BottomNav = () => {
         </nav>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 export default BottomNav;

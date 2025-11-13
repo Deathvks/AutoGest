@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/SellCarModal.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faEuroSign, faCalendarDay, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt, faBuilding, faFileInvoice } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faEuroSign, faCalendarDay, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt, faBuilding, faFileInvoice, faRoad } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../context/AuthContext';
 
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, icon, required = false }) => (
@@ -22,7 +22,9 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent placeholder:text-text-secondary/70 ${icon ? 'pl-11' : ''}`}
+                // --- INICIO DE LA MODIFICACIÓN ---
+                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent placeholder:text-text-secondary/70 ${icon ? 'pl-11' : ''} min-w-0`}
+                // --- FIN DE LA MODIFICACIÓN ---
             />
         </div>
     </div>
@@ -41,7 +43,10 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
         cif: '',
         buyerPhone: '',
         buyerEmail: '',
-        buyerAddress: '',
+        streetAddress: '',
+        postalCode: '',
+        city: '',
+        province: '',
     });
     const [error, setError] = useState('');
 
@@ -71,7 +76,10 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                 cif: buyerDetails.cif || '',
                 buyerPhone: buyerDetails.phone || '',
                 buyerEmail: buyerDetails.email || '',
-                buyerAddress: buyerDetails.address || '',
+                streetAddress: buyerDetails.streetAddress || buyerDetails.address || '',
+                postalCode: buyerDetails.postalCode || '',
+                city: buyerDetails.city || '',
+                province: buyerDetails.province || '',
             });
         }
     }, [car]);
@@ -135,8 +143,8 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
         const price = parseFloat(saleData.salePrice);
     
         // General validation
-        if (!saleData.salePrice || !saleData.saleDate || !saleData.buyerAddress.trim()) {
-            setError("Los campos de venta (precio, fecha) y la dirección del comprador son obligatorios.");
+        if (!saleData.salePrice || !saleData.saleDate || !saleData.streetAddress.trim() || !saleData.postalCode.trim() || !saleData.city.trim() || !saleData.province.trim()) {
+            setError("Los campos de venta y la dirección completa (calle, código postal, ciudad, provincia) son obligatorios.");
             return;
         }
         if (isNaN(price) || price <= 0) {
@@ -153,7 +161,10 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
         const buyerDetails = {
             phone: saleData.buyerPhone,
             email: saleData.buyerEmail,
-            address: saleData.buyerAddress,
+            streetAddress: saleData.streetAddress,
+            postalCode: saleData.postalCode,
+            city: saleData.city,
+            province: saleData.province,
         };
 
         // Type-specific validation
@@ -226,10 +237,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                             <div className="relative flex w-full max-w-sm mx-auto p-1 rounded-full bg-component-bg-hover border border-border-color mb-6 overflow-hidden">
                                 <div
                                     className={`absolute top-1 bottom-1 w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ease-in-out ${
-                                        // --- INICIO DE LA MODIFICACIÓN ---
-                                        // Ajustada la lógica de translación para que sea 100% (translate-x-full)
                                         clientType === 'empresa' ? 'translate-x-full' : 'translate-x-0'
-                                        // --- FIN DE LA MODIFICACIÓN ---
                                     }`}
                                 />
                                 <button
@@ -239,9 +247,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                                         clientType === 'particular' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
                                     }`}
                                 >
-                                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                     AUTÓNOMO
-                                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                                 </button>
                                 <button
                                     type="button"
@@ -273,7 +279,12 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                                     <InputField label="Teléfono" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} required={false} icon={faPhone} />
                                     <InputField label="Correo Electrónico" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" required={false} icon={faEnvelope} />
                                 </div>
-                                <InputField label="Dirección" name="buyerAddress" value={saleData.buyerAddress} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
+                                <InputField label="Dirección (Calle, Número, Piso)" name="streetAddress" value={saleData.streetAddress} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <InputField label="Código Postal" name="postalCode" value={saleData.postalCode} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
+                                    <InputField label="Ciudad" name="city" value={saleData.city} onChange={handleChange} icon={faBuilding} required={true} />
+                                    <InputField label="Provincia" name="province" value={saleData.province} onChange={handleChange} icon={faRoad} required={true} />
+                                </div>
                             </div>
                         </div>
 

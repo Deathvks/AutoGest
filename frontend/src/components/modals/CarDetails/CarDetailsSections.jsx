@@ -5,13 +5,12 @@ import {
     faUser, faIdCard, faPhone, faEnvelope, faMapPin, faCalendarDay,
     faCalendarCheck, faTruckPickup, faCheckCircle, faTrashAlt, faEdit,
     // --- INICIO DE LA MODIFICACIÓN ---
-    faPaperclip, faUndo, faSpinner, faBuilding, faFileInvoice
+    faPaperclip, faUndo, faSpinner, faBuilding, faFileInvoice, faRoad, faMapMarkerAlt
     // --- FIN DE LA MODIFICACIÓN ---
 } from '@fortawesome/free-solid-svg-icons';
 import api from '../../../services/api';
 import { DetailItem } from './CarDetailsUtils';
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const BuyerSection = ({ car }) => {
     let buyer = null;
     if (car.buyerDetails) {
@@ -24,6 +23,16 @@ const BuyerSection = ({ car }) => {
     if (car.status !== 'Vendido' || !buyer) return null;
 
     const isCompany = buyer.cif && buyer.cif.trim() !== '';
+    
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Construir la dirección completa a partir de las partes
+    const fullAddress = [
+        buyer.streetAddress,
+        buyer.postalCode,
+        buyer.city,
+        buyer.province
+    ].filter(part => part && part.trim() !== '').join(', ');
+    // --- FIN DE LA MODIFICACIÓN ---
 
     return (
         <section>
@@ -42,12 +51,19 @@ const BuyerSection = ({ car }) => {
                 )}
                 <DetailItem icon={faPhone} label="Teléfono" value={buyer.phone} />
                 <DetailItem icon={faEnvelope} label="Email" value={buyer.email} />
-                <DetailItem icon={faMapPin} label="Dirección" value={buyer.address} />
+                
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {/* Mostrar la dirección completa en un solo campo, o el campo 'address' antiguo si existe */}
+                <DetailItem 
+                    icon={faMapMarkerAlt} 
+                    label="Dirección" 
+                    value={fullAddress || buyer.address} 
+                />
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
         </section>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 const GestoriaSection = ({ car, onGestoriaPickupClick, onGestoriaReturnClick }) => {
     if (car.status !== 'Vendido') return null;

@@ -42,6 +42,13 @@
     --color-circles-bg: linear-gradient(120deg, rgb(135, 60, 141), rgb(182, 85, 107));
   }
 
+  /* --- INICIO DE LA MODIFICACIÓN --- */
+  html, body {
+    height: 100%;
+    overflow: hidden; /* Evita el scroll en el body */
+    overscroll-behavior-y: none; /* Deshabilita el "bounce" de pull-to-refresh */
+  }
+
   body {
     background: linear-gradient(-70deg, rgb(53, 33, 90), rgb(92, 37, 165));
     background-attachment: fixed;
@@ -49,7 +56,15 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     caret-color: transparent;
+    /* La siguiente línea es la clave para deshabilitar el "bounce" */
+    overscroll-behavior-y: none;
   }
+  
+  /* Hacemos que la app ocupe toda la altura */
+  #root, #root > div {
+    height: 100%;
+  }
+  /* --- FIN DE LA MODIFICACIÓN --- */
   
   input, textarea, select {
     @apply focus:outline-none;

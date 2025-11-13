@@ -87,7 +87,9 @@ const Header = ({ appState }) => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" aria-hidden="true" />,
                 document.body
             )}
-            <header className="sticky top-0 z-50 bg-component-bg backdrop-blur-lg border-b border-border-color p-4 sm:px-6 lg:px-8 flex items-center justify-between lg:hidden">
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <header className="sticky top-0 z-50 bg-component-bg backdrop-blur-lg border-b border-border-color pb-4 px-4 pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 lg:px-8 flex items-center justify-between lg:hidden">
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
                 <div className="flex items-center">
                     <FontAwesomeIcon icon={icon} className="h-6 w-6 text-accent mr-3" />
                     <h1 className="text-xl font-bold text-text-primary">{title}</h1>
@@ -125,11 +127,9 @@ const Header = ({ appState }) => {
                                             alt="Avatar"
                                             className="w-9 h-9 rounded-full object-cover ring-2 ring-border-color"
                                         />
-                                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                         <span className={`absolute -bottom-1 -right-1 block text-white text-[7px] font-bold px-1 py-0.5 rounded-md border border-component-bg ${statusInfo.badgeClass}`}>
                                             {statusInfo.text.toUpperCase()}
                                         </span>
-                                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                                     </Menu.Button>
                                     <Transition
                                         as={Fragment}
