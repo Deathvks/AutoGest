@@ -4,7 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faUser, faIdCard, faPhone, faEnvelope, faMapPin, faCalendarDay,
     faCalendarCheck, faTruckPickup, faCheckCircle, faTrashAlt, faEdit,
-    faPaperclip, faUndo, faSpinner
+    // --- INICIO DE LA MODIFICACIÓN ---
+    faPaperclip, faUndo, faSpinner, faBuilding, faFileInvoice
+    // --- FIN DE LA MODIFICACIÓN ---
 } from '@fortawesome/free-solid-svg-icons';
 import api from '../../../services/api';
 import { DetailItem } from './CarDetailsUtils';
@@ -21,12 +23,23 @@ const BuyerSection = ({ car }) => {
     }
     if (car.status !== 'Vendido' || !buyer) return null;
 
+    const isCompany = buyer.cif && buyer.cif.trim() !== '';
+
     return (
         <section>
             <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">Datos del Comprador</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-5">
-                <DetailItem icon={faUser} label="Nombre" value={`${buyer.name || ''} ${buyer.lastName || ''}`} />
-                <DetailItem icon={faIdCard} label="DNI/NIE" value={buyer.dni} />
+                {isCompany ? (
+                    <>
+                        <DetailItem icon={faBuilding} label="Razón Social" value={buyer.businessName} />
+                        <DetailItem icon={faFileInvoice} label="CIF" value={buyer.cif} />
+                    </>
+                ) : (
+                    <>
+                        <DetailItem icon={faUser} label="Nombre" value={`${buyer.name || ''} ${buyer.lastName || ''}`} />
+                        <DetailItem icon={faIdCard} label="DNI/NIE" value={buyer.dni} />
+                    </>
+                )}
                 <DetailItem icon={faPhone} label="Teléfono" value={buyer.phone} />
                 <DetailItem icon={faEnvelope} label="Email" value={buyer.email} />
                 <DetailItem icon={faMapPin} label="Dirección" value={buyer.address} />
@@ -34,6 +47,7 @@ const BuyerSection = ({ car }) => {
         </section>
     );
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 const GestoriaSection = ({ car, onGestoriaPickupClick, onGestoriaReturnClick }) => {
     if (car.status !== 'Vendido') return null;
@@ -232,6 +246,5 @@ const CarDetailsSections = (props) => {
         </div>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 export default CarDetailsSections;
