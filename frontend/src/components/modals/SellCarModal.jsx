@@ -134,7 +134,6 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
         setError('');
         const price = parseFloat(saleData.salePrice);
     
-        // --- INICIO DE LA MODIFICACIÓN ---
         // General validation
         if (!saleData.salePrice || !saleData.saleDate || !saleData.buyerAddress.trim()) {
             setError("Los campos de venta (precio, fecha) y la dirección del comprador son obligatorios.");
@@ -156,7 +155,6 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             email: saleData.buyerEmail,
             address: saleData.buyerAddress,
         };
-        // --- FIN DE LA MODIFICACIÓN ---
 
         // Type-specific validation
         if (clientType === 'empresa') {
@@ -228,7 +226,10 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                             <div className="relative flex w-full max-w-sm mx-auto p-1 rounded-full bg-component-bg-hover border border-border-color mb-6 overflow-hidden">
                                 <div
                                     className={`absolute top-1 bottom-1 w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ease-in-out ${
-                                        clientType === 'empresa' ? 'translate-x-full left-0' : 'translate-x-0 left-0'
+                                        // --- INICIO DE LA MODIFICACIÓN ---
+                                        // Ajustada la lógica de translación para que sea 100% (translate-x-full)
+                                        clientType === 'empresa' ? 'translate-x-full' : 'translate-x-0'
+                                        // --- FIN DE LA MODIFICACIÓN ---
                                     }`}
                                 />
                                 <button
@@ -238,7 +239,9 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                                         clientType === 'particular' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
                                     }`}
                                 >
-                                    AUTÓNOMO / PARTICULAR
+                                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                    AUTÓNOMO
+                                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                                 </button>
                                 <button
                                     type="button"
@@ -267,12 +270,10 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                                     </>
                                 )}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                     <InputField label="Teléfono" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} required={false} icon={faPhone} />
                                     <InputField label="Correo Electrónico" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" required={false} icon={faEnvelope} />
                                 </div>
                                 <InputField label="Dirección" name="buyerAddress" value={saleData.buyerAddress} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
-                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         </div>
 
