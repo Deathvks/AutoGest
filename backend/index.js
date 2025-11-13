@@ -20,14 +20,15 @@ const subscriptionController = require('./controllers/subscriptionController');
 
 const app = express();
 
+// --- INICIO DE LA MODIFICACIÓN ---
 const corsOptions = {
-    origin: ['http://localhost:5173', 'http://auto-gest.es', 'https://auto-gest.es'],
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5174', 'http://auto-gest.es', 'https://auto-gest.es'],
     optionsSuccessStatus: 200
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 app.use(cors(corsOptions));
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // La ruta del webhook de Stripe DEBE registrarse ANTES de `express.json()`.
 // Usamos `express.raw` para que el cuerpo de la petición se mantenga como un Buffer,
 // que es lo que Stripe necesita para verificar la firma.
@@ -36,7 +37,6 @@ app.post(
     express.raw({ type: 'application/json' }),
     subscriptionController.handleWebhook
 );
-// --- FIN DE LA MODIFICACIÓN ---
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -91,7 +91,8 @@ db.sequelize.authenticate()
     });
 
 const gracefulShutdown = async () => {
-    console.log('SIGTERM recibido, iniciando apagado...');
+    // Se cambia el mensaje para reflejar que puede ser por SIGINT o SIGTERM
+    console.log('Señal de apagado recibida, iniciando apagado...');
 
     const shutdownTimer = setTimeout(() => {
         console.error('El apagado se ha demorado más de 8 segundos. Forzando salida.');
@@ -135,5 +136,9 @@ process.on('message', (msg) => {
     gracefulShutdown();
   }
 });
+
+// Escuchar SIGINT (Ctrl+C en la terminal) y SIGTERM (señal de 'kill' estándar)
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
 
 module.exports = app;

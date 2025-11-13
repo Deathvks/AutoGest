@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/SellCarModal.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faEuroSign, faCalendarDay, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faEuroSign, faCalendarDay, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt, faBuilding, faFileInvoice } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../context/AuthContext';
 
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, icon, required = false }) => (
@@ -30,12 +30,15 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
 
 const SellCarModal = ({ car, onClose, onConfirm }) => {
     const { user } = useContext(AuthContext);
+    const [clientType, setClientType] = useState('particular');
     const [saleData, setSaleData] = useState({
         salePrice: '',
         saleDate: new Date().toISOString().split('T')[0],
         buyerName: '',
         buyerLastName: '',
         buyerDni: '',
+        businessName: '',
+        cif: '',
         buyerPhone: '',
         buyerEmail: '',
         buyerAddress: '',
@@ -54,13 +57,18 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                     console.error("Error al parsear los datos del comprador:", e);
                 }
             }
-
+            
+            const isCompany = buyerDetails.cif && !buyerDetails.dni;
+            setClientType(isCompany ? 'empresa' : 'particular');
+            
             setSaleData({
                 salePrice: '', 
                 saleDate: new Date().toISOString().split('T')[0],
                 buyerName: buyerDetails.name || '',
                 buyerLastName: buyerDetails.lastName || '',
                 buyerDni: buyerDetails.dni || '',
+                businessName: buyerDetails.businessName || '',
+                cif: buyerDetails.cif || '',
                 buyerPhone: buyerDetails.phone || '',
                 buyerEmail: buyerDetails.email || '',
                 buyerAddress: buyerDetails.address || '',
@@ -92,6 +100,31 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
         return controlChars.charAt(number % 23) === value.charAt(value.length - 1);
     };
 
+    const isValidCif = (value) => {
+        value = value.toUpperCase();
+        if (!/^[A-Z][0-9]{8}$/.test(value)) return false;
+        const controlDigit = value.charAt(value.length - 1);
+        const numberPart = value.substring(1, 8);
+        let sum = 0;
+        for (let i = 0; i < numberPart.length; i++) {
+            let num = parseInt(numberPart[i], 10);
+            if (i % 2 === 0) { // Posiciones impares (índice par)
+                num *= 2;
+                sum += num < 10 ? num : Math.floor(num / 10) + (num % 10);
+            } else { // Posiciones pares (índice impar)
+                sum += num;
+            }
+        }
+        const lastDigitOfSum = sum % 10;
+        const calculatedControl = lastDigitOfSum === 0 ? 0 : 10 - lastDigitOfSum;
+        
+        if (/[A-Z]/.test(controlDigit)) { // Letra
+            return String.fromCharCode(64 + calculatedControl) === controlDigit;
+        } else { // Número
+            return calculatedControl === parseInt(controlDigit, 10);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setSaleData(prev => ({ ...prev, [name]: value }));
@@ -101,32 +134,60 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
         setError('');
         const price = parseFloat(saleData.salePrice);
     
-        if (!saleData.salePrice || !saleData.saleDate || !saleData.buyerName.trim() || !saleData.buyerLastName.trim() || !saleData.buyerDni.trim() || !saleData.buyerPhone.trim() || !saleData.buyerEmail.trim()) {
-            setError("Todos los campos marcados con * son obligatorios.");
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // General validation
+        if (!saleData.salePrice || !saleData.saleDate || !saleData.buyerAddress.trim()) {
+            setError("Los campos de venta (precio, fecha) y la dirección del comprador son obligatorios.");
             return;
         }
         if (isNaN(price) || price <= 0) {
             setError("Por favor, introduce un precio de venta válido.");
             return;
         }
-        if (!isValidDniNie(saleData.buyerDni)) {
-            setError("EL FORMATO DEL DNI/NIE DEL COMPRADOR NO ES VÁLIDO.");
-            return;
-        }
+        
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(saleData.buyerEmail)) {
+        if (saleData.buyerEmail.trim() && !emailRegex.test(saleData.buyerEmail)) {
             setError("Por favor, introduce un email válido.");
             return;
         }
-        
+
         const buyerDetails = {
-            name: saleData.buyerName,
-            lastName: saleData.buyerLastName,
-            dni: saleData.buyerDni,
             phone: saleData.buyerPhone,
             email: saleData.buyerEmail,
             address: saleData.buyerAddress,
         };
+        // --- FIN DE LA MODIFICACIÓN ---
+
+        // Type-specific validation
+        if (clientType === 'empresa') {
+            if (!saleData.businessName.trim() || !saleData.cif.trim()) {
+                setError("La Razón Social y el CIF son obligatorios para empresas.");
+                return;
+            }
+            if (!isValidCif(saleData.cif)) {
+                setError("EL FORMATO DEL CIF NO ES VÁLIDO.");
+                return;
+            }
+            buyerDetails.businessName = saleData.businessName;
+            buyerDetails.cif = saleData.cif;
+            buyerDetails.name = ''; 
+            buyerDetails.lastName = '';
+            buyerDetails.dni = '';
+        } else {
+            if (!saleData.buyerName.trim() || !saleData.buyerLastName.trim() || !saleData.buyerDni.trim()) {
+                setError("El Nombre, Apellidos y DNI/NIE son obligatorios para particulares.");
+                return;
+            }
+            if (!isValidDniNie(saleData.buyerDni)) {
+                setError("EL FORMATO DEL DNI/NIE DEL COMPRADOR NO ES VÁLIDO.");
+                return;
+            }
+            buyerDetails.name = saleData.buyerName;
+            buyerDetails.lastName = saleData.buyerLastName;
+            buyerDetails.dni = saleData.buyerDni;
+            buyerDetails.businessName = `${saleData.buyerName} ${saleData.buyerLastName}`;
+            buyerDetails.cif = '';
+        }
     
         onConfirm(car.id, saleData.salePrice, saleData.saleDate, buyerDetails);
     };
@@ -145,7 +206,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                     <div className="text-center mb-6 p-4 bg-background/50 rounded-xl border border-border-color">
                         <p className="text-text-secondary uppercase">Marcando como vendido el <span className="font-bold text-text-primary">{car.make} {car.model} ({car.licensePlate})</span>.</p>
                         <div className="mt-2 flex justify-center gap-4 text-sm">
-                            {(user.role === 'admin' || user.role === 'technician' || user.isOwner) && (
+                            {(user.role === 'admin' || user.isOwner || !user.companyId) && (
                                 <p className="text-text-secondary uppercase">Compra: <span className="font-semibold text-text-primary">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</span></p>
                             )}
                             <p className="text-text-secondary uppercase">Venta: <span className="font-semibold text-text-primary">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}</span></p>
@@ -163,17 +224,55 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                         
                         <div>
                             <h3 className="text-lg font-semibold text-text-primary mb-3 pt-4 border-t border-border-color">Datos del Comprador</h3>
+                            
+                            <div className="relative flex w-full max-w-sm mx-auto p-1 rounded-full bg-component-bg-hover border border-border-color mb-6 overflow-hidden">
+                                <div
+                                    className={`absolute top-1 bottom-1 w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ease-in-out ${
+                                        clientType === 'empresa' ? 'translate-x-full left-0' : 'translate-x-0 left-0'
+                                    }`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setClientType('particular')}
+                                    className={`relative z-10 flex-1 rounded-full py-2 text-sm font-semibold transition-colors duration-300 ${
+                                        clientType === 'particular' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                                    }`}
+                                >
+                                    AUTÓNOMO / PARTICULAR
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setClientType('empresa')}
+                                    className={`relative z-10 flex-1 rounded-full py-2 text-sm font-semibold transition-colors duration-300 ${
+                                        clientType === 'empresa' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                                    }`}
+                                >
+                                    EMPRESA
+                                </button>
+                            </div>
+
                             <div className="space-y-4">
+                                {clientType === 'particular' ? (
+                                    <>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <InputField label="Nombre" name="buyerName" value={saleData.buyerName} onChange={handleChange} required={true} icon={faUser} />
+                                            <InputField label="Apellidos" name="buyerLastName" value={saleData.buyerLastName} onChange={handleChange} required={true} />
+                                        </div>
+                                        <InputField label="DNI/NIE" name="buyerDni" value={saleData.buyerDni} onChange={handleChange} required={true} icon={faIdCard} />
+                                    </>
+                                ) : (
+                                    <>
+                                        <InputField label="Razón Social" name="businessName" value={saleData.businessName} onChange={handleChange} required={true} icon={faBuilding} />
+                                        <InputField label="CIF" name="cif" value={saleData.cif} onChange={handleChange} required={true} icon={faFileInvoice} />
+                                    </>
+                                )}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <InputField label="Nombre" name="buyerName" value={saleData.buyerName} onChange={handleChange} required={true} icon={faUser} />
-                                    <InputField label="Apellidos" name="buyerLastName" value={saleData.buyerLastName} onChange={handleChange} required={true} />
+                                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                    <InputField label="Teléfono" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} required={false} icon={faPhone} />
+                                    <InputField label="Correo Electrónico" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" required={false} icon={faEnvelope} />
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <InputField label="DNI/NIE" name="buyerDni" value={saleData.buyerDni} onChange={handleChange} required={true} icon={faIdCard} />
-                                    <InputField label="Teléfono" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} required={true} icon={faPhone} />
-                                </div>
-                                <InputField label="Correo Electrónico" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" required={true} icon={faEnvelope} />
-                                <InputField label="Dirección" name="buyerAddress" value={saleData.buyerAddress} onChange={handleChange} icon={faMapMarkerAlt} required={false} />
+                                <InputField label="Dirección" name="buyerAddress" value={saleData.buyerAddress} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         </div>
 

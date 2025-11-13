@@ -14,11 +14,9 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
         const savedMonth = sessionStorage.getItem('salesSummaryMonth');
         return savedMonth ? new Date(savedMonth) : new Date();
     });
-    // --- INICIO DE LA MODIFICACIÓN ---
     const [viewMode, setViewMode] = useState(() => {
         return sessionStorage.getItem('salesSummaryViewMode') || 'monthly';
     }); // 'monthly' or 'all'
-    // --- FIN DE LA MODIFICACIÓN ---
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
 
@@ -28,11 +26,9 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
         sessionStorage.setItem('salesSummaryMonth', currentMonth.toISOString());
     }, [currentMonth]);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     useEffect(() => {
         sessionStorage.setItem('salesSummaryViewMode', viewMode);
     }, [viewMode]);
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const changeMonth = (amount) => {
         setCurrentMonth(prevDate => {
@@ -138,10 +134,12 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
 
     return (
         <div>
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
-                <h1 className="text-3xl font-bold text-text-primary tracking-tight">Resumen de Ventas</h1>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-between p-2 bg-component-bg rounded-xl border border-border-color shadow-lg">
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <h1 className="text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">Resumen de Ventas</h1>
+                
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                    <div className="flex items-center justify-between p-2 bg-component-bg rounded-xl border border-border-color shadow-lg w-full sm:w-auto">
                         <button onClick={() => changeMonth(-1)} className="p-2 w-10 h-10 flex items-center justify-center hover:bg-component-bg-hover rounded-lg transition-colors" title="Mes anterior" disabled={viewMode === 'all'}>
                             <FontAwesomeIcon icon={faChevronLeft} />
                         </button>
@@ -157,23 +155,27 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                             <FontAwesomeIcon icon={faChevronRight} />
                         </button>
                     </div>
-                    <button
-                        onClick={() => setViewMode(prev => prev === 'monthly' ? 'all' : 'monthly')}
-                        className="bg-component-bg backdrop-blur-lg text-text-primary px-4 h-12 flex items-center justify-center rounded-xl hover:bg-component-bg-hover transition-colors border border-border-color shadow-2xl text-sm font-semibold"
-                        title={viewMode === 'monthly' ? "Ver todas las ventas" : "Ver ventas por mes"}
-                    >
-                        {viewMode === 'monthly' ? 'Ver Todas' : 'Ver por Mes'}
-                    </button>
-                    <button 
-                        onClick={generatePDF} 
-                        disabled={noSoldCars}
-                        className="bg-component-bg backdrop-blur-lg text-text-primary w-12 h-12 flex items-center justify-center rounded-xl hover:bg-component-bg-hover transition-colors border border-border-color disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl"
-                        title={noSoldCars ? "No hay ventas para exportar" : "Generar PDF"}
-                    >
-                        <FontAwesomeIcon icon={faDownload} className="w-5 h-5" />
-                    </button>
+                    
+                    <div className="flex items-stretch gap-3 w-full sm:w-auto">
+                        <button
+                            onClick={() => setViewMode(prev => prev === 'monthly' ? 'all' : 'monthly')}
+                            className="flex-grow sm:flex-grow-0 bg-component-bg backdrop-blur-lg text-text-primary px-4 h-12 flex items-center justify-center rounded-xl hover:bg-component-bg-hover transition-colors border border-border-color shadow-2xl text-sm font-semibold"
+                            title={viewMode === 'monthly' ? "Ver todas las ventas" : "Ver ventas por mes"}
+                        >
+                            {viewMode === 'monthly' ? 'Ver Todas' : 'Ver por Mes'}
+                        </button>
+                        <button 
+                            onClick={generatePDF} 
+                            disabled={noSoldCars}
+                            className="flex-shrink-0 w-12 h-12 bg-component-bg backdrop-blur-lg text-text-primary flex items-center justify-center rounded-xl hover:bg-component-bg-hover transition-colors border border-border-color disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl"
+                            title={noSoldCars ? "No hay ventas para exportar" : "Generar PDF"}
+                        >
+                            <FontAwesomeIcon icon={faDownload} className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
             </div>
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
 
             {paginatedCars.length > 0 ? (
                 <>
