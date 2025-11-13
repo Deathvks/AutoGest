@@ -22,9 +22,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                // --- INICIO DE LA MODIFICACIÓN ---
                 className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent placeholder:text-text-secondary/70 ${icon ? 'pl-11' : ''} min-w-0`}
-                // --- FIN DE LA MODIFICACIÓN ---
             />
         </div>
     </div>
@@ -211,7 +209,9 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6 no-scrollbar">
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <div className="flex-grow overflow-y-auto p-6 no-scrollbar overflow-x-hidden">
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <div className="text-center mb-6 p-4 bg-background/50 rounded-xl border border-border-color">
                         <p className="text-text-secondary uppercase">Marcando como vendido el <span className="font-bold text-text-primary">{car.make} {car.model} ({car.licensePlate})</span>.</p>
                         <div className="mt-2 flex justify-center gap-4 text-sm">
