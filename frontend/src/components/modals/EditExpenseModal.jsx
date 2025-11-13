@@ -15,7 +15,9 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon, placeho
             )}
             <input
                 type={type} name={name} value={value} onChange={onChange} placeholder={placeholder}
-                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent ${icon ? 'pl-11' : ''} min-w-0`}
+                // --- INICIO DE LA MODIFICACIÓN ---
+                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent ${icon ? 'pl-11' : ''} min-w-0 text-left`}
+                // --- FIN DE LA MODIFICACIÓN ---
             />
         </div>
     </div>
@@ -130,9 +132,7 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-4 overflow-y-auto no-scrollbar flex-grow overflow-x-hidden">
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <InputField label="Fecha" name="date" type="date" value={editedExpense.date} onChange={handleChange} icon={faCalendarDays} />
                     <Select
                         label="Categoría"
