@@ -186,6 +186,19 @@ const AuthProvider = ({ children }) => {
         }
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const deleteUserLogo = async () => {
+        try {
+            const updatedUser = await api.deleteLogo();
+            setUser(updatedUser);
+            return updatedUser;
+        } catch (error) {
+            console.error("Error al eliminar el logo:", error);
+            throw error;
+        }
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const deleteAccount = async () => {
         try {
             await api.deleteAccount();
@@ -222,9 +235,7 @@ const AuthProvider = ({ children }) => {
     const value = {
         token,
         user,
-        // --- INICIO DE LA MODIFICACIÓN ---
-        setUser, // Exponemos la función para actualizar el usuario directamente
-        // --- FIN DE LA MODIFICACIÓN ---
+        setUser,
         login,
         logout,
         register,
@@ -232,6 +243,9 @@ const AuthProvider = ({ children }) => {
         isRefreshing,
         updateUserProfile,
         deleteUserAvatar,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        deleteUserLogo, // Se añade la nueva función
+        // --- FIN DE LA MODIFICACIÓN ---
         deleteAccount,
         subscriptionStatus,
         refreshSubscriptionStatus,

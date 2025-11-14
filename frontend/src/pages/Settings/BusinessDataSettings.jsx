@@ -1,8 +1,11 @@
 // frontend/src/pages/Settings/BusinessDataSettings.jsx
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faTrash, faImage, faLock, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+// --- INICIO DE LA MODIFICACIÓN ---
+import { faSave, faTrash, faImage, faLock, faInfoCircle, faUser, faXmark, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import ConfirmationModal from '../../components/modals/ConfirmationModal'; // Importar el modal
+// --- FIN DE LA MODIFICACIÓN ---
 import api from '../../services/api';
 import { Link } from 'react-router-dom';
 
@@ -27,8 +30,6 @@ const setStoredFormData = (userId, data) => {
 };
 
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Estilos de InputField actualizados para coincidir con el estilo "liquid glass"
 const InputField = ({ id, label, value, onChange, disabled, required }) => (
     <div>
         <label htmlFor={id} className="block text-sm font-semibold text-text-primary uppercase">
@@ -45,10 +46,9 @@ const InputField = ({ id, label, value, onChange, disabled, required }) => (
         />
     </div>
 );
-// --- FIN DE LA MODIFICACIÓN ---
 
 const BusinessDataSettings = () => {
-    const { user, updateUserProfile, refreshUser } = useContext(AuthContext);
+    const { user, updateUserProfile, deleteUserAvatar, deleteUserLogo } = useContext(AuthContext);
     const [accountType, setAccountType] = useState('empresa');
     
     const [empresaFormData, setEmpresaFormData] = useState({
@@ -63,12 +63,23 @@ const BusinessDataSettings = () => {
         dni: '',
         address: '',
         phone: '',
+        avatar: null
     });
 
     const [logoPreview, setLogoPreview] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [imageToEnlarge, setImageToEnlarge] = useState(null);
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Estados para los modales de confirmación del avatar
+    const [pendingAvatar, setPendingAvatar] = useState(null); // { file, previewUrl }
+    const [isAvatarChangeModalOpen, setIsAvatarChangeModalOpen] = useState(false);
+    const [isAvatarDeleteModalOpen, setIsAvatarDeleteModalOpen] = useState(false);
+    const avatarInputRef = useRef(null); // Ref para el input de avatar
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const isValidDniNie = (value) => {
         const dniRegex = /^([0-9]{8}[A-Z])$/i;
@@ -135,12 +146,14 @@ const BusinessDataSettings = () => {
                 dni: user.dni || storedData?.particular?.dni || '',
                 address: user.personalAddress || storedData?.particular?.address || '',
                 phone: user.personalPhone || storedData?.particular?.phone || '',
+                avatar: null
             };
     
             setEmpresaFormData(newEmpresaData);
             setParticularFormData(newParticularData);
     
             setLogoPreview(user.logoUrl || null);
+            setAvatarPreview(user.avatarUrl || null);
         }
     }, [user]);
 
@@ -162,6 +175,7 @@ const BusinessDataSettings = () => {
         }
     };
 
+    // --- Lógica para el LOGO (Empresa) ---
     const handleLogoChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -176,14 +190,60 @@ const BusinessDataSettings = () => {
 
     const handleDeleteLogo = async () => {
         try {
-            await api.deleteLogo();
+            await deleteUserLogo();
             setLogoPreview(null);
             setSuccessMessage('Logo eliminado con éxito.');
-            refreshUser();
         } catch (err) {
             setError('Error al eliminar el logo.');
         }
     };
+
+    // --- Lógica para el AVATAR (Autónomo) con Confirmación ---
+    const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPendingAvatar({ file, previewUrl: reader.result });
+                setIsAvatarChangeModalOpen(true);
+            };
+            reader.readAsDataURL(file);
+        }
+        // Limpiar el valor del input para permitir seleccionar el mismo archivo de nuevo
+        if (avatarInputRef.current) {
+            avatarInputRef.current.value = null;
+        }
+    };
+
+    const onConfirmAvatarChange = () => {
+        if (pendingAvatar) {
+            setParticularFormData(prev => ({ ...prev, avatar: pendingAvatar.file }));
+            setAvatarPreview(pendingAvatar.previewUrl);
+        }
+        setIsAvatarChangeModalOpen(false);
+        setPendingAvatar(null);
+    };
+
+    const onCancelAvatarChange = () => {
+        setIsAvatarChangeModalOpen(false);
+        setPendingAvatar(null);
+    };
+
+    const handleDeleteAvatar = () => {
+        setIsAvatarDeleteModalOpen(true); // Solo abre el modal
+    };
+
+    const onConfirmDeleteAvatar = async () => {
+        setIsAvatarDeleteModalOpen(false);
+        try {
+            await deleteUserAvatar();
+            setAvatarPreview(null);
+            setSuccessMessage('Avatar eliminado con éxito.');
+        } catch (err) {
+            setError('Error al eliminar el avatar.');
+        }
+    };
+    // --- FIN DE Lógica para el AVATAR ---
 
     const validateForm = () => {
         const missingFields = [];
@@ -233,7 +293,7 @@ const BusinessDataSettings = () => {
         
         setStoredFormData(user.id, {
             empresa: { ...empresaFormData, logo: null },
-            particular: particularFormData
+            particular: { ...particularFormData, avatar: null }
         });
 
         const data = new FormData();
@@ -243,10 +303,10 @@ const BusinessDataSettings = () => {
             data.append('cif', empresaFormData.cif);
             data.append('companyAddress', empresaFormData.address);
             data.append('companyPhone', empresaFormData.phone);
+            data.append('dni', ''); 
             if (empresaFormData.logo) {
                 data.append('logo', empresaFormData.logo);
             }
-            data.append('dni', ''); 
         } else {
             data.append('name', particularFormData.name);
             data.append('dni', particularFormData.dni);
@@ -254,11 +314,16 @@ const BusinessDataSettings = () => {
             data.append('personalPhone', particularFormData.phone);
             data.append('businessName', particularFormData.name);
             data.append('cif', '');
+            if (particularFormData.avatar) {
+                data.append('avatar', particularFormData.avatar);
+            }
         }
     
         try {
             await updateUserProfile(data);
             setSuccessMessage('¡Datos de facturación guardados con éxito!');
+            setEmpresaFormData(prev => ({ ...prev, logo: null }));
+            setParticularFormData(prev => ({ ...prev, avatar: null }));
         } catch (err) {
             setError(err.message || 'Error al guardar los datos.');
         } finally {
@@ -266,8 +331,6 @@ const BusinessDataSettings = () => {
         }
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se elimina el "div" contenedor exterior
     return (
         <>
             {isLocked && (
@@ -291,7 +354,6 @@ const BusinessDataSettings = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-                {/* Se elimina 'border-b border-border-color pb-4' y se añade 'mb-6' */}
                 <h2 className="text-xl font-bold text-text-primary mb-6">Datos de Facturación</h2>
                 
                 <div className="relative grid grid-cols-2 w-full max-w-sm mx-auto items-center rounded-full bg-component-bg-hover p-1 border border-border-color">
@@ -341,28 +403,61 @@ const BusinessDataSettings = () => {
                     )}
                 </div>
                 
-                <div>
-                    {/* Se actualiza el estilo de la label para que coincida con el InputField */}
-                    <label className="block text-sm font-semibold text-text-primary uppercase mb-1">Logo de la Empresa</label>
-                    <div className="flex items-center gap-4">
-                        {logoPreview ? (
-                            <img src={logoPreview} alt="Logo Preview" className="h-16 w-auto rounded-md object-contain bg-white p-1 border border-border-color" />
-                        ) : (
-                            <div className="h-16 w-16 bg-component-bg-hover border-2 border-dashed border-border-color rounded-md flex items-center justify-center">
-                                <FontAwesomeIcon icon={faImage} className="text-text-secondary" />
-                            </div>
-                        )}
-                        <input type="file" id="logo-upload" className="hidden" onChange={handleLogoChange} accept="image/*" disabled={isLocked || accountType === 'particular'}/>
-                        <label htmlFor="logo-upload" className={`cursor-pointer rounded-md border border-border-color bg-component-bg px-3 py-2 text-sm font-semibold text-text-primary shadow-sm hover:bg-component-bg-hover ${isLocked || accountType === 'particular' ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                            Cambiar
+                {accountType === 'empresa' ? (
+                    <div>
+                        <label className="block text-sm font-semibold text-text-primary uppercase mb-1">
+                            Logo de la Empresa
                         </label>
-                        {logoPreview && (
-                            <button type="button" onClick={handleDeleteLogo} className={`text-sm font-semibold text-red-500 hover:text-red-700 ${isLocked || accountType === 'particular' ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked || accountType === 'particular'}>
-                                <FontAwesomeIcon icon={faTrash} /> Eliminar
-                            </button>
-                        )}
+                        <div className="flex items-center gap-4">
+                            {logoPreview ? (
+                                <img
+                                    src={logoPreview}
+                                    alt="Logo Preview"
+                                    className="h-16 w-auto rounded-md object-contain bg-white p-1 border border-border-color cursor-pointer"
+                                    onClick={() => setImageToEnlarge(logoPreview)}
+                                />
+                            ) : (
+                                <div className="h-16 w-16 bg-component-bg-hover border-2 border-dashed border-border-color rounded-md flex items-center justify-center">
+                                    <FontAwesomeIcon icon={faImage} className="text-text-secondary" />
+                                </div>
+                            )}
+                            <input type="file" id="logo-upload" className="hidden" onChange={handleLogoChange} accept="image/*" disabled={isLocked}/>
+                            <label htmlFor="logo-upload" className={`cursor-pointer rounded-md border border-border-color bg-component-bg px-3 py-2 text-sm font-semibold text-text-primary shadow-sm hover:bg-component-bg-hover ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                Cambiar
+                            </label>
+                            {logoPreview && (
+                                <button type="button" onClick={handleDeleteLogo} className={`text-sm font-semibold text-red-500 hover:text-red-700 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
+                                    <FontAwesomeIcon icon={faTrash} /> Eliminar
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div>
+                        <label className="block text-sm font-semibold text-text-primary uppercase mb-1">
+                            Avatar (Opcional)
+                        </label>
+                        <div className="flex items-center gap-4">
+                            <img
+                                src={avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=1A1629&color=F0EEF7&size=128`}
+                                alt="Avatar Preview"
+                                className="h-16 w-16 rounded-full object-cover border border-border-color cursor-pointer"
+                                onClick={() => setImageToEnlarge(avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=1A1629&color=F0EEF7&size=512`)}
+                            />
+                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                            <input type="file" id="avatar-upload" ref={avatarInputRef} className="hidden" onChange={handleAvatarChange} accept="image/*" disabled={isLocked}/>
+                            {/* --- FIN DE LA MODIFICACIÓN --- */}
+                            <label htmlFor="avatar-upload" className={`cursor-pointer rounded-md border border-border-color bg-component-bg px-3 py-2 text-sm font-semibold text-text-primary shadow-sm hover:bg-component-bg-hover ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                Cambiar
+                            </label>
+                            {avatarPreview && (
+                                <button type="button" onClick={handleDeleteAvatar} className={`text-sm font-semibold text-red-500 hover:text-red-700 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
+                                    <FontAwesomeIcon icon={faTrash} /> Eliminar
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {error && <p className="text-sm text-red-500">{error}</p>}
                 {successMessage && <p className="text-sm text-green-500">{successMessage}</p>}
@@ -374,8 +469,61 @@ const BusinessDataSettings = () => {
                     </button>
                 </div>
             </form>
+
+            {imageToEnlarge && (
+                <div
+                    className="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center z-[100] p-4 animate-fade-in-up"
+                    onClick={() => setImageToEnlarge(null)}
+                >
+                    <button
+                        className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-[101]"
+                        onClick={() => setImageToEnlarge(null)}
+                        aria-label="Cerrar"
+                    >
+                        <FontAwesomeIcon icon={faXmark} className="w-8 h-8" />
+                    </button>
+
+                    <div
+                        className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <img
+                            src={imageToEnlarge}
+                            alt="Imagen a tamaño completo"
+                            className="w-full h-full rounded-lg object-contain"
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+            {/* Modal de confirmación para CAMBIAR avatar */}
+            <ConfirmationModal
+                isOpen={isAvatarChangeModalOpen}
+                onClose={onCancelAvatarChange}
+                onConfirm={onConfirmAvatarChange}
+                title="Confirmar Cambio de Avatar"
+                message="Esta es tu foto de perfil principal. Si la cambias aquí, también se actualizará en tu perfil de usuario. ¿Deseas continuar?"
+                confirmText="Continuar"
+                cancelText="Cancelar"
+                icon={faExclamationTriangle}
+                iconColor="text-yellow-accent"
+            />
+
+            {/* Modal de confirmación para ELIMINAR avatar */}
+            <ConfirmationModal
+                isOpen={isAvatarDeleteModalOpen}
+                onClose={() => setIsAvatarDeleteModalOpen(false)}
+                onConfirm={onConfirmDeleteAvatar}
+                title="Confirmar Eliminación"
+                message="Esta es tu foto de perfil principal. Si la eliminas aquí, también se eliminará de tu perfil de usuario. ¿Deseas continuar?"
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+                icon={faExclamationTriangle}
+                iconColor="text-red-accent"
+            />
+            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
-        // --- FIN DE LA MODIFICACIÓN ---
     );
 };
 
