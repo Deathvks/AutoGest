@@ -44,7 +44,9 @@ const Settings = ({
                 {/* --- FIN DE LA MODIFICACIÓN --- */}
                 
                 {shouldShowBusinessData && (
-                    <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    <div className="relative bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                         {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         {/* Se eliminan props que ya no se usan en este componente */}
                         <BusinessDataSettings />

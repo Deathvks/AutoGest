@@ -27,9 +27,11 @@ const setStoredFormData = (userId, data) => {
 };
 
 
+// --- INICIO DE LA MODIFICACIÓN ---
+// Estilos de InputField actualizados para coincidir con el estilo "liquid glass"
 const InputField = ({ id, label, value, onChange, disabled, required }) => (
     <div>
-        <label htmlFor={id} className="block text-sm font-medium text-text-secondary">
+        <label htmlFor={id} className="block text-sm font-semibold text-text-primary uppercase">
             {label} {required && <span className="text-red-500">*</span>}
         </label>
         <input
@@ -39,10 +41,11 @@ const InputField = ({ id, label, value, onChange, disabled, required }) => (
             value={value}
             onChange={onChange}
             disabled={disabled}
-            className="mt-1 block w-full px-3 py-2 bg-component-bg border border-border-color rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-accent focus:border-accent sm:text-sm disabled:opacity-50"
+            className="mt-1 block w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg placeholder:text-text-secondary focus:ring-1 focus:ring-accent focus:border-accent sm:text-sm disabled:opacity-50"
         />
     </div>
 );
+// --- FIN DE LA MODIFICACIÓN ---
 
 const BusinessDataSettings = () => {
     const { user, updateUserProfile, refreshUser } = useContext(AuthContext);
@@ -144,9 +147,7 @@ const BusinessDataSettings = () => {
     const isSubscribed = user?.subscriptionStatus === 'active';
     const isTrialing = user?.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
     const isTeamMember = user?.companyId && !user.isOwner;
-    // --- INICIO DE LA MODIFICACIÓN ---
     const isLockedByTrial = !isSubscribed && isTrialing && user?.role !== 'admin' && user?.role !== 'technician';
-    // --- FIN DE LA MODIFICACIÓN ---
     const isLocked = isLockedByTrial || isTeamMember;
 
     const handleChange = (e) => {
@@ -265,8 +266,10 @@ const BusinessDataSettings = () => {
         }
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se elimina el "div" contenedor exterior
     return (
-        <div className="bg-component-bg p-6 rounded-lg shadow-md border border-border-color relative">
+        <>
             {isLocked && (
                 <div className="absolute inset-0 bg-component-bg/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg text-center p-4">
                     <FontAwesomeIcon icon={isTeamMember ? faInfoCircle : faLock} className="text-4xl text-text-secondary mb-4" />
@@ -288,7 +291,8 @@ const BusinessDataSettings = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-                <h2 className="text-xl font-bold text-text-primary border-b border-border-color pb-4">Datos de Facturación</h2>
+                {/* Se elimina 'border-b border-border-color pb-4' y se añade 'mb-6' */}
+                <h2 className="text-xl font-bold text-text-primary mb-6">Datos de Facturación</h2>
                 
                 <div className="relative grid grid-cols-2 w-full max-w-sm mx-auto items-center rounded-full bg-component-bg-hover p-1 border border-border-color">
                     <span
@@ -338,7 +342,8 @@ const BusinessDataSettings = () => {
                 </div>
                 
                 <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Logo de la Empresa</label>
+                    {/* Se actualiza el estilo de la label para que coincida con el InputField */}
+                    <label className="block text-sm font-semibold text-text-primary uppercase mb-1">Logo de la Empresa</label>
                     <div className="flex items-center gap-4">
                         {logoPreview ? (
                             <img src={logoPreview} alt="Logo Preview" className="h-16 w-auto rounded-md object-contain bg-white p-1 border border-border-color" />
@@ -369,7 +374,8 @@ const BusinessDataSettings = () => {
                     </button>
                 </div>
             </form>
-        </div>
+        </>
+        // --- FIN DE LA MODIFICACIÓN ---
     );
 };
 

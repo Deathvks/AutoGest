@@ -18,7 +18,12 @@
 @layer base {
   :root {
     /* Tema Oscuro Permanente - Estilo Liquid Glass */
-    --color-background: transparent;
+    /* --- INICIO DE LA MODIFICACIÓN --- */
+    /* El gradiente se define aquí pero se aplicará en el body */
+    --color-background: linear-gradient(-70deg, rgb(17, 24, 39), rgb(30, 41, 59));
+    /* El color sólido se define para el html */
+    --color-background-solid: rgb(17, 24, 39); 
+    /* --- FIN DE LA MODIFICACIÓN --- */
     --color-component-bg: rgba(255, 255, 255, 0.1);
     --color-component-bg-hover: rgba(255, 255, 255, 0.15);
     --color-border: rgba(255, 255, 255, 0.2);
@@ -70,8 +75,18 @@
     overscroll-behavior-y: none; /* Deshabilita el "bounce" de pull-to-refresh */
   }
 
+  /* --- INICIO DE LA MODIFICACIÓN --- */
+  html {
+    /* Este es el color que usará iOS para las áreas seguras */
+    background-color: var(--color-background-solid);
+  }
+  /* --- FIN DE LA MODIFICACIÓN --- */
+
   body {
-    background: linear-gradient(-70deg, rgb(53, 33, 90), rgb(92, 37, 165));
+    /* --- INICIO DE LA MODIFICACIÓN --- */
+    /* Aplicamos el gradiente al body */
+    background: var(--color-background);
+    /* --- FIN DE LA MODIFICACIÓN --- */
     background-attachment: fixed;
     color: var(--color-text-secondary);
     scrollbar-width: none;
