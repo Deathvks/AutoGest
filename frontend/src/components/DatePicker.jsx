@@ -5,15 +5,8 @@ import { format, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarDays } from '@fortawesome/free-solid-svg-icons';
-import 'react-day-picker/style.css'; 
-
 // --- INICIO DE LA MODIFICACIÓN ---
-// Formateador para capitalizar el mes en el título
-const formatCaption = (date, options) => {
-    const monthYear = format(date, 'MMMM yyyy', { locale: options?.locale });
-    // Capitaliza solo la primera letra del string completo (ej: "Diciembre 2025")
-    return monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
-};
+import 'react-day-picker/style.css'; // Importamos los estilos por defecto
 // --- FIN DE LA MODIFICACIÓN ---
 
 const DatePicker = ({ label, value, onChange, placeholder = 'DD/MM/AAAA', icon = faCalendarDays }) => {
@@ -60,6 +53,7 @@ const DatePicker = ({ label, value, onChange, placeholder = 'DD/MM/AAAA', icon =
                     className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up"
                     onClick={() => setIsModalOpen(false)} // Cierra al hacer clic en el fondo
                 >
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
                     {/* Añadimos un panel con fondo para que el calendario flotante se vea bien */}
                     <div
                         className="bg-popup-bg backdrop-blur-lg rounded-2xl shadow-2xl border border-border-color p-4"
@@ -71,15 +65,13 @@ const DatePicker = ({ label, value, onChange, placeholder = 'DD/MM/AAAA', icon =
                             onSelect={handleDayClick} 
                             locale={es}
                             defaultMonth={selectedDate || new Date()}
-                            // --- INICIO DE LA MODIFICACIÓN ---
-                            captionLayout="dropdown-buttons" // Permite seleccionar año y mes
+                            captionLayout="buttons"
                             fromYear={1990}
-                            toYear={new Date().getFullYear() + 5} // Rango de años (extendido a +5)
-                            formatters={{ formatCaption }} // Aplica el formateador personalizado
-                            // --- FIN DE LA MODIFICACIÓN ---
+                            toYear={new Date().getFullYear() + 1}
                             weekStartsOn={1} // Lunes como primer día
                         />
                     </div>
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
             )}
         </div>

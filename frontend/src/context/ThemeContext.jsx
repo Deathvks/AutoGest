@@ -12,8 +12,8 @@ const themes = [
         id: 'midnight-blue',
         isDark: true,
         // --- INICIO DE LA MODIFICACIÓN ---
-        backgroundSolid: 'rgb(17, 24, 39)',
-        backgroundGradient: 'linear-gradient(-70deg, rgb(17, 24, 39), rgb(30, 41, 59))',
+        // Volvemos a tener una única variable 'background' para el gradiente
+        background: 'linear-gradient(-70deg, rgb(17, 24, 39), rgb(30, 41, 59))',
         // --- FIN DE LA MODIFICACIÓN ---
         componentBg: 'rgba(255, 255, 255, 0.08)',
         componentBgHover: 'rgba(255, 255, 255, 0.12)',
@@ -48,14 +48,9 @@ export const ThemeProvider = ({ children }) => {
         const root = document.documentElement;
         Object.keys(theme).forEach(key => {
             // --- INICIO DE LA MODIFICACIÓN ---
-            // Renombramos y mapeamos las nuevas variables de fondo
-            let cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-            if (key === 'backgroundGradient') cssKey = 'background'; // Mantenemos --color-background para el gradiente
-            if (key === 'backgroundSolid') cssKey = 'background-solid'; // Añadimos --color-background-solid
-            
-            const cssVarName = `--color-${cssKey}`;
+            // Volvemos a la lógica simple de mapeo
+            const cssVarName = `--color-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
             // --- FIN DE LA MODIFICACIÓN ---
-
             if (key !== 'id' && key !== 'name' && key !== 'isDark') {
                 root.style.setProperty(cssVarName, theme[key]);
             }
@@ -68,11 +63,7 @@ export const ThemeProvider = ({ children }) => {
         }
 
         // --- INICIO DE LA MODIFICACIÓN ---
-        // Eliminamos la manipulación directa de document.body.style.
-        // Esto ahora se gestionará en index.css usando las variables CSS.
-        // document.body.style.backgroundColor = 'rgb(17, 24, 39)';
-        // document.body.style.background = theme.background;
-        // document.body.style.backgroundAttachment = 'fixed';
+        // Nos aseguramos de que no se manipule el style del body desde aquí
         // --- FIN DE LA MODIFICACIÓN ---
     }
 
