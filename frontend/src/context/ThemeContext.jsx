@@ -56,6 +56,10 @@ export const ThemeProvider = ({ children }) => {
             root.classList.remove('dark');
         }
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se añade un backgroundColor sólido además del gradiente
+        document.body.style.backgroundColor = 'rgb(17, 24, 39)';
+        // --- FIN DE LA MODIFICACIÓN ---
         document.body.style.background = theme.background;
         document.body.style.backgroundAttachment = 'fixed';
     }
