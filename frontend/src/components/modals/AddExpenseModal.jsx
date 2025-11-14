@@ -3,6 +3,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faEuroSign, faCalendarDays, faTag, faPaperclip, faSync, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select';
+// --- INICIO DE LA MODIFICACIÓN ---
+import DatePicker from '../DatePicker'; // Importamos el nuevo componente
+// --- FIN DE LA MODIFICACIÓN ---
 
 const InputField = ({ label, name, value, onChange, type = 'text', icon, placeholder }) => (
     <div>
@@ -169,13 +172,10 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
                     )}
 
                     {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    <InputField 
-                        label="Fecha" 
-                        name="date" 
-                        type="date" 
-                        value={newExpense.date} 
-                        onChange={handleChange} 
-                        icon={faCalendarDays} 
+                    <DatePicker 
+                        label="Fecha"
+                        value={newExpense.date}
+                        onChange={(date) => handleSelectChange('date', date)}
                     />
                     {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <Select
@@ -240,12 +240,11 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
                                     />
                                 )}
                                 {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                                <InputField
+                                <DatePicker
                                     label="Fecha de Finalización (opcional)"
-                                    name="recurrenceEndDate"
-                                    type="date"
                                     value={newExpense.recurrenceEndDate}
-                                    onChange={handleChange}
+                                    onChange={(date) => handleSelectChange('recurrenceEndDate', date)}
+                                    placeholder="Sin fecha límite"
                                 />
                                 {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>

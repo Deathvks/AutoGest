@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faEuroSign, faCalendarDay, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt, faBuilding, faFileInvoice, faRoad } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../context/AuthContext';
+import DatePicker from '../DatePicker'; // Importamos el nuevo componente
 
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, icon, required = false }) => (
     <div>
@@ -22,9 +23,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                // --- INICIO DE LA MODIFICACIÓN ---
                 className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent placeholder:text-text-secondary/70 ${icon ? 'pl-11' : ''} min-w-0 text-left`}
-                // --- FIN DE LA MODIFICACIÓN ---
             />
         </div>
     </div>
@@ -35,9 +34,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
     const [clientType, setClientType] = useState('particular');
     const [saleData, setSaleData] = useState({
         salePrice: '',
-        // --- INICIO DE LA MODIFICACIÓN ---
         saleDate: new Date().toISOString().split('T')[0],
-        // --- FIN DE LA MODIFICACIÓN ---
         buyerName: '',
         buyerLastName: '',
         buyerDni: '',
@@ -70,9 +67,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             
             setSaleData({
                 salePrice: '', 
-                // --- INICIO DE LA MODIFICACIÓN ---
                 saleDate: new Date().toISOString().split('T')[0],
-                // --- FIN DE LA MODIFICACIÓN ---
                 buyerName: buyerDetails.name || '',
                 buyerLastName: buyerDetails.lastName || '',
                 buyerDni: buyerDetails.dni || '',
@@ -140,6 +135,10 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setSaleData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleDateChange = (date) => {
+        setSaleData(prev => ({ ...prev, saleDate: date }));
     };
 
     const handleConfirm = () => {
@@ -231,17 +230,12 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                             <h3 className="text-lg font-semibold text-text-primary mb-3">Datos de la Venta</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <InputField label="Precio Venta Final (€)" name="salePrice" value={saleData.salePrice} onChange={handleChange} type="number" placeholder="Ej: 23500" required={true} icon={faEuroSign}/>
-                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                                <InputField 
-                                    label="Fecha de Venta" 
-                                    name="saleDate" 
-                                    value={saleData.saleDate} 
-                                    onChange={handleChange} 
-                                    type="date" 
-                                    required={true} 
-                                    icon={faCalendarDay} 
+                                <DatePicker 
+                                    label="Fecha de Venta"
+                                    value={saleData.saleDate}
+                                    onChange={handleDateChange}
+                                    required={true}
                                 />
-                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         </div>
                         
@@ -249,11 +243,14 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                             <h3 className="text-lg font-semibold text-text-primary mb-3 pt-4 border-t border-border-color">Datos del Comprador</h3>
                             
                             <div className="relative flex w-full max-w-sm mx-auto p-1 rounded-full bg-component-bg-hover border border-border-color mb-6 overflow-hidden">
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                 <div
-                                    className={`absolute top-1 bottom-1 w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ease-in-out ${
-                                        clientType === 'empresa' ? 'translate-x-full' : 'translate-x-0'
+                                    className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ease-in-out ${
+                                        clientType === 'empresa' ? 'translate-x-[96%]' : 'translate-x-0'
                                     }`}
+                                    style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                                 />
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                                 <button
                                     type="button"
                                     onClick={() => setClientType('particular')}
@@ -292,13 +289,13 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <InputField label="Teléfono" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} required={false} icon={faPhone} />
                                     <InputField label="Correo Electrónico" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" required={false} icon={faEnvelope} />
-                                </div>
+                                En</div>
                                 <InputField label="Dirección (Calle, Número, Piso)" name="streetAddress" value={saleData.streetAddress} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <InputField label="Código Postal" name="postalCode" value={saleData.postalCode} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
                                     <InputField label="Ciudad" name="city" value={saleData.city} onChange={handleChange} icon={faBuilding} required={true} />
                                     <InputField label="Provincia" name="province" value={saleData.province} onChange={handleChange} icon={faRoad} required={true} />
-                                </div>
+                                Code</div>
                             </div>
                         </div>
 

@@ -7,6 +7,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Select from '../../Select';
 import { AuthContext } from '../../../context/AuthContext';
+// --- INICIO DE LA MODIFICACIÓN ---
+import DatePicker from '../../DatePicker'; // Importamos el nuevo componente
+// --- FIN DE LA MODIFICACIÓN ---
 
 export const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, error, required = false, placeholder = '' }) => (
     <div>
@@ -108,6 +111,13 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
     const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
     // --- FIN DE LA MODIFICACIÓN ---
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Handler específico para el DatePicker
+    const handleDateChange = (date) => {
+        handleChange({ target: { name: 'registrationDate', value: date } });
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
+
     return(
         <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -120,14 +130,11 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                <InputField 
-                    label="Fecha de Matriculación" 
-                    name="registrationDate" 
-                    type="date" 
-                    value={newCar.registrationDate} 
-                    onChange={handleChange} 
-                    icon={faCalendarDay} 
-                    placeholder="DD/MM/AAAA"
+                <DatePicker 
+                    label="Fecha de Matriculación"
+                    value={newCar.registrationDate}
+                    onChange={handleDateChange}
+                    placeholder="DD/MM/AAAA" // Placeholder para cuando esté vacío
                 />
                 {/* --- FIN DE LA MODIFICACIÓN --- */}
                 {/* --- INICIO DE LA MODIFICACIÓN --- */}

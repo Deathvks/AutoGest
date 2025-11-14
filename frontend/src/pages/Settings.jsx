@@ -5,7 +5,9 @@ import { APP_NAME } from '../config/version';
 import { AuthContext } from '../context/AuthContext';
 
 // Importar los nuevos componentes modularizados
-import AppearanceSettings from './Settings/AppearanceSettings';
+// --- INICIO DE LA MODIFICACIÓN ---
+// import AppearanceSettings from './Settings/AppearanceSettings'; // Se elimina la importación
+// --- FIN DE LA MODIFICACIÓN ---
 import BusinessDataSettings from './Settings/BusinessDataSettings';
 import AccountDataSettings from './Settings/AccountDataSettings';
 import ContactSettings from './Settings/ContactSettings';
@@ -19,7 +21,9 @@ const Settings = ({
     onActivateTrialClick
 }) => {
     const { user } = useContext(AuthContext);
-    const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // const [isColorPickerOpen, setIsColorPickerOpen] = useState(false); // Se elimina el estado
+    // --- FIN DE LA MODIFICACIÓN ---
 
     // --- INICIO DE LA MODIFICACIÓN ---
     // Se añade la condición `user?.companyId` y se incluye el rol 'technician'
@@ -35,9 +39,9 @@ const Settings = ({
             <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-8">AJUSTES</h1>
 
             <div className="space-y-8">
-                <div className={`bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl relative ${isColorPickerOpen ? 'z-10' : ''}`}>
-                    <AppearanceSettings onPickerToggle={setIsColorPickerOpen} />
-                </div>
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                {/* Se elimina por completo el div que contenía AppearanceSettings */}
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 
                 {shouldShowBusinessData && (
                     <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">

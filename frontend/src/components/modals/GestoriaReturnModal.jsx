@@ -2,9 +2,14 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
+// --- INICIO DE LA MODIFICACIÓN ---
+import DatePicker from '../DatePicker'; // Importamos el nuevo componente
+// --- FIN DE LA MODIFICACIÓN ---
 
 const GestoriaReturnModal = ({ car, onClose, onConfirm }) => {
-    const [returnDate, setReturnDate] = useState(car.gestoriaReturnDate || new Date().toISOString().split('T')[0]);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const [returnDate, setReturnDate] = useState(car.gestoriaReturnDate ? new Date(car.gestoriaReturnDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+    // --- FIN DE LA MODIFICACIÓN ---
     const [error, setError] = useState('');
 
     const handleConfirm = () => {
@@ -33,19 +38,14 @@ const GestoriaReturnModal = ({ car, onClose, onConfirm }) => {
                         {car.gestoriaReturnDate ? 'Edita la fecha' : 'Registra la fecha'} en la que la gestoría te devolvió los documentos del <span className="font-bold text-text-primary">{car.make} {car.model}</span>.
                     </p>
                     <div>
-                        <label htmlFor="returnDate" className="block text-sm font-semibold text-text-primary mb-1 uppercase">Fecha de Entrega</label>
-                        <div className="relative">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                                <FontAwesomeIcon icon={faCalendarCheck} className="h-4 w-4 text-text-secondary" />
-                            </div>
-                            <input
-                                type="date"
-                                id="returnDate"
-                                value={returnDate}
-                                onChange={(e) => setReturnDate(e.target.value)}
-                                className="w-full pl-11 px-4 py-2 bg-background/50 border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent"
-                            />
-                        </div>
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        <DatePicker
+                            label="Fecha de Entrega"
+                            value={returnDate}
+                            onChange={setReturnDate}
+                            icon={faCalendarCheck}
+                        />
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                         {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
                     </div>
                 </div>

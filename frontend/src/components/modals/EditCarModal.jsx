@@ -5,6 +5,9 @@ import { faXmark, faCar, faStar, faIdCard, faFingerprint, faCalendarDay, faRoad,
 import { AuthContext } from '../../context/AuthContext';
 import EditCarFileUploads from './EditCar/EditCarFileUploads';
 import Select from '../Select';
+// --- INICIO DE LA MODIFICACIÓN ---
+import DatePicker from '../DatePicker'; // Importamos el nuevo componente
+// --- FIN DE LA MODIFICACIÓN ---
 
 const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, required = false, placeholder = '' }) => (
     <div>
@@ -75,7 +78,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             transmission: car.transmission || '',
             status: car.status || 'En venta',
             // --- INICIO DE LA MODIFICACIÓN ---
-            // Asegurarse de que la fecha esté en formato YYYY-MM-DD o vacía
+            // Asegurarse de que la fecha esté en formato YYYY-MM-DD o vacía si no existe
             registrationDate: car.registrationDate ? new Date(car.registrationDate).toISOString().split('T')[0] : '',
             // --- FIN DE LA MODIFICACIÓN ---
         };
@@ -117,6 +120,13 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     const handleSelectChange = useCallback((name, value) => {
         setEditedCar(prev => ({ ...prev, [name]: value }));
     }, []);
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Handler específico para el DatePicker
+    const handleDateChange = (date) => {
+        setEditedCar(prev => ({ ...prev, registrationDate: date || '' }));
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleLocationSelect = useCallback((value) => {
         setEditedCar(prev => ({ ...prev, location: value, newLocation: '' }));
@@ -281,13 +291,10 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                                <InputField 
-                                    label="Fecha de Matriculación" 
-                                    name="registrationDate" 
-                                    type="date" 
-                                    value={editedCar.registrationDate} 
-                                    onChange={handleChange} 
-                                    icon={faCalendarDay} 
+                                <DatePicker 
+                                    label="Fecha de Matriculación"
+                                    value={editedCar.registrationDate}
+                                    onChange={handleDateChange}
                                     placeholder="DD/MM/AAAA"
                                 />
                                 {/* --- FIN DE LA MODIFICACIÓN --- */}

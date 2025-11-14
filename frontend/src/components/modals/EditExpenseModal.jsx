@@ -3,6 +3,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faEuroSign, faCalendarDays, faTag, faPaperclip, faSync, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select';
+// --- INICIO DE LA MODIFICACIÓN ---
+import DatePicker from '../DatePicker'; // Importamos el nuevo componente
+// --- FIN DE LA MODIFICACIÓN ---
 
 const InputField = ({ label, name, value, onChange, type = 'text', icon, placeholder }) => (
     <div>
@@ -134,14 +137,10 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                 </div>
                 <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-4 overflow-y-auto no-scrollbar flex-grow overflow-x-hidden">
                     {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                    <InputField 
-                        label="Fecha" 
-                        name="date" 
-                        type="date" 
-                        value={editedExpense.date} 
-                        onChange={handleChange} 
-                        icon={faCalendarDays}
-                        placeholder="DD/MM/AAAA"
+                    <DatePicker 
+                        label="Fecha"
+                        value={editedExpense.date}
+                        onChange={(date) => handleSelectChange('date', date)}
                     />
                     {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <Select
@@ -205,16 +204,14 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                                         placeholder="Ej: 15"
                                     />
                                 )}
-                                <InputField
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                <DatePicker
                                     label="Fecha de Finalización (opcional)"
-                                    name="recurrenceEndDate"
-                                    type="date"
                                     value={editedExpense.recurrenceEndDate}
-                                    onChange={handleChange}
-                                    // --- INICIO DE LA MODIFICACIÓN ---
-                                    placeholder="DD/MM/AAAA"
-                                    // --- FIN DE LA MODIFICACIÓN ---
+                                    onChange={(date) => handleSelectChange('recurrenceEndDate', date)}
+                                    placeholder="Sin fecha límite"
                                 />
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         )}
                     </div>
