@@ -18,10 +18,12 @@
 @layer base {
   :root {
     /* Tema Oscuro Permanente - Estilo Liquid Glass */
-    /* El gradiente se define aquí pero se aplicará en el html */
+    /* --- INICIO DE LA MODIFICACIÓN --- */
+    /* El gradiente se define aquí pero se aplicará en el body */
     --color-background: linear-gradient(-70deg, rgb(17, 24, 39), rgb(30, 41, 59));
     /* El color sólido se define para el html */
     --color-background-solid: rgb(17, 24, 39); 
+    /* --- FIN DE LA MODIFICACIÓN --- */
     --color-component-bg: rgba(255, 255, 255, 0.1);
     --color-component-bg-hover: rgba(255, 255, 255, 0.15);
     --color-border: rgba(255, 255, 255, 0.2);
@@ -75,18 +77,17 @@
 
   /* --- INICIO DE LA MODIFICACIÓN --- */
   html {
-    /* Aplicamos el gradiente al html para que cubra toda la pantalla, incluidas las áreas seguras */
-    background: var(--color-background);
-    background-attachment: fixed;
+    /* Este es el color que usará iOS para las áreas seguras */
+    background-color: var(--color-background-solid);
   }
   /* --- FIN DE LA MODIFICACIÓN --- */
 
   body {
     /* --- INICIO DE LA MODIFICACIÓN --- */
-    /* El body ya no necesita el fondo, pero sí el color de texto por defecto */
-    /* background: var(--color-background); */
-    /* background-attachment: fixed; */
+    /* Aplicamos el gradiente al body */
+    background: var(--color-background);
     /* --- FIN DE LA MODIFICACIÓN --- */
+    background-attachment: fixed;
     color: var(--color-text-secondary);
     scrollbar-width: none;
     -ms-overflow-style: none;
