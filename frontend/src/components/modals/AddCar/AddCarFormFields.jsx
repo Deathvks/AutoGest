@@ -119,7 +119,17 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
                 <InputField label="Nº de Bastidor" name="vin" value={newCar.vin} onChange={handleChange} icon={faFingerprint} error={fieldErrors.vin} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField label="Fecha de Matriculación" name="registrationDate" type="date" value={newCar.registrationDate} onChange={handleChange} icon={faCalendarDay} />
+                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                <InputField 
+                    label="Fecha de Matriculación" 
+                    name="registrationDate" 
+                    type="date" 
+                    value={newCar.registrationDate} 
+                    onChange={handleChange} 
+                    icon={faCalendarDay} 
+                    placeholder="DD/MM/AAAA"
+                />
+                {/* --- FIN DE LA MODIFICACIÓN --- */}
                 {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 {canViewSensitiveData && (
                     <InputField label="Precio de Compra (€)" name="purchasePrice" type="text" inputMode="decimal" value={newCar.purchasePrice} onChange={handleChange} icon={faEuroSign} error={fieldErrors.purchasePrice} required={true} />

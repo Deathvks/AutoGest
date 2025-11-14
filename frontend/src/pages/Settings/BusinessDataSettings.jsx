@@ -119,8 +119,6 @@ const BusinessDataSettings = () => {
     
             const storedData = getStoredFormData(user.id);
     
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Se leen los datos de los campos específicos de la base de datos
             const newEmpresaData = {
                 businessName: user.businessName || storedData?.empresa?.businessName || '',
                 cif: user.cif || storedData?.empresa?.cif || '',
@@ -135,7 +133,6 @@ const BusinessDataSettings = () => {
                 address: user.personalAddress || storedData?.particular?.address || '',
                 phone: user.personalPhone || storedData?.particular?.phone || '',
             };
-            // --- FIN DE LA MODIFICACIÓN ---
     
             setEmpresaFormData(newEmpresaData);
             setParticularFormData(newParticularData);
@@ -147,7 +144,9 @@ const BusinessDataSettings = () => {
     const isSubscribed = user?.subscriptionStatus === 'active';
     const isTrialing = user?.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
     const isTeamMember = user?.companyId && !user.isOwner;
-    const isLockedByTrial = !isSubscribed && isTrialing && user?.role !== 'admin';
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const isLockedByTrial = !isSubscribed && isTrialing && user?.role !== 'admin' && user?.role !== 'technician';
+    // --- FIN DE LA MODIFICACIÓN ---
     const isLocked = isLockedByTrial || isTeamMember;
 
     const handleChange = (e) => {
@@ -238,8 +237,6 @@ const BusinessDataSettings = () => {
 
         const data = new FormData();
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se envían los datos con los nombres de los campos específicos
         if (accountType === 'empresa') {
             data.append('businessName', empresaFormData.businessName);
             data.append('cif', empresaFormData.cif);
@@ -257,7 +254,6 @@ const BusinessDataSettings = () => {
             data.append('businessName', particularFormData.name);
             data.append('cif', '');
         }
-        // --- FIN DE LA MODIFICACIÓN ---
     
         try {
             await updateUserProfile(data);

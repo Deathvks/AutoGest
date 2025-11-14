@@ -35,7 +35,9 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
     const [clientType, setClientType] = useState('particular');
     const [saleData, setSaleData] = useState({
         salePrice: '',
+        // --- INICIO DE LA MODIFICACIÓN ---
         saleDate: new Date().toISOString().split('T')[0],
+        // --- FIN DE LA MODIFICACIÓN ---
         buyerName: '',
         buyerLastName: '',
         buyerDni: '',
@@ -68,7 +70,9 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             
             setSaleData({
                 salePrice: '', 
+                // --- INICIO DE LA MODIFICACIÓN ---
                 saleDate: new Date().toISOString().split('T')[0],
+                // --- FIN DE LA MODIFICACIÓN ---
                 buyerName: buyerDetails.name || '',
                 buyerLastName: buyerDetails.lastName || '',
                 buyerDni: buyerDetails.dni || '',
@@ -227,7 +231,17 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                             <h3 className="text-lg font-semibold text-text-primary mb-3">Datos de la Venta</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <InputField label="Precio Venta Final (€)" name="salePrice" value={saleData.salePrice} onChange={handleChange} type="number" placeholder="Ej: 23500" required={true} icon={faEuroSign}/>
-                                <InputField label="Fecha de Venta" name="saleDate" value={saleData.saleDate} onChange={handleChange} type="date" required={true} icon={faCalendarDay} />
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                <InputField 
+                                    label="Fecha de Venta" 
+                                    name="saleDate" 
+                                    value={saleData.saleDate} 
+                                    onChange={handleChange} 
+                                    type="date" 
+                                    required={true} 
+                                    icon={faCalendarDay} 
+                                />
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         </div>
                         

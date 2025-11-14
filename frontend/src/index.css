@@ -42,7 +42,6 @@
     --color-circles-bg: linear-gradient(120deg, rgb(135, 60, 141), rgb(182, 85, 107));
   }
 
-  /* --- INICIO DE LA MODIFICACIÓN --- */
   html, body {
     height: 100%;
     overflow: hidden; /* Evita el scroll en el body */
@@ -64,7 +63,6 @@
   #root, #root > div {
     height: 100%;
   }
-  /* --- FIN DE LA MODIFICACIÓN --- */
   
   input, textarea, select {
     @apply focus:outline-none;
@@ -87,7 +85,6 @@
     display: none;
   }
 
-  /* --- INICIO DE LA MODIFICACIÓN ANTERIOR --- */
   /*
     Anula los estilos de autocompletado del navegador, que inyectan
     un fondo de color. Se usa un box-shadow interno para "pintar"
@@ -102,9 +99,7 @@
     transition: background-color 5000s ease-in-out 0s;
     caret-color: var(--color-text-primary);
   }
-  /* --- FIN DE LA MODIFICACIÓN ANTERIOR --- */
 
-  /* --- INICIO DE LA MODIFICACIÓN --- */
   /* Añade un efecto de "iluminación" a los textos principales al pasar el ratón.
     Se aplica una transición suave para el cambio de color y la sombra del texto.
   */
@@ -117,7 +112,6 @@
     color: var(--color-accent);
     text-shadow: 0 0 5px var(--color-accent-soft-glow);
   }
-  /* --- FIN DE LA MODIFICACIÓN --- */
 }
 
 .circles-container {
@@ -181,6 +175,28 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 input[type="date"] {
   color-scheme: dark;
 }
+
+/* --- INICIO DE LA MODIFICACIÓN --- */
+/* Forzar que el placeholder sea visible en input[type="date"] en Safari/iOS */
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  /* Si no hay valor (:placeholder-shown no funciona), muestra el color del placeholder */
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+/* Ocultar el placeholder y mostrar el color real cuando hay un valor */
+input[type="date"]:valid::-webkit-datetime-edit-text,
+input[type="date"]:valid::-webkit-datetime-edit-month-field,
+input[type="date"]:valid::-webkit-datetime-edit-day-field,
+input[type="date"]:valid::-webkit-datetime-edit-year-field {
+  color: var(--color-text-primary);
+  opacity: 1;
+}
+/* --- FIN DE LA MODIFICACIÓN --- */
+
 
 /* Animaciones y transiciones */
 @keyframes fade-in-up {

@@ -133,7 +133,17 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                     </button>
                 </div>
                 <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-4 overflow-y-auto no-scrollbar flex-grow overflow-x-hidden">
-                    <InputField label="Fecha" name="date" type="date" value={editedExpense.date} onChange={handleChange} icon={faCalendarDays} />
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <InputField 
+                        label="Fecha" 
+                        name="date" 
+                        type="date" 
+                        value={editedExpense.date} 
+                        onChange={handleChange} 
+                        icon={faCalendarDays}
+                        placeholder="DD/MM/AAAA"
+                    />
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <Select
                         label="Categoría"
                         value={editedExpense.category}
@@ -201,6 +211,9 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                                     type="date"
                                     value={editedExpense.recurrenceEndDate}
                                     onChange={handleChange}
+                                    // --- INICIO DE LA MODIFICACIÓN ---
+                                    placeholder="DD/MM/AAAA"
+                                    // --- FIN DE LA MODIFICACIÓN ---
                                 />
                             </div>
                         )}

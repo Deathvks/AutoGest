@@ -74,6 +74,10 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             fuel: car.fuel || '',
             transmission: car.transmission || '',
             status: car.status || 'En venta',
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Asegurarse de que la fecha esté en formato YYYY-MM-DD o vacía
+            registrationDate: car.registrationDate ? new Date(car.registrationDate).toISOString().split('T')[0] : '',
+            // --- FIN DE LA MODIFICACIÓN ---
         };
     });
 
@@ -276,7 +280,17 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                                 <InputField label="Precio de Venta (€)" name="price" type="text" inputMode="decimal" value={editedCar.price} onChange={handleChange} icon={faEuroSign} required />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <InputField label="Fecha de Matriculación" name="registrationDate" type="date" value={editedCar.registrationDate ? editedCar.registrationDate.split('T')[0] : ''} onChange={handleChange} icon={faCalendarDay} />
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                <InputField 
+                                    label="Fecha de Matriculación" 
+                                    name="registrationDate" 
+                                    type="date" 
+                                    value={editedCar.registrationDate} 
+                                    onChange={handleChange} 
+                                    icon={faCalendarDay} 
+                                    placeholder="DD/MM/AAAA"
+                                />
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                                 <InputField label="Kilómetros" name="km" type="text" inputMode="decimal" value={editedCar.km} onChange={handleChange} icon={faRoad} />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

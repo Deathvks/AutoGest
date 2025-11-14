@@ -12,7 +12,9 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
     const { user } = useContext(AuthContext);
 
     const [newCar, setNewCar] = useState({
-        make: '', model: '', licensePlate: '', vin: '', registrationDate: new Date().toISOString().split('T')[0],
+        // --- INICIO DE LA MODIFICACIÓN ---
+        make: '', model: '', licensePlate: '', vin: '', registrationDate: '', // Se elimina la fecha por defecto
+        // --- FIN DE LA MODIFICACIÓN ---
         purchasePrice: '', price: '', km: '', horsepower: '', location: '',
         newLocation: '', notes: '', tags: [], hasInsurance: false, fuel: '', transmission: '', keys: 1
     });

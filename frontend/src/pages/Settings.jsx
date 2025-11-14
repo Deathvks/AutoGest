@@ -15,8 +15,6 @@ const Settings = ({
     expenses, 
     incidents, 
     onDeleteAccountClick, 
-    onBusinessDataClick, 
-    businessDataMessage, 
     onLogoutClick,
     onActivateTrialClick
 }) => {
@@ -24,11 +22,12 @@ const Settings = ({
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
     // --- INICIO DE LA MODIFICACIÓN ---
-    // Se añade la condición `user?.companyId` para que los miembros de un equipo vean los datos de facturación.
+    // Se añade la condición `user?.companyId` y se incluye el rol 'technician'
     const isSubscribed = user?.subscriptionStatus === 'active';
     const isTrialing = user?.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
     const isAdmin = user?.role === 'admin';
-    const shouldShowBusinessData = isSubscribed || isTrialing || isAdmin || user?.companyId;
+    const isTechnician = user?.role === 'technician'; // Se añade el rol de técnico
+    const shouldShowBusinessData = isSubscribed || isTrialing || isAdmin || isTechnician || user?.companyId;
     // --- FIN DE LA MODIFICACIÓN ---
 
     return (
@@ -42,10 +41,10 @@ const Settings = ({
                 
                 {shouldShowBusinessData && (
                     <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-2xl">
-                        <BusinessDataSettings 
-                            onBusinessDataClick={onBusinessDataClick} 
-                            businessDataMessage={businessDataMessage} 
-                        />
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        {/* Se eliminan props que ya no se usan en este componente */}
+                        <BusinessDataSettings />
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </div>
                 )}
 

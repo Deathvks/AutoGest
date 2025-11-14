@@ -15,9 +15,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon, placeho
             )}
             <input
                 type={type} name={name} value={value} onChange={onChange} placeholder={placeholder}
-                // --- INICIO DE LA MODIFICACIÓN ---
                 className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent ${icon ? 'pl-11' : ''} min-w-0 text-left`}
-                // --- FIN DE LA MODIFICACIÓN ---
             />
         </div>
     </div>
@@ -40,9 +38,11 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
 };
 
 const AddExpenseModal = ({ car, onClose, onAdd }) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
     const today = new Date().toISOString().split('T')[0];
     const [newExpense, setNewExpense] = useState({
         date: today,
+    // --- FIN DE LA MODIFICACIÓN ---
         category: 'Mecánica',
         customCategory: '',
         amount: '',
@@ -168,7 +168,16 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
                         </div>
                     )}
 
-                    <InputField label="Fecha" name="date" type="date" value={newExpense.date} onChange={handleChange} icon={faCalendarDays} />
+                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    <InputField 
+                        label="Fecha" 
+                        name="date" 
+                        type="date" 
+                        value={newExpense.date} 
+                        onChange={handleChange} 
+                        icon={faCalendarDays} 
+                    />
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <Select
                         label="Categoría"
                         value={newExpense.category}
@@ -230,6 +239,7 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
                                         placeholder="Ej: 15"
                                     />
                                 )}
+                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                 <InputField
                                     label="Fecha de Finalización (opcional)"
                                     name="recurrenceEndDate"
@@ -237,6 +247,7 @@ const AddExpenseModal = ({ car, onClose, onAdd }) => {
                                     value={newExpense.recurrenceEndDate}
                                     onChange={handleChange}
                                 />
+                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         )}
                     </div>
