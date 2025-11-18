@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/BusinessDataModal.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faBuilding, faIdCard, faFileInvoice, faMapMarkerAlt, faPhone, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faBuilding, faIdCard, faFileInvoice, faPhone, faUser } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../context/AuthContext';
 
 const InputField = ({ label, name, value, onChange, icon, required = false }) => (
@@ -58,19 +58,19 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
         let sum = 0;
         for (let i = 0; i < numberPart.length; i++) {
             let num = parseInt(numberPart[i], 10);
-            if (i % 2 === 0) { // Posiciones impares (índice par)
+            if (i % 2 === 0) {
                 num *= 2;
                 sum += num < 10 ? num : Math.floor(num / 10) + (num % 10);
-            } else { // Posiciones pares (índice impar)
+            } else {
                 sum += num;
             }
         }
         const lastDigitOfSum = sum % 10;
         const calculatedControl = lastDigitOfSum === 0 ? 0 : 10 - lastDigitOfSum;
         
-        if (/[A-Z]/.test(controlDigit)) { // Letra
+        if (/[A-Z]/.test(controlDigit)) {
             return String.fromCharCode(64 + calculatedControl) === controlDigit;
-        } else { // Número
+        } else {
             return calculatedControl === parseInt(controlDigit, 10);
         }
     };
@@ -78,16 +78,21 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
     useEffect(() => {
         if (user && isOpen) {
             const hasBillingDetails = user.dni || user.cif;
+            const isCompany = !!user.cif;
 
             setFormData({
                 businessName: hasBillingDetails ? user.businessName || '' : '',
                 name: hasBillingDetails ? user.name || '' : '',
                 dni: user.dni || '',
                 cif: user.cif || '',
-                address: user.address || '',
-                phone: user.phone || '',
+                // Cargamos los datos específicos si existen, si no, strings vacíos
+                streetAddress: isCompany ? (user.companyStreetAddress || '') : (user.personalStreetAddress || ''),
+                postalCode: isCompany ? (user.companyPostalCode || '') : (user.personalPostalCode || ''),
+                city: isCompany ? (user.companyCity || '') : (user.personalCity || ''),
+                province: isCompany ? (user.companyProvince || '') : (user.personalProvince || ''),
+                phone: isCompany ? (user.companyPhone || '') : (user.personalPhone || user.phone || ''),
             });
-            setAccountType(user.cif ? 'empresa' : 'particular');
+            setAccountType(isCompany ? 'empresa' : 'particular');
             setError('');
         }
     }, [user, isOpen]);
@@ -97,8 +102,8 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
     };
     
     const validateForm = () => {
-        if (!formData.address?.trim() || !formData.phone?.trim()) {
-            setError('La dirección y el teléfono son obligatorios.');
+        if (!formData.streetAddress?.trim() || !formData.postalCode?.trim() || !formData.city?.trim() || !formData.province?.trim() || !formData.phone?.trim()) {
+            setError('Todos los campos de dirección y teléfono son obligatorios.');
             return false;
         }
         if (accountType === 'empresa') {
@@ -131,19 +136,35 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
 
         const dataToSave = new FormData();
         dataToSave.append('email', user.email);
-        dataToSave.append('address', formData.address);
-        dataToSave.append('phone', formData.phone);
+        
+        // Datos comunes (aunque el backend los leerá de los específicos, enviamos por si acaso)
+        // dataToSave.append('phone', formData.phone); 
 
         if (accountType === 'empresa') {
             dataToSave.append('businessName', formData.businessName);
             dataToSave.append('cif', formData.cif);
-            dataToSave.append('name', user.name);
+            dataToSave.append('name', user.name); // Mantener nombre original del usuario
             dataToSave.append('dni', '');
+            
+            // Campos específicos de empresa
+            dataToSave.append('companyStreetAddress', formData.streetAddress);
+            dataToSave.append('companyPostalCode', formData.postalCode);
+            dataToSave.append('companyCity', formData.city);
+            dataToSave.append('companyProvince', formData.province);
+            dataToSave.append('companyPhone', formData.phone);
+
         } else {
             dataToSave.append('name', formData.name);
             dataToSave.append('dni', formData.dni);
-            dataToSave.append('businessName', formData.name);
+            dataToSave.append('businessName', formData.name); // Para autónomos el nombre comercial es el nombre
             dataToSave.append('cif', '');
+
+            // Campos específicos personales
+            dataToSave.append('personalStreetAddress', formData.streetAddress);
+            dataToSave.append('personalPostalCode', formData.postalCode);
+            dataToSave.append('personalCity', formData.city);
+            dataToSave.append('personalProvince', formData.province);
+            dataToSave.append('personalPhone', formData.phone);
         }
 
         try {
@@ -168,9 +189,7 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                     </button>
                 </div>
 
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                 <div className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar">
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <div className="relative flex w-full items-center rounded-full bg-component-bg-hover p-1 border border-border-color overflow-hidden">
                         <span
                             className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
@@ -213,7 +232,14 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                         
                         <hr className="border-border-color !my-6" />
 
-                        <InputField label="Dirección Fiscal" name="address" value={formData.address} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
+                        <InputField label="Dirección (Calle, Nº, Piso)" name="streetAddress" value={formData.streetAddress} onChange={handleChange} required={true} />
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <InputField label="C. Postal" name="postalCode" value={formData.postalCode} onChange={handleChange} required={true} />
+                            <InputField label="Ciudad" name="city" value={formData.city} onChange={handleChange} required={true} />
+                            <InputField label="Provincia" name="province" value={formData.province} onChange={handleChange} required={true} />
+                        </div>
+
                         <InputField label="Teléfono" name="phone" value={formData.phone} onChange={handleChange} icon={faPhone} required={true} />
                     </div>
 
