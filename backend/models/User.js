@@ -49,6 +49,7 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    // Dirección genérica (legacy o uso general)
     address: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -57,8 +58,20 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
-    companyAddress: {
+    // --- DATOS FISCALES EMPRESA (Detallados) ---
+    companyStreetAddress: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    companyPostalCode: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    companyCity: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    companyProvince: {
         type: DataTypes.STRING,
         allowNull: true,
     },
@@ -66,7 +79,20 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    personalAddress: {
+    // --- DATOS FISCALES PARTICULAR (Detallados) ---
+    personalStreetAddress: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    personalPostalCode: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    personalCity: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    personalProvince: {
         type: DataTypes.STRING,
         allowNull: true,
     },
@@ -74,7 +100,6 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
-    // --- FIN DE LA MODIFICACIÓN ---
     subscriptionStatus: {
         type: DataTypes.ENUM('inactive', 'active', 'cancelled', 'past_due'),
         allowNull: false,

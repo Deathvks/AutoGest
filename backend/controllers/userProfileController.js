@@ -30,7 +30,12 @@ exports.getMe = async (req, res) => {
                 include: [{
                     model: User,
                     as: 'owner',
-                    attributes: ['businessName', 'cif', 'dni', 'address', 'phone', 'logoUrl', 'invoiceCounter', 'proformaCounter', 'companyAddress', 'companyPhone', 'personalAddress', 'personalPhone']
+                    attributes: [
+                        'businessName', 'cif', 'dni', 'address', 'phone', 'logoUrl', 
+                        'invoiceCounter', 'proformaCounter',
+                        'companyStreetAddress', 'companyPostalCode', 'companyCity', 'companyProvince', 'companyPhone',
+                        'personalStreetAddress', 'personalPostalCode', 'personalCity', 'personalProvince', 'personalPhone'
+                    ]
                 }]
             });
 
@@ -39,22 +44,29 @@ exports.getMe = async (req, res) => {
                 userJson.isOwner = isOwner;
 
                 if (!isOwner && company.owner) {
-                    // --- INICIO DE LA MODIFICACIÓN ---
                     // Si es miembro, hereda todos los datos de facturación del propietario.
                     userJson.businessName = company.owner.businessName;
                     userJson.cif = company.owner.cif;
                     userJson.dni = company.owner.dni;
-                    userJson.address = company.owner.address;
+                    userJson.address = company.owner.address; // Dirección genérica completa
                     userJson.phone = company.owner.phone;
                     userJson.logoUrl = company.owner.logoUrl;
                     userJson.invoiceCounter = company.owner.invoiceCounter;
                     userJson.proformaCounter = company.owner.proformaCounter;
-                    // También heredan los datos específicos para que el frontend los muestre correctamente
-                    userJson.companyAddress = company.owner.companyAddress;
+                    
+                    // Heredar datos desglosados de empresa
+                    userJson.companyStreetAddress = company.owner.companyStreetAddress;
+                    userJson.companyPostalCode = company.owner.companyPostalCode;
+                    userJson.companyCity = company.owner.companyCity;
+                    userJson.companyProvince = company.owner.companyProvince;
                     userJson.companyPhone = company.owner.companyPhone;
-                    userJson.personalAddress = company.owner.personalAddress;
+
+                    // Heredar datos desglosados personales
+                    userJson.personalStreetAddress = company.owner.personalStreetAddress;
+                    userJson.personalPostalCode = company.owner.personalPostalCode;
+                    userJson.personalCity = company.owner.personalCity;
+                    userJson.personalProvince = company.owner.personalProvince;
                     userJson.personalPhone = company.owner.personalPhone;
-                    // --- FIN DE LA MODIFICACIÓN ---
                 }
                  return res.status(200).json(userJson);
             }
@@ -102,7 +114,13 @@ exports.getPendingInvitation = async (req, res) => {
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {
     try {
-        const { name, email, businessName, dni, cif, companyAddress, personalAddress, companyPhone, personalPhone, proformaCounter, invoiceCounter } = req.body;
+        const { 
+            name, email, businessName, dni, cif, 
+            companyStreetAddress, companyPostalCode, companyCity, companyProvince, companyPhone,
+            personalStreetAddress, personalPostalCode, personalCity, personalProvince, personalPhone,
+            proformaCounter, invoiceCounter 
+        } = req.body;
+        
         const user = await User.findByPk(req.user.id);
         
         if (!user) {
@@ -129,29 +147,43 @@ exports.updateProfile = async (req, res) => {
         if (name && name.trim() !== '') user.name = name;
         if (email && email.trim() !== '') user.email = email;
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         // Lógica para guardar los datos de forma independiente
         const accountType = (cif && cif.trim() !== '') ? 'empresa' : 'particular';
 
         if (accountType === 'empresa') {
             user.businessName = businessName;
             user.cif = cif;
-            user.dni = null; // Limpia el DNI si se guardan datos de empresa
-            if (companyAddress !== undefined) user.companyAddress = companyAddress;
+            user.dni = null;
+            
+            if (companyStreetAddress !== undefined) user.companyStreetAddress = companyStreetAddress;
+            if (companyPostalCode !== undefined) user.companyPostalCode = companyPostalCode;
+            if (companyCity !== undefined) user.companyCity = companyCity;
+            if (companyProvince !== undefined) user.companyProvince = companyProvince;
             if (companyPhone !== undefined) user.companyPhone = companyPhone;
+
+            // Construir dirección genérica para compatibilidad
+            const addressParts = [companyStreetAddress, companyPostalCode, companyCity, companyProvince].filter(part => part && part.trim() !== '');
+            if (addressParts.length > 0) user.address = addressParts.join(', ');
+            
+            if (companyPhone !== undefined) user.phone = companyPhone;
+
         } else { // 'particular'
             user.dni = dni;
-            // Si se actualiza el nombre, también se actualiza el businessName para autónomos
             user.businessName = name || user.name;
-            user.cif = null; // Limpia el CIF
-            if (personalAddress !== undefined) user.personalAddress = personalAddress;
+            user.cif = null;
+
+            if (personalStreetAddress !== undefined) user.personalStreetAddress = personalStreetAddress;
+            if (personalPostalCode !== undefined) user.personalPostalCode = personalPostalCode;
+            if (personalCity !== undefined) user.personalCity = personalCity;
+            if (personalProvince !== undefined) user.personalProvince = personalProvince;
             if (personalPhone !== undefined) user.personalPhone = personalPhone;
+
+            // Construir dirección genérica para compatibilidad
+            const addressParts = [personalStreetAddress, personalPostalCode, personalCity, personalProvince].filter(part => part && part.trim() !== '');
+            if (addressParts.length > 0) user.address = addressParts.join(', ');
+            
+            if (personalPhone !== undefined) user.phone = personalPhone;
         }
-        
-        // También actualizamos los campos genéricos para compatibilidad o uso general
-        user.address = accountType === 'empresa' ? companyAddress : personalAddress;
-        user.phone = accountType === 'empresa' ? companyPhone : personalPhone;
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (proformaCounter) user.proformaCounter = proformaCounter;
         if (invoiceCounter) user.invoiceCounter = invoiceCounter;
@@ -300,28 +332,66 @@ exports.deleteAccount = async (req, res) => {
             await transaction.rollback();
             return res.status(400).json({ error: `Eres propietario del equipo "${ownedCompany.name}" y no puedes eliminar tu cuenta. Transfiere la propiedad o elimina el equipo primero.` });
         }
+
         const cars = await Car.findAll({ where: { userId }, transaction });
+        
+        // Borrado físico de ficheros de los coches
         for (const car of cars) {
+            // 1. Imagen principal
             if (car.imageUrl) {
                 const imageFilename = path.basename(car.imageUrl);
                 const imageFilePath = path.join(__dirname, '..', 'public', 'uploads', imageFilename);
                 if (fs.existsSync(imageFilePath)) fs.unlinkSync(imageFilePath);
             }
-            if (car.registrationDocumentUrl) {
-                const docFilename = path.basename(car.registrationDocumentUrl);
-                const docFilePath = path.join(__dirname, '..', 'public', 'documents', docFilePath);
-                if (fs.existsSync(docFilePath)) fs.unlinkSync(docFilePath);
+
+            // 2. Arrays de documentos (Ficha técnica, Permiso, Otros)
+            const docFields = ['technicalSheetUrl', 'registrationCertificateUrl', 'otherDocumentsUrls'];
+            docFields.forEach(field => {
+                let docs = car[field];
+                // Parseo seguro del JSON
+                if (typeof docs === 'string') {
+                    try { docs = JSON.parse(docs); } catch(e) { docs = []; }
+                }
+                
+                if (Array.isArray(docs)) {
+                    docs.forEach(doc => {
+                        if (doc && doc.path) {
+                            const filename = path.basename(doc.path);
+                            const filePath = path.join(__dirname, '..', 'public', 'documents', filename);
+                            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+                        }
+                    });
+                }
+            });
+
+            // 3. PDF de Reserva
+            if (car.reservationPdfUrl) {
+                 const resFilename = path.basename(car.reservationPdfUrl);
+                 const resFilePath = path.join(__dirname, '..', 'public', 'documents', resFilename);
+                 if (fs.existsSync(resFilePath)) fs.unlinkSync(resFilePath);
             }
         }
+
+        // Borrado de datos relacionados en BD
         await Incident.destroy({ where: { carId: cars.map(c => c.id) }, transaction });
         await Expense.destroy({ where: { carLicensePlate: cars.map(c => c.licensePlate) }, transaction });
         await Car.destroy({ where: { userId }, transaction });
         await Location.destroy({ where: { userId }, transaction });
+        
+        // Borrado de avatar de usuario
         if (req.user.avatarUrl) {
             const avatarFilename = path.basename(req.user.avatarUrl);
             const avatarFilePath = path.join(__dirname, '..', 'public', 'avatars', avatarFilename);
             if (fs.existsSync(avatarFilePath)) fs.unlinkSync(avatarFilePath);
         }
+        
+        // Borrado de logo de usuario
+        if (req.user.logoUrl) {
+            const logoFilename = path.basename(req.user.logoUrl);
+            const logoFilePath = path.join(__dirname, '..', 'public', 'avatars', logoFilename);
+            if (fs.existsSync(logoFilePath)) fs.unlinkSync(logoFilePath);
+        }
+
         await User.destroy({ where: { id: userId }, transaction });
         await transaction.commit();
         res.status(200).json({ message: 'Cuenta eliminada permanentemente con éxito.' });

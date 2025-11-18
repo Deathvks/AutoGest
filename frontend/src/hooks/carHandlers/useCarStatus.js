@@ -23,14 +23,15 @@ const generateReservationPDF = (car, depositAmount, buyerDetails) => {
     doc.setLineWidth(0.5);
     doc.line(14, currentY + 2, 196, currentY + 2);
 
-    // Construir la dirección completa
+    // Construir la dirección completa usando los nuevos campos si existen, o el genérico
     const addressParts = [
         buyerDetails.streetAddress,
         buyerDetails.postalCode,
         buyerDetails.city,
         buyerDetails.province
     ].filter(part => part && part.trim() !== '');
-    const fullAddress = addressParts.join(', ');
+    
+    const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : (buyerDetails.address || 'No especificada');
 
     autoTable(doc, {
         startY: currentY + 5,
@@ -40,7 +41,7 @@ const generateReservationPDF = (car, depositAmount, buyerDetails) => {
             ['DNI/NIE:', buyerDetails.dni],
             ['Teléfono:', buyerDetails.phone || 'No especificado'],
             ['Email:', buyerDetails.email || 'No especificado'],
-            ['Dirección:', fullAddress || 'No especificada'] // Dirección añadida
+            ['Dirección:', fullAddress] // Dirección completa
         ],
         styles: { fontSize: 11 },
         columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } }

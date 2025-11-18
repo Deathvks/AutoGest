@@ -2,10 +2,8 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// --- INICIO DE LA MODIFICACIÓN ---
 import { faSave, faTrash, faImage, faLock, faInfoCircle, faUser, faXmark, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import ConfirmationModal from '../../components/modals/ConfirmationModal'; // Importar el modal
-// --- FIN DE LA MODIFICACIÓN ---
+import ConfirmationModal from '../../components/modals/ConfirmationModal';
 import api from '../../services/api';
 import { Link } from 'react-router-dom';
 
@@ -54,14 +52,20 @@ const BusinessDataSettings = () => {
     const [empresaFormData, setEmpresaFormData] = useState({
         businessName: '',
         cif: '',
-        address: '',
+        streetAddress: '',
+        postalCode: '',
+        city: '',
+        province: '',
         phone: '',
         logo: null
     });
     const [particularFormData, setParticularFormData] = useState({
         name: '',
         dni: '',
-        address: '',
+        streetAddress: '',
+        postalCode: '',
+        city: '',
+        province: '',
         phone: '',
         avatar: null
     });
@@ -73,13 +77,11 @@ const BusinessDataSettings = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const [imageToEnlarge, setImageToEnlarge] = useState(null);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     // Estados para los modales de confirmación del avatar
-    const [pendingAvatar, setPendingAvatar] = useState(null); // { file, previewUrl }
+    const [pendingAvatar, setPendingAvatar] = useState(null);
     const [isAvatarChangeModalOpen, setIsAvatarChangeModalOpen] = useState(false);
     const [isAvatarDeleteModalOpen, setIsAvatarDeleteModalOpen] = useState(false);
-    const avatarInputRef = useRef(null); // Ref para el input de avatar
-    // --- FIN DE LA MODIFICACIÓN ---
+    const avatarInputRef = useRef(null);
 
     const isValidDniNie = (value) => {
         const dniRegex = /^([0-9]{8}[A-Z])$/i;
@@ -136,7 +138,10 @@ const BusinessDataSettings = () => {
             const newEmpresaData = {
                 businessName: user.businessName || storedData?.empresa?.businessName || '',
                 cif: user.cif || storedData?.empresa?.cif || '',
-                address: user.companyAddress || storedData?.empresa?.address || '',
+                streetAddress: user.companyStreetAddress || storedData?.empresa?.streetAddress || user.companyAddress || '',
+                postalCode: user.companyPostalCode || storedData?.empresa?.postalCode || '',
+                city: user.companyCity || storedData?.empresa?.city || '',
+                province: user.companyProvince || storedData?.empresa?.province || '',
                 phone: user.companyPhone || storedData?.empresa?.phone || '',
                 logo: null
             };
@@ -144,7 +149,10 @@ const BusinessDataSettings = () => {
             const newParticularData = {
                 name: user.name || storedData?.particular?.name || '',
                 dni: user.dni || storedData?.particular?.dni || '',
-                address: user.personalAddress || storedData?.particular?.address || '',
+                streetAddress: user.personalStreetAddress || storedData?.particular?.streetAddress || user.personalAddress || '',
+                postalCode: user.personalPostalCode || storedData?.particular?.postalCode || '',
+                city: user.personalCity || storedData?.particular?.city || '',
+                province: user.personalProvince || storedData?.particular?.province || '',
                 phone: user.personalPhone || storedData?.particular?.phone || '',
                 avatar: null
             };
@@ -209,7 +217,6 @@ const BusinessDataSettings = () => {
             };
             reader.readAsDataURL(file);
         }
-        // Limpiar el valor del input para permitir seleccionar el mismo archivo de nuevo
         if (avatarInputRef.current) {
             avatarInputRef.current.value = null;
         }
@@ -230,7 +237,7 @@ const BusinessDataSettings = () => {
     };
 
     const handleDeleteAvatar = () => {
-        setIsAvatarDeleteModalOpen(true); // Solo abre el modal
+        setIsAvatarDeleteModalOpen(true);
     };
 
     const onConfirmDeleteAvatar = async () => {
@@ -243,13 +250,15 @@ const BusinessDataSettings = () => {
             setError('Error al eliminar el avatar.');
         }
     };
-    // --- FIN DE Lógica para el AVATAR ---
 
     const validateForm = () => {
         const missingFields = [];
         const data = accountType === 'empresa' ? empresaFormData : particularFormData;
 
-        if (!data.address?.trim()) missingFields.push('Dirección Fiscal');
+        if (!data.streetAddress?.trim()) missingFields.push('Dirección');
+        if (!data.postalCode?.trim()) missingFields.push('Código Postal');
+        if (!data.city?.trim()) missingFields.push('Ciudad');
+        if (!data.province?.trim()) missingFields.push('Provincia');
         if (!data.phone?.trim()) missingFields.push('Teléfono');
 
         if (accountType === 'empresa') {
@@ -301,7 +310,10 @@ const BusinessDataSettings = () => {
         if (accountType === 'empresa') {
             data.append('businessName', empresaFormData.businessName);
             data.append('cif', empresaFormData.cif);
-            data.append('companyAddress', empresaFormData.address);
+            data.append('companyStreetAddress', empresaFormData.streetAddress);
+            data.append('companyPostalCode', empresaFormData.postalCode);
+            data.append('companyCity', empresaFormData.city);
+            data.append('companyProvince', empresaFormData.province);
             data.append('companyPhone', empresaFormData.phone);
             data.append('dni', ''); 
             if (empresaFormData.logo) {
@@ -310,7 +322,10 @@ const BusinessDataSettings = () => {
         } else {
             data.append('name', particularFormData.name);
             data.append('dni', particularFormData.dni);
-            data.append('personalAddress', particularFormData.address);
+            data.append('personalStreetAddress', particularFormData.streetAddress);
+            data.append('personalPostalCode', particularFormData.postalCode);
+            data.append('personalCity', particularFormData.city);
+            data.append('personalProvince', particularFormData.province);
             data.append('personalPhone', particularFormData.phone);
             data.append('businessName', particularFormData.name);
             data.append('cif', '');
@@ -385,22 +400,69 @@ const BusinessDataSettings = () => {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {accountType === 'empresa' ? (
-                        <>
-                            <InputField id="businessName" label="Nombre de la Empresa" value={empresaFormData.businessName} onChange={handleChange} disabled={isLocked} required />
-                            <InputField id="cif" label="CIF" value={empresaFormData.cif} onChange={handleChange} disabled={isLocked} required />
-                            <InputField id="address" label="Dirección Fiscal" value={empresaFormData.address} onChange={handleChange} disabled={isLocked} required />
-                            <InputField id="phone" label="Teléfono" value={empresaFormData.phone} onChange={handleChange} disabled={isLocked} required />
-                        </>
-                    ) : (
-                        <>
-                            <InputField id="name" label="Nombre y Apellidos" value={particularFormData.name} onChange={handleChange} disabled={isLocked} required />
-                            <InputField id="dni" label="DNI/NIE" value={particularFormData.dni} onChange={handleChange} disabled={isLocked} required />
-                            <InputField id="address" label="Dirección Fiscal" value={particularFormData.address} onChange={handleChange} disabled={isLocked} required />
-                            <InputField id="phone" label="Teléfono" value={particularFormData.phone} onChange={handleChange} disabled={isLocked} required />
-                        </>
-                    )}
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {accountType === 'empresa' ? (
+                            <>
+                                <InputField id="businessName" label="Nombre de la Empresa" value={empresaFormData.businessName} onChange={handleChange} disabled={isLocked} required />
+                                <InputField id="cif" label="CIF" value={empresaFormData.cif} onChange={handleChange} disabled={isLocked} required />
+                            </>
+                        ) : (
+                            <>
+                                <InputField id="name" label="Nombre y Apellidos" value={particularFormData.name} onChange={handleChange} disabled={isLocked} required />
+                                <InputField id="dni" label="DNI/NIE" value={particularFormData.dni} onChange={handleChange} disabled={isLocked} required />
+                            </>
+                        )}
+                    </div>
+
+                    <InputField 
+                        id="streetAddress" 
+                        label="Dirección (Calle, Número, Piso)" 
+                        value={accountType === 'empresa' ? empresaFormData.streetAddress : particularFormData.streetAddress} 
+                        onChange={handleChange} 
+                        disabled={isLocked} 
+                        required 
+                    />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <InputField 
+                            id="postalCode" 
+                            label="Código Postal" 
+                            value={accountType === 'empresa' ? empresaFormData.postalCode : particularFormData.postalCode} 
+                            onChange={handleChange} 
+                            disabled={isLocked} 
+                            required 
+                        />
+                        <InputField 
+                            id="city" 
+                            label="Ciudad" 
+                            value={accountType === 'empresa' ? empresaFormData.city : particularFormData.city} 
+                            onChange={handleChange} 
+                            disabled={isLocked} 
+                            required 
+                        />
+                        <InputField 
+                            id="province" 
+                            label="Provincia" 
+                            value={accountType === 'empresa' ? empresaFormData.province : particularFormData.province} 
+                            onChange={handleChange} 
+                            disabled={isLocked} 
+                            required 
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <InputField 
+                            id="phone" 
+                            label="Teléfono" 
+                            value={accountType === 'empresa' ? empresaFormData.phone : particularFormData.phone} 
+                            onChange={handleChange} 
+                            disabled={isLocked} 
+                            required 
+                        />
+                        {/* Espacio vacío para alinear si es necesario o futuro campo */}
+                        <div></div>
+                    </div>
                 </div>
                 
                 {accountType === 'empresa' ? (
@@ -444,9 +506,7 @@ const BusinessDataSettings = () => {
                                 className="h-16 w-16 rounded-full object-cover border border-border-color cursor-pointer"
                                 onClick={() => setImageToEnlarge(avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=1A1629&color=F0EEF7&size=512`)}
                             />
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                             <input type="file" id="avatar-upload" ref={avatarInputRef} className="hidden" onChange={handleAvatarChange} accept="image/*" disabled={isLocked}/>
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
                             <label htmlFor="avatar-upload" className={`cursor-pointer rounded-md border border-border-color bg-component-bg px-3 py-2 text-sm font-semibold text-text-primary shadow-sm hover:bg-component-bg-hover ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                 Cambiar
                             </label>
@@ -496,7 +556,6 @@ const BusinessDataSettings = () => {
                 </div>
             )}
 
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
             {/* Modal de confirmación para CAMBIAR avatar */}
             <ConfirmationModal
                 isOpen={isAvatarChangeModalOpen}
@@ -522,7 +581,6 @@ const BusinessDataSettings = () => {
                 icon={faExclamationTriangle}
                 iconColor="text-red-accent"
             />
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
         </>
     );
 };

@@ -74,12 +74,30 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
             doc.text("AutoGest", 14, 35);
         }
         
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Construcción de la dirección del usuario (vendedor) a partir de los campos detallados
+        const userAddressParts = [
+            user.companyStreetAddress || user.personalStreetAddress,
+            user.companyPostalCode || user.personalPostalCode,
+            user.companyCity || user.personalCity,
+            user.companyProvince || user.personalProvince
+        ].filter(part => part && part.trim() !== '');
+        
+        const fullUserAddress = userAddressParts.length > 0 ? userAddressParts.join(', ') : (user.address || '');
+        // --- FIN DE LA MODIFICACIÓN ---
+
         doc.setFontSize(9);
         doc.setTextColor(headerFooterText);
         doc.text(user.businessName || user.name, 200, 25, { align: 'right' });
         doc.text(user.cif || user.dni || '', 200, 30, { align: 'right' });
-        doc.text(user.phone || '', 200, 35, { align: 'right' });
-        doc.text(user.address || '', 200, 40, { align: 'right' });
+        
+        // Usamos el teléfono específico si existe, o el genérico
+        const userPhone = user.companyPhone || user.personalPhone || user.phone || '';
+        doc.text(userPhone, 200, 35, { align: 'right' });
+        
+        // Usamos la dirección construida
+        doc.text(fullUserAddress, 200, 40, { align: 'right' });
+        
         doc.text(user.email || '', 200, 45, { align: 'right' });
 
         let currentY = 95;
@@ -121,13 +139,11 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
 
         if (buyerId) { doc.text(buyerId, 14, clientDetailsY); clientDetailsY += 5; }
         
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (fullAddress) {
             const splitAddress = doc.splitTextToSize(fullAddress, 90);
             doc.text(splitAddress, 14, clientDetailsY);
             clientDetailsY += (splitAddress.length * 5);
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (clientData.phone) { doc.text(clientData.phone, 14, clientDetailsY); clientDetailsY += 5; }
         if (clientData.email) { doc.text(clientData.email, 14, clientDetailsY); }
