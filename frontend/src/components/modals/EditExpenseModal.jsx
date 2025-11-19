@@ -140,7 +140,7 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                         </div>
                         <h2 className="text-lg font-bold uppercase tracking-wide">Editar Gasto</h2>
                     </div>
-                    <button onClick={onClose} className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20">
+                    <button onClick={onClose} className="text-white/60 hover:text-white transition-colors focus:outline-none">
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>

@@ -20,7 +20,7 @@ const CarDetailsHeader = ({ car, onClose }) => (
         </div>
         <button 
             onClick={onClose} 
-            className="text-white hover:text-red-100 transition-colors p-2 rounded-full hover:bg-red-800 focus:outline-none"
+            className="text-white/60 hover:text-white transition-colors p-1 focus:outline-none" // Modificado: sin fondo ni padding extra
             aria-label="Cerrar detalle"
         >
             <FontAwesomeIcon icon={faTimes} className="w-6 h-6" />

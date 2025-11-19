@@ -174,7 +174,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                         </div>
                         <button 
                             onClick={onClose} 
-                            className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20"
+                            className="text-white/60 hover:text-white transition-colors p-1 focus:outline-none" // Cambiado aquí: quitado hover:bg-white/20 y redondeo innecesario
                         >
                             <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                         </button>

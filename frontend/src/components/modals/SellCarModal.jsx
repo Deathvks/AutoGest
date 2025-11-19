@@ -212,7 +212,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                     <h2 className="text-lg font-bold uppercase tracking-wide">Vender Vehículo</h2>
                     <button 
                         onClick={onClose} 
-                        className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20"
+                        className="text-white/60 hover:text-white transition-colors focus:outline-none"
                     >
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>

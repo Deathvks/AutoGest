@@ -249,7 +249,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                     </div>
                     <button 
                         onClick={onClose} 
-                        className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20"
+                        className="text-white/60 hover:text-white transition-colors p-1 focus:outline-none" // Modificado: sin fondo ni padding extra
                     >
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
