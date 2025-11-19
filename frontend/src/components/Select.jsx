@@ -31,36 +31,35 @@ const Select = ({ label, value, onChange, options, icon }) => {
 
     return (
         <div className="relative" ref={selectRef}>
-            {label && <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">{label}</label>}
+            {label && <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">{label}</label>}
             
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative w-full cursor-pointer rounded-lg bg-component-bg-hover py-2 px-4 pr-10 text-left border-none h-[42px] flex items-center"
+                className={`relative w-full cursor-pointer rounded-lg bg-white py-2.5 px-4 pr-10 text-left border transition-colors flex items-center ${isOpen ? 'border-accent ring-1 ring-accent' : 'border-gray-300 hover:border-gray-400'}`}
             >
                 {icon && (
-                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" aria-hidden="true" />
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-gray-400 mr-3" aria-hidden="true" />
                 )}
-                <span className={`block truncate text-text-primary sm:text-sm ${icon ? 'ml-3' : ''}`}>
+                <span className={`block truncate text-sm ${!selectedOption ? 'text-gray-400' : 'text-gray-900 font-medium'}`}>
                     {selectedOption?.name || 'Selecciona una opción'}
                 </span>
                 <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                    <FontAwesomeIcon icon={faChevronDown} className={`h-4 w-4 text-text-secondary transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+                    <FontAwesomeIcon icon={faChevronDown} className={`h-3 w-3 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-accent' : ''}`} aria-hidden="true" />
                 </span>
             </button>
 
             {isOpen && (
                 <ul 
-                    className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-popup-bg backdrop-blur-lg py-1 text-base shadow-lg focus:outline-none sm:text-sm border border-border-color"
+                    className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-base shadow-lg border border-gray-200 focus:outline-none sm:text-sm"
                 >
                     {options.map((option) => (
                         <li
                             key={option.id}
                             onClick={() => handleSelect(option.id)}
-                            className="text-text-primary relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-component-bg-hover"
-                            style={{ '--hover-color': activeTheme.accent }}
+                            className={`relative cursor-pointer select-none py-2.5 pl-4 pr-9 hover:bg-gray-50 transition-colors ${selectedOption?.id === option.id ? 'bg-gray-50 text-accent font-bold' : 'text-gray-700'}`}
                         >
-                            <span className={`block truncate ${selectedOption?.id === option.id ? 'font-semibold' : 'font-normal'}`}>
+                            <span className="block truncate">
                                 {option.name}
                             </span>
                         </li>

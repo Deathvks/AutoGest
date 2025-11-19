@@ -117,59 +117,107 @@ const ForceVerificationModal = ({ isOpen, currentEmail, onClose, onVerified }) =
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color">
-                <div className="flex justify-between items-center p-6 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary flex items-center gap-3"><FontAwesomeIcon icon={faEnvelope} />Verificación Requerida</h2>
-                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary"><FontAwesomeIcon icon={faXmark} className="w-6 h-6" /></button>
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md border border-gray-300 overflow-hidden">
+                {/* Header */}
+                <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-white">
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3 uppercase tracking-tight">
+                        <FontAwesomeIcon icon={faEnvelope} className="text-accent"/>
+                        Verificación
+                    </h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
+                    </button>
                 </div>
                 
-                <div className="p-6">
+                <div className="p-6 bg-white">
                     {step === 'send' ? (
-                        <div className="space-y-4">
-                            <p className="text-text-secondary text-center">Para continuar, necesitamos verificar tu cuenta. Se enviará un código a tu correo.</p>
+                        <div className="space-y-6">
+                            <p className="text-gray-600 text-center text-sm font-medium">
+                                Para continuar, necesitamos verificar tu cuenta. Se enviará un código a tu correo.
+                            </p>
                             <div className="text-left">
-                                <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">Correo de verificación</label>
+                                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Correo de verificación</label>
                                 {isEditingEmail ? (
-                                    <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="NUEVO CORREO ELECTRÓNICO" className="w-full mt-1 px-3 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent text-text-primary placeholder:text-text-secondary" />
+                                    <input 
+                                        type="email" 
+                                        value={newEmail} 
+                                        onChange={(e) => setNewEmail(e.target.value)} 
+                                        placeholder="NUEVO CORREO ELECTRÓNICO" 
+                                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors shadow-sm" 
+                                    />
                                 ) : (
-                                    <p className="font-semibold text-text-primary w-full mt-1 px-3 py-2 bg-component-bg-hover border border-border-color rounded-lg break-words">{currentEmail}</p>
+                                    <div className="font-bold text-gray-900 w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg break-all">
+                                        {currentEmail}
+                                    </div>
                                 )}
-                                <button onClick={() => setIsEditingEmail(!isEditingEmail)} className="text-xs text-accent hover:opacity-80 transition-opacity mt-2">
-                                    {isEditingEmail ? 'Usar mi correo actual' : '¿Prefieres usar otro correo?'}
+                                <button 
+                                    onClick={() => setIsEditingEmail(!isEditingEmail)} 
+                                    className="text-xs font-bold text-accent hover:text-accent-hover transition-colors mt-3 uppercase"
+                                >
+                                    {isEditingEmail ? 'Usar mi correo actual' : '¿Cambiar correo?'}
                                 </button>
-                                {isEditingEmail && <p className="text-xs text-yellow-accent mt-2">Tu email se actualizará a esta nueva dirección una vez verificado.</p>}
+                                {isEditingEmail && <p className="text-xs text-yellow-600 mt-2 bg-yellow-50 p-2 rounded border border-yellow-200 font-medium">Tu email se actualizará a esta nueva dirección una vez verificado.</p>}
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            <p className="text-text-secondary text-center">Introduce el código de 6 dígitos enviado a <span className="font-semibold text-text-primary break-words">{emailToSend}</span>.</p>
+                        <div className="space-y-6">
+                            <p className="text-gray-600 text-center text-sm font-medium">
+                                Introduce el código de 6 dígitos enviado a <br/>
+                                <span className="font-bold text-gray-900 break-all">{emailToSend}</span>.
+                            </p>
                             <form onSubmit={handleVerificationSubmit} noValidate>
                                 <div className="flex justify-center gap-2 my-4" onPaste={handlePaste}>
                                     {code.map((digit, index) => (
-                                        <input key={index} ref={el => codeInputs.current[index] = el} type="text" maxLength="1" value={digit} onChange={(e) => handleCodeChange(e, index)} onKeyDown={(e) => handleKeyDown(e, index)}
-                                            className="w-12 h-14 text-center text-2xl font-bold rounded-lg border border-border-color bg-component-bg-hover text-text-primary transition-colors focus:border-accent focus:ring-1 focus:ring-accent" />
+                                        <input 
+                                            key={index} 
+                                            ref={el => codeInputs.current[index] = el} 
+                                            type="text" 
+                                            maxLength="1" 
+                                            value={digit} 
+                                            onChange={(e) => handleCodeChange(e, index)} 
+                                            onKeyDown={(e) => handleKeyDown(e, index)}
+                                            className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-lg border border-gray-300 bg-white text-gray-900 focus:border-accent focus:ring-2 focus:ring-accent focus:outline-none transition-all shadow-sm placeholder-gray-300" 
+                                        />
                                     ))}
                                 </div>
                             </form>
-                            <div className="text-sm text-center">
-                                <button type="button" onClick={handleSendCode} disabled={isLoading || resendCooldown > 0} className="font-medium text-accent hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <div className="text-center">
+                                <button 
+                                    type="button" 
+                                    onClick={handleSendCode} 
+                                    disabled={isLoading || resendCooldown > 0} 
+                                    className="text-xs font-bold text-accent hover:text-accent-hover disabled:opacity-50 disabled:cursor-not-allowed uppercase transition-colors"
+                                >
                                     {resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : '¿No has recibido el código? Reenviar'}
                                 </button>
                             </div>
                         </div>
                     )}
-                     {error && <p className="text-sm text-red-accent text-center mt-4 font-semibold uppercase">{error}</p>}
-                     {success && <p className="text-sm text-green-accent text-center mt-4 font-semibold uppercase">{success}</p>}
+                     {error && <div className="mt-4 p-2 bg-red-50 border-l-4 border-red-600 text-red-700 text-xs font-bold uppercase rounded-r text-center">{error}</div>}
+                     {success && <div className="mt-4 p-2 bg-green-50 border-l-4 border-green-600 text-green-700 text-xs font-bold uppercase rounded-r text-center">{success}</div>}
                 </div>
 
-                <div className="flex justify-end items-center gap-4 p-4 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
-                    <button onClick={onClose} className="bg-component-bg border border-border-color text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold uppercase">Cancelar</button>
+                <div className="flex justify-end items-center gap-4 p-4 border-t border-gray-200 bg-gray-50">
+                    <button 
+                        onClick={onClose} 
+                        className="bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                    >
+                        Cancelar
+                    </button>
                     {step === 'send' ? (
-                        <button onClick={handleSendCode} disabled={isLoading} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover font-semibold disabled:opacity-50 uppercase">
+                        <button 
+                            onClick={handleSendCode} 
+                            disabled={isLoading} 
+                            className="bg-accent text-white px-6 py-2.5 rounded-lg shadow hover:bg-accent-hover transition-colors font-bold uppercase text-xs tracking-wide disabled:opacity-50 flex items-center gap-2"
+                        >
                             {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Enviar Código'}
                         </button>
                     ) : (
-                        <button onClick={handleVerificationSubmit} disabled={isLoading} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover font-semibold disabled:opacity-50 uppercase">
+                        <button 
+                            onClick={handleVerificationSubmit} 
+                            disabled={isLoading} 
+                            className="bg-accent text-white px-6 py-2.5 rounded-lg shadow hover:bg-accent-hover transition-colors font-bold uppercase text-xs tracking-wide disabled:opacity-50 flex items-center gap-2"
+                        >
                             {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Verificar'}
                         </button>
                     )}

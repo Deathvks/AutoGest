@@ -1,8 +1,10 @@
+// autogest-app/frontend/src/pages/NotificationsPage.jsx
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell, faCheckDouble, faChevronLeft, faChevronRight, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import api from '../services/api';
 
 const timeSince = (date) => {
@@ -26,7 +28,7 @@ const NotificationsPage = ({ cars, setCarToEdit }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
 
-    const handleNotificationClick = (notification) => {
+    const handleNotificationClick = async (notification) => {
         if (notification.type === 'car_creation_pending_price' && notification.carId && cars && setCarToEdit) {
             const carToEdit = cars.find(c => c.id === notification.carId);
             if (carToEdit) {
@@ -37,6 +39,26 @@ const NotificationsPage = ({ cars, setCarToEdit }) => {
             const token = notification.link.split('/accept-invitation/')[1];
             if (token) {
                 setPendingInvitationToken(token);
+            }
+        } else if (notification.message === "Tu pago de suscripción se ha procesado con éxito.") {
+            try {
+                const loadingToast = toast.loading('Descargando factura...');
+                const blob = await api.subscriptions.downloadLatestInvoice();
+                
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `Factura_Suscripcion_${new Date().toISOString().split('T')[0]}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                link.parentNode.removeChild(link);
+                
+                toast.dismiss(loadingToast);
+                toast.success('Factura descargada correctamente');
+            } catch (error) {
+                toast.dismiss();
+                console.error("Error al descargar la factura:", error);
+                toast.error('No se pudo descargar la factura.');
             }
         }
     };
@@ -81,55 +103,61 @@ const NotificationsPage = ({ cars, setCarToEdit }) => {
     const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const goToPreviousPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
+    const isClickable = (notification) => {
+        return (
+            notification.type === 'car_creation_pending_price' || 
+            (notification.link && notification.link.includes('/accept-invitation/')) ||
+            notification.message === "Tu pago de suscripción se ha procesado con éxito."
+        );
+    };
+
     return (
         <div className="max-w-4xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div className="flex items-center gap-3">
-                    <h1 className="text-3xl font-bold text-text-primary tracking-tight">Notificaciones</h1>
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight uppercase">Notificaciones</h1>
                     {unreadCount > 0 && (
-                        <span className="bg-accent text-white text-sm font-bold rounded-full h-7 w-7 flex items-center justify-center">
+                        <span className="bg-accent text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
                             {unreadCount}
                         </span>
                     )}
                 </div>
                 <button
                     onClick={markAllNotificationsAsRead}
-                    className="bg-component-bg backdrop-blur-lg text-text-primary px-4 py-2 flex items-center justify-center rounded-xl hover:bg-component-bg-hover transition-colors border border-border-color shadow-2xl text-sm font-semibold whitespace-nowrap"
+                    className="bg-white text-gray-700 px-4 py-2 flex items-center justify-center rounded-lg hover:bg-gray-50 transition-colors border border-gray-300 shadow-sm text-sm font-bold uppercase"
                 >
-                    <FontAwesomeIcon icon={faCheckDouble} className="mr-2" />
-                    Marcar todas como leídas
+                    <FontAwesomeIcon icon={faCheckDouble} className="mr-2 text-accent" />
+                    Marcar todas leídas
                 </button>
             </div>
 
             {sortedNotifications.length > 0 ? (
                 <>
-                    <div className="bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color overflow-hidden shadow-2xl">
-                        <ul className="divide-y divide-border-color">
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                        <ul className="divide-y divide-gray-100">
                             {currentNotifications.map(notification => (
                                 <li 
                                     key={notification.id}
-                                    className={`flex items-center gap-4 p-4 sm:p-6 ${!notification.isRead ? 'bg-accent/5' : ''} ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'hover:bg-component-bg-hover transition-colors' : ''}`}
+                                    className={`flex items-center gap-4 p-4 sm:p-5 transition-colors ${
+                                        !notification.isRead ? 'bg-red-50' : 'bg-white hover:bg-gray-50'
+                                    } ${isClickable(notification) ? 'cursor-pointer' : ''}`}
+                                    onClick={() => handleNotificationClick(notification)}
                                 >
-                                    <div 
-                                        onClick={() => handleNotificationClick(notification)}
-                                        className={`flex-grow flex items-start gap-4 ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'cursor-pointer' : ''}`}
-                                    >
-                                        <div className="mt-1">
-                                            <FontAwesomeIcon icon={faBell} className={`w-5 h-5 ${notification.isRead ? 'text-text-secondary' : 'text-accent'}`} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className={`text-sm ${notification.isRead ? 'text-text-secondary' : 'text-text-primary font-medium'}`}>
-                                                {notification.message}
-                                            </p>
-                                            <p className="text-xs text-text-secondary mt-1">
-                                                {timeSince(notification.createdAt)}
-                                            </p>
-                                        </div>
+                                    <div className="mt-1">
+                                        <FontAwesomeIcon icon={faBell} className={`w-5 h-5 ${!notification.isRead ? 'text-accent' : 'text-gray-400'}`} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className={`text-sm ${!notification.isRead ? 'text-gray-900 font-bold' : 'text-gray-600 font-medium'}`}>
+                                            {notification.message}
+                                        </p>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            {timeSince(notification.createdAt)}
+                                        </p>
                                     </div>
                                     <div className="flex-shrink-0">
                                         <button
                                             onClick={(e) => handleDeleteNotification(e, notification.id)}
-                                            className="p-2 text-text-secondary hover:text-red-accent transition-colors"
+                                            className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-gray-100/50"
                                             title="Eliminar notificación"
                                         >
                                             <FontAwesomeIcon icon={faTrashAlt} />
@@ -144,16 +172,16 @@ const NotificationsPage = ({ cars, setCarToEdit }) => {
                             <button
                                 onClick={goToPreviousPage}
                                 disabled={currentPage === 1}
-                                className="px-4 py-2 rounded-lg bg-component-bg-hover text-text-primary disabled:opacity-50 disabled:cursor-not-allowed hover:bg-border-color transition-colors flex items-center gap-2 font-semibold border border-border-color"
+                                className="px-4 py-2 rounded-lg bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-2 font-bold text-sm border border-gray-300 shadow-sm"
                             >
                                 <FontAwesomeIcon icon={faChevronLeft} />
                                 <span className="hidden sm:inline">Anterior</span>
                             </button>
-                            <span className="text-text-secondary font-medium text-sm">Página {currentPage} de {totalPages}</span>
+                            <span className="text-gray-500 font-medium text-sm">Página {currentPage} de {totalPages}</span>
                             <button
                                 onClick={goToNextPage}
                                 disabled={currentPage === totalPages}
-                                className="px-4 py-2 rounded-lg bg-component-bg-hover text-text-primary disabled:opacity-50 disabled:cursor-not-allowed hover:bg-border-color transition-colors flex items-center gap-2 font-semibold border border-border-color"
+                                className="px-4 py-2 rounded-lg bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-2 font-bold text-sm border border-gray-300 shadow-sm"
                             >
                                 <span className="hidden sm:inline">Siguiente</span>
                                 <FontAwesomeIcon icon={faChevronRight} />
@@ -162,10 +190,12 @@ const NotificationsPage = ({ cars, setCarToEdit }) => {
                     )}
                 </>
             ) : (
-                <div className="text-center py-16 px-4 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl">
-                    <FontAwesomeIcon icon={faBell} className="text-5xl text-text-secondary/50 mb-4" />
-                    <h3 className="text-xl font-semibold text-text-primary">No tienes notificaciones</h3>
-                    <p className="text-text-secondary mt-2">Cuando tengas notificaciones, aparecerán aquí.</p>
+                <div className="text-center py-20 px-4 bg-white rounded-lg border border-gray-200 border-dashed">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 mb-4">
+                        <FontAwesomeIcon icon={faBell} className="text-3xl text-gray-300" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">No tienes notificaciones</h3>
+                    <p className="text-gray-500 mt-2">Te avisaremos cuando ocurra algo importante.</p>
                 </div>
             )}
         </div>

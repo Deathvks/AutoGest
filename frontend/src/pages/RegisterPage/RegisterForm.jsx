@@ -3,18 +3,18 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faEnvelope, faKey, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faEnvelope, faKey, faSpinner, faCar } from '@fortawesome/free-solid-svg-icons';
 
 const InputField = ({ name, type, value, onChange, placeholder, icon }) => (
-    <div className="relative">
-        <FontAwesomeIcon icon={icon} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
+    <div className="relative mb-4">
+        <FontAwesomeIcon icon={icon} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
             id={name}
             name={name}
             type={type}
             value={value}
             onChange={onChange}
-            className="w-full appearance-none rounded-lg border border-border-color bg-component-bg-hover px-4 py-3 pl-12 text-text-primary placeholder:text-text-secondary transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+            className="w-full px-4 py-3 pl-12 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-all shadow-sm"
             placeholder={placeholder}
         />
     </div>
@@ -71,40 +71,46 @@ const RegisterForm = ({ onRegistrationSuccess }) => {
 
     return (
         <>
-            <div className="text-center">
-                <h2 className="text-3xl font-bold tracking-tight text-text-primary">
-                    Crear una Cuenta
+            <div className="text-center mb-8">
+                {/* ICONO PRINCIPAL DEL COCHE */}
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-4 text-accent border border-red-100">
+                    <FontAwesomeIcon icon={faCar} className="h-8 w-8" />
+                </div>
+                <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight uppercase">
+                    Crear Cuenta
                 </h2>
-                <p className="mt-2 text-text-secondary">Empieza a gestionar tu negocio hoy mismo.</p>
+                <p className="mt-2 text-sm text-gray-500 font-medium">Únete a AutoGest hoy mismo</p>
             </div>
             
             <form className="space-y-6" onSubmit={handleRegisterSubmit} noValidate>
-                <div className="space-y-4">
+                <div>
                     <InputField name="name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre completo" icon={faUser} />
-                    <InputField name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" icon={faEnvelope} />
+                    <InputField name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Correo electrónico" icon={faEnvelope} />
                     <InputField name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" icon={faKey} />
                 </div>
 
-                {error && <p className="text-sm text-red-accent text-center font-medium">{error}</p>}
-                {success && <p className="text-sm text-green-accent text-center font-medium">{success}</p>}
+                {error && <p className="p-3 bg-red-50 border-l-4 border-red-600 text-red-700 text-sm font-bold rounded-r text-center">{error}</p>}
+                {success && <p className="p-3 bg-green-50 border-l-4 border-green-600 text-green-700 text-sm font-bold rounded-r text-center">{success}</p>}
 
                 <div>
                     <button 
                         type="submit" 
                         disabled={isLoading}
-                        className="group relative flex w-full justify-center rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50"
+                        className="w-full bg-accent text-white font-bold py-3.5 rounded-lg shadow-lg hover:bg-accent-hover transition-all transform hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none uppercase tracking-wide text-sm"
                     >
                         {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Crear Cuenta'}
                     </button>
                 </div>
             </form>
 
-            <p className="text-center text-sm text-text-secondary">
-                ¿Ya tienes una cuenta?{' '}
-                <Link to="/login" className="font-medium text-accent hover:text-accent-hover">
-                    Inicia sesión
-                </Link>
-            </p>
+            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                <p className="text-sm text-gray-500">
+                    ¿Ya tienes una cuenta?{' '}
+                    <Link to="/login" className="font-bold text-accent hover:text-accent-hover transition-colors">
+                        Inicia sesión
+                    </Link>
+                </p>
+            </div>
         </>
     );
 };

@@ -10,19 +10,19 @@ const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 const InputField = ({ label, name, value, onChange, icon, required = false }) => (
     <div>
-        <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">
+        <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">
             {label}
-            {required && <span className="text-red-accent ml-1">*</span>}
+            {required && <span className="text-red-600 ml-1">*</span>}
         </label>
         <div className="relative">
             {icon && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-gray-400" />
                 </div>
             )}
             <input
                 type="text" name={name} value={value} onChange={onChange}
-                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent placeholder:text-text-secondary ${icon ? 'pl-11' : ''}`}
+                className={`w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors ${icon ? 'pl-11' : ''}`}
             />
         </div>
     </div>
@@ -159,31 +159,55 @@ const TestDriveModal = ({ car, onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-border-color">
-                <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary flex items-center gap-3">
-                        <FontAwesomeIcon icon={faFileSignature} />
-                        Prueba de Vehículo
-                    </h2>
-                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in-up backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-gray-300 overflow-hidden">
+                {/* Header Rojo Occident */}
+                <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 bg-accent text-white">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white/20 rounded-full">
+                            <FontAwesomeIcon icon={faFileSignature} className="text-white w-5 h-5" />
+                        </div>
+                        <h2 className="text-lg font-bold uppercase tracking-wide">Prueba de Vehículo</h2>
+                    </div>
+                    <button 
+                        onClick={onClose} 
+                        className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20"
+                    >
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
-                <div className="flex-grow overflow-y-auto p-6 space-y-4">
-                    <p className="text-text-secondary text-center">
-                        Introduce los datos del cliente para generar el documento de exoneración de responsabilidad para la prueba del <span className="font-semibold text-text-primary">{car.make} {car.model}</span>.
-                    </p>
+
+                <div className="flex-grow overflow-y-auto p-6 space-y-6 bg-white no-scrollbar">
+                    <div className="text-center mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                         <p className="text-gray-600 text-sm font-medium">
+                            Introduce los datos del cliente para generar el documento de exoneración de responsabilidad para la prueba del <span className="font-bold text-gray-900">{car.make} {car.model}</span>.
+                        </p>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <InputField label="Nombre" name="name" value={clientData.name} onChange={handleChange} icon={faUser} required={true} />
                         <InputField label="Apellidos" name="lastName" value={clientData.lastName} onChange={handleChange} required={true} />
                     </div>
                     <InputField label="DNI / NIE" name="dni" value={clientData.dni} onChange={handleChange} icon={faIdCard} required={true} />
-                    {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
+                    
+                    {error && (
+                        <div className="p-3 bg-red-50 border-l-4 border-red-600 text-red-700 text-sm font-bold uppercase rounded-r">
+                            {error}
+                        </div>
+                    )}
                 </div>
-                <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-border-color">
-                    <button onClick={onClose} className="bg-component-bg border border-border-color text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold uppercase">Cancelar</button>
-                    <button onClick={handleGenerateDocument} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold flex items-center gap-2 uppercase">
+
+                <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-gray-200 bg-gray-50">
+                    <button 
+                        onClick={onClose} 
+                        className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        onClick={handleGenerateDocument} 
+                        className="bg-accent text-white px-6 py-2.5 rounded hover:bg-accent-hover transition-colors font-bold uppercase text-xs tracking-wide shadow-sm flex items-center gap-2"
+                    >
                         <FontAwesomeIcon icon={faFileSignature} />
                         Generar Documento
                     </button>

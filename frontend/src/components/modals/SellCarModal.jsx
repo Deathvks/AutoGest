@@ -1,20 +1,20 @@
 // autogest-app/frontend/src/components/modals/SellCarModal.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faEuroSign, faCalendarDay, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt, faBuilding, faFileInvoice, faRoad } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faEuroSign, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt, faBuilding, faFileInvoice, faRoad } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../context/AuthContext';
 import DatePicker from '../DatePicker'; // Importamos el nuevo componente
 
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, icon, required = false }) => (
     <div>
-        <label className="block text-sm font-semibold text-text-primary mb-1">
+        <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">
             {label}
-            {required && <span className="text-red-accent ml-1">*</span>}
+            {required && <span className="text-red-600 ml-1">*</span>}
         </label>
         <div className="relative">
             {icon && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-gray-400" />
                 </div>
             )}
             <input
@@ -23,7 +23,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent placeholder:text-text-secondary/70 ${icon ? 'pl-11' : ''} min-w-0 text-left`}
+                className={`w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors ${icon ? 'pl-11' : ''} min-w-0 text-left`}
             />
         </div>
     </div>
@@ -205,29 +205,35 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-border-color">
-                <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary uppercase">Vender Coche</h2>
-                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in-up backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-gray-300 overflow-hidden">
+                {/* Header Rojo Occident */}
+                <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 bg-accent text-white">
+                    <h2 className="text-lg font-bold uppercase tracking-wide">Vender Vehículo</h2>
+                    <button 
+                        onClick={onClose} 
+                        className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20"
+                    >
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6 no-scrollbar overflow-x-hidden">
-                    <div className="text-center mb-6 p-4 bg-background/50 rounded-xl border border-border-color">
-                        <p className="text-text-secondary uppercase">Marcando como vendido el <span className="font-bold text-text-primary">{car.make} {car.model} ({car.licensePlate})</span>.</p>
-                        <div className="mt-2 flex justify-center gap-4 text-sm">
+                <div className="flex-grow overflow-y-auto p-6 no-scrollbar overflow-x-hidden bg-white">
+                    <div className="text-center mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-gray-600 text-sm uppercase font-medium">
+                            Marcando como vendido el <span className="font-bold text-gray-900">{car.make} {car.model} ({car.licensePlate})</span>.
+                        </p>
+                        <div className="mt-2 flex justify-center gap-4 text-xs font-bold text-gray-500">
                             {(user.role === 'admin' || user.isOwner || !user.companyId) && (
-                                <p className="text-text-secondary uppercase">Compra: <span className="font-semibold text-text-primary">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</span></p>
+                                <p>COMPRA: <span className="text-gray-800">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}</span></p>
                             )}
-                            <p className="text-text-secondary uppercase">Venta: <span className="font-semibold text-text-primary">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}</span></p>
+                            <p>VENTA: <span className="text-gray-800">{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}</span></p>
                         </div>
                     </div>
 
                     <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-6">
                         <div>
-                            <h3 className="text-lg font-semibold text-text-primary mb-3">Datos de la Venta</h3>
+                            <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide border-b border-gray-100 pb-1">Datos de la Venta</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <InputField label="Precio Venta Final (€)" name="salePrice" value={saleData.salePrice} onChange={handleChange} type="number" placeholder="Ej: 23500" required={true} icon={faEuroSign}/>
                                 <DatePicker 
@@ -240,34 +246,26 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                         </div>
                         
                         <div>
-                            <h3 className="text-lg font-semibold text-text-primary mb-3 pt-4 border-t border-border-color">Datos del Comprador</h3>
+                            <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide border-b border-gray-100 pb-1">Datos del Comprador</h3>
                             
-                            <div className="relative flex w-full max-w-sm mx-auto p-1 rounded-full bg-component-bg-hover border border-border-color mb-6 overflow-hidden">
-                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                                <div
-                                    className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ease-in-out ${
-                                        clientType === 'empresa' ? 'translate-x-[96%]' : 'translate-x-0'
-                                    }`}
-                                    style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
-                                />
-                                {/* --- FIN DE LA MODIFICACIÓN --- */}
+                            <div className="flex w-full max-w-sm mx-auto p-1 bg-gray-100 rounded-lg border border-gray-200 mb-6">
                                 <button
                                     type="button"
                                     onClick={() => setClientType('particular')}
-                                    className={`relative z-10 flex-1 rounded-full py-2 text-sm font-semibold transition-colors duration-300 ${
-                                        clientType === 'particular' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors uppercase ${
+                                        clientType === 'particular' ? 'bg-white text-accent shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
                                     }`}
                                 >
-                                    AUTÓNOMO
+                                    Autónomo
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setClientType('empresa')}
-                                    className={`relative z-10 flex-1 rounded-full py-2 text-sm font-semibold transition-colors duration-300 ${
-                                        clientType === 'empresa' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors uppercase ${
+                                        clientType === 'empresa' ? 'bg-white text-accent shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
                                     }`}
                                 >
-                                    EMPRESA
+                                    Empresa
                                 </button>
                             </div>
 
@@ -289,23 +287,37 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <InputField label="Teléfono" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} required={false} icon={faPhone} />
                                     <InputField label="Correo Electrónico" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" required={false} icon={faEnvelope} />
-                                En</div>
+                                </div>
                                 <InputField label="Dirección (Calle, Número, Piso)" name="streetAddress" value={saleData.streetAddress} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <InputField label="Código Postal" name="postalCode" value={saleData.postalCode} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
                                     <InputField label="Ciudad" name="city" value={saleData.city} onChange={handleChange} icon={faBuilding} required={true} />
                                     <InputField label="Provincia" name="province" value={saleData.province} onChange={handleChange} icon={faRoad} required={true} />
-                                Code</div>
+                                </div>
                             </div>
                         </div>
 
-                        {error && <p className="text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
+                        {error && (
+                            <div className="p-3 bg-red-50 border-l-4 border-red-600 text-red-700 text-sm font-bold uppercase rounded-r">
+                                {error}
+                            </div>
+                        )}
                     </form>
                 </div>
                 
-                <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-border-color">
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold">CANCELAR</button>
-                    <button onClick={handleConfirm} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold">CONFIRMAR VENTA</button>
+                <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-gray-200 bg-gray-50">
+                    <button 
+                        onClick={onClose} 
+                        className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        onClick={handleConfirm} 
+                        className="bg-accent text-white px-6 py-2.5 rounded hover:bg-accent-hover transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                    >
+                        Confirmar Venta
+                    </button>
                 </div>
             </div>
         </div>

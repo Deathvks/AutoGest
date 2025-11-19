@@ -1,47 +1,45 @@
 // autogest-app/frontend/src/components/modals/EditCarModal.jsx
 import React, { useState, useMemo, useContext, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faCar, faStar, faIdCard, faFingerprint, faCalendarDay, faRoad, faEuroSign, faMapMarkerAlt, faBolt, faKey, faGasPump, faCogs, faUserShield } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faCar, faStar, faIdCard, faFingerprint, faRoad, faEuroSign, faMapMarkerAlt, faBolt, faKey, faGasPump, faCogs, faUserShield } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../context/AuthContext';
 import EditCarFileUploads from './EditCar/EditCarFileUploads';
 import Select from '../Select';
-// --- INICIO DE LA MODIFICACIÓN ---
-import DatePicker from '../DatePicker'; // Importamos el nuevo componente
-// --- FIN DE LA MODIFICACIÓN ---
+import DatePicker from '../DatePicker';
 
 const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMode, required = false, placeholder = '' }) => (
     <div>
-        <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">
+        <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">
             {label}
-            {required && <span className="text-red-accent ml-1">*</span>}
+            {required && <span className="text-red-600 ml-1">*</span>}
         </label>
         <div className="relative">
             {icon && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-gray-400" />
                 </div>
             )}
             <input
                 type={type} name={name} value={value || ''} onChange={onChange} inputMode={inputMode} placeholder={placeholder}
-                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent ${icon ? 'pl-11' : ''}`}
+                className={`w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors ${icon ? 'pl-11' : ''}`}
             />
         </div>
     </div>
 );
 
 const KeySelector = ({ label, icon, value, onChange }) => (
-     <div className="bg-background/50 p-4 rounded-xl border border-border-color flex items-center justify-between">
-        <label className="flex items-center text-sm font-semibold text-text-primary">
+     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center justify-between">
+        <label className="flex items-center text-sm font-bold text-gray-700 uppercase">
             <FontAwesomeIcon icon={icon} className="h-4 w-4 text-accent mr-3" />
             {label}
         </label>
-        <div className="flex items-center rounded-lg bg-component-bg-hover p-1 border border-border-color text-text-secondary">
+        <div className="flex items-center rounded-lg bg-white p-1 border border-gray-200 text-gray-500">
             {[1, 2, 3].map(num => (
                 <button
                     key={num}
                     type="button"
                     onClick={() => onChange(num)}
-                    className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${value === num ? 'bg-component-bg text-text-primary shadow-md' : 'hover:bg-border-color'}`}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-colors ${value === num ? 'bg-gray-100 text-gray-900 shadow-sm border border-gray-200' : 'hover:bg-gray-50'}`}
                 >
                     {num}
                 </button>
@@ -77,10 +75,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             fuel: car.fuel || '',
             transmission: car.transmission || '',
             status: car.status || 'En venta',
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Asegurarse de que la fecha esté en formato YYYY-MM-DD o vacía si no existe
             registrationDate: car.registrationDate ? new Date(car.registrationDate).toISOString().split('T')[0] : '',
-            // --- FIN DE LA MODIFICACIÓN ---
         };
     });
 
@@ -94,9 +89,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     const [newOtherDocumentFiles, setNewOtherDocumentFiles] = useState([]);
     const [filesToRemove, setFilesToRemove] = useState([]);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const fuelOptions = useMemo(() => [ { id: '', name: 'SELECCIONA...' }, { id: 'Gasolina', name: 'Gasolina' }, { id: 'Diesel', name: 'Diesel' }, { id: 'Híbrido', name: 'Híbrido' }, { id: 'Eléctrico', name: 'Eléctrico' } ], []);
     const transmissionOptions = useMemo(() => [ { id: '', name: 'SELECCIONA...' }, { id: 'Manual', name: 'Manual' }, { id: 'Automático', name: 'Automático' } ], []);
@@ -121,12 +114,9 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
         setEditedCar(prev => ({ ...prev, [name]: value }));
     }, []);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Handler específico para el DatePicker
     const handleDateChange = (date) => {
         setEditedCar(prev => ({ ...prev, registrationDate: date || '' }));
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleLocationSelect = useCallback((value) => {
         setEditedCar(prev => ({ ...prev, location: value, newLocation: '' }));
@@ -247,17 +237,32 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     };
 
     return (
-       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-border-color">
-                <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary uppercase">Editar Coche</h2>
-                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+       <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in-up backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-gray-300 overflow-hidden">
+                {/* Header Rojo Occident */}
+                <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 bg-accent text-white">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white/20 rounded-full">
+                            <FontAwesomeIcon icon={faCar} className="text-white w-5 h-5" />
+                        </div>
+                        <h2 className="text-lg font-bold uppercase tracking-wide">Editar Vehículo</h2>
+                    </div>
+                    <button 
+                        onClick={onClose} 
+                        className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20"
+                    >
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
 
-                <form onSubmit={(e) => e.preventDefault()} noValidate className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar">
-                    {serverError && ( <div className="p-3 bg-red-accent/10 rounded-lg"><p className="text-sm text-red-accent font-semibold uppercase">{serverError}</p></div> )}
+                <form onSubmit={(e) => e.preventDefault()} noValidate className="flex-grow overflow-y-auto p-6 space-y-6 bg-white no-scrollbar">
+                    {serverError && (
+                        <div className="flex-shrink-0 pb-4">
+                             <div className="p-3 bg-red-50 border-l-4 border-red-600 text-red-700 text-sm font-bold uppercase rounded-r">
+                                {serverError}
+                            </div>
+                        </div>
+                    )}
 
                     <EditCarFileUploads
                         editedCar={editedCar}
@@ -269,9 +274,15 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                         handleFileChange={handleFileChange}
                         handleRemoveNewFile={handleRemoveNewFile}
                         handleRemoveExistingFile={handleRemoveExistingFile}
+                        // Pasa el icono del coche si no hay imagen (corregido para usar la prop `carImage` o similar si existiera)
+                        // Asumo que `EditCarFileUploads` tiene una lógica interna para decidir si usar imagePreview, editedCar.imageUrl o defaultImage
+                        // Si 'EditCarFileUploads' necesita un prop específico para la imagen actual del coche, lo añadiríamos aquí.
+                        // Para este ejemplo, aseguro que 'imagePreview' y 'editedCar.imageUrl' se manejen correctamente dentro de 'EditCarFileUploads'.
+                        // El `defaultImage` se pasará como un fallback visual.
+                        defaultImageComponent={<div className="flex items-center justify-center w-full h-full text-gray-300"><FontAwesomeIcon icon={faCar} className="w-16 h-16" /></div>}
                     />
 
-                    <div className="pt-6 border-t border-border-color">
+                    <div className="pt-6 border-t border-gray-100">
                         <div className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <InputField label="Marca" name="make" value={editedCar.make} onChange={handleChange} icon={faCar} required />
@@ -282,22 +293,18 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                                 <InputField label="Nº de Bastidor" name="vin" value={editedCar.vin} onChange={handleChange} icon={faFingerprint} />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                 {canViewSensitiveData && (
                                     <InputField label="Precio de Compra (€)" name="purchasePrice" type="text" inputMode="decimal" value={editedCar.purchasePrice} onChange={handleChange} icon={faEuroSign} required />
                                 )}
-                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                                 <InputField label="Precio de Venta (€)" name="price" type="text" inputMode="decimal" value={editedCar.price} onChange={handleChange} icon={faEuroSign} required />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                 <DatePicker 
                                     label="Fecha de Matriculación"
                                     value={editedCar.registrationDate}
                                     onChange={handleDateChange}
                                     placeholder="DD/MM/AAAA"
                                 />
-                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                                 <InputField label="Kilómetros" name="km" type="text" inputMode="decimal" value={editedCar.km} onChange={handleChange} icon={faRoad} />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -311,7 +318,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Select label="Ubicación Existente" value={editedCar.location} onChange={handleLocationSelect} options={locationOptions} icon={faMapMarkerAlt} />
-                                <InputField label="o Nueva Ubicación" name="newLocation" value={editedCar.newLocation} onChange={handleNewLocationInput} icon={faMapMarkerAlt} placeholder="ESCRIBE PARA CREAR/ACTUALIZAR" />
+                                <InputField label="o Nueva Ubicación" name="newLocation" value={editedCar.newLocation} onChange={handleNewLocationInput} icon={faMapMarkerAlt} placeholder="ESCRIBE PARA CREAR UNA NUEVA" />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Select label="Combustible" value={editedCar.fuel} onChange={(value) => handleSelectChange('fuel', value)} options={fuelOptions} icon={faGasPump} />
@@ -320,24 +327,39 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                             <Select label="Estado" value={editedCar.status} onChange={(value) => handleSelectChange('status', value)} options={statusOptions} icon={faUserShield} />
                             
                             <div>
-                                <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">Etiquetas</label>
-                                <div className="flex flex-wrap items-center gap-2 w-full px-3 py-2 bg-component-bg-hover border border-border-color rounded-lg focus-within:ring-1 focus-within:ring-accent focus-within:border-accent">
+                                <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">Etiquetas</label>
+                                <div className="flex flex-wrap items-center gap-2 w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-accent focus-within:border-accent">
                                     {editedCar.tags.map(tag => (
-                                        <span key={tag} className="flex items-center gap-1.5 bg-accent/10 text-accent text-sm font-semibold px-2 py-1 rounded">
+                                        <span key={tag} className="flex items-center gap-1.5 bg-red-50 text-accent text-xs font-bold px-2.5 py-1 rounded border border-red-100 uppercase">
                                             {tag}
-                                            <button onClick={() => removeTag(tag)} className="hover:opacity-75"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
+                                            <button onClick={() => removeTag(tag)} className="hover:text-red-800 transition-colors"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
                                         </span>
                                     ))}
-                                    <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={handleTagKeyDown} placeholder="AÑADIR Y PULSAR ENTER" className="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-text-primary text-sm min-w-[150px] uppercase" />
+                                    <input 
+                                        type="text" 
+                                        value={tagInput} 
+                                        onChange={(e) => setTagInput(e.target.value)} 
+                                        onKeyDown={handleTagKeyDown} 
+                                        placeholder="AÑADIR Y PULSAR ENTER" 
+                                        className="flex-1 bg-transparent !border-0 !ring-0 !outline-none !shadow-none focus:!ring-0 p-0 text-gray-900 text-sm placeholder:text-gray-400 min-w-[150px] uppercase" 
+                                    />
                                 </div>
                             </div>
                         </div>
                     </div>
                 </form>
 
-                <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-border-color">
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold uppercase">Cancelar</button>
-                    <button onClick={handleUpdate} className="px-6 py-2 rounded-lg shadow-lg shadow-accent/20 transition-opacity bg-accent text-white hover:bg-accent-hover font-semibold uppercase">
+                <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-gray-200 bg-gray-50">
+                    <button 
+                        onClick={onClose} 
+                        className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        onClick={handleUpdate} 
+                        className="bg-accent text-white px-6 py-2.5 rounded hover:bg-accent-hover transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                    >
                         Guardar Cambios
                     </button>
                 </div>

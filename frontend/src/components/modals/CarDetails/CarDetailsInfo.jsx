@@ -7,10 +7,10 @@ import CarPlaceholderImage from '../../../pages/MyCars/CarPlaceholderImage';
 
 const getStatusChipClass = (status) => {
     switch (status) {
-        case 'Vendido': return 'bg-green-accent/10 text-green-accent';
-        case 'En venta': return 'bg-blue-accent/10 text-blue-accent';
-        case 'Reservado': return 'bg-yellow-accent/10 text-yellow-accent';
-        default: return 'bg-component-bg-hover text-text-secondary';
+        case 'Vendido': return 'bg-green-100 text-green-800 border border-green-200';
+        case 'En venta': return 'bg-blue-100 text-blue-800 border border-blue-200';
+        case 'Reservado': return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+        default: return 'bg-gray-100 text-gray-800 border border-gray-200';
     }
 };
 
@@ -19,9 +19,7 @@ const CarDetailsInfo = ({ car }) => {
     const [remainingTime, setRemainingTime] = useState('');
     const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
-    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         if (!isReservedAndActive) return;
@@ -53,8 +51,9 @@ const CarDetailsInfo = ({ car }) => {
     }, [car.reservationExpiry, isReservedAndActive]);
 
     return (
-        <div className="space-y-4">
-            <div className="w-full h-auto aspect-video bg-component-bg-hover rounded-xl border-2 border-border-color flex items-center justify-center overflow-hidden">
+        <div className="space-y-6">
+            {/* Contenedor de Imagen */}
+            <div className="w-full h-auto aspect-video bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
                 {car.imageUrl ? (
                     <img
                         src={car.imageUrl}
@@ -65,30 +64,37 @@ const CarDetailsInfo = ({ car }) => {
                     <CarPlaceholderImage car={car} />
                 )}
             </div>
-            <div className="bg-component-bg-hover p-6 rounded-xl text-center border border-border-color">
+
+            {/* Panel de Precio y Estado */}
+            <div className="bg-gray-50 p-6 rounded-lg text-center border border-gray-200 shadow-sm">
                 <div className="flex flex-col items-center">
-                    <p className="text-lg text-text-secondary uppercase font-semibold">Precio Venta Final</p>
-                    <p className="text-5xl lg:text-4xl font-extrabold text-accent">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Precio Venta Final</p>
+                    {/* Reducido el tamaño de texto aquí */}
+                    <p className="text-3xl lg:text-4xl font-extrabold text-accent tracking-tight">
                         {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice || car.price)}
                     </p>
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                    
                     {canViewSensitiveData && (
-                        <p className="text-sm text-text-secondary mt-2 uppercase">
+                        <p className="text-sm font-medium text-gray-400 mt-2 uppercase">
                             Compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
                         </p>
                     )}
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+                    
                     {car.status === 'Reservado' && car.reservationDeposit > 0 && (
-                        <p className="text-sm font-semibold text-yellow-accent mt-1 uppercase">
+                        <p className="text-sm font-semibold text-yellow-600 mt-2 uppercase bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100">
                             Reserva: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}
                         </p>
                     )}
                 </div>
-                <span className={`mt-4 inline-block text-sm font-bold px-4 py-1.5 rounded-full ${getStatusChipClass(car.status)} uppercase`}>
-                    {car.status} {car.saleDate ? ` - ${new Date(car.saleDate).toLocaleDateString('es-ES')}` : ''}
-                </span>
+
+                <div className="mt-6">
+                    <span className={`inline-block text-sm font-bold px-4 py-1.5 rounded-full uppercase tracking-wide ${getStatusChipClass(car.status)}`}>
+                        {car.status} {car.saleDate ? ` - ${new Date(car.saleDate).toLocaleDateString('es-ES')}` : ''}
+                    </span>
+                </div>
+
                 {isReservedAndActive && (
-                    <div className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold text-yellow-accent bg-yellow-accent/10 px-3 py-1 rounded-full uppercase">
+                    <div className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded border border-yellow-200 w-fit mx-auto uppercase">
                         <FontAwesomeIcon icon={faClock} />
                         <span>Quedan: {remainingTime}</span>
                     </div>

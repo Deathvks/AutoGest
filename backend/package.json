@@ -30,6 +30,7 @@
     "nodemailer": "^7.0.9",
     "openai": "^4.52.7",
     "sequelize": "^6.37.7",
+    "sharp": "^0.33.2",
     "stripe": "^16.2.0"
   },
   "devDependencies": {

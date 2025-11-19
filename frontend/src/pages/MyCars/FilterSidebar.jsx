@@ -52,12 +52,14 @@ const FilterSidebar = ({ cars, filters, setFilters, resetFilters }) => {
     const handleSelectChange = (name, value) => setFilters(prev => ({ ...prev, [name]: value }));
 
     return (
-        <div className="bg-component-bg backdrop-blur-lg p-6 rounded-2xl shadow-2xl border border-border-color">
-            <h3 className="font-bold text-text-primary mb-6 flex items-center gap-2 text-lg">
+        <div className="bg-white rounded-lg border border-gray-300 overflow-hidden">
+            {/* Header Rojo Occident */}
+            <div className="bg-accent px-6 py-4 flex items-center gap-3 text-white">
                 <FontAwesomeIcon icon={faFilter} />
-                Filtros
-            </h3>
-            <div className="space-y-4">
+                <h3 className="font-bold text-lg uppercase tracking-wide">Filtros</h3>
+            </div>
+
+            <div className="p-6 space-y-4">
                 <Select label="Marca" value={filters.make} onChange={(value) => handleSelectChange('make', value)} options={[{ id: '', name: 'Todas' }, ...makeOptions]} />
                 <Select label="Estado" value={filters.status} onChange={(value) => handleSelectChange('status', value)} options={[{ id: '', name: 'Todos' }, ...statusOptions]} />
                 {locationOptions.length > 0 && (
@@ -72,28 +74,60 @@ const FilterSidebar = ({ cars, filters, setFilters, resetFilters }) => {
                 
                 <div className="grid grid-cols-2 gap-3 pt-2">
                     <div>
-                        <label htmlFor="minPriceDesktop" className="block text-sm font-medium text-text-secondary mb-1">Precio Mín.</label>
-                        <input type="number" name="minPrice" id="minPriceDesktop" value={filters.minPrice} onChange={handleInputChange} placeholder="€" className="w-full px-3 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent text-text-primary placeholder:text-text-secondary" />
+                        <label htmlFor="minPriceDesktop" className="block text-sm font-bold text-gray-700 mb-1 uppercase">Precio Mín.</label>
+                        <input 
+                            type="number" 
+                            name="minPrice" 
+                            id="minPriceDesktop" 
+                            value={filters.minPrice} 
+                            onChange={handleInputChange} 
+                            placeholder="€" 
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors" 
+                        />
                     </div>
                     <div>
-                        <label htmlFor="maxPriceDesktop" className="block text-sm font-medium text-text-secondary mb-1">Precio Máx.</label>
-                        <input type="number" name="maxPrice" id="maxPriceDesktop" value={filters.maxPrice} onChange={handleInputChange} placeholder="€" className="w-full px-3 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent text-text-primary placeholder:text-text-secondary" />
+                        <label htmlFor="maxPriceDesktop" className="block text-sm font-bold text-gray-700 mb-1 uppercase">Precio Máx.</label>
+                        <input 
+                            type="number" 
+                            name="maxPrice" 
+                            id="maxPriceDesktop" 
+                            value={filters.maxPrice} 
+                            onChange={handleInputChange} 
+                            placeholder="€" 
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors" 
+                        />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <label htmlFor="minKmDesktop" className="block text-sm font-medium text-text-secondary mb-1">KM Mín.</label>
-                        <input type="number" name="minKm" id="minKmDesktop" value={filters.minKm} onChange={handleInputChange} placeholder="km" className="w-full px-3 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent text-text-primary placeholder:text-text-secondary" />
+                        <label htmlFor="minKmDesktop" className="block text-sm font-bold text-gray-700 mb-1 uppercase">KM Mín.</label>
+                        <input 
+                            type="number" 
+                            name="minKm" 
+                            id="minKmDesktop" 
+                            value={filters.minKm} 
+                            onChange={handleInputChange} 
+                            placeholder="km" 
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors" 
+                        />
                     </div>
                     <div>
-                        <label htmlFor="maxKmDesktop" className="block text-sm font-medium text-text-secondary mb-1">KM Máx.</label>
-                        <input type="number" name="maxKm" id="maxKmDesktop" value={filters.maxKm} onChange={handleInputChange} placeholder="km" className="w-full px-3 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent text-text-primary placeholder:text-text-secondary" />
+                        <label htmlFor="maxKmDesktop" className="block text-sm font-bold text-gray-700 mb-1 uppercase">KM Máx.</label>
+                        <input 
+                            type="number" 
+                            name="maxKm" 
+                            id="maxKmDesktop" 
+                            value={filters.maxKm} 
+                            onChange={handleInputChange} 
+                            placeholder="km" 
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors" 
+                        />
                     </div>
                 </div>
 
                 <div className="pt-4">
-                    <button onClick={resetFilters} className="w-full flex items-center justify-center gap-2 text-sm text-accent font-semibold hover:text-accent-hover transition-colors">
+                    <button onClick={resetFilters} className="w-full flex items-center justify-center gap-2 text-sm text-accent font-bold hover:text-accent-hover transition-colors uppercase">
                         <FontAwesomeIcon icon={faUndo} />
                         Limpiar filtros
                     </button>

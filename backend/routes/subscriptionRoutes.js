@@ -21,9 +21,12 @@ router.post('/reactivate-subscription', protect, subscriptionController.reactiva
 // Sincronizar el estado de la suscripción manualmente
 router.post('/sync', protect, subscriptionController.syncSubscription);
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Crear una sesión para el portal de cliente de Stripe
 router.post('/create-customer-portal-session', protect, subscriptionController.createCustomerPortalSession);
+
+// --- INICIO DE LA MODIFICACIÓN ---
+// Descargar la última factura en PDF
+router.get('/latest-invoice', protect, subscriptionController.downloadLatestInvoice);
 // --- FIN DE LA MODIFICACIÓN ---
 
 // Se elimina la ruta del webhook de este fichero, ya que se ha movido a index.js

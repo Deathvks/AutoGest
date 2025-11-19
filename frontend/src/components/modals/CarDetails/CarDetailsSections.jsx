@@ -2,64 +2,51 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faUser, faIdCard, faPhone, faEnvelope, faMapPin, faCalendarDay,
+    faUser, faIdCard, faPhone, faEnvelope, faCalendarDay,
     faCalendarCheck, faTruckPickup, faCheckCircle, faTrashAlt, faEdit,
-    // --- INICIO DE LA MODIFICACIÓN ---
-    faPaperclip, faUndo, faSpinner, faBuilding, faFileInvoice, faRoad, faMapMarkerAlt
-    // --- FIN DE LA MODIFICACIÓN ---
+    faPaperclip, faUndo, faSpinner, faBuilding, faFileInvoice, faMapMarkerAlt
 } from '@fortawesome/free-solid-svg-icons';
 import api from '../../../services/api';
 import { DetailItem } from './CarDetailsUtils';
+
+const SectionHeader = ({ title }) => (
+    <h3 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wide border-b border-gray-200 pb-2">
+        {title}
+    </h3>
+);
 
 const BuyerSection = ({ car }) => {
     let buyer = null;
     if (car.buyerDetails) {
         try {
             buyer = typeof car.buyerDetails === 'string' ? JSON.parse(car.buyerDetails) : car.buyerDetails;
-        } catch (e) {
-            console.error("Error al parsear datos del comprador:", e);
-        }
+        } catch (e) { console.error(e); }
     }
     if (car.status !== 'Vendido' || !buyer) return null;
 
     const isCompany = buyer.cif && buyer.cif.trim() !== '';
-    
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Construir la dirección completa a partir de las partes
-    const fullAddress = [
-        buyer.streetAddress,
-        buyer.postalCode,
-        buyer.city,
-        buyer.province
-    ].filter(part => part && part.trim() !== '').join(', ');
-    // --- FIN DE LA MODIFICACIÓN ---
+    const fullAddress = [buyer.streetAddress, buyer.postalCode, buyer.city, buyer.province].filter(p => p && p.trim()).join(', ');
 
     return (
         <section>
-            <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">Datos del Comprador</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-5">
-                {isCompany ? (
-                    <>
-                        <DetailItem icon={faBuilding} label="Razón Social" value={buyer.businessName} />
-                        <DetailItem icon={faFileInvoice} label="CIF" value={buyer.cif} />
-                    </>
-                ) : (
-                    <>
-                        <DetailItem icon={faUser} label="Nombre" value={`${buyer.name || ''} ${buyer.lastName || ''}`} />
-                        <DetailItem icon={faIdCard} label="DNI/NIE" value={buyer.dni} />
-                    </>
-                )}
-                <DetailItem icon={faPhone} label="Teléfono" value={buyer.phone} />
-                <DetailItem icon={faEnvelope} label="Email" value={buyer.email} />
-                
-                {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                {/* Mostrar la dirección completa en un solo campo, o el campo 'address' antiguo si existe */}
-                <DetailItem 
-                    icon={faMapMarkerAlt} 
-                    label="Dirección" 
-                    value={fullAddress || buyer.address} 
-                />
-                {/* --- FIN DE LA MODIFICACIÓN --- */}
+            <SectionHeader title="Datos del Comprador" />
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+                    {isCompany ? (
+                        <>
+                            <DetailItem icon={faBuilding} label="Razón Social" value={buyer.businessName} />
+                            <DetailItem icon={faFileInvoice} label="CIF" value={buyer.cif} />
+                        </>
+                    ) : (
+                        <>
+                            <DetailItem icon={faUser} label="Nombre" value={`${buyer.name || ''} ${buyer.lastName || ''}`} />
+                            <DetailItem icon={faIdCard} label="DNI/NIE" value={buyer.dni} />
+                        </>
+                    )}
+                    <DetailItem icon={faPhone} label="Teléfono" value={buyer.phone} />
+                    <DetailItem icon={faEnvelope} label="Email" value={buyer.email} />
+                    <DetailItem icon={faMapMarkerAlt} label="Dirección" value={fullAddress || buyer.address} />
+                </div>
             </div>
         </section>
     );
@@ -70,28 +57,25 @@ const GestoriaSection = ({ car, onGestoriaPickupClick, onGestoriaReturnClick }) 
 
     return (
         <section>
-            <h3 className="text-lg font-semibold text-text-primary my-4 border-b border-border-color pb-2 uppercase">Gestión Documentación</h3>
-            <div className="bg-component-bg-hover p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-border-color">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+            <SectionHeader title="Gestión Documentación" />
+            <div className="bg-white p-5 rounded-lg border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 w-full">
                     <DetailItem icon={faCalendarDay} label="Recogida" value={car.gestoriaPickupDate ? new Date(car.gestoriaPickupDate).toLocaleDateString('es-ES') : 'Pendiente'} />
                     <DetailItem icon={faCalendarCheck} label="Entrega" value={car.gestoriaReturnDate ? new Date(car.gestoriaReturnDate).toLocaleDateString('es-ES') : 'Pendiente'} />
                 </div>
                 <div className="w-full sm:w-auto flex-shrink-0">
                     {!car.gestoriaPickupDate ? (
-                        <button onClick={() => onGestoriaPickupClick(car)} className="w-full sm:w-auto bg-accent text-white px-4 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover text-sm font-semibold flex items-center justify-center gap-2 uppercase">
-                            <FontAwesomeIcon icon={faTruckPickup} />
-                            Registrar Recogida
+                        <button onClick={() => onGestoriaPickupClick(car)} className="w-full bg-accent text-white px-4 py-2 rounded shadow hover:bg-accent-hover text-sm font-bold uppercase transition-colors flex items-center justify-center gap-2">
+                            <FontAwesomeIcon icon={faTruckPickup} /> Registrar Recogida
                         </button>
                     ) : !car.gestoriaReturnDate ? (
-                        <button onClick={() => onGestoriaReturnClick(car)} className="w-full sm:w-auto bg-accent text-white px-4 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover text-sm font-semibold flex items-center justify-center gap-2 uppercase">
-                            <FontAwesomeIcon icon={faCalendarCheck} />
-                            Registrar Entrega
+                        <button onClick={() => onGestoriaReturnClick(car)} className="w-full bg-accent text-white px-4 py-2 rounded shadow hover:bg-accent-hover text-sm font-bold uppercase transition-colors flex items-center justify-center gap-2">
+                            <FontAwesomeIcon icon={faCalendarCheck} /> Registrar Entrega
                         </button>
                     ) : (
-                        <p className="text-sm font-semibold text-green-accent flex items-center gap-2 uppercase">
-                            <FontAwesomeIcon icon={faCheckCircle} />
-                            Proceso Finalizado
-                        </p>
+                        <div className="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded flex items-center gap-2 text-sm font-bold uppercase">
+                            <FontAwesomeIcon icon={faCheckCircle} /> Finalizado
+                        </div>
                     )}
                 </div>
             </div>
@@ -112,25 +96,23 @@ const NotesSection = ({ car, onDeleteNote }) => {
 
     return (
         <section>
-            <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">Anotaciones</h3>
+            <SectionHeader title="Anotaciones" />
             <div className="space-y-3">
                 {parsedNotes.length > 0 ? (
                     parsedNotes.map(note => (
-                        <div key={note.id} className="bg-component-bg-hover p-3 rounded-lg flex items-start justify-between gap-4 border border-border-color">
+                        <div key={note.id} className="bg-yellow-50/50 p-3 rounded border border-yellow-200 flex justify-between gap-4">
                             <div>
-                                <p className="text-sm text-text-primary uppercase">{note.content}</p>
-                                <p className="text-xs text-text-secondary mt-1 uppercase">
-                                    {note.type} - {new Date(note.date).toLocaleDateString('es-ES')}
-                                </p>
+                                <p className="text-sm text-gray-800">{note.content}</p>
+                                <p className="text-xs text-gray-500 mt-1 font-medium uppercase">{note.type} - {new Date(note.date).toLocaleDateString('es-ES')}</p>
                             </div>
-                            <button onClick={() => onDeleteNote(car, note.id)} className="text-red-accent/70 hover:text-red-accent transition-opacity flex-shrink-0 p-1" title="Eliminar nota">
+                            <button onClick={() => onDeleteNote(car, note.id)} className="text-gray-400 hover:text-red-600 transition-colors self-start">
                                 <FontAwesomeIcon icon={faTrashAlt} />
                             </button>
                         </div>
                     ))
                 ) : (
-                    <div className="text-center py-4 bg-component-bg-hover rounded-lg border border-border-color">
-                        <p className="text-sm text-text-secondary uppercase">No hay anotaciones.</p>
+                    <div className="text-center py-6 bg-gray-50 rounded border border-gray-200 border-dashed">
+                        <p className="text-sm text-gray-500">No hay anotaciones.</p>
                     </div>
                 )}
             </div>
@@ -139,35 +121,32 @@ const NotesSection = ({ car, onDeleteNote }) => {
 };
 
 const ExpenseItem = ({ expense, onEditExpenseClick, onDeleteExpense }) => (
-    <div className="bg-component-bg-hover p-4 rounded-lg border border-border-color">
-        <div className="flex items-start justify-between">
+    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-gray-300 transition-colors">
+        <div className="flex justify-between items-start">
             <div>
-                <p className="font-semibold text-text-primary uppercase">{expense.category}</p>
-                <p className="text-sm text-text-secondary">{new Date(expense.date).toLocaleDateString()}</p>
-                {expense.description && <p className="text-sm text-text-primary mt-1 uppercase">{expense.description}</p>}
+                <p className="font-bold text-gray-800 uppercase text-sm">{expense.category}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{new Date(expense.date).toLocaleDateString()}</p>
+                {expense.description && <p className="text-sm text-gray-600 mt-2">{expense.description}</p>}
             </div>
-            <div className="text-right flex-shrink-0 ml-4">
-                <p className="font-bold text-red-accent text-lg">- {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</p>
-                <div className="mt-2 flex items-center gap-4">
-                    <button onClick={() => onEditExpenseClick(expense)} className="text-text-secondary hover:text-blue-accent transition-opacity text-xs" title="EDITAR GASTO">
+            <div className="text-right">
+                <p className="font-bold text-red-600 text-lg">- {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</p>
+                <div className="mt-2 flex items-center justify-end gap-3">
+                    <button onClick={() => onEditExpenseClick(expense)} className="text-gray-400 hover:text-accent transition-colors">
                         <FontAwesomeIcon icon={faEdit} />
                     </button>
-                    <button onClick={() => onDeleteExpense(expense)} className="text-text-secondary hover:text-red-accent transition-opacity text-xs" title="ELIMINAR GASTO">
+                    <button onClick={() => onDeleteExpense(expense)} className="text-gray-400 hover:text-red-600 transition-colors">
                         <FontAwesomeIcon icon={faTrashAlt} />
                     </button>
                 </div>
             </div>
         </div>
         {expense.attachments && expense.attachments.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-border-color">
-                <div className="flex flex-wrap gap-2">
-                    {expense.attachments.map((file, index) => (
-                        <a href={file.path} target="_blank" rel="noopener noreferrer" key={index} title={file.originalname} className="text-xs font-semibold text-blue-accent hover:underline bg-blue-accent/10 px-2 py-1 rounded-md uppercase flex items-center gap-1.5">
-                            <FontAwesomeIcon icon={faPaperclip} />
-                            Adjunto {index + 1}
-                        </a>
-                    ))}
-                </div>
+            <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
+                {expense.attachments.map((file, index) => (
+                    <a key={index} href={file.path} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors">
+                        <FontAwesomeIcon icon={faPaperclip} /> Adjunto {index + 1}
+                    </a>
+                ))}
             </div>
         )}
     </div>
@@ -184,28 +163,22 @@ const ExpensesSection = ({ car, onEditExpenseClick, onDeleteExpense }) => {
             try {
                 const data = await api.getExpensesByCarLicensePlate(car.licensePlate);
                 setCarExpenses(data);
-            } catch (error) {
-                console.error("Error al cargar los gastos del coche:", error);
-            } finally {
-                setIsLoading(false);
-            }
+            } catch (error) { console.error(error); } finally { setIsLoading(false); }
         };
         fetchExpenses();
     }, [car]);
 
     return (
         <section>
-            <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">Gastos del Vehículo</h3>
+            <SectionHeader title="Gastos del Vehículo" />
             <div className="space-y-3">
                 {isLoading ? (
-                    <div className="text-center py-4 bg-component-bg-hover rounded-lg border border-border-color">
-                        <FontAwesomeIcon icon={faSpinner} spin className="text-text-secondary" />
-                    </div>
+                    <div className="text-center py-4"><FontAwesomeIcon icon={faSpinner} spin className="text-accent" /></div>
                 ) : carExpenses.length > 0 ? (
-                    carExpenses.map(expense => <ExpenseItem key={expense.id} expense={expense} onEditExpenseClick={onEditExpenseClick} onDeleteExpense={onDeleteExpense} />)
+                    carExpenses.map(exp => <ExpenseItem key={exp.id} expense={exp} onEditExpenseClick={onEditExpenseClick} onDeleteExpense={onDeleteExpense} />)
                 ) : (
-                    <div className="text-center py-4 bg-component-bg-hover rounded-lg border border-border-color">
-                        <p className="text-sm text-text-secondary uppercase">No hay gastos registrados.</p>
+                    <div className="text-center py-6 bg-gray-50 rounded border border-gray-200 border-dashed">
+                        <p className="text-sm text-gray-500">No hay gastos registrados.</p>
                     </div>
                 )}
             </div>
@@ -214,21 +187,22 @@ const ExpensesSection = ({ car, onEditExpenseClick, onDeleteExpense }) => {
 };
 
 const IncidentItem = ({ incident, onResolve, onDelete }) => (
-    <div className="bg-component-bg-hover p-3 rounded-lg flex items-start justify-between border border-border-color">
+    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-start gap-4">
         <div>
-            <p className="text-sm text-text-primary uppercase">{incident.description}</p>
-            <p className="text-xs text-text-secondary mt-1 uppercase">
-                {new Date(incident.date).toLocaleDateString()} -
-                <span className={`font-semibold ${incident.status === 'resuelta' ? 'text-green-accent' : 'text-yellow-accent'}`}>
-                    {incident.status === 'resuelta' ? ' Resuelta' : ' Pendiente'}
+            <p className="text-sm font-medium text-gray-800">{incident.description}</p>
+            <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 uppercase">
+                <span>{new Date(incident.date).toLocaleDateString()}</span>
+                <span>•</span>
+                <span className={`font-bold ${incident.status === 'resuelta' ? 'text-green-600' : 'text-yellow-600'}`}>
+                    {incident.status === 'resuelta' ? 'Resuelta' : 'Pendiente'}
                 </span>
-            </p>
+            </div>
         </div>
-        <div className="flex items-center gap-4 flex-shrink-0 ml-4">
-            <button onClick={() => onResolve(incident.id, incident.status === 'resuelta' ? 'abierta' : 'resuelta')} className={`${incident.status === 'resuelta' ? 'text-yellow-accent' : 'text-green-accent'} hover:opacity-75 transition-opacity`} title={incident.status === 'resuelta' ? 'MARCAR COMO PENDIENTE' : 'MARCAR COMO RESUELTA'}>
+        <div className="flex items-center gap-3 shrink-0">
+            <button onClick={() => onResolve(incident.id, incident.status === 'resuelta' ? 'abierta' : 'resuelta')} className={`p-1 ${incident.status === 'resuelta' ? 'text-yellow-500 hover:text-yellow-600' : 'text-green-500 hover:text-green-600'}`}>
                 <FontAwesomeIcon icon={incident.status === 'resuelta' ? faUndo : faCheckCircle} />
             </button>
-            <button onClick={() => onDelete(incident.id)} className="text-red-accent/70 hover:text-red-accent transition-opacity" title="ELIMINAR INCIDENCIA">
+            <button onClick={() => onDelete(incident.id)} className="p-1 text-gray-400 hover:text-red-600">
                 <FontAwesomeIcon icon={faTrashAlt} />
             </button>
         </div>
@@ -237,30 +211,27 @@ const IncidentItem = ({ incident, onResolve, onDelete }) => (
 
 const IncidentsSection = ({ incidents, onResolveIncident, onDeleteIncident }) => (
     <section>
-        <h3 className="text-lg font-semibold text-text-primary mb-4 border-b border-border-color pb-2 uppercase">Incidencias</h3>
+        <SectionHeader title="Incidencias" />
         <div className="space-y-3">
             {incidents.length > 0 ? (
-                incidents.map(incident => <IncidentItem key={incident.id} incident={incident} onResolve={onResolveIncident} onDelete={onDeleteIncident} />)
+                incidents.map(inc => <IncidentItem key={inc.id} incident={inc} onResolve={onResolveIncident} onDelete={onDeleteIncident} />)
             ) : (
-                <div className="text-center py-4 bg-component-bg-hover rounded-lg border border-border-color">
-                    <p className="text-sm text-text-secondary uppercase">No hay incidencias registradas.</p>
+                <div className="text-center py-6 bg-gray-50 rounded border border-gray-200 border-dashed">
+                    <p className="text-sm text-gray-500">No hay incidencias registradas.</p>
                 </div>
             )}
         </div>
     </section>
 );
 
-
-const CarDetailsSections = (props) => {
-    return (
-        <div className="space-y-8">
-            <BuyerSection {...props} />
-            <GestoriaSection {...props} />
-            <NotesSection {...props} />
-            <ExpensesSection {...props} />
-            <IncidentsSection {...props} />
-        </div>
-    );
-};
+const CarDetailsSections = (props) => (
+    <div className="space-y-8">
+        <BuyerSection {...props} />
+        <GestoriaSection {...props} />
+        <NotesSection {...props} />
+        <ExpensesSection {...props} />
+        <IncidentsSection {...props} />
+    </div>
+);
 
 export default CarDetailsSections;

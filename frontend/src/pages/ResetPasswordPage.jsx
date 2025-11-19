@@ -7,10 +7,10 @@ import api from '../services/api';
 
 const InputField = ({ name, type, value, onChange, placeholder, icon }) => (
     <div className="relative">
-        <FontAwesomeIcon icon={icon} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
+        <FontAwesomeIcon icon={icon} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
         <input 
             id={name} name={name} type={type} value={value} onChange={onChange}
-            className="w-full appearance-none rounded-lg border border-border-color bg-component-bg-hover px-4 py-3 pl-12 text-text-primary placeholder:text-text-secondary transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+            className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-3 pl-12 text-gray-900 placeholder:text-gray-400 transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent shadow-sm"
             placeholder={placeholder} 
         />
     </div>
@@ -52,13 +52,15 @@ const ResetPasswordPage = () => {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-background p-4">
-            <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[radial-gradient(var(--color-accent)_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+            {/* Se ha eliminado el fondo decorativo para mantener el estilo corporativo limpio */}
             
-            <div className="w-full max-w-md space-y-8 rounded-2xl bg-component-bg p-8 shadow-2xl backdrop-blur-lg border border-border-color">
+            <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-sm border border-gray-200">
                 <div className="text-center">
-                    <FontAwesomeIcon icon={faCar} className="mx-auto h-12 w-auto text-accent" />
-                    <h2 className="mt-6 text-3xl font-bold tracking-tight text-text-primary">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-4 text-accent border border-red-100">
+                        <FontAwesomeIcon icon={faCar} className="h-8 w-8" />
+                    </div>
+                    <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-gray-900 uppercase">
                         Establecer Nueva Contraseña
                     </h2>
                 </div>
@@ -69,22 +71,22 @@ const ResetPasswordPage = () => {
                         <InputField name="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirmar Nueva Contraseña" icon={faKey} />
                     </div>
 
-                    {error && <p className="text-sm text-red-accent text-center font-medium">{error}</p>}
-                    {message && <p className="text-sm text-green-accent text-center font-medium">{message}</p>}
+                    {error && <p className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200 text-center font-bold">{error}</p>}
+                    {message && <p className="text-sm text-green-600 bg-green-50 p-2 rounded border border-green-200 text-center font-bold">{message}</p>}
 
                     <div>
                         <button 
                             type="submit" 
                             disabled={isLoading || !!message}
-                            className="group relative flex w-full justify-center rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50"
+                            className="group relative flex w-full justify-center rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-bold text-white shadow hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 transition-colors uppercase tracking-wide"
                         >
                             {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Guardar Contraseña'}
                         </button>
                     </div>
                 </form>
                 {message && (
-                    <div className="text-center text-sm">
-                        <Link to="/login" className="font-medium text-accent hover:text-accent-hover">
+                    <div className="text-center text-sm pt-4 border-t border-gray-100">
+                        <Link to="/login" className="font-bold text-accent hover:text-accent-hover transition-colors uppercase text-xs">
                             Ir a Iniciar Sesión
                         </Link>
                     </div>

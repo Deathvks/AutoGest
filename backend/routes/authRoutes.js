@@ -5,6 +5,9 @@ const userAccountController = require('../controllers/userAccountController');
 const userProfileController = require('../controllers/userProfileController');
 const { protect } = require('../middleware/auth');
 const profileUpload = require('../middleware/profileUpload');
+// --- INICIO DE LA MODIFICACIÓN ---
+const convertImagesToWebp = require('../middleware/imageConversion');
+// --- FIN DE LA MODIFICACIÓN ---
 
 // Middleware para manejar errores de Multer
 const handleMulterError = (err, req, res, next) => {
@@ -39,7 +42,10 @@ router.post('/reset-password/:token', userAccountController.resetPassword);
 // --- Rutas de Perfil (Protegidas) ---
 router.get('/me', protect, userProfileController.getMe);
 router.get('/pending-invitation', protect, userProfileController.getPendingInvitation); 
-router.put('/profile', protect, profileUpload, handleMulterError, userProfileController.updateProfile);
+// --- INICIO DE LA MODIFICACIÓN ---
+// Se añade el middleware de conversión de imágenes tras el manejo de la subida
+router.put('/profile', protect, profileUpload, handleMulterError, convertImagesToWebp, userProfileController.updateProfile);
+// --- FIN DE LA MODIFICACIÓN ---
 router.delete('/logo', protect, userProfileController.deleteLogo);
 router.delete('/avatar', protect, userProfileController.deleteAvatar);
 router.put('/update-password', protect, userProfileController.updatePassword);

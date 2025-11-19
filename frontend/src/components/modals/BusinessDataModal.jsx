@@ -6,19 +6,19 @@ import { AuthContext } from '../../context/AuthContext';
 
 const InputField = ({ label, name, value, onChange, icon, required = false }) => (
     <div>
-        <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">
+        <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">
             {label}
-            {required && <span className="text-red-accent ml-1">*</span>}
+            {required && <span className="text-red-600 ml-1">*</span>}
         </label>
         <div className="relative">
             {icon && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-gray-400" />
                 </div>
             )}
             <input
                 type="text" name={name} value={value || ''} onChange={onChange}
-                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent ${icon ? 'pl-11' : ''}`}
+                className={`w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 transition-colors placeholder:text-gray-400 ${icon ? 'pl-11' : ''}`}
             />
         </div>
     </div>
@@ -85,7 +85,6 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                 name: hasBillingDetails ? user.name || '' : '',
                 dni: user.dni || '',
                 cif: user.cif || '',
-                // Cargamos los datos específicos si existen, si no, strings vacíos
                 streetAddress: isCompany ? (user.companyStreetAddress || '') : (user.personalStreetAddress || ''),
                 postalCode: isCompany ? (user.companyPostalCode || '') : (user.personalPostalCode || ''),
                 city: isCompany ? (user.companyCity || '') : (user.personalCity || ''),
@@ -137,16 +136,11 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
         const dataToSave = new FormData();
         dataToSave.append('email', user.email);
         
-        // Datos comunes (aunque el backend los leerá de los específicos, enviamos por si acaso)
-        // dataToSave.append('phone', formData.phone); 
-
         if (accountType === 'empresa') {
             dataToSave.append('businessName', formData.businessName);
             dataToSave.append('cif', formData.cif);
-            dataToSave.append('name', user.name); // Mantener nombre original del usuario
+            dataToSave.append('name', user.name); 
             dataToSave.append('dni', '');
-            
-            // Campos específicos de empresa
             dataToSave.append('companyStreetAddress', formData.streetAddress);
             dataToSave.append('companyPostalCode', formData.postalCode);
             dataToSave.append('companyCity', formData.city);
@@ -156,10 +150,8 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
         } else {
             dataToSave.append('name', formData.name);
             dataToSave.append('dni', formData.dni);
-            dataToSave.append('businessName', formData.name); // Para autónomos el nombre comercial es el nombre
+            dataToSave.append('businessName', formData.name);
             dataToSave.append('cif', '');
-
-            // Campos específicos personales
             dataToSave.append('personalStreetAddress', formData.streetAddress);
             dataToSave.append('personalPostalCode', formData.postalCode);
             dataToSave.append('personalCity', formData.city);
@@ -177,43 +169,45 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-border-color">
-                <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary flex items-center gap-3">
-                        <FontAwesomeIcon icon={faBuilding} />
-                        DATOS DE FACTURACIÓN
-                    </h2>
-                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in-up backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-gray-300 overflow-hidden">
+                <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 bg-accent text-white">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white/20 rounded-full">
+                            <FontAwesomeIcon icon={faBuilding} className="text-white w-5 h-5" />
+                        </div>
+                        <h2 className="text-lg font-bold uppercase tracking-wide">Datos de Facturación</h2>
+                    </div>
+                    <button onClick={onClose} className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20">
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar">
-                    <div className="relative flex w-full items-center rounded-full bg-component-bg-hover p-1 border border-border-color overflow-hidden">
+                <div className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar bg-white">
+                    <div className="relative flex w-full items-center rounded-lg bg-gray-100 p-1 border border-gray-200">
                         <span
-                            className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
-                                accountType === 'particular' ? 'translate-x-[96%]' : 'translate-x-0'
+                            className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-md bg-white shadow-sm border border-gray-200 transition-transform duration-300 ${
+                                accountType === 'particular' ? 'translate-x-full' : 'translate-x-0'
                             }`}
                             style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                         />
                         <button
                             type="button"
                             onClick={() => setAccountType('empresa')}
-                            className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${
-                                accountType === 'empresa' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                            className={`relative z-10 flex-1 py-2 text-xs font-bold transition-colors duration-300 uppercase text-center ${
+                                accountType === 'empresa' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
-                            EMPRESA
+                            Empresa
                         </button>
                         <button
                             type="button"
                             onClick={() => setAccountType('particular')}
-                            className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${
-                                accountType === 'particular' ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+                            className={`relative z-10 flex-1 py-2 text-xs font-bold transition-colors duration-300 uppercase text-center ${
+                                accountType === 'particular' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
                             }`}
                         >
-                            AUTÓNOMO / PARTICULAR
+                            Autónomo
                         </button>
                     </div>
 
@@ -230,7 +224,7 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                             </>
                         )}
                         
-                        <hr className="border-border-color !my-6" />
+                        <div className="border-t border-gray-100 my-6"></div>
 
                         <InputField label="Dirección (Calle, Nº, Piso)" name="streetAddress" value={formData.streetAddress} onChange={handleChange} required={true} />
                         
@@ -243,12 +237,16 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                         <InputField label="Teléfono" name="phone" value={formData.phone} onChange={handleChange} icon={faPhone} required={true} />
                     </div>
 
-                    {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
+                    {error && (
+                        <div className="p-3 bg-red-50 border-l-4 border-red-600 text-red-700 text-sm font-bold uppercase rounded-r">
+                            {error}
+                        </div>
+                    )}
                 </div>
 
-                <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-border-color">
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold uppercase">Cancelar</button>
-                    <button onClick={handleConfirmSave} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold uppercase">Guardar Datos</button>
+                <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-gray-200 bg-gray-50">
+                    <button onClick={onClose} className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm">Cancelar</button>
+                    <button onClick={handleConfirmSave} className="bg-accent text-white px-6 py-2.5 rounded hover:bg-accent-hover transition-colors font-bold uppercase text-xs tracking-wide shadow-sm">Guardar Datos</button>
                 </div>
             </div>
         </div>

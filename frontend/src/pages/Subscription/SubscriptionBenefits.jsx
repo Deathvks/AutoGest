@@ -20,12 +20,16 @@ const SubscriptionBenefits = () => {
             {benefits.map((benefit, index) => (
                 <div 
                     key={benefit.title} 
-                    className="group bg-component-bg backdrop-blur-lg p-6 rounded-2xl border border-border-color shadow-lg transition-all duration-300 hover:shadow-2xl hover:border-accent hover:scale-[1.03] cursor-pointer animate-fade-in-up"
+                    className="group bg-white p-6 rounded-lg border border-gray-200 shadow-sm transition-all duration-300 hover:shadow-md hover:border-accent cursor-default animate-fade-in-up flex items-start gap-4"
                     style={{ animationDelay: `${index * 100}ms` }}
                 >
-                    <FontAwesomeIcon icon={benefit.icon} className="text-accent text-3xl mb-4 transition-transform duration-300 group-hover:scale-110" />
-                    <h4 className="font-bold text-text-primary text-lg mb-2 transition-colors duration-300 group-hover:text-accent">{benefit.title}</h4>
-                    <p className="text-text-secondary text-sm leading-relaxed">{benefit.description}</p>
+                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-50 flex items-center justify-center group-hover:bg-accent transition-colors duration-300 border border-red-100 group-hover:border-accent">
+                        <FontAwesomeIcon icon={benefit.icon} className="text-accent text-lg group-hover:text-white transition-colors duration-300" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-gray-900 text-base mb-1 uppercase group-hover:text-accent transition-colors duration-300">{benefit.title}</h4>
+                        <p className="text-gray-600 text-sm leading-relaxed">{benefit.description}</p>
+                    </div>
                 </div>
             ))}
         </div>

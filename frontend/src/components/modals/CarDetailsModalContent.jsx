@@ -12,10 +12,12 @@ const CarDetailsModalContent = (props) => {
     if (!car) return null;
 
     return (
-        <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col border border-border-color">
+        <div className="bg-white rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col border border-gray-200 overflow-hidden relative">
+            {/* La franja roja superior se ha eliminado porque el header ahora es completamente rojo */}
+
             <CarDetailsHeader {...props} />
 
-            <div className="flex-grow overflow-y-auto p-6 space-y-8 no-scrollbar">
+            <div className="flex-grow overflow-y-auto p-8 space-y-8 no-scrollbar bg-white">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-1">
                         <CarDetailsInfo {...props} />
@@ -24,7 +26,7 @@ const CarDetailsModalContent = (props) => {
                         <CarDetailsMain {...props} />
                     </div>
                 </div>
-                <div className="pt-8 border-t border-border-color">
+                <div className="pt-8 border-t border-gray-100">
                     <CarDetailsSections {...props} />
                 </div>
             </div>

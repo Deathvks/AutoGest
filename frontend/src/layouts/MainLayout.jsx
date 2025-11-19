@@ -12,9 +12,6 @@ import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 import AppRoutes from '../components/AppRoutes';
 import AppModals from '../components/AppModals';
-// --- INICIO DE LA MODIFICACIÓN ---
-// Se elimina la importación del componente de versión
-// --- FIN DE LA MODIFICACIÓN ---
 
 const MainLayout = () => {
     const appState = useAppState();
@@ -22,17 +19,13 @@ const MainLayout = () => {
     const { user, subscriptionStatus, isRefreshing, promptTrial, isTrialActive } = useContext(AuthContext);
     const location = useLocation();
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se ajusta la lógica para que el modal de prueba no aparezca si el usuario ya está en un equipo.
     useEffect(() => {
         if (promptTrial && user && !user.companyId) {
             appState.setIsTrialModalOpen(true);
         } else {
-            // Se asegura de cerrar el modal si el usuario se une a un equipo
             appState.setIsTrialModalOpen(false);
         }
     }, [promptTrial, user, user?.companyId, appState.setIsTrialModalOpen]);
-    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         const {
@@ -77,11 +70,11 @@ const MainLayout = () => {
 
     if (isUnassignedUser && !isAllowedUnassignedPath) {
         return (
-            <div className="flex h-screen bg-background font-sans text-text-secondary">
+            <div className="flex h-dvh bg-background font-sans text-text-secondary overflow-hidden">
                 <Sidebar onLogoutClick={() => setLogoutModalOpen(true)} />
-                <div className="flex flex-col flex-1 min-w-0">
+                <div className="flex flex-col flex-1 min-w-0 h-full">
                     <Header appState={appState} />
-                    <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 flex items-center justify-center no-scrollbar">
+                    <main className="flex-1 overflow-y-auto overscroll-none p-4 sm:p-6 lg:p-8 flex items-center justify-center no-scrollbar relative">
                         <div className="w-full max-w-lg space-y-6 rounded-2xl bg-component-bg p-8 text-center shadow-2xl backdrop-blur-lg border border-border-color">
                             <FontAwesomeIcon icon={faUsers} className="text-5xl text-accent mb-4" />
                             <h2 className="text-2xl font-bold text-text-primary">Acción Requerida</h2>
@@ -111,11 +104,18 @@ const MainLayout = () => {
     }
 
     return (
-        <div className="flex h-screen bg-background font-sans text-text-secondary">
+        // Contenedor principal con altura dinámica viewport (dvh) y overflow oculto
+        <div className="flex h-dvh bg-background font-sans text-text-secondary overflow-hidden">
             <Sidebar onLogoutClick={() => setLogoutModalOpen(true)} />
-            <div className="flex flex-col flex-1 min-w-0">
+            <div className="flex flex-col flex-1 min-w-0 h-full">
                 <Header appState={appState} />
-                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 no-scrollbar">
+                
+                {/* CAMBIO: 
+                    - overscroll-none: Deshabilita el rebote del scroll en todos los navegadores compatibles.
+                    - relative: Para posicionamiento.
+                    - lg:pb-4: Padding inferior reducido en escritorio para evitar espacio vacío excesivo.
+                */}
+                <main className="flex-1 overflow-y-auto overscroll-none p-4 sm:p-6 lg:p-8 pb-20 lg:pb-4 no-scrollbar relative">
                     <Suspense fallback={<div className="flex h-full w-full items-center justify-center">Cargando página...</div>}>
                         <AppRoutes 
                             appState={appState} 
@@ -125,9 +125,6 @@ const MainLayout = () => {
                 </main>
             </div>
             <BottomNav />
-            {/* --- INICIO DE LA MODIFICACIÓN --- */}
-            {/* Se elimina el indicador de versión de esta parte del layout */}
-            {/* --- FIN DE LA MODIFICACIÓN --- */}
             <AppModals appState={appState} />
         </div>
     );

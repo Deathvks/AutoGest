@@ -1,26 +1,22 @@
 // autogest-app/frontend/src/components/modals/EditExpenseModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faEuroSign, faCalendarDays, faTag, faPaperclip, faSync, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faEuroSign, faTag, faPaperclip, faSync, faCheck, faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
 import Select from '../Select';
-// --- INICIO DE LA MODIFICACIÓN ---
-import DatePicker from '../DatePicker'; // Importamos el nuevo componente
-// --- FIN DE LA MODIFICACIÓN ---
+import DatePicker from '../DatePicker';
 
 const InputField = ({ label, name, value, onChange, type = 'text', icon, placeholder }) => (
     <div>
-        <label className="block text-sm font-semibold text-text-primary mb-1">{label}</label>
+        <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">{label}</label>
         <div className="relative">
             {icon && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-gray-400" />
                 </div>
             )}
             <input
                 type={type} name={name} value={value} onChange={onChange} placeholder={placeholder}
-                // --- INICIO DE LA MODIFICACIÓN ---
-                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent ${icon ? 'pl-11' : ''} min-w-0 text-left`}
-                // --- FIN DE LA MODIFICACIÓN ---
+                className={`w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors ${icon ? 'pl-11' : ''}`}
             />
         </div>
     </div>
@@ -36,8 +32,16 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
     }, [value]);
     return (
         <div>
-            <label className="block text-sm font-semibold text-text-primary mb-1">{label}</label>
-            <textarea ref={textareaRef} name={name} value={value} onChange={onChange} placeholder={placeholder} className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary resize-none overflow-hidden" rows="3" />
+            <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">{label}</label>
+            <textarea 
+                ref={textareaRef} 
+                name={name} 
+                value={value} 
+                onChange={onChange} 
+                placeholder={placeholder} 
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 resize-none overflow-hidden" 
+                rows="3" 
+            />
         </div>
     );
 };
@@ -79,7 +83,6 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
             setEditedExpense(prev => ({ ...prev, category: 'Otros', customCategory: expense.category }));
         }
     }, [expense]);
-
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -127,22 +130,27 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md p-6 border border-border-color flex flex-col max-h-[90vh]">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-text-primary">Editar Gasto</h2>
-                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in-up backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col border border-gray-300 overflow-hidden max-h-[90vh]">
+                {/* Header Rojo Occident */}
+                <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 bg-accent text-white">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white/20 rounded-full">
+                            <FontAwesomeIcon icon={faFileInvoiceDollar} className="text-white w-5 h-5" />
+                        </div>
+                        <h2 className="text-lg font-bold uppercase tracking-wide">Editar Gasto</h2>
+                    </div>
+                    <button onClick={onClose} className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20">
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
                 </div>
-                <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-4 overflow-y-auto no-scrollbar flex-grow overflow-x-hidden">
-                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+
+                <form onSubmit={(e) => e.preventDefault()} noValidate className="flex-grow overflow-y-auto p-6 space-y-4 bg-white no-scrollbar">
                     <DatePicker 
                         label="Fecha"
                         value={editedExpense.date}
                         onChange={(date) => handleSelectChange('date', date)}
                     />
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
                     <Select
                         label="Categoría"
                         value={editedExpense.category}
@@ -162,8 +170,8 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                     <InputField label="Importe (€)" name="amount" type="number" value={editedExpense.amount} onChange={handleChange} icon={faEuroSign} />
                     <TextareaField label="Descripción (Opcional)" name="description" value={editedExpense.description} onChange={handleChange} placeholder="Detalles del gasto..." />
 
-                    <div className="space-y-4 pt-4 border-t border-border-color">
-                        <div className="flex items-center">
+                    <div className="pt-4 border-t border-gray-100">
+                        <div className="flex items-center mb-4">
                             <input
                                 type="checkbox"
                                 name="isRecurring"
@@ -174,19 +182,19 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                             />
                             <label
                                 htmlFor="isRecurringEdit"
-                                className="flex items-center cursor-pointer"
+                                className="flex items-center cursor-pointer group"
                             >
-                                <div className="w-5 h-5 bg-component-bg-hover border-2 border-border-color rounded-md flex items-center justify-center transition-colors peer-checked:bg-accent peer-checked:border-accent peer-focus:ring-2 peer-focus:ring-accent peer-focus:ring-offset-2 peer-focus:ring-offset-component-bg">
+                                <div className={`w-5 h-5 border-2 rounded-md flex items-center justify-center transition-colors ${editedExpense.isRecurring ? 'bg-accent border-accent' : 'bg-white border-gray-300 group-hover:border-accent'}`}>
                                     <FontAwesomeIcon icon={faCheck} className={`h-3 w-3 text-white transition-opacity ${editedExpense.isRecurring ? 'opacity-100' : 'opacity-0'}`} />
                                 </div>
-                                <span className="ml-3 text-sm font-semibold text-text-primary select-none">
+                                <span className="ml-3 text-sm font-bold text-gray-700 uppercase select-none group-hover:text-accent transition-colors">
                                     Gasto Recurrente
                                 </span>
                             </label>
                         </div>
 
                         {editedExpense.isRecurring && (
-                            <div className="space-y-4 p-4 bg-background/50 rounded-xl border border-border-color">
+                            <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                 <Select
                                     label="Frecuencia"
                                     value={editedExpense.recurrenceType}
@@ -204,20 +212,18 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                                         placeholder="Ej: 15"
                                     />
                                 )}
-                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                 <DatePicker
                                     label="Fecha de Finalización (opcional)"
                                     value={editedExpense.recurrenceEndDate}
                                     onChange={(date) => handleSelectChange('recurrenceEndDate', date)}
                                     placeholder="Sin fecha límite"
                                 />
-                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                             </div>
                         )}
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-text-primary mb-1">Adjuntar Nuevos Archivos</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">Adjuntar Nuevos Archivos</label>
                         <input
                             type="file"
                             multiple
@@ -229,17 +235,32 @@ const EditExpenseModal = ({ expense, onClose, onUpdate }) => {
                         <button
                             type="button"
                             onClick={() => fileInputRef.current.click()}
-                            className="w-full bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors flex items-center justify-center gap-2 border border-border-color font-semibold"
+                            className="w-full bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 font-bold uppercase text-sm shadow-sm"
                         >
-                            <FontAwesomeIcon icon={faPaperclip} />
+                            <FontAwesomeIcon icon={faPaperclip} className="text-accent" />
                             {attachments.length > 0 ? `${attachments.length} archivo(s) nuevo(s)` : 'Seleccionar archivos'}
                         </button>
                     </div>
-                    {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
+                    {error && (
+                        <div className="p-3 bg-red-50 border-l-4 border-red-600 text-red-700 text-sm font-bold uppercase rounded-r">
+                            {error}
+                        </div>
+                    )}
                 </form>
-                <div className="mt-6 flex justify-end gap-4 pt-6 border-t border-border-color">
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold">Cancelar</button>
-                    <button onClick={handleUpdate} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold">Guardar Cambios</button>
+
+                <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-gray-200 bg-gray-50">
+                    <button 
+                        onClick={onClose} 
+                        className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        onClick={handleUpdate} 
+                        className="bg-accent text-white px-6 py-2.5 rounded hover:bg-accent-hover transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                    >
+                        Guardar Cambios
+                    </button>
                 </div>
             </div>
         </div>

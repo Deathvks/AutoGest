@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/AddCarModal.jsx
 import React, { useState, useMemo, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faCar } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../context/AuthContext';
 
 import InsuranceConfirmationModal from './InsuranceConfirmationModal';
@@ -12,9 +12,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
     const { user } = useContext(AuthContext);
 
     const [newCar, setNewCar] = useState({
-        // --- INICIO DE LA MODIFICACIÓN ---
-        make: '', model: '', licensePlate: '', vin: '', registrationDate: '', // Se elimina la fecha por defecto
-        // --- FIN DE LA MODIFICACIÓN ---
+        make: '', model: '', licensePlate: '', vin: '', registrationDate: '',
         purchasePrice: '', price: '', km: '', horsepower: '', location: '',
         newLocation: '', notes: '', tags: [], hasInsurance: false, fuel: '', transmission: '', keys: 1
     });
@@ -30,9 +28,7 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
     const [tagInput, setTagInput] = useState('');
     const [showInsuranceConfirm, setShowInsuranceConfirm] = useState(false);
     
-    // --- INICIO DE LA MODIFICACIÓN ---
     const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const fuelOptions = useMemo(() => [ { id: 'Gasolina', name: 'Gasolina' }, { id: 'Diesel', name: 'Diesel' }, { id: 'Híbrido', name: 'Híbrido' }, { id: 'Eléctrico', name: 'Eléctrico' } ], []);
     const transmissionOptions = useMemo(() => [ { id: 'Manual', name: 'Manual' }, { id: 'Automático', name: 'Automático' } ], []);
@@ -108,11 +104,9 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
         if (!newCar.make.trim()) errors.make = 'LA MARCA ES OBLIGATORIA';
         if (!newCar.model.trim()) errors.model = 'EL MODELO ES OBLIGATORIO';
         if (!newCar.licensePlate.trim()) errors.licensePlate = 'LA MATRÍCULA ES OBLIGATORIA';
-        // --- INICIO DE LA MODIFICACIÓN ---
         if (canViewSensitiveData && !newCar.purchasePrice.trim()) {
             errors.purchasePrice = 'EL PRECIO DE COMPRA ES OBLIGATORIO';
         }
-        // --- FIN DE LA MODIFICACIÓN ---
         if (!newCar.price.trim()) errors.price = 'EL PRECIO DE VENTA ES OBLIGATORIO';
 
         setFieldErrors(errors);
@@ -143,11 +137,9 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
             Object.keys(finalCarData).forEach(key => {
                 const value = finalCarData[key];
                 if (key === 'tags') formData.append(key, JSON.stringify(value));
-                // --- INICIO DE LA MODIFICACIÓN ---
                 else if (key === 'purchasePrice' && !canViewSensitiveData) {
                     // No añadir el precio de compra si no hay permisos
                 }
-                // --- FIN DE LA MODIFICACIÓN ---
                 else if (value !== null && value !== undefined && value !== '') formData.append(key, value);
             });
 
@@ -170,16 +162,25 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
 
     return (
        <>
-           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 animate-fade-in-up">
-                <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-border-color">
-                    <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
-                        <h2 className="text-xl font-bold text-text-primary uppercase">Añadir Nuevo Coche</h2>
-                        <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in-up backdrop-blur-sm">
+                <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-gray-300 overflow-hidden">
+                    {/* Header Rojo Occident */}
+                    <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 bg-accent text-white">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-full">
+                                <FontAwesomeIcon icon={faCar} className="text-white w-5 h-5" />
+                            </div>
+                            <h2 className="text-lg font-bold uppercase tracking-wide">Nuevo Vehículo</h2>
+                        </div>
+                        <button 
+                            onClick={onClose} 
+                            className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20"
+                        >
                             <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                         </button>
                     </div>
 
-                    <form onSubmit={(e) => e.preventDefault()} noValidate className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar">
+                    <form onSubmit={(e) => e.preventDefault()} noValidate className="flex-grow overflow-y-auto p-6 space-y-6 bg-white no-scrollbar">
                         <AddCarFileUploads
                             imagePreview={imagePreview}
                             handleImageChange={handleImageChange}
@@ -189,7 +190,8 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                             handleFileChange={handleFileChange}
                             handleRemoveFile={handleRemoveFile}
                         />
-                        <div className="pt-6 border-t border-border-color">
+                        
+                        <div className="pt-4 border-t border-gray-100">
                             <AddCarFormFields
                                 newCar={newCar}
                                 fieldErrors={fieldErrors}
@@ -208,11 +210,28 @@ const AddCarModal = ({ onClose, onAdd, locations }) => {
                         </div>
                     </form>
 
-                    {error && <p className="flex-shrink-0 px-6 pb-4 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
+                    {error && (
+                        <div className="flex-shrink-0 px-6 pb-4">
+                            <div className="p-3 bg-red-50 border-l-4 border-red-600 text-red-700 text-sm font-bold uppercase rounded-r">
+                                {error}
+                            </div>
+                        </div>
+                    )}
 
-                    <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-border-color">
-                        <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold">CANCELAR</button>
-                        <button onClick={handleAdd} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold">AÑADIR COCHE</button>
+                    {/* Footer Gris Claro */}
+                    <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-gray-200 bg-gray-50">
+                        <button 
+                            onClick={onClose} 
+                            className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                        >
+                            Cancelar
+                        </button>
+                        <button 
+                            onClick={handleAdd} 
+                            className="bg-accent text-white px-6 py-2.5 rounded hover:bg-accent-hover transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                        >
+                            Añadir Coche
+                        </button>
                     </div>
                 </div>
             </div>

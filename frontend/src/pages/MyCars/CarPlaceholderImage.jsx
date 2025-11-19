@@ -19,7 +19,8 @@ const CarPlaceholderImage = ({ car, size }) => {
 
     return (
         <div
-            className={`w-full h-full flex items-center justify-center font-extrabold text-white ${textSizeClass}`}
+            // CAMBIO: text-white a text-gray-300 para que las letras sean grises
+            className={`w-full h-full flex items-center justify-center font-extrabold text-gray-300 ${textSizeClass}`}
             style={backgroundStyle}
         >
             {initials}

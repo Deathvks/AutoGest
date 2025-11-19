@@ -4,7 +4,7 @@ import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faExclamationTriangle, faSpinner, faSignOutAlt, faUserPlus, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faExclamationTriangle, faSpinner, faSignOutAlt, faUserPlus, faSignInAlt, faUsers } from '@fortawesome/free-solid-svg-icons';
 
 const AcceptInvitationPage = () => {
     const { token } = useParams();
@@ -63,20 +63,22 @@ const AcceptInvitationPage = () => {
         switch (status) {
             case 'loading':
                 return (
-                    <div className="text-center">
+                    <div className="text-center py-8">
                         <FontAwesomeIcon icon={faSpinner} spin size="3x" className="text-accent mb-4" />
-                        <p className="text-text-secondary">Verificando invitación...</p>
+                        <p className="text-gray-500 font-medium">Verificando invitación...</p>
                     </div>
                 );
 
             case 'invalid':
             case 'error':
                 return (
-                    <div className="text-center">
-                        <FontAwesomeIcon icon={faExclamationTriangle} className="text-5xl text-red-accent mb-4" />
-                        <h2 className="text-2xl font-bold text-text-primary mb-2">Error en la Invitación</h2>
-                        <p className="text-text-secondary">{error}</p>
-                        <Link to={user ? "/" : "/login"} className="mt-6 inline-block bg-accent text-white font-bold py-2 px-4 rounded-lg hover:bg-accent-hover transition-colors">
+                    <div className="text-center py-6">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-6 border border-red-100">
+                            <FontAwesomeIcon icon={faExclamationTriangle} className="text-3xl text-red-600" />
+                        </div>
+                        <h2 className="text-2xl font-extrabold text-gray-900 mb-3 uppercase tracking-tight">Error</h2>
+                        <p className="text-gray-600 mb-8 px-4">{error}</p>
+                        <Link to={user ? "/" : "/login"} className="inline-flex items-center justify-center w-full bg-accent text-white font-bold py-3 px-6 rounded-lg hover:bg-accent-hover transition-colors uppercase text-sm shadow-sm">
                             {user ? "Ir a la página principal" : "Iniciar Sesión"}
                         </Link>
                     </div>
@@ -85,16 +87,23 @@ const AcceptInvitationPage = () => {
             case 'needsAction':
                 if (user && user.email !== invitationDetails.email) {
                     return (
-                         <div className="text-center">
-                            <FontAwesomeIcon icon={faExclamationTriangle} className="text-5xl text-yellow-accent mb-4" />
-                            <h2 className="text-2xl font-bold text-text-primary mb-2">Sesión Incorrecta</h2>
-                            <p className="text-text-secondary">
-                                La invitación es para <strong className="font-semibold text-text-primary">{invitationDetails.email}</strong>, pero has iniciado sesión como <strong className="font-semibold text-text-primary">{user.email}</strong>.
+                         <div className="text-center py-6">
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-50 mb-6 border border-yellow-100">
+                                <FontAwesomeIcon icon={faExclamationTriangle} className="text-3xl text-yellow-600" />
+                            </div>
+                            <h2 className="text-xl font-extrabold text-gray-900 mb-3 uppercase tracking-tight">Sesión Incorrecta</h2>
+                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-left text-sm text-yellow-800 mb-6">
+                                <p className="mb-2">
+                                    La invitación es para <strong className="font-bold">{invitationDetails.email}</strong>.
+                                </p>
+                                <p>
+                                    Actualmente estás conectado como <strong className="font-bold">{user.email}</strong>.
+                                </p>
+                            </div>
+                             <p className="text-gray-600 text-sm mb-8">
+                                Por favor, cierra la sesión actual para poder aceptar la invitación con la cuenta correcta.
                             </p>
-                             <p className="text-text-secondary mt-2">
-                                Por favor, cierra la sesión actual para poder aceptar la invitación.
-                            </p>
-                            <button onClick={handleLogout} className="mt-8 w-full bg-red-accent/20 text-red-accent font-bold py-3 px-4 rounded-lg hover:bg-red-accent/30 transition-colors flex items-center justify-center gap-2">
+                            <button onClick={handleLogout} className="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 uppercase text-sm shadow-sm">
                                 <FontAwesomeIcon icon={faSignOutAlt} />
                                 Cerrar Sesión y Continuar
                             </button>
@@ -103,60 +112,62 @@ const AcceptInvitationPage = () => {
                 }
 
                 return (
-                    <div className="text-center">
-                        <FontAwesomeIcon icon={faCheckCircle} className="text-5xl text-green-accent mb-4" />
-                        <h2 className="text-2xl font-bold text-text-primary mb-2">Has sido invitado</h2>
-                        <p className="text-text-secondary">
-                            Para unirte al equipo de <span className="font-semibold text-text-primary">{invitationDetails.companyName}</span>.
+                    <div className="text-center pt-4">
+                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-50 mb-6 border border-green-100">
+                            <FontAwesomeIcon icon={faUsers} className="text-4xl text-green-600" />
+                        </div>
+                        <h2 className="text-2xl font-extrabold text-gray-900 mb-2 uppercase tracking-tight">Invitación de Equipo</h2>
+                        <p className="text-gray-600 mb-6">
+                            Has sido invitado a unirte a <span className="font-bold text-gray-900">{invitationDetails.companyName}</span>.
                         </p>
                         
                         {invitationDetails.isTrialActive && (
-                            <div className="mt-4 p-3 bg-yellow-accent/10 border-l-4 border-yellow-accent text-yellow-accent/80 rounded-md text-left">
-                                <p className="font-bold">¡Atención!</p>
-                                <p className="text-sm">Actualmente estás en un período de prueba. Al unirte, tu prueba finalizará. Si abandonas el equipo, necesitarás una suscripción.</p>
+                            <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-left rounded-r-lg">
+                                <p className="font-bold text-xs uppercase mb-1">¡Atención!</p>
+                                <p className="text-sm leading-relaxed">
+                                    Actualmente estás en un período de prueba. Al unirte, tu prueba finalizará. Si abandonas el equipo, necesitarás una suscripción propia.
+                                </p>
                             </div>
                         )}
 
                         {!invitationDetails.isTrialActive && !invitationDetails.hasUsedTrial && (
-                            // --- INICIO DE LA MODIFICACIÓN ---
-                            // Eliminamos la clase 'border' para quitar el borde blanco
-                            <div className="mt-4 p-3 bg-blue-accent/10 border-l-4 border-blue-accent text-blue-accent/80 rounded-md text-left">
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
-                                <p className="font-bold">Información</p>
-                                <p className="text-sm">No has usado tu período de prueba. Si en el futuro abandonas este equipo, podrás disfrutar de tus 3 días de prueba.</p>
+                            <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 text-blue-800 text-left rounded-r-lg">
+                                <p className="font-bold text-xs uppercase mb-1">Información</p>
+                                <p className="text-sm leading-relaxed">
+                                    No has usado tu período de prueba. Si en el futuro abandonas este equipo, podrás disfrutar de tus 3 días de prueba.
+                                </p>
                             </div>
                         )}
 
                         {user ? (
-                             <button onClick={handleAccept} disabled={isAccepting} className="mt-8 w-full bg-accent text-white font-bold py-3 px-4 rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50">
+                             <button onClick={handleAccept} disabled={isAccepting} className="w-full bg-accent text-white font-bold py-3 px-4 rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-70 shadow-sm uppercase text-sm tracking-wide">
                                 {isAccepting ? (
                                     <><FontAwesomeIcon icon={faSpinner} spin className="mr-2" /> Uniéndote...</>
-                                ) : 'Aceptar y Unirme al Equipo'}
+                                ) : 'Aceptar y Unirme'}
                             </button>
                         ) : (
-                            <div className="mt-8">
+                            <div className="mt-8 pt-6 border-t border-gray-100">
                                 {invitationDetails.userExists ? (
-                                    <p className="text-text-secondary mb-4">
-                                        Hemos detectado una cuenta con el correo <strong className="font-semibold text-text-primary">{invitationDetails.email}</strong>. Por favor, inicia sesión para aceptar la invitación.
-                                    </p>
-                                ) : (
-                                    <p className="text-text-secondary mb-4">
-                                        Parece que no tienes una cuenta. Para aceptar la invitación, primero <strong className="font-semibold text-text-primary">debes crear una cuenta</strong> con el correo <strong className="font-semibold text-text-primary">{invitationDetails.email}</strong>.
-                                    </p>
-                                )}
-                                <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                                    {invitationDetails.userExists ? (
-                                        <Link to={`/login?email=${invitationDetails.email}`} state={{ from: location.pathname }} className="flex-1 bg-accent text-white font-bold py-3 px-4 rounded-lg hover:bg-accent-hover text-center transition-colors flex items-center justify-center gap-2">
+                                    <>
+                                        <p className="text-sm text-gray-600 mb-4">
+                                            Hemos detectado una cuenta con el correo <strong className="text-gray-900">{invitationDetails.email}</strong>.
+                                        </p>
+                                        <Link to={`/login?email=${invitationDetails.email}`} state={{ from: location.pathname }} className="flex w-full items-center justify-center gap-2 bg-accent text-white font-bold py-3 px-4 rounded-lg hover:bg-accent-hover transition-colors shadow-sm uppercase text-sm">
                                             <FontAwesomeIcon icon={faSignInAlt} />
-                                            Iniciar Sesión
+                                            Iniciar Sesión para Aceptar
                                         </Link>
-                                    ) : (
-                                        <Link to={`/register?email=${invitationDetails.email}`} state={{ from: location.pathname }} className="flex-1 bg-component-bg-hover text-text-primary font-bold py-3 px-4 rounded-lg hover:bg-border-color text-center transition-colors flex items-center justify-center gap-2">
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-sm text-gray-600 mb-4">
+                                            No tienes cuenta. Crea una con <strong className="text-gray-900">{invitationDetails.email}</strong> para aceptar.
+                                        </p>
+                                        <Link to={`/register?email=${invitationDetails.email}`} state={{ from: location.pathname }} className="flex w-full items-center justify-center gap-2 bg-white text-gray-700 font-bold py-3 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm uppercase text-sm">
                                             <FontAwesomeIcon icon={faUserPlus} />
                                             Crear Cuenta
                                         </Link>
-                                    )}
-                                </div>
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>
@@ -165,9 +176,8 @@ const AcceptInvitationPage = () => {
     };
     
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-            <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[radial-gradient(var(--color-accent)_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
-            <div className="w-full max-w-md space-y-8 rounded-2xl bg-component-bg p-8 shadow-2xl backdrop-blur-lg border border-border-color">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-white rounded-lg shadow-sm border border-gray-200 p-8">
                 {renderContent()}
             </div>
         </div>

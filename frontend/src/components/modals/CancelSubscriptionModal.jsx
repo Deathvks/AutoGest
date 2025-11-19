@@ -15,38 +15,43 @@ const CancelSubscriptionModal = ({ isOpen, onClose, onConfirm }) => {
 
     const modalContent = (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-lg border border-border-color">
-                <div className="p-8 text-center">
-                    <FontAwesomeIcon icon={faSadTear} className="w-16 h-16 text-accent mx-auto mb-6" />
-                    <h2 className="text-2xl font-bold text-text-primary">¿De verdad te vas?</h2>
-                    <p className="text-text-secondary mt-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg border border-gray-300 overflow-hidden">
+                <div className="p-8 text-center bg-white">
+                    <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-full bg-red-50 border border-red-100">
+                        <FontAwesomeIcon icon={faSadTear} className="text-3xl text-accent" />
+                    </div>
+                    
+                    <h2 className="text-2xl font-extrabold text-gray-900 uppercase tracking-tight">¿De verdad te vas?</h2>
+                    <p className="text-gray-600 mt-4 text-sm leading-relaxed font-medium">
                         Nos da pena verte partir. Si cancelas, perderás el acceso a herramientas clave para tu negocio:
                     </p>
 
                     <ul className="text-left space-y-3 my-6 inline-block">
                         {benefits.map((benefit, index) => (
-                            <li key={index} className="flex items-center gap-3 text-sm text-text-secondary">
-                                <FontAwesomeIcon icon={benefit.icon} className="w-4 h-4 text-accent" />
-                                <span>{benefit.text}</span>
+                            <li key={index} className="flex items-center gap-3 text-sm text-gray-700">
+                                <div className="w-6 flex justify-center">
+                                    <FontAwesomeIcon icon={benefit.icon} className="text-accent" />
+                                </div>
+                                <span className="font-medium">{benefit.text}</span>
                             </li>
                         ))}
                     </ul>
 
-                    <p className="text-xs text-text-secondary">
+                    <p className="text-xs text-gray-500 font-medium bg-gray-50 p-3 rounded border border-gray-200 text-center">
                         Tu plan seguirá activo hasta el final del periodo de facturación actual.
                     </p>
                 </div>
 
-                <div className="flex flex-col-reverse sm:flex-row justify-center items-center gap-4 p-6 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
+                <div className="flex flex-col-reverse sm:flex-row justify-center items-center gap-4 p-6 border-t border-gray-200 bg-gray-50">
                     <button 
                         onClick={onConfirm}
-                        className="w-full sm:w-auto bg-component-bg border border-border-color text-text-primary px-6 py-3 rounded-lg hover:bg-border-color transition-colors font-semibold"
+                        className="w-full sm:w-auto bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
                     >
                         Sí, Cancelar
                     </button>
                     <button 
                         onClick={onClose}
-                        className="w-full sm:w-auto bg-accent text-white px-8 py-3 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-transform transform hover:scale-105 font-semibold"
+                        className="w-full sm:w-auto bg-accent text-white px-8 py-3 rounded-lg shadow hover:bg-accent-hover transition-transform transform hover:scale-105 font-bold uppercase text-xs tracking-wide"
                     >
                         No, Quiero Quedarme
                     </button>

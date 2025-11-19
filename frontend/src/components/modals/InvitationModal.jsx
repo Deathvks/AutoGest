@@ -4,6 +4,8 @@ import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { FaSpinner } from 'react-icons/fa';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUsers, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 const InvitationModal = ({ token, onClose }) => {
     const [invitation, setInvitation] = useState(null);
@@ -48,48 +50,50 @@ const InvitationModal = ({ token, onClose }) => {
             
             handleInvitationHandled();
             
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Forzamos una recarga completa de la aplicación redirigiendo a la página principal.
-            // Esto asegura que todo el estado del usuario (contexto, etc.) se actualice.
+            // Forzamos una recarga completa
             window.location.href = '/';
-            // --- FIN DE LA MODIFICACIÓN ---
 
         } catch (err) {
             toast.error(err.message || 'No se pudo aceptar la invitación.');
             setError(err.message);
             handleInvitationHandled();
         } finally {
-            // Aunque la página recargará, mantenemos esto por si la redirección falla.
             setIsAccepting(false);
         }
     };
 
     const handleDecline = () => {
-        handleInvitationHandled(); // Marcar como manejada
+        handleInvitationHandled();
         setPendingInvitationToken(null);
         onClose();
     };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in-up">
-            <div className="relative w-full max-w-md p-6 bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl border border-border-color">
-                <h2 className="text-2xl font-bold text-center text-text-primary mb-4">
-                    Invitación de Equipo
-                </h2>
+            <div className="relative w-full max-w-md p-8 bg-white rounded-lg shadow-2xl border border-gray-300 overflow-hidden">
+                <div className="text-center mb-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 mb-4 border border-green-100">
+                        <FontAwesomeIcon icon={faUsers} className="text-3xl text-green-600" />
+                    </div>
+                    <h2 className="text-2xl font-extrabold text-gray-900 uppercase tracking-tight">
+                        Invitación de Equipo
+                    </h2>
+                </div>
 
                 {isLoading && (
-                    <div className="flex flex-col items-center justify-center p-8">
+                    <div className="flex flex-col items-center justify-center p-4">
                         <FaSpinner className="animate-spin text-4xl text-accent" />
-                        <p className="mt-4 text-text-secondary">Cargando invitación...</p>
+                        <p className="mt-4 text-gray-500 font-medium">Cargando invitación...</p>
                     </div>
                 )}
 
                 {error && !isLoading && (
-                    <div className="text-center p-4 bg-red-accent/10 rounded-lg border border-red-accent/20">
-                        <p className="text-red-accent font-medium">{error}</p>
+                    <div className="text-center p-4 bg-red-50 rounded-lg border border-red-100">
+                        <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-500 text-2xl mb-2" />
+                        <p className="text-red-700 font-medium">{error}</p>
                         <button
                             onClick={onClose}
-                            className="mt-4 px-4 py-2 bg-component-bg-hover text-text-primary rounded-lg border border-border-color hover:bg-border-color transition-colors"
+                            className="mt-4 px-6 py-2 bg-white text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors font-bold text-sm uppercase shadow-sm"
                         >
                             Cerrar
                         </button>
@@ -98,37 +102,48 @@ const InvitationModal = ({ token, onClose }) => {
 
                 {invitation && !isLoading && !error && (
                     <div>
-                        <p className="text-center text-text-secondary mb-6">
-                            Has sido invitado a unirte al equipo{' '}
-                            <span className="font-bold text-accent">{invitation.companyName}</span>.
-                            {invitation.isTrialActive && (
-                                <span className="block mt-3 text-xs text-yellow-accent bg-yellow-accent/10 p-2 rounded-lg border border-yellow-accent/20">
-                                    <strong>¡Atención!</strong> Al unirte, tu período de prueba finalizará. Si abandonas el equipo, necesitarás una suscripción.
-                                </span>
-                            )}
-                             {!invitation.isTrialActive && !invitation.hasUsedTrial && (
-                                <span className="block mt-3 text-xs text-blue-accent bg-blue-accent/10 p-3 rounded-lg">
-                                    <strong>Nota:</strong> Si en el futuro abandonas el equipo, aún podrás disfrutar de tu prueba gratuita de 3 días.
-                                </span>
-                            )}
+                        <p className="text-center text-gray-600 mb-6">
+                            Has sido invitado a unirte al equipo <br/>
+                            <span className="font-extrabold text-gray-900 text-lg">{invitation.companyName}</span>
                         </p>
-                        <div className="flex justify-center space-x-4">
+                        
+                        {invitation.isTrialActive && (
+                            <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 text-left rounded-r text-sm">
+                                <div className="flex items-center gap-2 mb-1 font-bold uppercase">
+                                    <FontAwesomeIcon icon={faExclamationTriangle} />
+                                    <span>¡Atención!</span>
+                                </div>
+                                <p>Al unirte, tu período de prueba finalizará. Si abandonas el equipo, necesitarás una suscripción.</p>
+                            </div>
+                        )}
+
+                         {!invitation.isTrialActive && !invitation.hasUsedTrial && (
+                            <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 text-blue-800 text-left rounded-r text-sm">
+                                <div className="flex items-center gap-2 mb-1 font-bold uppercase">
+                                    <FontAwesomeIcon icon={faInfoCircle} />
+                                    <span>Información</span>
+                                </div>
+                                <p>No has usado tu período de prueba. Si en el futuro abandonas este equipo, podrás disfrutar de tus 3 días de prueba.</p>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col-reverse sm:flex-row justify-center gap-3 pt-4 border-t border-gray-100">
                             <button
                                 onClick={handleDecline}
                                 disabled={isAccepting}
-                                className="px-6 py-2.5 font-semibold text-text-primary bg-component-bg-hover rounded-lg border border-border-color hover:bg-border-color transition-colors disabled:opacity-50"
+                                className="w-full sm:w-auto px-6 py-2.5 font-bold text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 uppercase text-xs tracking-wide shadow-sm"
                             >
                                 Rechazar
                             </button>
                             <button
                                 onClick={handleAccept}
                                 disabled={isAccepting}
-                                className="px-6 py-2.5 font-semibold text-white bg-accent rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                className="w-full sm:w-auto px-6 py-2.5 font-bold text-white bg-accent rounded-lg shadow hover:bg-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center uppercase text-xs tracking-wide"
                             >
                                 {isAccepting ? (
                                     <>
                                         <FaSpinner className="animate-spin mr-2" />
-                                        Aceptando...
+                                        Uniéndote...
                                     </>
                                 ) : (
                                     'Aceptar Invitación'

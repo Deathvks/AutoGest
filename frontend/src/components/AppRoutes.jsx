@@ -13,10 +13,11 @@ const Settings = lazy(() => import('../pages/Settings'));
 const ManageUsersPage = lazy(() => import('../pages/ManageUsersPage'));
 const SubscriptionPage = lazy(() => import('../pages/SubscriptionPage'));
 const AcceptInvitationPage = lazy(() => import('../pages/AcceptInvitationPage'));
-const NotificationsPage = lazy(() => import('../pages/NotificationsPage')); // Importa la nueva página
+const NotificationsPage = lazy(() => import('../pages/NotificationsPage'));
 
 const AppRoutes = ({ appState, onLogoutClick }) => {
-    const { user } = useContext(AuthContext);
+    // CAMBIO: Extraemos subscriptionStatus e isTrialActive del contexto para la lógica de permisos
+    const { user, subscriptionStatus, isTrialActive } = useContext(AuthContext);
 
     const {
         cars,
@@ -46,16 +47,25 @@ const AppRoutes = ({ appState, onLogoutClick }) => {
         setSubscriptionSuccessModalOpen,
         setUserToExpel,
         setCarToEdit,
-        // --- INICIO DE LA MODIFICACIÓN ---
         setIsTrialModalOpen,
-        // --- FIN DE LA MODIFICACIÓN ---
     } = appState;
 
     if (!user) {
         return null; // No renderizar nada si el usuario aún no está cargado
     }
 
-    const canAccessDashboard = user.role === 'admin' || user.isOwner || !user.companyId;
+    // Lógica de permisos actualizada para coincidir con el Sidebar
+    const hasValidSubscription = subscriptionStatus === 'active' || 
+        (subscriptionStatus === 'cancelled' && user.subscriptionExpiry && new Date(user.subscriptionExpiry) > new Date());
+
+    const canAccessDashboard = 
+        user.role === 'admin' || 
+        user.role === 'technician' || 
+        user.role === 'technician_subscribed' || 
+        !!user.companyId || // Si está en un equipo
+        hasValidSubscription || // Si tiene suscripción
+        isTrialActive; // Si está en prueba
+
     const userHomePath = canAccessDashboard ? '/' : '/cars';
 
     return (
@@ -116,14 +126,12 @@ const AppRoutes = ({ appState, onLogoutClick }) => {
                     onBusinessDataClick={() => setIsBusinessDataModalOpen(true)}
                     businessDataMessage={businessDataMessage}
                     onLogoutClick={onLogoutClick}
-                    // --- INICIO DE LA MODIFICACIÓN ---
                     onActivateTrialClick={() => setIsTrialModalOpen(true)}
-                    // --- FIN DE LA MODIFICACIÓN ---
                 />} 
             />
             <Route 
                 path="/admin" 
-                element={(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed' || user.canExpelUsers)
+                element={(user.role === 'admin' || user.role === 'technician' || user.role === 'technician_subscribed' || (user.role === 'user' && user.companyId && user.canExpelUsers))
                     ? <ManageUsersPage 
                         users={users} 
                         onAddUser={() => setAddUserModalOpen(true)} 

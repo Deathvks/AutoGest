@@ -1,6 +1,7 @@
+// autogest-app/frontend/src/components/NotificationsPanel.jsx
 import React, { useState, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faCircle, faCheckDouble, faChevronLeft, faChevronRight, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCheckDouble, faChevronLeft, faChevronRight, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
@@ -22,23 +23,25 @@ const timeSince = (date) => {
 
 const NotificationItem = ({ notification, onClick, onDelete }) => (
     <div 
-        className={`flex items-center gap-4 p-3 rounded-lg ${!notification.isRead ? 'bg-accent/5' : ''} ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'hover:bg-component-bg-hover transition-colors' : ''}`}
+        className={`flex items-start gap-3 p-3 rounded-lg border border-transparent transition-all ${
+            !notification.isRead ? 'bg-red-50 border-red-100' : 'hover:bg-gray-50 hover:border-gray-200'
+        } ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'cursor-pointer' : ''}`}
     >
         <div
             onClick={() => onClick(notification)}
-            className={`flex-grow flex items-start gap-4 ${(notification.type === 'car_creation_pending_price' || (notification.link && notification.link.includes('/accept-invitation/'))) ? 'cursor-pointer' : ''}`}
+            className="flex-grow flex items-start gap-3"
         >
-            <div className="relative mt-1">
-                <FontAwesomeIcon icon={faBell} className="text-text-secondary" />
-                {!notification.isRead && (
-                    <FontAwesomeIcon icon={faCircle} className="absolute -top-1 -right-1 text-accent w-2 h-2" />
-                )}
+            <div className="mt-1 relative">
+                 <FontAwesomeIcon icon={faBell} className={`w-4 h-4 ${!notification.isRead ? 'text-accent' : 'text-gray-400'}`} />
+                 {!notification.isRead && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-accent rounded-full ring-1 ring-white"></span>
+                 )}
             </div>
-            <div className="flex-1">
-                <p className={`text-sm ${notification.isRead ? 'text-text-secondary' : 'text-text-primary font-medium'}`}>
+            <div className="flex-1 min-w-0">
+                <p className={`text-sm ${!notification.isRead ? 'font-bold text-gray-900' : 'font-medium text-gray-600'}`}>
                     {notification.message}
                 </p>
-                <p className="text-xs text-text-secondary mt-1">
+                <p className="text-xs text-gray-400 mt-1">
                     {timeSince(notification.createdAt)}
                 </p>
             </div>
@@ -46,10 +49,10 @@ const NotificationItem = ({ notification, onClick, onDelete }) => (
         <div className="flex-shrink-0">
             <button
                 onClick={(e) => { e.stopPropagation(); onDelete(notification.id); }}
-                className="p-2 text-text-secondary hover:text-red-accent transition-colors"
+                className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-white"
                 title="Eliminar notificación"
             >
-                <FontAwesomeIcon icon={faTrashAlt} />
+                <FontAwesomeIcon icon={faTrashAlt} className="w-3 h-3" />
             </button>
         </div>
     </div>
@@ -110,64 +113,65 @@ const NotificationsPanel = ({ onMarkAllRead, onClose, cars, setCarToEdit }) => {
     const goToPreviousPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
     return (
-        <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full border border-border-color flex flex-col max-h-[70vh]">
-            <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-border-color">
-                <h3 className="font-bold text-text-primary text-lg">Notificaciones</h3>
+        <div className="bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col max-h-[70vh] overflow-hidden">
+            {/* Header Rojo Occident */}
+            <div className="flex-shrink-0 flex justify-between items-center p-4 bg-accent text-white">
+                <h3 className="font-bold text-sm uppercase tracking-wide">Notificaciones</h3>
                 {onClose && (
-                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary text-2xl leading-none">&times;</button>
+                    <button onClick={onClose} className="text-white/80 hover:text-white transition-colors text-xl leading-none">
+                        &times;
+                    </button>
                 )}
             </div>
 
-            <div className="flex-grow overflow-y-auto p-2 no-scrollbar">
+            <div className="flex-grow overflow-y-auto p-2 space-y-1">
                 {currentNotifications && currentNotifications.length > 0 ? (
-                    <div className="space-y-1">
-                        {currentNotifications.map(notif => (
-                            <NotificationItem 
-                                key={notif.id} 
-                                notification={notif} 
-                                onClick={handleNotificationClick} 
-                                onDelete={handleDeleteNotification} 
-                            />
-                        ))}
-                    </div>
+                    currentNotifications.map(notif => (
+                        <NotificationItem 
+                            key={notif.id} 
+                            notification={notif} 
+                            onClick={handleNotificationClick} 
+                            onDelete={handleDeleteNotification} 
+                        />
+                    ))
                 ) : (
-                    <div className="text-center py-16 px-4">
-                        <FontAwesomeIcon icon={faBell} className="text-4xl text-text-secondary/50 mb-4" />
-                        <p className="text-sm text-text-secondary">No tienes notificaciones nuevas.</p>
+                    <div className="text-center py-12 px-4">
+                        <FontAwesomeIcon icon={faBell} className="text-3xl text-gray-300 mb-3" />
+                        <p className="text-sm text-gray-500">No tienes notificaciones nuevas.</p>
                     </div>
                 )}
             </div>
 
             {totalPages > 1 && (
-                <div className="flex-shrink-0 flex justify-between items-center p-2 border-t border-border-color">
+                <div className="flex-shrink-0 flex justify-between items-center p-2 border-t border-gray-100 bg-white">
                     <button
                         onClick={goToPreviousPage}
                         disabled={currentPage === 1}
-                        className="px-3 py-1.5 rounded-lg bg-component-bg-hover disabled:opacity-50 hover:bg-border-color transition-colors"
+                        className="p-2 text-gray-500 hover:text-accent disabled:opacity-30 transition-colors"
                     >
                         <FontAwesomeIcon icon={faChevronLeft} />
                     </button>
-                    <span className="text-xs font-semibold text-text-secondary">PÁGINA {currentPage} DE {totalPages}</span>
+                    <span className="text-xs font-bold text-gray-400">PÁGINA {currentPage} DE {totalPages}</span>
                     <button
                         onClick={goToNextPage}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-1.5 rounded-lg bg-component-bg-hover disabled:opacity-50 hover:bg-border-color transition-colors"
+                        className="p-2 text-gray-500 hover:text-accent disabled:opacity-30 transition-colors"
                     >
                         <FontAwesomeIcon icon={faChevronRight} />
                     </button>
                 </div>
             )}
 
-            <div className="flex-shrink-0 flex justify-between items-center p-3 border-t border-border-color bg-component-bg-hover/50 rounded-b-2xl">
-                <Link to="/notifications" onClick={onClose} className="text-xs font-semibold text-accent hover:underline">
+            <div className="flex-shrink-0 flex justify-between items-center p-3 border-t border-gray-200 bg-gray-50">
+                <Link to="/notifications" onClick={onClose} className="text-xs font-bold text-accent hover:underline uppercase">
                     Ver todas
                 </Link>
                 <button
                     onClick={onMarkAllRead}
-                    className="text-xs font-semibold text-text-secondary hover:text-text-primary flex items-center gap-1.5"
+                    className="text-xs font-bold text-gray-500 hover:text-gray-700 flex items-center gap-1.5 uppercase"
                 >
                     <FontAwesomeIcon icon={faCheckDouble} />
-                    Marcar todas como leídas
+                    Marcar leídas
                 </button>
             </div>
         </div>

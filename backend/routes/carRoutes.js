@@ -4,14 +4,23 @@ const router = express.Router();
 const carController = require('../controllers/carController');
 const { protect, checkSubscription } = require('../middleware/auth');
 const uploadMiddleware = require('../middleware/fileUploads'); // Corregido: usar fileUploads
+// --- INICIO DE LA MODIFICACIÓN ---
+const convertImagesToWebp = require('../middleware/imageConversion');
+// --- FIN DE LA MODIFICACIÓN ---
 
 router.route('/')
     .get(protect, carController.getAllCars) // Corregido: getCars -> getAllCars
-    .post(protect, checkSubscription, uploadMiddleware, carController.createCar);
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se añade el middleware de conversión de imágenes después de la subida y antes del controlador
+    .post(protect, checkSubscription, uploadMiddleware, convertImagesToWebp, carController.createCar);
+    // --- FIN DE LA MODIFICACIÓN ---
 
 router.route('/:id')
     .get(protect, carController.getCarById) // Añadido para obtener un solo coche
-    .put(protect, checkSubscription, uploadMiddleware, carController.updateCar)
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Se añade el middleware de conversión de imágenes después de la subida y antes del controlador
+    .put(protect, checkSubscription, uploadMiddleware, convertImagesToWebp, carController.updateCar)
+    // --- FIN DE LA MODIFICACIÓN ---
     .delete(protect, checkSubscription, carController.deleteCar);
 
 // Eliminadas las rutas antiguas que ya no existen en el controlador

@@ -28,12 +28,12 @@ const TrialCountdownMobile = () => {
 
     return (
         <div className="lg:hidden py-6">
-            <h4 className="font-semibold text-text-primary mb-2 uppercase">Prueba Gratuita</h4>
-            <div className="p-3 rounded-lg bg-accent/10 text-accent">
+            <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Prueba Gratuita</h4>
+            <div className="p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800">
                 <div className="flex items-center gap-3">
                     <FontAwesomeIcon icon={faRocket} className="h-5 w-5" />
                     <div className="flex-1">
-                        <div className="font-bold text-sm">PRUEBA GRATUITA ACTIVA</div>
+                        <div className="font-bold text-sm uppercase">PRUEBA GRATUITA ACTIVA</div>
                         <span className="block text-xs font-bold">{timeLeftString}</span>
                     </div>
                 </div>
@@ -49,9 +49,7 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
     const [exportMessage, setExportMessage] = useState('');
 
     const isSubscribed = user.subscriptionStatus === 'active';
-    // --- INICIO DE LA MODIFICACIÓN ---
     const canActivateTrial = !isSubscribed && !user.hasUsedTrial && user.role !== 'admin' && !user.companyId;
-    // --- FIN DE LA MODIFICACIÓN ---
     const canExportData = isSubscribed || isTrialActive || user.role === 'admin';
 
     const handlePasswordChange = (e) => {
@@ -102,26 +100,40 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
         window.dispatchEvent(new Event('openCookieConsent'));
     };
 
-    const liquidButtonClass = "bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2";
+    const buttonBaseClass = "bg-white text-gray-700 font-bold px-4 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors text-sm flex items-center gap-2 shadow-sm uppercase";
 
     return (
         <div>
-            <h3 className="text-lg font-bold text-text-primary mb-4 uppercase">Cuenta y Datos</h3>
+            <h3 className="text-lg font-extrabold text-gray-900 mb-6 uppercase tracking-wide">Cuenta y Datos</h3>
             
-            <div className="divide-y divide-border-color">
+            <div className="divide-y divide-gray-100">
                 <form onSubmit={handlePasswordSubmit} className="py-6">
-                    <h4 className="font-semibold text-text-primary mb-2 uppercase">Cambiar Contraseña</h4>
+                    <h4 className="font-bold text-gray-900 mb-4 uppercase text-sm">Cambiar Contraseña</h4>
                     <div className="grid sm:grid-cols-2 gap-4">
-                        <input name="currentPassword" type="password" placeholder="Contraseña Actual" value={passwordData.currentPassword} onChange={handlePasswordChange} className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary" />
-                        <input name="newPassword" type="password" placeholder="Nueva Contraseña" value={passwordData.newPassword} onChange={handlePasswordChange} className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary" />
+                        <input 
+                            name="currentPassword" 
+                            type="password" 
+                            placeholder="Contraseña Actual" 
+                            value={passwordData.currentPassword} 
+                            onChange={handlePasswordChange} 
+                            className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 shadow-sm" 
+                        />
+                        <input 
+                            name="newPassword" 
+                            type="password" 
+                            placeholder="Nueva Contraseña" 
+                            value={passwordData.newPassword} 
+                            onChange={handlePasswordChange} 
+                            className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 shadow-sm" 
+                        />
                     </div>
                     <div className="mt-4 flex items-center gap-4">
-                        <button type="submit" className={liquidButtonClass}>
+                        <button type="submit" className="bg-accent text-white font-bold px-6 py-2.5 rounded-lg shadow hover:bg-accent-hover transition-colors text-sm flex items-center gap-2 uppercase">
                             <FontAwesomeIcon icon={faKey} />
                             Actualizar
                         </button>
                         {passwordMessage.text && (
-                            <span className={`text-sm font-semibold ${passwordMessage.type === 'success' ? 'text-green-accent' : 'text-red-accent'}`}>
+                            <span className={`text-sm font-bold ${passwordMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
                                 {passwordMessage.text}
                             </span>
                         )}
@@ -134,11 +146,11 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
 
                 {canActivateTrial && (
                     <div className="py-6">
-                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Prueba Gratuita</h4>
-                        <p className="text-sm text-text-secondary mb-3">
+                        <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Prueba Gratuita</h4>
+                        <p className="text-sm text-gray-500 mb-4">
                             No has usado tu período de prueba de 3 días. ¡Actívalo ahora para desbloquear todas las funciones!
                         </p>
-                        <button onClick={onActivateTrialClick} className={liquidButtonClass}>
+                        <button onClick={onActivateTrialClick} className="bg-accent text-white font-bold px-6 py-2.5 rounded-lg shadow hover:bg-accent-hover transition-colors text-sm flex items-center gap-2 uppercase">
                             <FontAwesomeIcon icon={faRocket} />
                             Activar Prueba Gratuita
                         </button>
@@ -147,30 +159,30 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
 
                 {canExportData && (
                     <div className="py-6">
-                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Exportar Datos</h4>
-                        <p className="text-sm text-text-secondary mb-3">Descarga una copia de seguridad de tus datos en formato CSV.</p>
-                        <div className="flex flex-wrap gap-2">
-                            <button onClick={() => handleExport(cars, 'coches.csv', 'coches')} className={liquidButtonClass}>
+                        <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Exportar Datos</h4>
+                        <p className="text-sm text-gray-500 mb-4">Descarga una copia de seguridad de tus datos en formato CSV.</p>
+                        <div className="flex flex-wrap gap-3">
+                            <button onClick={() => handleExport(cars, 'coches.csv', 'coches')} className={buttonBaseClass}>
                                 <FontAwesomeIcon icon={faFileExport} />
                                 Coches
                             </button>
-                            <button onClick={() => handleExport(expenses, 'gastos.csv', 'gastos')} className={liquidButtonClass}>
+                            <button onClick={() => handleExport(expenses, 'gastos.csv', 'gastos')} className={buttonBaseClass}>
                                 <FontAwesomeIcon icon={faFileExport} />
                                 Gastos
                             </button>
-                            <button onClick={() => handleExport(incidents, 'incidencias.csv', 'incidencias')} className={liquidButtonClass}>
+                            <button onClick={() => handleExport(incidents, 'incidencias.csv', 'incidencias')} className={buttonBaseClass}>
                                 <FontAwesomeIcon icon={faFileExport} />
                                 Incidencias
                             </button>
                         </div>
-                        {exportMessage && <p className="text-sm text-yellow-accent mt-3 font-semibold">{exportMessage}</p>}
+                        {exportMessage && <p className="text-sm text-yellow-600 mt-3 font-bold">{exportMessage}</p>}
                     </div>
                 )}
 
                 <div className="py-6">
-                    <h4 className="font-semibold text-text-primary mb-2 uppercase">Privacidad y Cookies</h4>
-                    <p className="text-sm text-text-secondary mb-3">Gestiona tus preferencias de consentimiento de cookies.</p>
-                    <button onClick={handleManageCookies} className={liquidButtonClass}>
+                    <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Privacidad y Cookies</h4>
+                    <p className="text-sm text-gray-500 mb-4">Gestiona tus preferencias de consentimiento de cookies.</p>
+                    <button onClick={handleManageCookies} className={buttonBaseClass}>
                         <FontAwesomeIcon icon={faCookieBite} />
                         Gestionar Cookies
                     </button>
@@ -178,9 +190,9 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
 
                 {user && (
                     <div className="py-6 lg:hidden">
-                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Suscripción</h4>
-                        <p className="text-sm text-text-secondary mb-3">Gestiona o revisa el plan de suscripción.</p>
-                        <Link to="/subscription" className="inline-flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm">
+                        <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Suscripción</h4>
+                        <p className="text-sm text-gray-500 mb-4">Gestiona o revisa el plan de suscripción.</p>
+                        <Link to="/subscription" className={buttonBaseClass}>
                             <FontAwesomeIcon icon={faCreditCard} />
                             Gestionar Suscripción
                         </Link>
@@ -189,8 +201,8 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
 
                 {user && user.role === 'admin' && (
                     <div className="py-6 lg:hidden">
-                        <h4 className="font-semibold text-text-primary mb-2 uppercase">Administración</h4>
-                        <Link to="/admin" className="inline-flex w-full sm:w-auto items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm">
+                        <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Administración</h4>
+                        <Link to="/admin" className={`w-full sm:w-auto ${buttonBaseClass} justify-center`}>
                             <FontAwesomeIcon icon={faUserShield} />
                             Gestionar Usuarios
                         </Link>
@@ -198,17 +210,20 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                 )}
                 
                 <div className="py-6 lg:hidden">
-                     <h4 className="font-semibold text-text-primary mb-2 uppercase">Sesión</h4>
-                     <button onClick={onLogoutClick} className="w-full sm:w-auto bg-component-bg-hover text-text-primary font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2">
+                     <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Sesión</h4>
+                     <button onClick={onLogoutClick} className={`w-full sm:w-auto ${buttonBaseClass} justify-center`}>
                         <FontAwesomeIcon icon={faSignOutAlt} />
                         Cerrar Sesión
                     </button>
                 </div>
 
                 <div className="py-6">
-                    <h4 className="font-semibold text-red-accent mb-2 uppercase">Zona de Peligro</h4>
-                    <p className="text-sm text-red-accent/80 mb-3">La eliminación de tu cuenta es permanente y no se puede deshacer.</p>
-                    <button onClick={onDeleteAccountClick} className="w-full sm:w-auto bg-component-bg-hover text-red-accent font-semibold px-4 py-2 rounded-lg hover:bg-border-color transition-colors text-sm flex items-center gap-2">
+                    <h4 className="font-bold text-red-600 mb-2 uppercase text-sm">Zona de Peligro</h4>
+                    <p className="text-sm text-gray-500 mb-4">La eliminación de tu cuenta es permanente y no se puede deshacer.</p>
+                    <button 
+                        onClick={onDeleteAccountClick} 
+                        className="w-full sm:w-auto bg-white text-red-600 font-bold px-4 py-2.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors text-sm flex items-center justify-center gap-2 uppercase shadow-sm"
+                    >
                         <FontAwesomeIcon icon={faExclamationTriangle} />
                         Eliminar Mi Cuenta
                     </button>

@@ -5,8 +5,9 @@ const { cancelSubscription } = require('./subscription/cancelSubscription');
 const { handleWebhook } = require('./subscription/handleWebhook');
 const { syncSubscription } = require('./subscription/syncSubscription');
 const { reactivateSubscription } = require('./subscription/reactivateSubscription');
-// --- INICIO DE LA MODIFICACIÓN ---
 const { createCustomerPortalSession } = require('./subscription/createCustomerPortalSession');
+// --- INICIO DE LA MODIFICACIÓN ---
+const { downloadLatestInvoice } = require('./subscription/downloadLatestInvoice');
 // --- FIN DE LA MODIFICACIÓN ---
 
 module.exports = {
@@ -16,7 +17,8 @@ module.exports = {
     handleWebhook,
     syncSubscription,
     reactivateSubscription,
-    // --- INICIO DE LA MODIFICACIÓN ---
     createCustomerPortalSession,
+    // --- INICIO DE LA MODIFICACIÓN ---
+    downloadLatestInvoice,
     // --- FIN DE LA MODIFICACIÓN ---
 };

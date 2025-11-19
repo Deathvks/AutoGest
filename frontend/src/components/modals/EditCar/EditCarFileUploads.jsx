@@ -2,9 +2,6 @@
 import React, { useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar, faUpload, faCamera, faFileLines, faXmark } from '@fortawesome/free-solid-svg-icons';
-// --- INICIO DE LA MODIFICACIÓN ---
-import CarPlaceholderImage from '../../../pages/MyCars/CarPlaceholderImage';
-// --- FIN DE LA MODIFICACIÓN ---
 
 const FileUploadSection = ({ label, existingFiles = [], newFiles = [], onFileChange, onRemoveNewFile, onRemoveExistingFile, fileType, maxFiles }) => {
     const fileInputRef = useRef(null);
@@ -101,13 +98,11 @@ const EditCarFileUploads = (props) => {
                 <label className="block text-sm font-semibold text-text-primary mb-2">Imagen Principal</label>
                 <div className="flex items-center gap-4">
                     <div className="w-28 h-28 rounded-xl bg-background/50 flex items-center justify-center overflow-hidden border border-border-color flex-shrink-0">
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
                         {imagePreview || editedCar.imageUrl ? (
                             <img src={imagePreview || editedCar.imageUrl} alt="Vista previa" className="h-full w-full object-cover" />
                         ) : (
-                            <CarPlaceholderImage car={editedCar} />
+                            <FontAwesomeIcon icon={faCar} className="text-4xl text-text-secondary" />
                         )}
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                     </div>
                     <div className="flex flex-col gap-2 w-full">
                         <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} className="hidden" />

@@ -1,7 +1,5 @@
 // autogest-app/frontend/src/pages/RegisterPage.jsx
 import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCar } from '@fortawesome/free-solid-svg-icons';
 import RegisterForm from './RegisterPage/RegisterForm';
 import VerificationForm from './RegisterPage/VerificationForm';
 
@@ -32,12 +30,11 @@ const RegisterPage = () => {
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-background p-4">
-            <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[radial-gradient(var(--color-accent)_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+            {/* Fondo decorativo sutil */}
+            <div className="absolute inset-0 -z-10 bg-background"></div>
             
-            <div className="w-full max-w-md space-y-8 rounded-2xl bg-component-bg p-8 shadow-2xl backdrop-blur-lg border border-border-color">
-                <div className="mx-auto flex h-12 w-auto items-center justify-center text-accent">
-                    <FontAwesomeIcon icon={faCar} className="h-10 w-10" />
-                </div>
+            <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
+                {/* El icono se ha eliminado de aquí para que lo gestione cada formulario individualmente */}
                 
                 {step === 'register' ? (
                     <RegisterForm onRegistrationSuccess={handleRegistrationSuccess} />

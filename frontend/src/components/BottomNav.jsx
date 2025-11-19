@@ -30,31 +30,29 @@ const BottomNav = () => {
             to={path} 
             end
             className={({ isActive }) =>
-                // --- INICIO DE LA MODIFICACIÓN ---
-                `flex flex-col items-center justify-center w-full pt-2 pb-[calc(0.25rem+env(safe-area-inset-bottom))] text-xs font-medium transition-colors duration-200 relative ${
-                // --- FIN DE LA MODIFICACIÓN ---
+                `flex flex-col items-center justify-center w-full pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] text-[10px] font-bold uppercase transition-colors duration-200 relative ${
                 isActive
                     ? 'text-accent'
-                    : 'text-text-secondary hover:text-accent'
+                    : 'text-gray-400 hover:text-gray-600'
                 }`
             }
         >
             {({ isActive }) => (
                 <>
-                    <div className={`relative flex items-center justify-center w-12 h-8`}>
-                        <FontAwesomeIcon icon={icon} className="w-5 h-5 z-10" />
-                        {isActive && (
-                             <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-8 rounded-full bg-accent/20 transition-all duration-300"></span>
-                        )}
+                    {isActive && (
+                        <span className="absolute top-0 inset-x-0 h-0.5 bg-accent shadow-[0_0_8px_rgba(220,0,40,0.5)] mx-4 rounded-b-full"></span>
+                    )}
+                    <div className="mb-1">
+                        <FontAwesomeIcon icon={icon} className="w-5 h-5" />
                     </div>
-                    <span>{text}</span>
+                    <span className="tracking-wide">{text}</span>
                 </>
             )}
         </NavLink>
     );
 
     return (
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-component-bg backdrop-blur-lg border-t border-border-color flex justify-around shadow-t-2xl">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
             {navItems.map(item => <NavItem key={item.text} {...item} />)}
         </nav>
     );

@@ -5,15 +5,15 @@ import { faTimes, faFileInvoice, faPercentage, faCreditCard, faUser, faBuilding,
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 
-const InputField = ({ label, name, value, onChange, type = 'text', icon }) => (
+const InputField = ({ label, name, value, onChange, type = 'text', icon, placeholder }) => (
     <div>
-        <label htmlFor={name} className="block text-sm font-semibold text-text-primary mb-1 uppercase">
+        <label htmlFor={name} className="block text-sm font-bold text-gray-700 mb-1 uppercase">
             {label}
         </label>
         <div className="relative">
             {icon && (
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-text-secondary" />
+                    <FontAwesomeIcon icon={icon} className="h-4 w-4 text-gray-400" />
                 </div>
             )}
             <input
@@ -22,7 +22,8 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon }) => (
                 type={type}
                 value={value}
                 onChange={onChange}
-                className={`w-full px-4 py-2 bg-component-bg-hover border rounded-lg focus:ring-1 focus:border-accent text-text-primary transition-colors border-border-color focus:ring-accent ${icon ? 'pl-11' : ''}`}
+                placeholder={placeholder}
+                className={`w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors ${icon ? 'pl-11' : ''}`}
             />
         </div>
     </div>
@@ -38,14 +39,14 @@ const TextareaField = ({ label, name, value, onChange, placeholder }) => {
     }, [value]);
     return (
         <div>
-            <label className="block text-sm font-semibold text-text-primary mb-1 uppercase">{label}</label>
+            <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">{label}</label>
             <textarea
                 ref={textareaRef}
                 name={name}
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                className="w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg focus:ring-1 focus:ring-accent focus:border-accent text-text-primary placeholder:text-text-secondary/70 resize-none overflow-hidden no-scrollbar"
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 resize-none overflow-hidden"
                 rows="3"
             />
         </div>
@@ -142,19 +143,23 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-            <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-border-color">
-                <div className="flex-shrink-0 flex justify-between items-center p-6 border-b border-border-color">
-                    <h2 className="text-xl font-bold text-text-primary flex items-center gap-3">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in-up backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-gray-300 overflow-hidden">
+                {/* Header Rojo Occident */}
+                <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 bg-accent text-white">
+                    <h2 className="text-lg font-bold text-white flex items-center gap-3 uppercase tracking-wide">
                         <FontAwesomeIcon icon={faFileInvoice} />
                         GENERAR {type === 'proforma' ? 'PROFORMA' : 'FACTURA'}
                     </h2>
-                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+                    <button 
+                        onClick={onClose} 
+                        className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20"
+                    >
                         <FontAwesomeIcon icon={faTimes} className="w-6 h-6" />
                     </button>
                 </div>
 
-                <div className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar">
+                <div className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar bg-white">
                     <InputField
                         label={`Número de ${type === 'proforma' ? 'Proforma' : 'Factura'}`}
                         name="pdfNumber"
@@ -163,19 +168,26 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                         onChange={(e) => setNumber(e.target.value)}
                     />
 
-                    <div className="pt-4 border-t border-border-color">
-                         <h3 className="text-lg font-semibold text-text-primary mb-4">Datos del Cliente</h3>
-                         <div className="relative flex w-full items-center rounded-full bg-component-bg-hover p-1 border border-border-color overflow-hidden mb-4">
-                            <span
-                                className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-1/2 rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
-                                    clientType === 'empresa' ? 'translate-x-[96%]' : 'translate-x-0'
+                    <div className="pt-4 border-t border-gray-100">
+                         <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide">Datos del Cliente</h3>
+                         
+                         <div className="flex w-full items-center rounded-lg bg-gray-100 p-1 border border-gray-200 mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setClientType('particular')}
+                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors uppercase ${
+                                    clientType === 'particular' ? 'bg-white text-accent shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
                                 }`}
-                                style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
-                            />
-                            <button type="button" onClick={() => setClientType('particular')} className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${clientType === 'particular' ? 'text-text-primary' : 'text-text-secondary'}`}>
+                            >
                                 AUTÓNOMO
                             </button>
-                             <button type="button" onClick={() => setClientType('empresa')} className={`relative z-10 flex-1 rounded-full py-1.5 text-sm font-semibold transition-colors duration-300 ${clientType === 'empresa' ? 'text-text-primary' : 'text-text-secondary'}`}>
+                             <button
+                                type="button"
+                                onClick={() => setClientType('empresa')}
+                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors uppercase ${
+                                    clientType === 'empresa' ? 'bg-white text-accent shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                            >
                                 EMPRESA
                             </button>
                         </div>
@@ -236,12 +248,26 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                         placeholder="Añade aquí cualquier aclaración o nota..."
                     />
 
-                    {error && <p className="mt-2 text-sm text-red-accent text-center font-semibold uppercase">{error}</p>}
+                    {error && (
+                        <div className="p-3 bg-red-50 border-l-4 border-red-600 text-red-700 text-sm font-bold uppercase rounded-r">
+                            {error}
+                        </div>
+                    )}
                 </div>
 
-                <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-border-color">
-                    <button onClick={onClose} className="bg-component-bg-hover text-text-primary px-4 py-2 rounded-lg hover:bg-border-color transition-colors font-semibold uppercase">Cancelar</button>
-                    <button onClick={handleConfirm} className="bg-accent text-white px-6 py-2 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold uppercase">Generar PDF</button>
+                <div className="flex-shrink-0 mt-auto flex justify-end items-center gap-4 p-4 border-t border-gray-200 bg-gray-50">
+                    <button 
+                        onClick={onClose} 
+                        className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        onClick={handleConfirm} 
+                        className="bg-accent text-white px-6 py-2.5 rounded hover:bg-accent-hover transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
+                    >
+                        Generar PDF
+                    </button>
                 </div>
             </div>
         </div>

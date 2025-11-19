@@ -6,13 +6,10 @@ import { faCookieBite } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 
 const CookieConsent = () => {
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // 1. Todos los hooks se llaman incondicionalmente al principio.
     const [isVisible, setIsVisible] = useState(false);
     const { user } = useContext(AuthContext);
 
     useEffect(() => {
-        // 2. La lógica se ejecuta dentro del hook. Si no hay usuario, nos aseguramos de que el modal esté oculto.
         if (!user) {
             setIsVisible(false);
             return;
@@ -33,9 +30,8 @@ const CookieConsent = () => {
         return () => {
             window.removeEventListener('openCookieConsent', handleOpen);
         };
-    }, [user]); // El efecto se re-ejecuta cuando el usuario cambia (login/logout).
+    }, [user]);
     
-    // 3. Si no hay usuario, ahora devolvemos null después de los hooks.
     if (!user) {
         return null;
     }
@@ -45,27 +41,28 @@ const CookieConsent = () => {
         localStorage.setItem(consentKey, choice);
         setIsVisible(false);
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     if (!isVisible) {
         return null;
     }
 
     return (
-        <div className="fixed bottom-0 inset-x-0 bg-component-bg/80 backdrop-blur-lg border-t border-border-color p-4 z-[100] animate-fade-in-up">
-            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 p-6 z-[100] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] animate-fade-in-up">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="flex items-start gap-4">
-                    <FontAwesomeIcon icon={faCookieBite} className="w-8 h-8 text-accent flex-shrink-0 mt-1" />
+                    <div className="p-2 bg-red-50 rounded-full text-accent flex-shrink-0">
+                        <FontAwesomeIcon icon={faCookieBite} className="w-6 h-6" />
+                    </div>
                     <div>
-                        <h3 className="font-bold text-text-primary">Este sitio web utiliza cookies</h3>
-                        <p className="text-sm text-text-secondary">
+                        <h3 className="text-lg font-bold text-gray-900 uppercase tracking-tight">Este sitio web utiliza cookies</h3>
+                        <p className="text-sm text-gray-600 mt-1 leading-relaxed">
                             Usamos cookies para mejorar tu experiencia. Consulta nuestra{' '}
-                            <Link to="/cookie-policy" className="text-accent font-semibold">
+                            <Link to="/cookie-policy" className="text-accent font-bold hover:underline">
                                 Política de Cookies
                             </Link>
                             .
                         </p>
-                        <p className="text-xs text-text-secondary mt-1">
+                        <p className="text-xs text-gray-400 mt-2 font-medium">
                             Puedes cambiar tus preferencias en cualquier momento desde Ajustes.
                         </p>
                     </div>
@@ -73,19 +70,19 @@ const CookieConsent = () => {
                 <div className="flex-shrink-0 flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
                     <button
                         onClick={() => handleChoice('accepted')}
-                        className="w-full bg-accent text-white font-semibold px-6 py-2 rounded-lg hover:bg-accent-hover transition-colors shadow-lg shadow-accent/20 whitespace-nowrap"
+                        className="w-full sm:w-auto bg-accent text-white font-bold px-6 py-3 rounded-lg hover:bg-accent-hover transition-colors shadow-sm uppercase text-xs tracking-wide"
                     >
                         Aceptar Todas
                     </button>
                     <button
                         onClick={() => handleChoice('necessary')}
-                        className="w-full bg-component-bg-hover text-text-primary font-semibold px-6 py-2 rounded-lg hover:bg-border-color transition-colors whitespace-nowrap"
+                        className="w-full sm:w-auto bg-white text-gray-700 font-bold px-6 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm uppercase text-xs tracking-wide"
                     >
                         Solo Necesarias
                     </button>
                     <button
                         onClick={() => handleChoice('declined')}
-                        className="w-full text-text-secondary font-semibold px-6 py-2 rounded-lg hover:bg-border-color transition-colors text-sm whitespace-nowrap"
+                        className="w-full sm:w-auto text-gray-500 font-bold px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors uppercase text-xs tracking-wide"
                     >
                         Rechazar
                     </button>

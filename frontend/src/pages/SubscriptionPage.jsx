@@ -19,9 +19,7 @@ const stripePublishableKey = import.meta.env.PROD
 const stripePromise = loadStripe(stripePublishableKey);
 
 const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
     const { user, subscriptionStatus, refreshSubscriptionStatus, setPromptTrial } = useContext(AuthContext);
-    // --- FIN DE LA MODIFICACIÓN ---
     
     const [cookieConsent, setCookieConsent] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -48,9 +46,7 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
     };
 
     const handleSuccessfulPayment = () => {
-        // --- INICIO DE LA MODIFICACIÓN ---
         setPromptTrial(false); // Evita que el modal de prueba aparezca
-        // --- FIN DE LA MODIFICACIÓN ---
         setIsVerifyingPayment(true);
         setVerificationError('');
 
@@ -93,28 +89,28 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
 
     if (user.role === 'admin' || user.role === 'technician') {
         return (
-            <div className="p-8 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color text-center shadow-2xl">
-                <FontAwesomeIcon icon={faCheckCircle} className="w-16 h-16 mx-auto mb-4 text-green-accent" />
-                <h3 className="text-xl font-bold text-green-accent">CUENTA DE ACCESO COMPLETO</h3>
-                <p className="text-text-secondary mt-2">TU ROL DE {user.role.toUpperCase()} NO REQUIERE UNA SUSCRIPCIÓN DE PAGO.</p>
+            <div className="p-8 bg-white rounded-lg border border-gray-200 text-center shadow-sm">
+                <FontAwesomeIcon icon={faCheckCircle} className="w-16 h-16 mx-auto mb-4 text-green-600" />
+                <h3 className="text-xl font-bold text-green-700 uppercase">Cuenta de Acceso Completo</h3>
+                <p className="text-gray-600 mt-2">Tu rol de {user.role.toUpperCase()} no requiere una suscripción de pago.</p>
             </div>
         );
     }
     
     if (user.role === 'user' && user.companyId) {
         return (
-            <div className="p-8 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color text-center shadow-2xl">
-                <FontAwesomeIcon icon={faUsersCog} className="w-16 h-16 mx-auto mb-4 text-blue-accent" />
-                <h3 className="text-xl font-bold text-blue-accent">SUSCRIPCIÓN GESTIONADA</h3>
-                <p className="text-text-secondary mt-2">
-                    LA SUSCRIPCIÓN DE ESTA CUENTA ES GESTIONADA POR LA ORGANIZACIÓN A LA QUE PERTENECES.
+            <div className="p-8 bg-white rounded-lg border border-gray-200 text-center shadow-sm">
+                <FontAwesomeIcon icon={faUsersCog} className="w-16 h-16 mx-auto mb-4 text-blue-600" />
+                <h3 className="text-xl font-bold text-blue-700 uppercase">Suscripción Gestionada</h3>
+                <p className="text-gray-600 mt-2">
+                    La suscripción de esta cuenta es gestionada por la organización a la que perteneces.
                 </p>
             </div>
         );
     }
 
     if (isLoading) {
-        return <div className="text-center p-8"><FontAwesomeIcon icon={faSpinner} spin size="2x" /></div>;
+        return <div className="text-center p-8 text-accent"><FontAwesomeIcon icon={faSpinner} spin size="2x" /></div>;
     }
 
     const isSubscribed = subscriptionStatus === 'active' || subscriptionStatus === 'cancelled';
@@ -123,12 +119,12 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
         return (
             <div className="max-w-4xl mx-auto space-y-12 animate-fade-in-up">
                 <div>
-                    <h1 className="text-3xl lg:text-4xl font-bold text-text-primary tracking-tight">Tu Suscripción</h1>
-                    <p className="mt-2 text-lg text-text-secondary">Gestiona el estado de tu plan y revisa los beneficios incluidos.</p>
+                    <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight uppercase">Tu Suscripción</h1>
+                    <p className="mt-4 text-lg text-gray-500">Gestiona el estado de tu plan y revisa los beneficios incluidos.</p>
                 </div>
                 <SubscriptionStatus status={subscriptionStatus} expiry={user.subscriptionExpiry} onCancel={handleCancel} />
                 <div>
-                    <h2 className="text-2xl font-semibold text-text-primary mb-6">Beneficios de tu Plan</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6 uppercase">Beneficios de tu Plan</h2>
                     <SubscriptionBenefits />
                 </div>
             </div>
@@ -138,34 +134,34 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
     const areCookiesAllowedForPayment = cookieConsent === 'accepted' || cookieConsent === 'necessary';
     
     return (
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-            <div className="order-2 lg:order-1 lg:pt-8 animate-fade-in-up">
-                <h2 className="text-3xl lg:text-4xl font-bold text-text-primary tracking-tight">
-                    LA HERRAMIENTA DEFINITIVA PARA <span className="text-accent">COMPRA VENTAS DE COCHES</span>
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-12 items-start">
+            <div className="order-2 lg:order-1 lg:pt-4 animate-fade-in-up">
+                <h2 className="text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight uppercase">
+                    La herramienta definitiva para <span className="text-accent">compra ventas de coches</span>
                 </h2>
-                <p className="mt-4 text-lg text-text-secondary">
+                <p className="mt-6 text-lg text-gray-500 leading-relaxed">
                     Desbloquea todo el potencial de tu negocio. AutoGest te da el control total para que te centres en lo que realmente importa: vender.
                 </p>
-                <div className="mt-10 pt-8 border-t border-border-color">
-                    <h3 className="text-xl font-semibold text-text-primary mb-6">TODO INCLUIDO EN TU PLAN:</h3>
+                <div className="mt-12 pt-10 border-t border-gray-200">
+                    <h3 className="text-xl font-bold text-gray-900 mb-8 uppercase">Todo incluido en tu plan:</h3>
                     <SubscriptionBenefits />
                 </div>
             </div>
-            <div className="order-1 lg:order-2">
+            <div className="order-1 lg:order-2 w-full">
                 {areCookiesAllowedForPayment ? (
                     <Elements stripe={stripePromise}>
                         <CheckoutForm onSuccessfulPayment={handleSuccessfulPayment} />
                     </Elements>
                 ) : (
-                    <div className="p-8 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl h-full flex flex-col items-center justify-center text-center">
-                        <FontAwesomeIcon icon={faCookieBite} className="w-16 h-16 text-yellow-accent mx-auto mb-6" />
-                        <h3 className="text-xl font-bold text-text-primary">Se requiere el consentimiento de cookies</h3>
-                        <p className="text-text-secondary mt-2 mb-6">
-                            Para procesar los pagos de forma segura a través de nuestro proveedor Stripe, es necesario aceptar el uso de cookies.
+                    <div className="p-10 bg-white rounded-lg border border-gray-200 shadow-sm h-full flex flex-col items-center justify-center text-center">
+                        <FontAwesomeIcon icon={faCookieBite} className="w-16 h-16 text-yellow-500 mx-auto mb-6" />
+                        <h3 className="text-xl font-bold text-gray-900 uppercase">Se requiere consentimiento</h3>
+                        <p className="text-gray-600 mt-4 mb-8 max-w-sm">
+                            Para procesar los pagos de forma segura a través de Stripe, es necesario aceptar el uso de cookies.
                         </p>
                         <button
                             onClick={handleAcceptCookiesForPayment}
-                            className="bg-accent text-white font-semibold py-3 px-8 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-all"
+                            className="bg-accent text-white font-bold py-3 px-8 rounded-lg shadow hover:bg-accent-hover transition-colors uppercase text-sm"
                         >
                             Aceptar cookies para pagar
                         </button>
@@ -174,19 +170,19 @@ const SubscriptionPageContent = ({ setSubscriptionSuccessModalOpen }) => {
             </div>
             {(isVerifyingPayment || verificationError) && (
                  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
-                    <div className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color p-8 text-center">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md border border-gray-200 p-8 text-center">
                         {isVerifyingPayment && (
                             <>
-                                <FontAwesomeIcon icon={faSpinner} spin size="2x" className="text-accent mb-4" />
-                                <h3 className="text-xl font-bold text-text-primary">VERIFICANDO PAGO...</h3>
-                                <p className="text-text-secondary mt-2">ESTO PUEDE TARDAR UNOS SEGUNDOS. NO CIERRES ESTA VENTANA.</p>
+                                <FontAwesomeIcon icon={faSpinner} spin size="2x" className="text-accent mb-6" />
+                                <h3 className="text-xl font-bold text-gray-900 uppercase">Verificando Pago...</h3>
+                                <p className="text-gray-600 mt-2">Esto puede tardar unos segundos. No cierres esta ventana.</p>
                             </>
                         )}
                         {verificationError && (
                              <>
-                                <FontAwesomeIcon icon={faExclamationTriangle} size="2x" className="text-red-accent mb-4" />
-                                <h3 className="text-xl font-bold text-text-primary">ERROR DE VERIFICACIÓN</h3>
-                                <p className="text-text-secondary mt-2">{verificationError}</p>
+                                <FontAwesomeIcon icon={faExclamationTriangle} size="2x" className="text-red-600 mb-6" />
+                                <h3 className="text-xl font-bold text-gray-900 uppercase">Error de Verificación</h3>
+                                <p className="text-gray-600 mt-2">{verificationError}</p>
                              </>
                         )}
                     </div>

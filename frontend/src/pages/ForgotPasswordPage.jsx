@@ -7,10 +7,16 @@ import api from '../services/api';
 
 const InputField = ({ name, type, value, onChange, placeholder, icon }) => (
     <div className="relative">
-        <FontAwesomeIcon icon={icon} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <FontAwesomeIcon icon={icon} className="text-gray-400" />
+        </div>
         <input 
-            id={name} name={name} type={type} value={value} onChange={onChange}
-            className="w-full appearance-none rounded-lg border border-border-color bg-component-bg-hover px-4 py-3 pl-12 text-text-primary placeholder:text-text-secondary transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+            id={name} 
+            name={name} 
+            type={type} 
+            value={value} 
+            onChange={onChange}
+            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent sm:text-sm transition-colors"
             placeholder={placeholder} 
         />
     </div>
@@ -52,40 +58,79 @@ const ForgotPasswordPage = () => {
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-background p-4">
-            <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[radial-gradient(var(--color-accent)_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+            {/* Fondo coincidente con Login/Register */}
+            <div className="absolute inset-0 -z-10 bg-background"></div>
             
-            <div className="w-full max-w-md space-y-8 rounded-2xl bg-component-bg p-8 shadow-2xl backdrop-blur-lg border border-border-color">
+            <div className="w-full max-w-md bg-white p-10 rounded-2xl shadow-xl border border-gray-200">
                 <div className="text-center">
-                    <FontAwesomeIcon icon={faCar} className="mx-auto h-12 w-auto text-accent" />
-                    <h2 className="mt-6 text-3xl font-bold tracking-tight text-text-primary">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-4 text-accent border border-red-100">
+                        <FontAwesomeIcon icon={faCar} className="h-8 w-8" />
+                    </div>
+                    <h2 className="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight uppercase">
                         Recuperar Contraseña
                     </h2>
-                    <p className="mt-2 text-text-secondary">
+                    <p className="mt-2 text-sm text-gray-500">
                         Introduce tu email y te enviaremos un enlace para restablecerla.
                     </p>
                 </div>
 
-                <form className="space-y-6" onSubmit={handleSubmit} noValidate>
-                    <InputField name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" icon={faEnvelope} />
+                <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
+                    <div className="rounded-md shadow-sm -space-y-px">
+                        <InputField 
+                            name="email" 
+                            type="email" 
+                            value={email} 
+                            onChange={(e) => setEmail(e.target.value)} 
+                            placeholder="Correo electrónico" 
+                            icon={faEnvelope} 
+                        />
+                    </div>
 
-                    {error && <p className="text-sm text-red-accent text-center font-medium">{error}</p>}
-                    {message && <p className="text-sm text-green-accent text-center font-medium">{message}</p>}
+                    {error && (
+                        <div className="rounded-md bg-red-50 p-4 border border-red-100">
+                            <div className="flex">
+                                <div className="ml-3">
+                                    <h3 className="text-sm font-bold text-red-800 uppercase">Error</h3>
+                                    <div className="mt-2 text-sm text-red-700">
+                                        <p>{error}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {message && (
+                         <div className="rounded-md bg-green-50 p-4 border border-green-100">
+                            <div className="flex">
+                                <div className="ml-3">
+                                    <h3 className="text-sm font-bold text-green-800 uppercase">Enviado</h3>
+                                    <div className="mt-2 text-sm text-green-700">
+                                        <p>{message}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div>
                         <button 
                             type="submit" 
                             disabled={isLoading || resendCooldown > 0}
-                            className="group relative flex w-full justify-center rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50"
+                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors uppercase tracking-wide shadow-md"
                         >
                             {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : (resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : 'Enviar Enlace')}
                         </button>
                     </div>
                 </form>
-                <p className="text-center text-sm text-text-secondary">
-                    <Link to="/login" className="font-medium text-accent hover:text-accent-hover">
-                        Volver a Iniciar Sesión
-                    </Link>
-                </p>
+                
+                <div className="text-center mt-4">
+                    <p className="text-sm text-gray-600">
+                        ¿Lo has recordado?{' '}
+                        <Link to="/login" className="font-bold text-accent hover:text-accent-hover transition-colors">
+                            Volver a Iniciar Sesión
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
     );

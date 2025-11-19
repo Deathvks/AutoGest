@@ -27,11 +27,10 @@ const setStoredFormData = (userId, data) => {
     }
 };
 
-
 const InputField = ({ id, label, value, onChange, disabled, required }) => (
     <div>
-        <label htmlFor={id} className="block text-sm font-semibold text-text-primary uppercase">
-            {label} {required && <span className="text-red-500">*</span>}
+        <label htmlFor={id} className="block text-sm font-bold text-gray-700 uppercase mb-1">
+            {label} {required && <span className="text-red-600">*</span>}
         </label>
         <input
             type="text"
@@ -40,7 +39,7 @@ const InputField = ({ id, label, value, onChange, disabled, required }) => (
             value={value}
             onChange={onChange}
             disabled={disabled}
-            className="mt-1 block w-full px-4 py-2 bg-component-bg-hover border border-border-color rounded-lg placeholder:text-text-secondary focus:ring-1 focus:ring-accent focus:border-accent sm:text-sm disabled:opacity-50"
+            className="mt-1 block w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:ring-2 focus:ring-accent focus:border-accent sm:text-sm disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
         />
     </div>
 );
@@ -349,19 +348,19 @@ const BusinessDataSettings = () => {
     return (
         <>
             {isLocked && (
-                <div className="absolute inset-0 bg-component-bg/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg text-center p-4">
-                    <FontAwesomeIcon icon={isTeamMember ? faInfoCircle : faLock} className="text-4xl text-text-secondary mb-4" />
-                    <h3 className="text-xl font-bold text-text-primary">
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 rounded-lg text-center p-6 border border-gray-200">
+                    <FontAwesomeIcon icon={isTeamMember ? faInfoCircle : faLock} className="text-4xl text-gray-400 mb-4" />
+                    <h3 className="text-xl font-bold text-gray-900">
                         {isTeamMember ? 'Datos del Equipo' : 'Función Premium'}
                     </h3>
-                    <p className="text-text-secondary mt-1">
+                    <p className="text-gray-600 mt-2 max-w-sm mx-auto">
                         {isTeamMember 
                             ? 'Estás viendo los datos de facturación del equipo al que perteneces. Solo el propietario puede modificarlos.'
                             : 'Añade tus datos de empresa para facturas profesionales.'
                         }
                     </p>
                     {!isTeamMember && (
-                         <Link to="/subscription" className="mt-4 bg-accent text-white px-5 py-2 rounded-lg font-semibold hover:bg-accent-hover transition-colors">
+                         <Link to="/subscription" className="mt-6 bg-accent text-white px-6 py-2.5 rounded-lg font-bold text-sm uppercase hover:bg-accent-hover transition-colors shadow">
                             Suscríbete ahora
                         </Link>
                     )}
@@ -369,11 +368,11 @@ const BusinessDataSettings = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-                <h2 className="text-xl font-bold text-text-primary mb-6">Datos de Facturación</h2>
+                <h2 className="text-xl font-extrabold text-gray-900 mb-6 uppercase tracking-wide">Datos de Facturación</h2>
                 
-                <div className="relative grid grid-cols-2 w-full max-w-sm mx-auto items-center rounded-full bg-component-bg-hover p-1 border border-border-color">
+                <div className="relative grid grid-cols-2 w-full max-w-sm mx-auto items-center rounded-lg bg-gray-100 p-1 border border-gray-200">
                     <span
-                        className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-full bg-component-bg backdrop-blur-sm shadow-lg transition-transform duration-300 ${
+                        className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-md bg-white shadow-sm border border-gray-200 transition-transform duration-300 ${
                             accountType === 'particular' ? 'translate-x-full' : 'translate-x-0'
                         }`}
                         style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
@@ -382,8 +381,8 @@ const BusinessDataSettings = () => {
                         type="button"
                         onClick={() => setAccountType('empresa')}
                         disabled={isLocked}
-                        className={`relative z-10 rounded-full py-2 text-xs font-semibold transition-colors duration-300 whitespace-nowrap text-center ${
-                            accountType === 'empresa' ? 'text-text-primary' : 'text-text-secondary'
+                        className={`relative z-10 rounded-md py-2 text-xs font-bold transition-colors duration-300 whitespace-nowrap text-center uppercase ${
+                            accountType === 'empresa' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
                         }`}
                     >
                         EMPRESA
@@ -392,8 +391,8 @@ const BusinessDataSettings = () => {
                         type="button"
                         onClick={() => setAccountType('particular')}
                         disabled={isLocked}
-                        className={`relative z-10 rounded-full py-2 text-xs font-semibold transition-colors duration-300 whitespace-nowrap text-center ${
-                            accountType === 'particular' ? 'text-text-primary' : 'text-text-secondary'
+                        className={`relative z-10 rounded-md py-2 text-xs font-bold transition-colors duration-300 whitespace-nowrap text-center uppercase ${
+                            accountType === 'particular' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
                         }`}
                     >
                         AUTÓNOMO
@@ -466,8 +465,8 @@ const BusinessDataSettings = () => {
                 </div>
                 
                 {accountType === 'empresa' ? (
-                    <div>
-                        <label className="block text-sm font-semibold text-text-primary uppercase mb-1">
+                    <div className="border-t border-gray-100 pt-6">
+                        <label className="block text-sm font-bold text-gray-700 uppercase mb-2">
                             Logo de la Empresa
                         </label>
                         <div className="flex items-center gap-4">
@@ -475,55 +474,59 @@ const BusinessDataSettings = () => {
                                 <img
                                     src={logoPreview}
                                     alt="Logo Preview"
-                                    className="h-16 w-auto rounded-md object-contain bg-white p-1 border border-border-color cursor-pointer"
+                                    className="h-16 w-auto rounded-md object-contain bg-white p-1 border border-gray-300 cursor-pointer hover:border-accent transition-colors"
                                     onClick={() => setImageToEnlarge(logoPreview)}
                                 />
                             ) : (
-                                <div className="h-16 w-16 bg-component-bg-hover border-2 border-dashed border-border-color rounded-md flex items-center justify-center">
-                                    <FontAwesomeIcon icon={faImage} className="text-text-secondary" />
+                                <div className="h-16 w-16 bg-gray-50 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center text-gray-400">
+                                    <FontAwesomeIcon icon={faImage} className="text-2xl" />
                                 </div>
                             )}
                             <input type="file" id="logo-upload" className="hidden" onChange={handleLogoChange} accept="image/*" disabled={isLocked}/>
-                            <label htmlFor="logo-upload" className={`cursor-pointer rounded-md border border-border-color bg-component-bg px-3 py-2 text-sm font-semibold text-text-primary shadow-sm hover:bg-component-bg-hover ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                Cambiar
-                            </label>
-                            {logoPreview && (
-                                <button type="button" onClick={handleDeleteLogo} className={`text-sm font-semibold text-red-500 hover:text-red-700 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
-                                    <FontAwesomeIcon icon={faTrash} /> Eliminar
-                                </button>
-                            )}
+                            <div className="flex flex-col gap-2">
+                                <label htmlFor="logo-upload" className={`cursor-pointer rounded-md bg-white px-3 py-1.5 text-xs font-bold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm uppercase text-center ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                    Cambiar
+                                </label>
+                                {logoPreview && (
+                                    <button type="button" onClick={handleDeleteLogo} className={`text-xs font-bold text-red-600 hover:text-red-700 uppercase ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
+                                        <FontAwesomeIcon icon={faTrash} className="mr-1" /> Eliminar
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ) : (
-                    <div>
-                        <label className="block text-sm font-semibold text-text-primary uppercase mb-1">
+                    <div className="border-t border-gray-100 pt-6">
+                        <label className="block text-sm font-bold text-gray-700 uppercase mb-2">
                             Avatar (Opcional)
                         </label>
                         <div className="flex items-center gap-4">
                             <img
-                                src={avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=1A1629&color=F0EEF7&size=128`}
+                                src={avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=f3f4f6&color=374151&size=128`}
                                 alt="Avatar Preview"
-                                className="h-16 w-16 rounded-full object-cover border border-border-color cursor-pointer"
-                                onClick={() => setImageToEnlarge(avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=1A1629&color=F0EEF7&size=512`)}
+                                className="h-16 w-16 rounded-full object-cover border-2 border-gray-200 cursor-pointer hover:border-accent transition-colors"
+                                onClick={() => setImageToEnlarge(avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=f3f4f6&color=374151&size=512`)}
                             />
                             <input type="file" id="avatar-upload" ref={avatarInputRef} className="hidden" onChange={handleAvatarChange} accept="image/*" disabled={isLocked}/>
-                            <label htmlFor="avatar-upload" className={`cursor-pointer rounded-md border border-border-color bg-component-bg px-3 py-2 text-sm font-semibold text-text-primary shadow-sm hover:bg-component-bg-hover ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                Cambiar
-                            </label>
-                            {avatarPreview && (
-                                <button type="button" onClick={handleDeleteAvatar} className={`text-sm font-semibold text-red-500 hover:text-red-700 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
-                                    <FontAwesomeIcon icon={faTrash} /> Eliminar
-                                </button>
-                            )}
+                            <div className="flex flex-col gap-2">
+                                <label htmlFor="avatar-upload" className={`cursor-pointer rounded-md bg-white px-3 py-1.5 text-xs font-bold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm uppercase text-center ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                    Cambiar
+                                </label>
+                                {avatarPreview && (
+                                    <button type="button" onClick={handleDeleteAvatar} className={`text-xs font-bold text-red-600 hover:text-red-700 uppercase ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
+                                        <FontAwesomeIcon icon={faTrash} className="mr-1" /> Eliminar
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                {successMessage && <p className="text-sm text-green-500">{successMessage}</p>}
+                {error && <p className="text-sm text-red-600 font-bold bg-red-50 p-3 rounded border border-red-100">{error}</p>}
+                {successMessage && <p className="text-sm text-green-600 font-bold bg-green-50 p-3 rounded border border-green-100">{successMessage}</p>}
 
-                <div className="flex justify-end pt-4 border-t border-border-color">
-                    <button type="submit" className="bg-accent text-white font-bold py-2 px-4 rounded-md hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50" disabled={isSaving || isLocked}>
+                <div className="flex justify-end pt-6 border-t border-gray-200">
+                    <button type="submit" className="bg-accent text-white font-bold py-2.5 px-6 rounded-lg shadow hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 transition-colors uppercase text-sm" disabled={isSaving || isLocked}>
                         <FontAwesomeIcon icon={faSave} className="mr-2" />
                         {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                     </button>
@@ -532,7 +535,7 @@ const BusinessDataSettings = () => {
 
             {imageToEnlarge && (
                 <div
-                    className="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center z-[100] p-4 animate-fade-in-up"
+                    className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in-up"
                     onClick={() => setImageToEnlarge(null)}
                 >
                     <button
@@ -540,17 +543,17 @@ const BusinessDataSettings = () => {
                         onClick={() => setImageToEnlarge(null)}
                         aria-label="Cerrar"
                     >
-                        <FontAwesomeIcon icon={faXmark} className="w-8 h-8" />
+                        <FontAwesomeIcon icon={faXmark} className="w-10 h-10" />
                     </button>
 
                     <div
-                        className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96"
+                        className="relative w-full max-w-lg aspect-square"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <img
                             src={imageToEnlarge}
                             alt="Imagen a tamaño completo"
-                            className="w-full h-full rounded-lg object-contain"
+                            className="w-full h-full object-contain rounded-lg"
                         />
                     </div>
                 </div>
@@ -566,7 +569,7 @@ const BusinessDataSettings = () => {
                 confirmText="Continuar"
                 cancelText="Cancelar"
                 icon={faExclamationTriangle}
-                iconColor="text-yellow-accent"
+                iconColor="text-yellow-500"
             />
 
             {/* Modal de confirmación para ELIMINAR avatar */}
@@ -579,7 +582,7 @@ const BusinessDataSettings = () => {
                 confirmText="Eliminar"
                 cancelText="Cancelar"
                 icon={faExclamationTriangle}
-                iconColor="text-red-accent"
+                iconColor="text-red-600"
             />
         </>
     );

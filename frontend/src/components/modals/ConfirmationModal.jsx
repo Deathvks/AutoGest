@@ -15,7 +15,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
  * @param {string} [props.confirmText='Confirmar'] - Texto del botón de confirmación.
  * @param {string} [props.cancelText='Cancelar'] - Texto del botón de cancelación.
  * @param {object} [props.icon=faExclamationTriangle] - Icono de FontAwesome a mostrar.
- * @param {string} [props.iconColor='text-yellow-accent'] - Clase de color para el icono.
+ * @param {string} [props.iconColor='text-yellow-600'] - Clase de color para el icono.
  */
 const ConfirmationModal = ({ 
     isOpen, 
@@ -26,33 +26,37 @@ const ConfirmationModal = ({
     confirmText = 'Confirmar', 
     cancelText = 'Cancelar', 
     icon = faExclamationTriangle, 
-    iconColor = 'text-yellow-accent' 
+    iconColor = 'text-yellow-600' 
 }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-fade-in-up" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[110] p-4 animate-fade-in-up backdrop-blur-sm" onClick={onClose}>
             <div 
-                className="bg-component-bg backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md border border-border-color"
+                className="bg-white rounded-lg shadow-2xl w-full max-w-md border border-gray-300 overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="p-8 text-center">
-                    <FontAwesomeIcon icon={icon} className={`w-16 h-16 ${iconColor} mx-auto mb-6`} />
-                    <h2 className="text-2xl font-bold text-text-primary">{title}</h2>
-                    <p className="text-text-secondary mt-2">
+                <div className="p-8 text-center bg-white">
+                    <div className={`w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-full bg-gray-50 border border-gray-100`}>
+                         <FontAwesomeIcon icon={icon} className={`text-3xl ${iconColor}`} />
+                    </div>
+                    
+                    <h2 className="text-2xl font-extrabold text-gray-900 uppercase tracking-tight">{title}</h2>
+                    <p className="text-gray-600 mt-3 text-sm leading-relaxed font-medium">
                         {message}
                     </p>
                 </div>
-                <div className="flex justify-center items-center gap-4 p-6 border-t border-border-color bg-component-bg-hover rounded-b-2xl">
+
+                <div className="flex justify-center items-center gap-4 p-6 border-t border-gray-200 bg-gray-50">
                     <button 
                         onClick={onClose}
-                        className="w-full bg-component-bg border border-border-color text-text-primary px-4 py-2.5 rounded-lg hover:bg-border-color transition-colors font-semibold"
+                        className="w-full bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
                     >
                         {cancelText}
                     </button>
                     <button 
                         onClick={onConfirm}
-                        className="w-full bg-accent text-white px-4 py-2.5 rounded-lg shadow-lg shadow-accent/20 hover:bg-accent-hover transition-opacity font-semibold"
+                        className="w-full bg-accent text-white px-4 py-2.5 rounded-lg shadow-lg hover:bg-accent-hover transition-opacity font-bold uppercase text-xs tracking-wide"
                     >
                         {confirmText}
                     </button>

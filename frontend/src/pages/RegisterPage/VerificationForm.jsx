@@ -102,12 +102,13 @@ const VerificationForm = ({ email }) => {
 
     return (
         <>
-            <div className="text-center">
-                <h2 className="text-3xl font-bold tracking-tight text-text-primary">
+            <div className="text-center mb-8">
+                <h2 className="text-2xl font-extrabold tracking-tight text-gray-900 uppercase">
                     Verificar Cuenta
                 </h2>
-                <p className="mt-2 text-text-secondary">
-                    Introduce el código de 6 dígitos enviado a <br/> <span className="font-semibold text-text-primary break-words">{email}</span>
+                <p className="mt-2 text-sm text-gray-500">
+                    Introduce el código de 6 dígitos enviado a <br/> 
+                    <span className="font-bold text-gray-900 break-all">{email}</span>
                 </p>
             </div>
             
@@ -122,30 +123,38 @@ const VerificationForm = ({ email }) => {
                             value={digit}
                             onChange={(e) => handleCodeChange(e, index)}
                             onKeyDown={(e) => handleKeyDown(e, index)}
-                            className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold rounded-lg border border-border-color bg-component-bg-hover text-text-primary transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
+                            className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl font-bold rounded-lg border border-gray-300 bg-white text-gray-900 focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-colors shadow-sm placeholder-gray-300"
                         />
                     ))}
                 </div>
                 
-                {error && <p className="text-sm text-red-accent text-center font-medium">{error}</p>}
-                {success && <p className="text-sm text-green-accent text-center font-medium">{success}</p>}
+                {error && (
+                    <div className="text-sm text-red-600 bg-red-50 p-3 rounded border border-red-200 text-center font-bold">
+                        {error}
+                    </div>
+                )}
+                {success && (
+                    <div className="text-sm text-green-600 bg-green-50 p-3 rounded border border-green-200 text-center font-bold">
+                        {success}
+                    </div>
+                )}
 
                 <div>
                     <button 
                         type="submit" 
                         disabled={isLoading}
-                        className="group relative flex w-full justify-center rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50"
+                        className="group relative flex w-full justify-center rounded-lg border border-transparent bg-accent px-4 py-3 text-sm font-bold text-white shadow hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors uppercase tracking-wide"
                     >
                         {isLoading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Verificar Cuenta'}
                     </button>
                 </div>
             </form>
 
-            <div className="text-sm text-center">
+            <div className="text-center mt-6 pt-4 border-t border-gray-100">
                 <button 
                     onClick={handleResendCode} 
                     disabled={isLoading || resendCooldown > 0} 
-                    className="font-medium text-accent hover:text-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="text-xs font-bold text-accent hover:text-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors uppercase"
                 >
                     {resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : '¿No has recibido el código? Reenviar'}
                 </button>

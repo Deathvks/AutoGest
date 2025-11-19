@@ -13,22 +13,22 @@ const TrialCountdownSidebar = () => {
     const { trialTimeLeft } = useContext(AuthContext);
 
     if (!trialTimeLeft) {
-        return <span className="block text-xs font-bold">Prueba Expirada</span>;
+        return <span className="block text-xs font-bold mt-1">Prueba Expirada</span>;
     }
 
     const { days, hours, minutes, seconds } = trialTimeLeft;
     let timeLeftString = '';
     if (days > 0) {
-        timeLeftString = `Quedan: ${days}d ${hours}h`;
+        timeLeftString = `${days}d ${hours}h restantes`;
     } else if (hours > 0) {
-        timeLeftString = `Quedan: ${hours}h ${minutes}m`;
+        timeLeftString = `${hours}h ${minutes}m restantes`;
     } else if (minutes > 0) {
-        timeLeftString = `Quedan: ${minutes}m ${seconds}s`;
+        timeLeftString = `${minutes}m ${seconds}s restantes`;
     } else {
-        timeLeftString = `Quedan: ${seconds}s`;
+        timeLeftString = `${seconds}s restantes`;
     }
 
-    return <span className="block text-xs font-bold">{timeLeftString}</span>;
+    return <span className="block text-xs font-bold mt-1">{timeLeftString}</span>;
 };
 
 const Sidebar = ({ onLogoutClick }) => {
@@ -42,26 +42,33 @@ const Sidebar = ({ onLogoutClick }) => {
     const getStatusText = () => {
         if (isExempt || hasValidSubscription) return 'Pro';
         if (isTrialActive) return 'Prueba';
-        return 'Free';
+        return 'Gratis';
     };
 
     const userStatusText = getStatusText();
-    
-    const isSubscribed = subscriptionStatus === 'active';
-    const isManagementLocked = isTrialActive && !isSubscribed && user.role !== 'admin';
+    const isManagementLocked = isTrialActive && !hasValidSubscription && user.role !== 'admin';
+
+    // Lógica para mostrar/ocultar el Dashboard
+    const canSeeDashboard = 
+        user.role === 'admin' || 
+        user.role === 'technician' || 
+        user.role === 'technician_subscribed' || 
+        !!user.companyId || // Si está en un equipo
+        hasValidSubscription || // Si tiene suscripción
+        isTrialActive; // Si está en prueba
 
     const NavItem = ({ to, icon, children, locked = false, count }) => {
-        const commonClasses = "flex items-center px-4 py-3 text-sm font-semibold rounded-lg transition-colors duration-200";
+        const baseClasses = "flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors duration-200";
         
         if (locked) {
             return (
                 <div 
-                    className={`${commonClasses} text-text-secondary opacity-50 cursor-not-allowed relative group`}
+                    className={`${baseClasses} text-text-secondary opacity-60 cursor-not-allowed relative group bg-gray-50`}
                     title="Suscríbete para obtener todas las ventajas"
                 >
-                    <FontAwesomeIcon icon={icon} className="w-5 h-5 mr-3" />
+                    <FontAwesomeIcon icon={icon} className="w-5 h-5 mr-3 text-gray-400" />
                     <span className="flex-1">{children}</span>
-                    <FontAwesomeIcon icon={faLock} className="w-4 h-4 ml-auto text-text-secondary" />
+                    <FontAwesomeIcon icon={faLock} className="w-3 h-3 ml-auto text-gray-400" />
                 </div>
             );
         }
@@ -70,93 +77,121 @@ const Sidebar = ({ onLogoutClick }) => {
             <NavLink
                 to={to}
                 className={({ isActive }) =>
-                    `${commonClasses} ${
+                    `${baseClasses} ${
                         isActive
-                            ? 'bg-accent text-white shadow-lg'
-                            : 'text-text-secondary hover:bg-component-bg-hover hover:text-text-primary'
+                            ? 'bg-accent text-white shadow-sm' // Rojo sólido con texto blanco
+                            : 'text-text-secondary hover:bg-gray-100 hover:text-text-primary' // Gris claro al hover
                     }`
                 }
             >
-                <FontAwesomeIcon icon={icon} className="w-5 h-5 mr-3" />
-                <span className="flex-1">{children}</span>
-                {count > 0 && (
-                    <span className="bg-white/20 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center ml-auto">
-                        {count}
-                    </span>
+                {({ isActive }) => (
+                    <>
+                        <FontAwesomeIcon 
+                            icon={icon} 
+                            className={`w-5 h-5 mr-3 transition-colors ${isActive ? 'text-white' : 'text-accent/80'}`} 
+                        />
+                        <span className="flex-1">{children}</span>
+                        {count > 0 && (
+                            <span className={`text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center ml-auto ${isActive ? 'bg-white text-accent' : 'bg-accent text-white'}`}>
+                                {count}
+                            </span>
+                        )}
+                    </>
                 )}
             </NavLink>
         );
     };
 
     return (
-        <div className="hidden lg:flex bg-component-bg text-text-primary w-64 flex-shrink-0 flex-col border-r border-border-color h-screen sticky top-0">
-            <div className="p-6 text-center border-b border-border-color">
-                <Link to="/" className="text-2xl font-bold text-accent">AutoGest</Link>
+        <div className="hidden lg:flex bg-white text-text-primary w-64 flex-shrink-0 flex-col border-r border-border-color h-screen sticky top-0 shadow-sm z-20">
+            {/* Header del Sidebar */}
+            <div className="h-16 flex items-center px-6 border-b border-border-color bg-white">
+                <Link to="/" className="text-2xl font-extrabold tracking-tight text-accent flex items-center gap-2">
+                    AutoGest
+                </Link>
             </div>
 
-            <nav className="flex-1 p-4 space-y-2">
-                <NavItem to="/" icon={faTachometerAlt}>Dashboard</NavItem>
+            {/* Navegación Principal */}
+            <nav className="flex-1 px-3 py-6 space-y-4 overflow-y-auto no-scrollbar">
+                {canSeeDashboard && (
+                    <NavItem to="/" icon={faTachometerAlt}>Dashboard</NavItem>
+                )}
                 <NavItem to="/cars" icon={faCar}>Mis Coches</NavItem>
                 <NavItem to="/sales" icon={faChartLine}>Ventas</NavItem>
                 <NavItem to="/expenses" icon={faFileInvoiceDollar}>Gastos</NavItem>
                 
+                {/* Separador sutil */}
+                <div className="my-4 border-t border-gray-100 mx-2"></div>
+                
+                <NavItem to="/notifications" icon={faBell} count={unreadCount}>Notificaciones</NavItem>
+                
                 {(user.role === 'admin' || user.isOwner || (user.companyId && user.canExpelUsers)) && (
                     <NavItem to="/admin" icon={faUsersCog} locked={isManagementLocked}>
-                        Gestión
+                        Administración
                     </NavItem>
                 )}
-                <NavItem to="/notifications" icon={faBell} count={unreadCount}>Notificaciones</NavItem>
                 <NavItem to="/subscription" icon={faCreditCard}>Suscripción</NavItem>
             </nav>
 
+            {/* Banner de Prueba (si aplica) */}
             {isTrialActive && !hasValidSubscription && (
                 <div className="px-4 pb-4">
-                    <div className="p-4 rounded-lg bg-accent/10 text-accent">
-                        <div className="flex items-center gap-3">
-                            <FontAwesomeIcon icon={faRocket} className="h-5 w-5" />
+                    <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 shadow-sm">
+                        <div className="flex items-start gap-3">
+                            <FontAwesomeIcon icon={faRocket} className="h-5 w-5 mt-0.5 text-yellow-600" />
                             <div className="flex-1">
-                                <div className="font-bold text-sm">Prueba Gratuita</div>
+                                <div className="font-bold text-sm">Prueba Activa</div>
                                 <TrialCountdownSidebar />
+                                <Link to="/subscription" className="text-xs font-semibold underline mt-1 block hover:text-yellow-900">
+                                    Suscribirse
+                                </Link>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            <div className="p-4 border-t border-border-color">
-                <div className="space-y-2">
-                    <Link 
-                        to="/profile" 
-                        className="flex items-center w-full px-4 py-3 text-sm font-semibold rounded-lg text-text-secondary hover:bg-component-bg-hover hover:text-text-primary transition-colors duration-200"
-                    >
-                        <img 
-                            src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}&background=8b5cf6&color=fff`} 
-                            alt="Avatar" 
-                            className="w-10 h-10 rounded-full object-cover flex-shrink-0 mr-3"
-                        />
-                        <div className="truncate">
-                            <p className="font-semibold text-sm text-text-primary truncate">{user.name}</p>
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                            <p className="text-xs text-text-secondary capitalize truncate">
-                                {userStatusText}
-                                {user.companyId && user.businessName && ` / ${user.businessName}`}
-                            </p>
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
+            {/* Pie del Sidebar (Usuario) */}
+            <div className="p-4 border-t border-border-color bg-white">
+                {/* Enlace al perfil restaurado */}
+                <Link 
+                    to="/profile" 
+                    className="flex items-center gap-3 mb-4 p-2 rounded-lg hover:bg-gray-50 hover:shadow-sm transition-all border border-transparent hover:border-border-color group"
+                >
+                     <img 
+                        src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}&background=dc2626&color=fff`} 
+                        alt="Avatar" 
+                        className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm group-hover:border-accent/20 transition-colors"
+                    />
+                    <div className="min-w-0 overflow-hidden text-left">
+                        <p className="text-sm font-bold text-text-primary truncate group-hover:text-accent transition-colors">{user.name}</p>
+                        <div className="flex items-center gap-1 text-xs text-text-secondary truncate">
+                            <span className={`inline-block w-2 h-2 rounded-full ${userStatusText === 'Pro' ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
+                            {userStatusText}
+                            {user.companyId && user.businessName && <span className="opacity-75"> • {user.businessName}</span>}
                         </div>
+                    </div>
+                </Link>
+
+                <div className="space-y-1">
+                    <Link 
+                        to="/settings" 
+                        className="flex items-center w-full px-3 py-2 text-sm font-medium text-text-secondary rounded-md hover:bg-gray-50 hover:text-accent hover:shadow-sm transition-all border border-transparent hover:border-border-color"
+                    >
+                         <FontAwesomeIcon icon={faCog} className="w-4 h-4 mr-2" />
+                         Ajustes
                     </Link>
-                    
-                    <NavItem to="/settings" icon={faCog}>Ajustes</NavItem>
                     
                     <button
                         onClick={onLogoutClick}
-                        className="w-full flex items-center px-4 py-3 text-sm font-semibold text-text-secondary hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors"
+                        className="flex items-center w-full px-3 py-2 text-sm font-medium text-text-secondary rounded-md hover:bg-gray-50 hover:text-red-600 hover:shadow-sm transition-all border border-transparent hover:border-border-color"
                     >
-                        <FontAwesomeIcon icon={faSignOutAlt} className="w-5 h-5 mr-3" />
+                        <FontAwesomeIcon icon={faSignOutAlt} className="w-4 h-4 mr-2" />
                         Cerrar Sesión
                     </button>
                 </div>
                  <div className="text-center mt-4">
-                    <span className="text-xs text-text-secondary opacity-50">Versión {APP_VERSION}</span>
+                    <span className="text-[10px] text-gray-400 font-mono">v{APP_VERSION}</span>
                 </div>
             </div>
         </div>

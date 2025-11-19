@@ -10,377 +10,165 @@
 
 .no-scrollbar {
   -ms-overflow-style: none;
-  /* IE and Edge */
   scrollbar-width: none;
-  /* Firefox */
 }
 
 @layer base {
   :root {
-    /* Tema Oscuro Permanente - Estilo Liquid Glass */
-    /* --- INICIO DE LA MODIFICACIÓN --- */
-    /* El gradiente se define aquí pero se aplicará en el body */
-    --color-background: linear-gradient(-70deg, rgb(17, 24, 39), rgb(30, 41, 59));
-    /* El color sólido se define para el html */
-    --color-background-solid: rgb(17, 24, 39); 
-    /* --- FIN DE LA MODIFICACIÓN --- */
-    --color-component-bg: rgba(255, 255, 255, 0.1);
-    --color-component-bg-hover: rgba(255, 255, 255, 0.15);
-    --color-border: rgba(255, 255, 255, 0.2);
-    --color-text-primary: #f8fafc;
-    --color-text-secondary: #cbd5e1;
-    --color-popup-bg: rgba(26, 22, 41, 0.95);
-
-    /* Paleta de Acento por Defecto (Púrpura) */
-    --color-accent: rgb(168, 134, 226);
-    --color-accent-hover: rgb(187, 163, 233);
-    --color-accent-rgb: 168, 134, 226;
-    --color-accent-soft-glow: rgba(168, 134, 226, 0.15);
-
-    /* Colores de estado */
-    --color-green-accent: #4ade80;
-    --color-red-accent: rgb(224, 123, 142);
-    --color-yellow-accent: #facc15;
-    --color-blue-accent: #60a5fa;
-
-    /* Color para los círculos animados del fondo */
-    --color-circles-bg: linear-gradient(120deg, rgb(135, 60, 141), rgb(182, 85, 107));
-  
-    /* --- INICIO DE LA MODIFICACIÓN (Estilos para React-Day-Picker) --- */
-    /* Definimos las variables de la librería en el root */
-    --rdp-cell-size: 40px; /* Tamaño base de las celdas */
-    --rdp-color: var(--color-text-primary) !important; /* Color del texto de los días */
-    --rdp-accent-color: var(--color-accent) !important; /* Color del día seleccionado */
-    --rdp-background-color: var(--color-component-bg-hover) !important; /* Fondo del día al pasar el ratón */
+    /* --- NUEVO TEMA (Estilo Occident) --- */
     
+    /* Color Principal (Rojo Corporativo) */
+    --color-accent: rgb(220, 0, 40);
+    --color-accent-rgb: 220, 0, 40;
+    --color-accent-hover: rgb(190, 0, 35);
+    --color-accent-soft-glow: rgba(220, 0, 40, 0.1);
+
+    /* Fondos */
+    /* CAMBIO: Gris neutro exacto (#f7f7f7 / rgb(247, 247, 247)) */
+    --color-background: #f7f7f7; 
+    --color-background-solid: #f7f7f7;
+    
+    --color-component-bg: #ffffff; /* Blanco puro para tarjetas */
+    --color-component-bg-hover: #f9fafb;
+    --color-popup-bg: #ffffff;
+
+    /* Bordes y Textos */
+    --color-border: #d1d5db; /* Gris visible para bordes */
+    --color-text-primary: #111827; /* Negro suave */
+    --color-text-secondary: #4b5563; /* Gris medio */
+
+    /* Colores de estado (Ajustados para fondo claro) */
+    --color-green-accent: #16a34a;
+    --color-red-accent: #dc2626;
+    --color-yellow-accent: #ca8a04;
+    --color-blue-accent: #2563eb;
+
+    /* Degradados eliminados, fondo plano */
+    --color-circles-bg: transparent;
+
+    /* Variables para React-Day-Picker (Ajuste a tema claro) */
+    --rdp-cell-size: 40px;
+    --rdp-color: var(--color-text-primary) !important;
+    --rdp-accent-color: var(--color-accent) !important;
+    --rdp-background-color: var(--color-component-bg-hover) !important;
     --rdp-accent-color-dark: var(--color-accent) !important;
     --rdp-background-color-dark: var(--color-component-bg-hover) !important;
-    
     --rdp-outline: 2px solid var(--color-accent) !important;
-    --rdp-outline-selected: 3px solid var(--color-accent) !important;
-
-    --rdp-caption-color: var(--color-text-primary) !important; /* Color del título (mes y año) */
-    --rdp-nav-color: var(--color-accent) !important; /* Color de las flechas de navegación */
-    --rdp-head_color: var(--color-text-secondary) !important; /* Color de los días de la semana (lu, ma...) */
+    --rdp-outline-selected: 2px solid var(--color-accent) !important;
     
-    --rdp-selected-color: #fff !important; /* Texto del día seleccionado */
-    --rdp-today-color: var(--color-accent) !important; /* Texto del día de hoy */
-    --rdp-today-background-color: var(--color-accent-soft-glow) !important; /* Fondo del día de hoy (Corregido) */
-    /* --- FIN DE LA MODIFICACIÓN --- */
+    --rdp-caption-color: var(--color-text-primary) !important;
+    --rdp-nav-color: var(--color-accent) !important; 
+    
+    --rdp-head_color: var(--color-text-secondary) !important;
+    --rdp-selected-color: #fff !important;
+    --rdp-today-color: var(--color-accent) !important;
+    --rdp-today-background-color: transparent !important;
   }
 
   html, body {
     height: 100%;
-    overflow: hidden; /* Evita el scroll en el body */
-    overscroll-behavior-y: none; /* Deshabilita el "bounce" de pull-to-refresh */
-  }
-
-  /* --- INICIO DE LA MODIFICACIÓN --- */
-  html {
-    /* Este es el color que usará iOS para las áreas seguras */
     background-color: var(--color-background-solid);
   }
-  /* --- FIN DE LA MODIFICACIÓN --- */
 
   body {
-    /* --- INICIO DE LA MODIFICACIÓN --- */
-    /* Aplicamos el gradiente al body */
     background: var(--color-background);
-    /* --- FIN DE LA MODIFICACIÓN --- */
-    background-attachment: fixed;
-    color: var(--color-text-secondary);
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    caret-color: transparent;
-    /* La siguiente línea es la clave para deshabilitar el "bounce" */
-    overscroll-behavior-y: none;
+    color: var(--color-text-primary);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
   
-  /* Hacemos que la app ocupe toda la altura */
   #root, #root > div {
     height: 100%;
   }
-  
+
   input, textarea, select {
-    @apply focus:outline-none;
+    @apply focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent;
+    background-color: #fff !important;
+    border: 1px solid var(--color-border) !important;
+    color: var(--color-text-primary) !important;
+  }
+  
+  /* Override para inputs deshabilitados */
+  input:disabled, textarea:disabled, select:disabled {
+    background-color: #e5e7eb !important;
+    color: #9ca3af !important;
   }
 
-  input, textarea {
-    caret-color: var(--color-text-primary);
-  }
-
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  input[type=number] {
-    -moz-appearance: textfield;
-  }
-
-  body::-webkit-scrollbar {
-    display: none;
-  }
-
-  /*
-    Anula los estilos de autocompletado del navegador, que inyectan
-    un fondo de color. Se usa un box-shadow interno para "pintar"
-    sobre el color del navegador y mantener la apariencia del diseño.
-  */
+  /* Reset de estilos de autocompletado para tema claro */
   input:-webkit-autofill,
   input:-webkit-autofill:hover, 
   input:-webkit-autofill:focus, 
   input:-webkit-autofill:active {
     -webkit-text-fill-color: var(--color-text-primary) !important;
-    -webkit-box-shadow: 0 0 0px 1000px var(--color-component-bg-hover) inset !important;
-    transition: background-color 5000s ease-in-out 0s;
+    -webkit-box-shadow: 0 0 0px 1000px #fff inset !important;
     caret-color: var(--color-text-primary);
   }
-
-  /* Añade un efecto de "iluminación" a los textos principales al pasar el ratón.
-    Se aplica una transición suave para el cambio de color y la sombra del texto.
-  */
-  .text-text-primary,
-  .text-text-secondary {
-    transition: color 0.3s ease, text-shadow 0.3s ease;
-  }
-  .text-text-primary:hover,
-  .text-text-secondary:hover {
-    color: var(--color-accent);
-    text-shadow: 0 0 5px var(--color-accent-soft-glow);
-  }
-
-  /* --- INICIO DE LA NUEVA MODIFICACIÓN (Estilos para Dropdowns del DatePicker) --- */
-  /*
-    Estilos para los selectores de mes/año 
-    que activamos con `captionLayout="dropdown-buttons"`
-  */
+  
+  /* Dropdowns del calendario */
   .rdp-caption_dropdowns {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem; /* 8px */
-  }
-
-  .rdp-dropdown {
-    position: relative;
+    gap: 0.5rem;
   }
 
   select.rdp-dropdown {
     appearance: none;
-    -webkit-appearance: none;
     cursor: pointer;
-    border-radius: 0.5rem; /* rounded-lg */
-    background-color: var(--color-component-bg-hover);
-    padding: 0.375rem 2.5rem 0.375rem 0.75rem; /* py-1.5 px-3 pr-10 */
-    font-size: 0.875rem; /* text-sm */
-    line-height: 1.25rem;
-    font-weight: 600; /* font-semibold */
-    color: var(--color-text-primary);
-    border: none;
-    /* Flecha personalizada */
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23cbd5e1' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
-    background-position: right 0.5rem center;
+    border-radius: 0.375rem;
+    padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid var(--color-border);
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%234b5563' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.25rem center;
     background-repeat: no-repeat;
-    background-size: 1.25em 1.25em;
+    background-size: 1rem 1rem;
   }
-
-  select.rdp-dropdown:focus {
-    outline: none;
-    box-shadow: 0 0 0 1px var(--color-accent); /* ring-1 ring-accent */
+  
+  /* --- CORRECCIÓN ICONOS NAVEGACIÓN --- */
+  .rdp-nav_button {
+    color: var(--color-accent) !important;
   }
-
-  /* Capitalizar la primera letra de los meses en el dropdown */
-  select.rdp-dropdown_month option {
-    text-transform: capitalize;
-    color: black; /* Los options usan el estilo nativo, forzamos color */
-  }
-  select.rdp-dropdown_year option {
-      color: black;
-  }
-  /* --- FIN DE LA NUEVA MODIFICACIÓN --- */
-}
-
-
-.circles-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  overflow: hidden;
-}
-
-.circles {
-  position: absolute;
-  height: 270px;
-  width: 450px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.circle {
-  position: absolute;
-  border-radius: 50%;
-  background: var(--color-circles-bg);
-}
-
-.circle-1 {
-  height: 300px;
-  width: 300px;
-  top: 100px;
-  left: -50px;
-  opacity: 0.5;
-  animation: float 6s cubic-bezier(0.54, 0.085, 0.5, 0.92) 3.5s infinite alternate;
-}
-
-.circle-2 {
-  height: 240px;
-  width: 240px;
-  bottom: 40px;
-  right: -100px;
-  opacity: 0.5;
-  animation: float 6s cubic-bezier(0.54, 0.085, 0.5, 0.92) 2s infinite alternate;
-}
-
-
-:root {
-  --color-blue-accent: var(--color-accent);
-}
-
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Animaciones y transiciones */
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  
+  .rdp-nav_button svg {
+    fill: var(--color-accent) !important;
+    color: var(--color-accent) !important;
+    stroke: var(--color-accent) !important;
   }
 }
 
-@keyframes fade-in-down {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes rocket-liftoff {
-  0% {
-    transform: translateY(50px) scale(0.8) rotate(-10deg);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translateY(0) scale(1) rotate(0deg);
-    opacity: 1;
-  }
-}
-
-@keyframes float {
-  50% {
-    transform: translateY(10px) translateX(5px);
-  }
-}
-
-body,
-.bg-background,
-.bg-component-bg,
-.bg-component-bg-hover,
-.border-border-color,
-.text-text-primary,
-.text-text-secondary {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-@keyframes animated-gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Animación de resplandor para bordes */
-@keyframes glow {
-  0% {
-    border-color: var(--color-border);
-  }
-
-  50% {
-    border-color: var(--color-accent);
-  }
-
-  100% {
-    border-color: var(--color-border);
-  }
-}
-
-.animated-premium-background {
-  background: linear-gradient(-45deg, #1A1629, #26213D, #1A1629);
-  background-size: 400% 400%;
-  animation: animated-gradient 20s ease infinite;
+/* Clases de utilidad personalizadas para simular el estilo de tarjeta Occident */
+.card-occident {
+  background-color: var(--color-component-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem; /* Bordes menos redondeados, más cuadrados */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   position: relative;
   overflow: hidden;
 }
 
-.animated-premium-background::before {
+.card-occident::before {
   content: '';
   position: absolute;
-  top: 0;
   left: 0;
-  right: 0;
+  top: 0;
   bottom: 0;
-  background: linear-gradient(-45deg,
-      transparent,
-      rgba(var(--color-accent-rgb), 0.15),
-      transparent,
-      rgba(var(--color-accent-rgb), 0.1),
-      transparent);
-  background-size: 600% 600%;
-  animation: animated-gradient 12s ease-in-out infinite alternate;
-  opacity: 0.8;
-  z-index: 0;
+  width: 4px;
+  background-color: var(--color-accent); /* Borde rojo a la izquierda */
 }
 
-.animated-premium-background>* {
-  position: relative;
-  z-index: 1;
+.header-occident {
+  background-color: var(--color-accent);
+  color: white;
 }
 
-/* Estilos definitivos para el selector de color personalizado */
-
-/* Contenedor principal del selector de color */
-.custom-color-picker.chrome-picker {
-  border-radius: 1rem !important;
-  box-shadow: none !important;
-  background: var(--color-popup-bg) !important;
-  border: 1px solid var(--color-border) !important;
-  overflow: hidden;
+/* Animaciones */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Oculta la sección de inputs (HEX/RGB) que es el último elemento con esta clase */
-.custom-color-picker .flexbox-fix:last-of-type {
-  display: none !important;
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
 }

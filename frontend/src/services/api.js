@@ -194,8 +194,13 @@ const api = {
         cancelSubscription: () => fetch(`${BASE_URL}/subscriptions/cancel-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
         reactivateSubscription: () => fetch(`${BASE_URL}/subscriptions/reactivate-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
         syncSubscription: () => fetch(`${BASE_URL}/subscriptions/sync`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
-        // --- INICIO DE LA MODIFICACIÓN ---
         createCustomerPortalSession: () => fetch(`${BASE_URL}/subscriptions/create-customer-portal-session`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
+        // --- INICIO DE LA MODIFICACIÓN ---
+        downloadLatestInvoice: async () => {
+            const response = await fetch(`${BASE_URL}/subscriptions/latest-invoice`, { headers: getAuthHeaders() });
+            if (!response.ok) return handleResponseError(response);
+            return response.blob();
+        },
         // --- FIN DE LA MODIFICACIÓN ---
     },
 

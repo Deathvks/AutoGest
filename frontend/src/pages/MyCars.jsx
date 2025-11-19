@@ -70,16 +70,16 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
         <main className="flex-1 space-y-6 min-w-0">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="relative w-full sm:flex-grow">
-              <FontAwesomeIcon icon={faSearch} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary z-10" />
+              <FontAwesomeIcon icon={faSearch} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
               <input
                 type="text"
                 placeholder="Buscar por marca, modelo, matrícula..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-10 py-3 bg-component-bg backdrop-blur-lg border border-border-color rounded-xl focus:ring-2 focus:ring-accent focus:border-transparent transition placeholder:text-text-secondary"
+                className="w-full pl-12 pr-10 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent transition shadow-sm placeholder:text-gray-400 text-gray-800"
               />
               {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+                <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <FontAwesomeIcon icon={faTimes} />
                 </button>
               )}
@@ -87,14 +87,14 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={() => setFilterModalOpen(true)}
-                className="flex-1 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-3 rounded-xl border border-border-color hover:bg-border-color transition-colors xl:hidden"
+                className="flex-1 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-white text-gray-700 font-bold px-4 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm xl:hidden uppercase text-sm"
               >
                 <FontAwesomeIcon icon={faFilter} />
                 <span>Filtros</span>
               </button>
               <button
                 onClick={onAddClick}
-                className="flex-1 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-component-bg-hover text-text-primary font-semibold px-4 py-3 rounded-xl border border-border-color hover:bg-border-color transition-colors"
+                className="flex-1 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-accent text-white font-bold px-4 py-3 rounded-lg shadow hover:bg-accent-hover transition-colors uppercase text-sm"
               >
                 <FontAwesomeIcon icon={faPlus} />
                 <span>Añadir</span>
@@ -102,10 +102,10 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
             </div>
           </div>
 
-          <div className="pb-4 border-b border-border-color">
-            <h2 className="text-lg font-bold text-text-primary">
+          <div className="pb-4 border-b border-gray-200">
+            <h2 className="text-lg font-extrabold text-gray-900 uppercase tracking-wide">
               {filteredCars.length} Vehículos
-              <span className="text-sm font-medium text-text-secondary ml-2">(de {cars.length} en total)</span>
+              <span className="text-sm font-medium text-gray-500 ml-2 lowercase">(de {cars.length} en total)</span>
             </h2>
           </div>
 
@@ -125,8 +125,8 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
           </div>
 
           {filteredCars.length === 0 && (
-            <div className="text-center py-16 px-4 bg-component-bg backdrop-blur-lg rounded-2xl border border-border-color shadow-2xl">
-              <p className="text-text-secondary">No se han encontrado coches con los filtros actuales.</p>
+            <div className="text-center py-16 px-4 bg-white rounded-lg border border-gray-200 border-dashed">
+              <p className="text-gray-500 font-medium">No se han encontrado coches con los filtros actuales.</p>
             </div>
           )}
         </main>
