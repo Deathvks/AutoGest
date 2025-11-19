@@ -1,4 +1,4 @@
-// frontend/src/components/DatePicker.jsx
+// autogest-app/frontend/src/components/DatePicker.jsx
 import React, { useState } from 'react';
 import { DayPicker } from 'react-day-picker';
 import { format, parse } from 'date-fns';
@@ -68,6 +68,10 @@ const DatePicker = ({ label, value, onChange, placeholder = 'DD/MM/AAAA', icon =
                             modifiersClassNames={{
                                 selected: 'bg-accent text-white hover:bg-accent-hover', // Estilo Occident para selección
                                 today: 'text-accent font-bold'
+                            }}
+                            classNames={{
+                                nav_button: 'text-accent hover:bg-red-50', // Color rojo para botones
+                                chevron: 'fill-accent' // Color rojo para los iconos SVG
                             }}
                         />
                     </div>
