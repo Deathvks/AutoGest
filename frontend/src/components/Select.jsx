@@ -51,7 +51,7 @@ const Select = ({ label, value, onChange, options, icon }) => {
 
             {isOpen && (
                 <ul 
-                    className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-base shadow-lg border border-gray-200 focus:outline-none sm:text-sm"
+                    className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-base shadow-lg border border-gray-200 focus:outline-none sm:text-sm no-scrollbar"
                 >
                     {options.map((option) => (
                         <li
