@@ -62,6 +62,12 @@ const DatePicker = ({ label, value, onChange, placeholder = 'DD/MM/AAAA', icon =
 
     const displayValue = selectedDate ? format(selectedDate, 'dd/MM/yyyy') : '';
 
+    // Formateador para capitalizar el mes en la cabecera nativa
+    const formatCaption = (date, options) => {
+        const string = format(date, 'LLLL yyyy', options);
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    };
+
     return (
         <div className="relative">
             {label && <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">{label}</label>}
@@ -81,15 +87,11 @@ const DatePicker = ({ label, value, onChange, placeholder = 'DD/MM/AAAA', icon =
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4 animate-fade-in-up backdrop-blur-sm" onClick={() => setIsModalOpen(false)}>
                     <div className="bg-white rounded-2xl shadow-2xl border border-gray-300 p-4 w-auto min-w-[340px] flex flex-col gap-2 overflow-hidden" onClick={(e) => e.stopPropagation()}>
                         
-                        {/* --- CABECERA --- */}
+                        {/* --- CABECERA (Selects) --- */}
                         <div className="flex items-center justify-between gap-3 mb-2 w-full">
-                            
-                            {/* Selector de Mes */}
                             <div className="flex-1 min-w-0">
                                 <Select value={currentMonth.getMonth().toString()} options={months} onChange={handleMonthChange} />
                             </div>
-                            
-                            {/* Botón de Año */}
                             <button 
                                 onClick={() => setViewMode(viewMode === 'calendar' ? 'years' : 'calendar')}
                                 className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border w-28 ${
@@ -103,10 +105,11 @@ const DatePicker = ({ label, value, onChange, placeholder = 'DD/MM/AAAA', icon =
                             </button>
                         </div>
 
-                        {/* --- CUERPO: CALENDARIO O AÑOS --- */}
-                        {/* CAMBIO: h-auto para el calendario (se adapta a 5 o 6 semanas), h-[300px] fijo solo para la lista de años */}
-                        <div className={`w-full relative ${viewMode === 'years' ? 'h-[300px]' : 'h-auto'}`}>
+                        {/* --- CUERPO --- */}
+                        {/* Eliminada altura fija en el contenedor padre para permitir dinamismo */}
+                        <div className="w-full relative">
                             {viewMode === 'calendar' ? (
+                                // El calendario tiene altura automática
                                 <DayPicker
                                     mode="single"
                                     selected={selectedDate}
@@ -114,13 +117,16 @@ const DatePicker = ({ label, value, onChange, placeholder = 'DD/MM/AAAA', icon =
                                     month={currentMonth}
                                     onMonthChange={setCurrentMonth}
                                     locale={es}
+                                    formatters={{ formatCaption }}
                                     style={{
                                         '--rdp-accent-color': 'var(--color-accent)',
                                         '--rdp-background-color': 'var(--color-component-bg-hover)',
                                     }}
                                     className="!m-0 w-full flex justify-center"
                                     classNames={{
-                                        caption: 'hidden', nav: 'hidden',
+                                        caption: 'flex justify-center pt-2 pb-2 relative items-center', // Visible y centrado
+                                        caption_label: 'text-sm font-bold text-gray-800 capitalize',   // Texto visible, capitalizado
+                                        nav: 'hidden', // Ocultamos flechas nativas
                                         table: 'w-full border-collapse',
                                         head_cell: 'text-gray-400 font-medium text-xs w-10 h-10 pb-2',
                                         cell: 'text-center p-0 relative focus-within:relative focus-within:z-20',
@@ -130,7 +136,8 @@ const DatePicker = ({ label, value, onChange, placeholder = 'DD/MM/AAAA', icon =
                                     }}
                                 />
                             ) : (
-                                <div ref={yearsScrollRef} className="grid grid-cols-4 gap-2 h-full overflow-y-auto p-1 pr-2 no-scrollbar content-start">
+                                // La vista de años tiene altura fija y scroll
+                                <div ref={yearsScrollRef} className="grid grid-cols-4 gap-2 h-[300px] overflow-y-auto p-1 pr-2 no-scrollbar content-start">
                                     {yearsList.map(year => (
                                         <button
                                             key={year}
