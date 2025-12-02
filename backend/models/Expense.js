@@ -20,12 +20,14 @@ const Expense = sequelize.define('Expense', {
     },
     carLicensePlate: {
         type: DataTypes.STRING,
-        allowNull: true, // <-- Esta línea permite que el campo sea nulo
-        references: {
-            model: 'Cars',
-            key: 'licensePlate',
-        },
-        onDelete: 'CASCADE',
+        allowNull: true,
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se elimina la referencia estricta (FK) a nivel de modelo.
+        // La relación lógica se mantiene, pero la integridad referencial estricta
+        // se ha eliminado de la BD para permitir matrículas duplicadas entre usuarios.
+        // references: { model: 'Cars', key: 'licensePlate' },
+        // onDelete: 'CASCADE',
+        // --- FIN DE LA MODIFICACIÓN ---
     },
     userId: {
         type: DataTypes.INTEGER,
@@ -49,7 +51,6 @@ const Expense = sequelize.define('Expense', {
         },
         onDelete: 'CASCADE',
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     isRecurring: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
@@ -71,7 +72,6 @@ const Expense = sequelize.define('Expense', {
         type: DataTypes.DATEONLY,
         allowNull: true,
     },
-    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
 });

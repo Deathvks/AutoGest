@@ -4,7 +4,6 @@ const { Op } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
 
-// --- INICIO DE LA MODIFICACIÓN ---
 // Función para calcular la siguiente fecha de recurrencia
 const calculateNextRecurrence = (startDate, type, customValue) => {
     const date = new Date(startDate);
@@ -26,7 +25,6 @@ const calculateNextRecurrence = (startDate, type, customValue) => {
     }
     return date.toISOString().split('T')[0];
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 // Obtener todos los gastos GENERALES (sin coche) del usuario o de su empresa
 exports.getAllExpenses = async (req, res) => {
@@ -75,9 +73,7 @@ exports.getAllUserExpenses = async (req, res) => {
 // Crear un nuevo gasto
 exports.createExpense = async (req, res) => {
     try {
-        // --- INICIO DE LA MODIFICACIÓN ---
         const { carLicensePlate, isRecurring, recurrenceType, recurrenceCustomValue, recurrenceEndDate, ...expenseData } = req.body;
-        // --- FIN DE LA MODIFICACIÓN ---
 
         const dataToCreate = {
             ...expenseData,
@@ -118,7 +114,6 @@ exports.createExpense = async (req, res) => {
             dataToCreate.attachments = req.files.map(file => `/expenses/${file.filename}`);
         }
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         const isRecurringBool = isRecurring === 'true' || isRecurring === true;
         dataToCreate.isRecurring = isRecurringBool;
 
@@ -128,7 +123,6 @@ exports.createExpense = async (req, res) => {
             dataToCreate.recurrenceEndDate = recurrenceEndDate || null;
             dataToCreate.nextRecurrenceDate = calculateNextRecurrence(dataToCreate.date, recurrenceType, recurrenceCustomValue);
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         const newExpense = await Expense.create(dataToCreate);
         res.status(201).json(newExpense);
@@ -153,10 +147,9 @@ exports.updateExpense = async (req, res) => {
             return res.status(404).json({ error: 'Gasto no encontrado o no tienes permiso para editarlo.' });
         }
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         const { date, category, amount, description, isRecurring, recurrenceType, recurrenceCustomValue, recurrenceEndDate } = req.body;
         const updateData = { date, category, amount, description };
-        
+
         const isRecurringBool = isRecurring === 'true' || isRecurring === true;
         updateData.isRecurring = isRecurringBool;
 
@@ -171,7 +164,6 @@ exports.updateExpense = async (req, res) => {
             updateData.recurrenceEndDate = null;
             updateData.nextRecurrenceDate = null;
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         if (req.files && req.files.length > 0) {
             const newAttachments = req.files.map(file => `/expenses/${file.filename}`);
@@ -247,10 +239,19 @@ exports.getExpensesByCarLicensePlate = async (req, res) => {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para ver sus gastos.' });
         }
 
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const expensesWhere = { carLicensePlate: car.licensePlate };
+        if (req.user.companyId) {
+            expensesWhere.companyId = req.user.companyId;
+        } else {
+            expensesWhere.userId = req.user.id;
+        }
+
         const expenses = await Expense.findAll({
-            where: { carLicensePlate: car.licensePlate },
+            where: expensesWhere,
             order: [['date', 'DESC']]
         });
+        // --- FIN DE LA MODIFICACIÓN ---
         res.status(200).json(expenses);
     } catch (error) {
         console.error(error);
