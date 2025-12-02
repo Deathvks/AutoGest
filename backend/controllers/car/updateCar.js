@@ -19,7 +19,7 @@ exports.updateCar = async (req, res) => {
         if (!car) {
             return res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para editarlo.' });
         }
-        
+
         const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
         const isUserTryingToModifyLockedCar = isReservedAndActive && req.user.role !== 'admin';
 
@@ -31,7 +31,7 @@ exports.updateCar = async (req, res) => {
         }
 
         const updateData = req.body;
-        
+
         if (req.user.role === 'user') {
             delete updateData.purchasePrice;
         }
@@ -67,15 +67,14 @@ exports.updateCar = async (req, res) => {
                 updateData[field] = (isNaN(numericValue) || value === null || String(value).trim() === '') ? null : numericValue;
             }
         });
-        
+
         const dateFields = ['registrationDate', 'saleDate', 'gestoriaPickupDate', 'gestoriaReturnDate'];
         dateFields.forEach(field => {
             if (updateData[field] !== undefined) {
                 updateData[field] = (!updateData[field] || isNaN(new Date(updateData[field]).getTime())) ? null : updateData[field];
             }
         });
-        
-        // --- INICIO DE LA MODIFICACIÓN ---
+
         // Se asegura de que los campos de texto opcionales se guarden como null si están vacíos.
         const optionalTextFields = ['fuel', 'transmission', 'vin', 'location', 'notes'];
         optionalTextFields.forEach(field => {
@@ -83,28 +82,27 @@ exports.updateCar = async (req, res) => {
                 updateData[field] = String(updateData[field]).trim() === '' ? null : updateData[field];
             }
         });
-        // --- FIN DE LA MODIFICACIÓN ---
-        
+
         if (updateData.buyerDetails) {
             try {
-                updateData.buyerDetails = typeof updateData.buyerDetails === 'string' 
-                    ? JSON.parse(updateData.buyerDetails) 
+                updateData.buyerDetails = typeof updateData.buyerDetails === 'string'
+                    ? JSON.parse(updateData.buyerDetails)
                     : updateData.buyerDetails;
             } catch (e) {
                 return res.status(400).json({ error: 'Los detalles del comprador no tienen un formato JSON válido.' });
             }
         }
-        
+
         if (updateData.licensePlate) {
             updateData.licensePlate = String(updateData.licensePlate).replace(/\s/g, '').toUpperCase();
         }
-        
+
         if (updateData.location && String(updateData.location).trim() !== '') {
             await Location.findOrCreate({
                 where: { name: String(updateData.location).trim(), userId: req.user.id }
             });
         }
-        
+
         if (req.files) {
             if (req.files.invoicePdf) {
                 if (!req.files.otherDocuments) req.files.otherDocuments = [];
@@ -115,7 +113,7 @@ exports.updateCar = async (req, res) => {
                 deleteFile(car.imageUrl);
                 updateData.imageUrl = `/uploads/${req.files.image[0].filename}`;
             }
-            
+
             const fileFields = ['technicalSheet', 'registrationCertificate', 'otherDocuments'];
             const MAX_FILES = {
                 technicalSheet: 2,
@@ -151,12 +149,12 @@ exports.updateCar = async (req, res) => {
                     discardedDocs.forEach(doc => deleteFile(doc));
                     currentDocs = currentDocs.slice(discardedCount);
                 }
-                
+
                 updateData[urlField] = JSON.stringify(currentDocs);
             });
         }
         delete updateData.filesToRemove;
-        
+
         await car.update(updateData);
         res.status(200).json(car);
     } catch (error) {
@@ -165,9 +163,18 @@ exports.updateCar = async (req, res) => {
             return res.status(400).json({ error: '¡Error! Los documentos solo pueden ser imágenes (JPG, PNG, WEBP) o archivos PDF.' });
         }
         if (error.name === 'SequelizeUniqueConstraintError') {
+            // --- INICIO DE LA MODIFICACIÓN ---
             const field = error.errors[0]?.path;
             const value = error.errors[0]?.value;
-            return res.status(400).json({ error: `Ya existe un coche con ${field === 'licensePlate' ? 'la matrícula' : 'el VIN'} ${value}.` });
+
+            if (field === 'licensePlate') {
+                return res.status(400).json({ error: `Ya tienes registrado un coche con la matrícula ${value}.` });
+            }
+            if (field === 'vin') {
+                return res.status(400).json({ error: `Ya existe un coche con el VIN ${value}.` });
+            }
+            return res.status(400).json({ error: `El valor ${value} ya está en uso.` });
+            // --- FIN DE LA MODIFICACIÓN ---
         }
         res.status(500).json({ error: 'Error al actualizar el coche' });
     }

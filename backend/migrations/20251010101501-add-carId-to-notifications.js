@@ -2,22 +2,15 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
-    // Añadimos la columna 'carId' a la tabla 'Notifications'
-    await queryInterface.addColumn('Notifications', 'carId', {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'Cars', // Nombre de la tabla de referencia
-        key: 'id',
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'SET NULL' // Si se borra un coche, el carId en la notificación se pondrá a null
-    });
+  async up(queryInterface, Sequelize) {
+    // La columna 'carId' ya se define y crea en la migración 20251010101500-create-notifications.js.
+    // Omitimos esta migración para evitar el error "Duplicate column name 'carId'".
+    console.log('Omitiendo migración 20251010101501-add-carId-to-notifications.js porque la columna carId ya existe.');
+    return Promise.resolve();
   },
 
-  async down (queryInterface, Sequelize) {
-    // Lógica para revertir el cambio (eliminar la columna)
-    await queryInterface.removeColumn('Notifications', 'carId');
+  async down(queryInterface, Sequelize) {
+    // No hacemos nada en el down ya que el up no realizó cambios.
+    return Promise.resolve();
   }
 };

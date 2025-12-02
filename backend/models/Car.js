@@ -135,19 +135,17 @@ const Car = sequelize.define('Car', {
     timestamps: true,
     // --- INICIO DE LA MODIFICACIÓN ---
     // Se elimina 'paranoid: true' para desactivar el borrado lógico.
-    // Ahora, los borrados serán permanentes.
     indexes: [
         {
-            name: 'unique_licensePlate', // Se cambia el nombre del índice
+            name: 'unique_licensePlate_user', // Cambiamos el nombre para reflejar el ámbito
             unique: true,
-            fields: ['licensePlate'],
-            // Se elimina la condición 'where' para que la matrícula sea siempre única.
+            // Hacemos que la unicidad sea la combinación de matrícula Y usuario
+            fields: ['licensePlate', 'userId'],
         },
         {
-            name: 'unique_vin', // Se cambia el nombre del índice
+            name: 'unique_vin',
             unique: true,
             fields: ['vin'],
-            // Se elimina la condición 'where' para que el VIN sea siempre único.
         }
     ]
     // --- FIN DE LA MODIFICACIÓN ---

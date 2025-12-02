@@ -17,7 +17,10 @@ module.exports = {
             fuel: { type: Sequelize.STRING },
             horsepower: { type: Sequelize.INTEGER, allowNull: true },
             registrationDate: { type: Sequelize.DATEONLY },
-            licensePlate: { type: Sequelize.STRING, unique: true },
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Se elimina unique: true para permitir que la matrícula se repita entre diferentes usuarios
+            licensePlate: { type: Sequelize.STRING },
+            // --- FIN DE LA MODIFICACIÓN ---
             vin: { type: Sequelize.STRING, unique: true },
             transmission: { type: Sequelize.STRING },
             notes: { type: Sequelize.TEXT },
@@ -41,6 +44,15 @@ module.exports = {
             createdAt: { allowNull: false, type: Sequelize.DATE },
             updatedAt: { allowNull: false, type: Sequelize.DATE }
         });
+
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Se añade la restricción compuesta: Matrícula única por Usuario
+        await queryInterface.addConstraint('Cars', {
+            fields: ['licensePlate', 'userId'],
+            type: 'unique',
+            name: 'unique_licensePlate_user'
+        });
+        // --- FIN DE LA MODIFICACIÓN ---
     },
 
     async down(queryInterface, Sequelize) {

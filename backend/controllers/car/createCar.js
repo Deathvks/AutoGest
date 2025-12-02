@@ -10,12 +10,10 @@ exports.createCar = async (req, res) => {
     try {
         const carData = { ...req.body, userId: req.user.id };
 
-        // --- INICIO DE LA MODIFICACIÓN ---
         // Si el usuario pertenece a una empresa, se asocia el coche y la ubicación a ella.
         if (req.user.companyId) {
             carData.companyId = req.user.companyId;
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         // Si el usuario no es admin/técnico, no se le permite establecer un precio de compra.
         if (req.user.role === 'user') {
@@ -29,7 +27,6 @@ exports.createCar = async (req, res) => {
 
         // Si se proporciona una nueva ubicación, se crea si no existe.
         if (carData.location && carData.location.trim() !== '') {
-            // --- INICIO DE LA MODIFICACIÓN ---
             const locationData = {
                 where: { name: carData.location.trim(), userId: req.user.id },
                 defaults: {}
@@ -38,9 +35,8 @@ exports.createCar = async (req, res) => {
                 locationData.where.companyId = req.user.companyId;
             }
             await Location.findOrCreate(locationData);
-            // --- FIN DE LA MODIFICACIÓN ---
         }
-        
+
         // Asocia los ficheros subidos solo si existen.
         if (req.files) {
             if (req.files.image) {
@@ -67,9 +63,18 @@ exports.createCar = async (req, res) => {
         }
         // Manejo de errores específicos, como matrículas o VIN duplicados.
         if (error.name === 'SequelizeUniqueConstraintError') {
+            // --- INICIO DE LA MODIFICACIÓN ---
             const field = error.errors[0]?.path;
             const value = error.errors[0]?.value;
-            return res.status(400).json({ error: `Ya existe un coche con ${field === 'licensePlate' ? 'la matrícula' : 'el VIN'} ${value}` });
+
+            if (field === 'licensePlate') {
+                return res.status(400).json({ error: `Ya tienes registrado un coche con la matrícula ${value}.` });
+            }
+            if (field === 'vin') {
+                return res.status(400).json({ error: `Ya existe un coche con el VIN ${value}.` });
+            }
+            return res.status(400).json({ error: `El valor ${value} ya está en uso.` });
+            // --- FIN DE LA MODIFICACIÓN ---
         }
         res.status(500).json({ error: 'Error al crear el coche' });
     }
