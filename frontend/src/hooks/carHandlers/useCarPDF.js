@@ -3,14 +3,15 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
-import { useCarActions } from './useCarActions'; 
+import { useCarActions } from './useCarActions';
 
 export const useCarPDF = ({ setCars, setLocations, modalState }) => {
     const { user } = useContext(AuthContext);
-    
+
     const context = { setCars, setLocations, modalState };
     const { handleUpdateCar } = useCarActions(context);
 
+    // --- Eliminado parámetro sellerType ---
     const handleGeneratePdf = async (car, type, number, igicRate, observations, paymentMethod, clientData) => {
         const doc = new jsPDF();
         const today = new Date();
@@ -31,12 +32,14 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         doc.context2d.fillStyle = headerGradient;
         doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F');
 
-
         // --- Cabecera ---
-        if (user.logoUrl) {
-            const logoUrl = `${API_BASE_URL}${user.logoUrl}`;
+        const imageUrl = user.logoUrl || user.avatarUrl;
+        let imageLoaded = false;
+
+        if (imageUrl) {
+            const fullImageUrl = `${API_BASE_URL}${imageUrl}`;
             try {
-                const response = await fetch(logoUrl);
+                const response = await fetch(fullImageUrl);
                 if (response.ok) {
                     const blob = await response.blob();
                     const logoData = await new Promise((resolve, reject) => {
@@ -45,7 +48,7 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
                         reader.onerror = reject;
                         reader.readAsDataURL(blob);
                     });
-                    
+
                     const img = new Image();
                     img.src = logoData;
                     await new Promise(resolve => { img.onload = resolve; });
@@ -61,43 +64,59 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
                         imgHeight = maxH;
                     }
                     doc.addImage(logoData, 'PNG', 14, 25, imgWidth, imgHeight);
+                    imageLoaded = true;
                 }
             } catch (error) {
-                console.error("Error al cargar el logo para el PDF:", error);
-                doc.setFontSize(18);
-                doc.setTextColor(headerFooterText);
-                doc.text("AutoGest", 14, 35);
+                console.error("Error al cargar la imagen para el PDF:", error);
             }
-        } else {
+        }
+
+        // --- INICIO DE LA DETECCIÓN AUTOMÁTICA ---
+        // Detectar si es Particular o Profesional (Autónomo/Empresa)
+        // Se considera profesional si tiene CIF o Razón Social definida.
+        const isProfessional = !!(user.cif || user.businessName);
+
+        if (!imageLoaded) {
             doc.setFontSize(18);
             doc.setTextColor(headerFooterText);
-            doc.text("AutoGest", 14, 35);
+
+            if (user.businessName) {
+                // Si tiene Razón Social (Empresa), la mostramos.
+                doc.text(user.businessName, 14, 35);
+            } else if (!isProfessional) {
+                // Si es Particular (no tiene CIF ni Razón Social), mostramos Nombre y Apellidos.
+                const fullName = `${user.name} ${user.lastName || ''}`.trim();
+                doc.text(fullName, 14, 35);
+            }
+            // Si es Autónomo (tiene CIF pero no Razón Social) y no hay logo -> NO MOSTRAMOS NADA (Texto vacío)
         }
-        
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Construcción de la dirección del usuario (vendedor) a partir de los campos detallados
+        // --- FIN DE LA DETECCIÓN AUTOMÁTICA ---
+
         const userAddressParts = [
             user.companyStreetAddress || user.personalStreetAddress,
             user.companyPostalCode || user.personalPostalCode,
             user.companyCity || user.personalCity,
             user.companyProvince || user.personalProvince
         ].filter(part => part && part.trim() !== '');
-        
+
         const fullUserAddress = userAddressParts.length > 0 ? userAddressParts.join(', ') : (user.address || '');
-        // --- FIN DE LA MODIFICACIÓN ---
 
         doc.setFontSize(9);
         doc.setTextColor(headerFooterText);
-        doc.text(user.businessName || user.name, 200, 25, { align: 'right' });
+
+        // Datos de contacto a la derecha
+        // Si es Particular -> Nombre personal.
+        // Si es Profesional -> Razón Social si existe, si no Nombre personal.
+        const rightSideName = (!isProfessional)
+            ? `${user.name} ${user.lastName || ''}`.trim()
+            : (user.businessName || `${user.name} ${user.lastName || ''}`.trim());
+
+        doc.text(rightSideName, 200, 25, { align: 'right' });
         doc.text(user.cif || user.dni || '', 200, 30, { align: 'right' });
-        
-        // Usamos el teléfono específico si existe, o el genérico
+
         const userPhone = user.companyPhone || user.personalPhone || user.phone || '';
         doc.text(userPhone, 200, 35, { align: 'right' });
-        
-        // Usamos la dirección construida
         doc.text(fullUserAddress, 200, 40, { align: 'right' });
-        
         doc.text(user.email || '', 200, 45, { align: 'right' });
 
         let currentY = 95;
@@ -120,7 +139,7 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
 
         const buyerName = clientData.businessName || `${clientData.name || ''} ${clientData.lastName || ''}`;
         const buyerId = clientData.cif || clientData.dni || '';
-        
+
         const addressParts = [
             clientData.streetAddress,
             clientData.postalCode,
@@ -128,17 +147,17 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
             clientData.province
         ].filter(part => part && part.trim() !== '');
         const fullAddress = addressParts.join(', ');
-        
+
         doc.setFont(undefined, 'bold');
         doc.text(`FACTURA PARA:`, 14, currentY);
         doc.setFont(undefined, 'normal');
-        
+
         let clientDetailsY = currentY + 5;
         doc.text(buyerName, 14, clientDetailsY);
         clientDetailsY += 5;
 
         if (buyerId) { doc.text(buyerId, 14, clientDetailsY); clientDetailsY += 5; }
-        
+
         if (fullAddress) {
             const splitAddress = doc.splitTextToSize(fullAddress, 90);
             doc.text(splitAddress, 14, clientDetailsY);
@@ -147,17 +166,17 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
 
         if (clientData.phone) { doc.text(clientData.phone, 14, clientDetailsY); clientDetailsY += 5; }
         if (clientData.email) { doc.text(clientData.email, 14, clientDetailsY); }
-        
+
         doc.setFont(undefined, 'normal');
         doc.text(`NÚMERO:`, 120, currentY);
         doc.setFont(undefined, 'bold');
-        doc.text(`${type.toUpperCase()}-${number}`, 150, currentY);
+        doc.text(`${type === 'invoice' ? 'FACTURA' : type.toUpperCase()}-${number}`, 150, currentY);
 
         doc.setFont(undefined, 'normal');
         doc.text(`FECHA:`, 120, currentY + 5);
         doc.setFont(undefined, 'bold');
         doc.text(today.toLocaleDateString('es-ES'), 150, currentY + 5);
-        
+
         doc.setFont(undefined, 'normal');
         doc.text(`VENCIMIENTO:`, 120, currentY + 10);
         doc.setFont(undefined, 'bold');
@@ -187,19 +206,19 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         let total = price;
         let subtotal = price;
         let igicAmount = 0;
-        
+
         const rate = parseFloat(igicRate) || 0;
         if (rate > 0) {
-           subtotal = price / (1 + rate / 100);
-           igicAmount = price - subtotal;
+            subtotal = price / (1 + rate / 100);
+            igicAmount = price - subtotal;
         }
-        
+
         const paidAmount = type === 'factura' ? total : 0;
 
         const totalsData = [
             ['SUBTOTAL:', new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(subtotal)],
         ];
-        
+
         if (igicAmount > 0) {
             totalsData.push([`IGIC (${igicRate}%):`, new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(igicAmount)]);
         }
@@ -214,7 +233,7 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
             body: totalsData,
             theme: 'plain',
             styles: { fontSize: 10, cellPadding: 2, textColor: primaryColor },
-            columnStyles: { 0: { halign: 'right', fontStyle: 'bold' } , 1: { halign: 'right' }},
+            columnStyles: { 0: { halign: 'right', fontStyle: 'bold' }, 1: { halign: 'right' } },
             tableWidth: 'wrap',
             margin: { left: 125 }
         });
@@ -227,11 +246,11 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         footerGradient.addColorStop(1, 'rgb(95, 95, 95)');
         doc.context2d.fillStyle = footerGradient;
         doc.rect(125, currentY + 1, 71, 10, 'F');
-        
+
         doc.setFont(undefined, 'bold');
         doc.setFontSize(10);
         doc.setTextColor(headerFooterText);
-        
+
         if (type === 'proforma') {
             doc.text('TOTAL POR PAGAR', 130, currentY + 7.5);
             doc.text(new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total), 196, currentY + 7.5, { align: 'right' });
@@ -239,11 +258,11 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
             doc.text('TOTAL FACTURA', 130, currentY + 7.5);
             doc.text(new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total), 196, currentY + 7.5, { align: 'right' });
         }
-        
+
         let finalY = currentY + 20;
 
         doc.setTextColor(primaryColor);
-        
+
         if (paymentMethod && paymentMethod.trim() !== '') {
             doc.setFont(undefined, 'bold');
             doc.setFontSize(10);
@@ -253,7 +272,7 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
             doc.text(paymentMethod, 14, finalY);
             finalY += 10;
         }
-        
+
         if (user.applyIgic && type === 'factura') {
             doc.setFont(undefined, 'bold');
             doc.setFontSize(10);
@@ -278,7 +297,7 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
             const splitObservations = doc.splitTextToSize(observations, 182);
             doc.text(splitObservations, 14, finalY);
         }
-        
+
         if (type === 'proforma') {
             const pageHeight = doc.internal.pageSize.getHeight();
             doc.setFontSize(8);
@@ -287,15 +306,16 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
             const proformaDisclaimer = "ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL. ES UN PRESUPUESTO PREVIO A LA FACTURA FINAL";
             doc.text(proformaDisclaimer, 105, pageHeight - 10, { align: 'center' });
         }
-        
-        const fileName = `${type}_${number}_${car.licensePlate}.pdf`;
+
+        const fileNameType = type === 'invoice' ? 'factura' : type;
+        const fileName = `${fileNameType}_${number}_${car.licensePlate}.pdf`;
         doc.save(fileName);
-        
+
         const pdfBlob = doc.output('blob');
         const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
         const formData = new FormData();
         formData.append('invoicePdf', pdfFile);
-        
+
         await handleUpdateCar(car.id, formData);
     };
 

@@ -1,7 +1,9 @@
 // frontend/src/hooks/carHandlers/useCarStatus.js
+import { useContext } from 'react';
 import api from '../../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { AuthContext } from '../../context/AuthContext';
 
 // --- INICIO DE LA MODIFICACIÓN ---
 // Se añade buyerDetails como parámetro y se actualiza el contenido del PDF
@@ -30,7 +32,7 @@ const generateReservationPDF = (car, depositAmount, buyerDetails) => {
         buyerDetails.city,
         buyerDetails.province
     ].filter(part => part && part.trim() !== '');
-    
+
     const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : (buyerDetails.address || 'No especificada');
 
     autoTable(doc, {
@@ -92,7 +94,8 @@ const generateReservationPDF = (car, depositAmount, buyerDetails) => {
 // --- FIN DE LA MODIFICACIÓN ---
 
 
-export const useCarStatus = ({ setCars, modalState }) => { // Se modifica la firma para aceptar un objeto
+export const useCarStatus = ({ setCars, modalState }) => {
+    const { user } = useContext(AuthContext);
 
     const handleSellConfirm = async (carId, salePrice, saleDate, buyerDetails) => {
         try {
@@ -100,13 +103,25 @@ export const useCarStatus = ({ setCars, modalState }) => { // Se modifica la fir
             const updatedCar = await api.updateCar(carId, updatedData);
             setCars(prev => prev.map(c => c.id === carId ? updatedCar : c));
             modalState.setCarToSell(null);
+
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Abrimos el modal de Factura automáticamente tras la venta
+            if (user) {
+                modalState.setPdfModalInfo({
+                    car: updatedCar,
+                    type: 'invoice', // Tipo factura por defecto al vender
+                    number: user.invoiceCounter // Siguiente número de factura del usuario
+                });
+            }
+            // --- FIN DE LA MODIFICACIÓN ---
+
         } catch (error) { console.error("Error al vender el coche:", error); }
     };
 
     // --- INICIO DE LA MODIFICACIÓN ---
     // Se añade buyerDetails como parámetro para pasarlo a generateReservationPDF
     const handleReserveConfirm = async (carToUpdate, newNoteContent, depositAmount, reservationDurationInHours, buyerDetails) => {
-    // --- FIN DE LA MODIFICACIÓN ---
+        // --- FIN DE LA MODIFICACIÓN ---
         try {
             // --- INICIO DE LA MODIFICACIÓN ---
             // Se pasa buyerDetails a la función de generación de PDF
@@ -122,7 +137,7 @@ export const useCarStatus = ({ setCars, modalState }) => { // Se modifica la fir
                     const parsed = JSON.parse(carToUpdate.notes);
                     if (Array.isArray(parsed)) existingNotes = parsed;
                 } catch (e) {
-                     existingNotes = [{ id: new Date(carToUpdate.updatedAt).getTime(), content: carToUpdate.notes, type: 'General', date: new Date(carToUpdate.updatedAt).toISOString().split('T')[0] }];
+                    existingNotes = [{ id: new Date(carToUpdate.updatedAt).getTime(), content: carToUpdate.notes, type: 'General', date: new Date(carToUpdate.updatedAt).toISOString().split('T')[0] }];
                 }
             }
             if (newNoteContent?.trim()) {

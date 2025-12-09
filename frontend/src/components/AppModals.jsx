@@ -1,6 +1,7 @@
 // autogest-app/frontend/src/components/AppModals.jsx
 import React, { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import api from '../services/api';
 
 // Importa todos los componentes de modales
 import CarDetailsModal from './modals/CarDetailsModal';
@@ -35,8 +36,7 @@ import DeleteFileConfirmationModal from './modals/DeleteFileConfirmationModal';
 import TrialModal from './modals/TrialModal';
 
 const AppModals = ({ appState }) => {
-    const { logout, user, startTrial } = useContext(AuthContext);
-
+    const { logout, user, startTrial, refreshUser } = useContext(AuthContext);
 
     const {
         incidents, locations, allExpenses, cars, users,
@@ -99,7 +99,7 @@ const AppModals = ({ appState }) => {
                 }}
                 onDeleteFile={setFileToDelete}
             />
-            
+
             {isAddCarModalOpen && <AddCarModal onClose={() => setAddCarModalOpen(false)} onAdd={handleAddCar} locations={locations} />}
             {carToEdit && <EditCarModal car={carToEdit} onClose={() => setCarToEdit(null)} onUpdate={(formData) => handleUpdateCar(carToEdit.id, formData)} locations={locations} />}
             {carToSell && <SellCarModal car={carToSell} onClose={() => setCarToSell(null)} onConfirm={handleSellConfirm} />}
@@ -117,7 +117,7 @@ const AppModals = ({ appState }) => {
             {isAddUserModalOpen && <AddUserModal onClose={() => setAddUserModalOpen(false)} onUserAdded={handleUserAdded} />}
             {userToEdit && <EditUserModal user={userToEdit} onClose={() => setUserToEdit(null)} onUserUpdated={handleUserUpdated} onExpelUser={setUserToExpel} />}
             {userToDelete && <DeleteUserConfirmationModal user={userToDelete} onClose={() => setUserToDelete(null)} onConfirmDelete={handleUserDeleted} />}
-            
+
             {userToExpel && <ExpelUserConfirmationModal user={userToExpel} onClose={() => setUserToExpel(null)} onConfirmExpel={handleExpelUser} />}
 
             <InvestmentDetailsModal isOpen={isInvestmentModalOpen} onClose={() => setInvestmentModalOpen(false)} cars={cars} expenses={allExpenses} />
@@ -126,14 +126,14 @@ const AppModals = ({ appState }) => {
             {carForGestoriaPickup && <GestoriaPickupModal car={carForGestoriaPickup} onClose={() => setCarForGestoriaPickup(null)} onConfirm={handleGestoriaPickup} />}
             {carForGestoriaReturn && <GestoriaReturnModal car={carForGestoriaReturn} onClose={() => setCarForGestoriaReturn(null)} onConfirm={handleGestoriaReturn} />}
             {carToNotify && <NotifyClientModal car={carToNotify} onClose={() => setCarToNotify(null)} />}
-            
-            <BusinessDataModal 
-                isOpen={isBusinessDataModalOpen} 
-                onClose={() => setIsBusinessDataModalOpen(false)} 
-                onSave={handleSaveBusinessData} 
+
+            <BusinessDataModal
+                isOpen={isBusinessDataModalOpen}
+                onClose={() => setIsBusinessDataModalOpen(false)}
+                onSave={handleSaveBusinessData}
             />
-            
-            <SubscriptionSuccessModal 
+
+            <SubscriptionSuccessModal
                 isOpen={isSubscriptionSuccessModalOpen}
                 onClose={() => setSubscriptionSuccessModalOpen(false)}
             />
@@ -148,18 +148,44 @@ const AppModals = ({ appState }) => {
                 <GeneratePdfModal
                     isOpen={!!pdfModalInfo}
                     onClose={() => setPdfModalInfo(null)}
-                    // --- INICIO DE LA MODIFICACIÓN ---
-                    onConfirm={async (type, number, igicRate, observations, paymentMethod, clientData) => {
-                        await handleGeneratePdf(pdfModalInfo.car, type, number, igicRate, observations, paymentMethod, clientData);
-                        setPdfModalInfo(null);
+                    car={pdfModalInfo.car}
+                    // --- INICIO MODIFICACIÓN: Eliminado sellerType ---
+                    onConfirm={async (type, number, clientData) => {
+                        try {
+                            const fieldToUpdate = type === 'proforma' ? 'proformaCounter' : 'invoiceCounter';
+                            const numberField = type === 'proforma' ? 'proformaNumber' : 'invoiceNumber';
+
+                            // Guardamos número y buyerDetails
+                            await api.updateCar(pdfModalInfo.car.id, {
+                                [numberField]: number,
+                                buyerDetails: JSON.stringify(clientData)
+                            });
+
+                            await api.updateProfile({ [fieldToUpdate]: number + 1 });
+                            await refreshUser();
+
+                            // Generar PDF sin sellerType (se detectará dentro)
+                            await handleGeneratePdf(
+                                pdfModalInfo.car,
+                                type,
+                                number,
+                                '7',
+                                '',
+                                '',
+                                clientData
+                            );
+
+                            setPdfModalInfo(null);
+                        } catch (error) {
+                            console.error("Error generando PDF:", error);
+                        }
                     }}
-                    // --- FIN DE LA MODIFICACIÓN ---
+                    // --- FIN MODIFICACIÓN ---
                     type={pdfModalInfo.type}
                     defaultNumber={pdfModalInfo.number}
-                    car={pdfModalInfo.car}
                 />
             )}
-            
+
             {fileToDelete && (
                 <DeleteFileConfirmationModal
                     fileData={fileToDelete}

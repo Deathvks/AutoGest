@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faEuroSign, faUser, faIdCard, faPhone, faEnvelope, faMapMarkerAlt, faBuilding, faFileInvoice, faRoad } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../context/AuthContext';
-import DatePicker from '../DatePicker'; // Importamos el nuevo componente
+import DatePicker from '../DatePicker';
 
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, icon, required = false }) => (
     <div>
@@ -61,12 +61,12 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                     console.error("Error al parsear los datos del comprador:", e);
                 }
             }
-            
+
             const isCompany = buyerDetails.cif && !buyerDetails.dni;
             setClientType(isCompany ? 'empresa' : 'particular');
-            
+
             setSaleData({
-                salePrice: '', 
+                salePrice: '',
                 saleDate: new Date().toISOString().split('T')[0],
                 buyerName: buyerDetails.name || '',
                 buyerLastName: buyerDetails.lastName || '',
@@ -115,19 +115,19 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
         let sum = 0;
         for (let i = 0; i < numberPart.length; i++) {
             let num = parseInt(numberPart[i], 10);
-            if (i % 2 === 0) { // Posiciones impares (índice par)
+            if (i % 2 === 0) {
                 num *= 2;
                 sum += num < 10 ? num : Math.floor(num / 10) + (num % 10);
-            } else { // Posiciones pares (índice impar)
+            } else {
                 sum += num;
             }
         }
         const lastDigitOfSum = sum % 10;
         const calculatedControl = lastDigitOfSum === 0 ? 0 : 10 - lastDigitOfSum;
-        
-        if (/[A-Z]/.test(controlDigit)) { // Letra
+
+        if (/[A-Z]/.test(controlDigit)) {
             return String.fromCharCode(64 + calculatedControl) === controlDigit;
-        } else { // Número
+        } else {
             return calculatedControl === parseInt(controlDigit, 10);
         }
     };
@@ -144,17 +144,16 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
     const handleConfirm = () => {
         setError('');
         const price = parseFloat(saleData.salePrice);
-    
-        // General validation
+
         if (!saleData.salePrice || !saleData.saleDate || !saleData.streetAddress.trim() || !saleData.postalCode.trim() || !saleData.city.trim() || !saleData.province.trim()) {
-            setError("Los campos de venta y la dirección completa (calle, código postal, ciudad, provincia) son obligatorios.");
+            setError("Los campos de venta y la dirección completa son obligatorios.");
             return;
         }
         if (isNaN(price) || price <= 0) {
             setError("Por favor, introduce un precio de venta válido.");
             return;
         }
-        
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (saleData.buyerEmail.trim() && !emailRegex.test(saleData.buyerEmail)) {
             setError("Por favor, introduce un email válido.");
@@ -170,7 +169,6 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             province: saleData.province,
         };
 
-        // Type-specific validation
         if (clientType === 'empresa') {
             if (!saleData.businessName.trim() || !saleData.cif.trim()) {
                 setError("La Razón Social y el CIF son obligatorios para empresas.");
@@ -182,7 +180,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             }
             buyerDetails.businessName = saleData.businessName;
             buyerDetails.cif = saleData.cif;
-            buyerDetails.name = ''; 
+            buyerDetails.name = '';
             buyerDetails.lastName = '';
             buyerDetails.dni = '';
         } else {
@@ -200,18 +198,17 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             buyerDetails.businessName = `${saleData.buyerName} ${saleData.buyerLastName}`;
             buyerDetails.cif = '';
         }
-    
+
         onConfirm(car.id, saleData.salePrice, saleData.saleDate, buyerDetails);
     };
 
     return (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in-up backdrop-blur-sm">
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-gray-300 overflow-hidden">
-                {/* Header Rojo Occident */}
                 <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 bg-accent text-white">
                     <h2 className="text-lg font-bold uppercase tracking-wide">Vender Vehículo</h2>
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="text-white/60 hover:text-white transition-colors focus:outline-none"
                     >
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
@@ -235,8 +232,8 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                         <div>
                             <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide border-b border-gray-100 pb-1">Datos de la Venta</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <InputField label="Precio Venta Final (€)" name="salePrice" value={saleData.salePrice} onChange={handleChange} type="number" placeholder="Ej: 23500" required={true} icon={faEuroSign}/>
-                                <DatePicker 
+                                <InputField label="Precio Venta Final (€)" name="salePrice" value={saleData.salePrice} onChange={handleChange} type="number" placeholder="Ej: 23500" required={true} icon={faEuroSign} />
+                                <DatePicker
                                     label="Fecha de Venta"
                                     value={saleData.saleDate}
                                     onChange={handleDateChange}
@@ -244,26 +241,24 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                                 />
                             </div>
                         </div>
-                        
+
                         <div>
                             <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide border-b border-gray-100 pb-1">Datos del Comprador</h3>
-                            
+
                             <div className="flex w-full max-w-sm mx-auto p-1 bg-gray-100 rounded-lg border border-gray-200 mb-6">
                                 <button
                                     type="button"
                                     onClick={() => setClientType('particular')}
-                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors uppercase ${
-                                        clientType === 'particular' ? 'bg-white text-accent shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
-                                    }`}
+                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors uppercase ${clientType === 'particular' ? 'bg-white text-accent shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
+                                        }`}
                                 >
-                                    Autónomo
+                                    Particular
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setClientType('empresa')}
-                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors uppercase ${
-                                        clientType === 'empresa' ? 'bg-white text-accent shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
-                                    }`}
+                                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors uppercase ${clientType === 'empresa' ? 'bg-white text-accent shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'
+                                        }`}
                                 >
                                     Empresa
                                 </button>
@@ -304,16 +299,16 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                         )}
                     </form>
                 </div>
-                
+
                 <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-gray-200 bg-gray-50">
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
                     >
                         Cancelar
                     </button>
-                    <button 
-                        onClick={handleConfirm} 
+                    <button
+                        onClick={handleConfirm}
                         className="bg-accent text-white px-6 py-2.5 rounded hover:bg-accent-hover transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
                     >
                         Confirmar Venta
