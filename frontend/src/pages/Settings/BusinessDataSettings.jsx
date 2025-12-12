@@ -47,7 +47,7 @@ const InputField = ({ id, label, value, onChange, disabled, required }) => (
 const BusinessDataSettings = () => {
     const { user, updateUserProfile, deleteUserAvatar, deleteUserLogo } = useContext(AuthContext);
     const [accountType, setAccountType] = useState('empresa');
-    
+
     const [empresaFormData, setEmpresaFormData] = useState({
         businessName: '',
         cif: '',
@@ -104,7 +104,9 @@ const BusinessDataSettings = () => {
 
     const isValidCif = (value) => {
         value = value.toUpperCase();
-        if (!/^[A-Z][0-9]{8}$/.test(value)) return false;
+        // CAMBIO: Regex actualizada para permitir letra o número al final
+        if (!/^[A-Z][0-9]{7}[A-Z0-9]$/.test(value)) return false;
+
         const controlDigit = value.charAt(value.length - 1);
         const numberPart = value.substring(1, 8);
         let sum = 0;
@@ -119,7 +121,8 @@ const BusinessDataSettings = () => {
         }
         const lastDigitOfSum = sum % 10;
         const calculatedControl = lastDigitOfSum === 0 ? 0 : 10 - lastDigitOfSum;
-        
+
+        // Comprobar si el último carácter es una letra
         if (/[A-Z]/.test(controlDigit)) {
             return String.fromCharCode(64 + calculatedControl) === controlDigit;
         } else {
@@ -131,9 +134,9 @@ const BusinessDataSettings = () => {
         if (user) {
             const isCompany = user.cif && !user.dni;
             setAccountType(isCompany ? 'empresa' : 'particular');
-    
+
             const storedData = getStoredFormData(user.id);
-    
+
             const newEmpresaData = {
                 businessName: user.businessName || storedData?.empresa?.businessName || '',
                 cif: user.cif || storedData?.empresa?.cif || '',
@@ -144,7 +147,7 @@ const BusinessDataSettings = () => {
                 phone: user.companyPhone || storedData?.empresa?.phone || '',
                 logo: null
             };
-    
+
             const newParticularData = {
                 name: user.name || storedData?.particular?.name || '',
                 dni: user.dni || storedData?.particular?.dni || '',
@@ -155,10 +158,10 @@ const BusinessDataSettings = () => {
                 phone: user.personalPhone || storedData?.particular?.phone || '',
                 avatar: null
             };
-    
+
             setEmpresaFormData(newEmpresaData);
             setParticularFormData(newParticularData);
-    
+
             setLogoPreview(user.logoUrl || null);
             setAvatarPreview(user.avatarUrl || null);
         }
@@ -287,25 +290,25 @@ const BusinessDataSettings = () => {
         setError('');
         return true;
     };
-    
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccessMessage('');
-    
+
         if (!validateForm()) {
             return;
         }
-        
+
         setIsSaving(true);
-        
+
         setStoredFormData(user.id, {
             empresa: { ...empresaFormData, logo: null },
             particular: { ...particularFormData, avatar: null }
         });
 
         const data = new FormData();
-        
+
         if (accountType === 'empresa') {
             data.append('businessName', empresaFormData.businessName);
             data.append('cif', empresaFormData.cif);
@@ -314,7 +317,7 @@ const BusinessDataSettings = () => {
             data.append('companyCity', empresaFormData.city);
             data.append('companyProvince', empresaFormData.province);
             data.append('companyPhone', empresaFormData.phone);
-            data.append('dni', ''); 
+            data.append('dni', '');
             if (empresaFormData.logo) {
                 data.append('logo', empresaFormData.logo);
             }
@@ -332,7 +335,7 @@ const BusinessDataSettings = () => {
                 data.append('avatar', particularFormData.avatar);
             }
         }
-    
+
         try {
             await updateUserProfile(data);
             setSuccessMessage('¡Datos de facturación guardados con éxito!');
@@ -354,13 +357,13 @@ const BusinessDataSettings = () => {
                         {isTeamMember ? 'Datos del Equipo' : 'Función Premium'}
                     </h3>
                     <p className="text-gray-600 mt-2 max-w-sm mx-auto">
-                        {isTeamMember 
+                        {isTeamMember
                             ? 'Estás viendo los datos de facturación del equipo al que perteneces. Solo el propietario puede modificarlos.'
                             : 'Añade tus datos de empresa para facturas profesionales.'
                         }
                     </p>
                     {!isTeamMember && (
-                         <Link to="/subscription" className="mt-6 bg-accent text-white px-6 py-2.5 rounded-lg font-bold text-sm uppercase hover:bg-accent-hover transition-colors shadow">
+                        <Link to="/subscription" className="mt-6 bg-accent text-white px-6 py-2.5 rounded-lg font-bold text-sm uppercase hover:bg-accent-hover transition-colors shadow">
                             Suscríbete ahora
                         </Link>
                     )}
@@ -369,21 +372,19 @@ const BusinessDataSettings = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                 <h2 className="text-xl font-extrabold text-gray-900 mb-6 uppercase tracking-wide">Datos de Facturación</h2>
-                
+
                 <div className="relative grid grid-cols-2 w-full max-w-sm mx-auto items-center rounded-lg bg-gray-100 p-1 border border-gray-200">
                     <span
-                        className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-md bg-white shadow-sm border border-gray-200 transition-transform duration-300 ${
-                            accountType === 'particular' ? 'translate-x-full' : 'translate-x-0'
-                        }`}
+                        className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-md bg-white shadow-sm border border-gray-200 transition-transform duration-300 ${accountType === 'particular' ? 'translate-x-full' : 'translate-x-0'
+                            }`}
                         style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                     />
                     <button
                         type="button"
                         onClick={() => setAccountType('empresa')}
                         disabled={isLocked}
-                        className={`relative z-10 rounded-md py-2 text-xs font-bold transition-colors duration-300 whitespace-nowrap text-center uppercase ${
-                            accountType === 'empresa' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
-                        }`}
+                        className={`relative z-10 rounded-md py-2 text-xs font-bold transition-colors duration-300 whitespace-nowrap text-center uppercase ${accountType === 'empresa' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
+                            }`}
                     >
                         EMPRESA
                     </button>
@@ -391,9 +392,8 @@ const BusinessDataSettings = () => {
                         type="button"
                         onClick={() => setAccountType('particular')}
                         disabled={isLocked}
-                        className={`relative z-10 rounded-md py-2 text-xs font-bold transition-colors duration-300 whitespace-nowrap text-center uppercase ${
-                            accountType === 'particular' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
-                        }`}
+                        className={`relative z-10 rounded-md py-2 text-xs font-bold transition-colors duration-300 whitespace-nowrap text-center uppercase ${accountType === 'particular' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
+                            }`}
                     >
                         AUTÓNOMO
                     </button>
@@ -414,56 +414,56 @@ const BusinessDataSettings = () => {
                         )}
                     </div>
 
-                    <InputField 
-                        id="streetAddress" 
-                        label="Dirección (Calle, Número, Piso)" 
-                        value={accountType === 'empresa' ? empresaFormData.streetAddress : particularFormData.streetAddress} 
-                        onChange={handleChange} 
-                        disabled={isLocked} 
-                        required 
+                    <InputField
+                        id="streetAddress"
+                        label="Dirección (Calle, Número, Piso)"
+                        value={accountType === 'empresa' ? empresaFormData.streetAddress : particularFormData.streetAddress}
+                        onChange={handleChange}
+                        disabled={isLocked}
+                        required
                     />
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                        <InputField 
-                            id="postalCode" 
-                            label="Código Postal" 
-                            value={accountType === 'empresa' ? empresaFormData.postalCode : particularFormData.postalCode} 
-                            onChange={handleChange} 
-                            disabled={isLocked} 
-                            required 
+                        <InputField
+                            id="postalCode"
+                            label="Código Postal"
+                            value={accountType === 'empresa' ? empresaFormData.postalCode : particularFormData.postalCode}
+                            onChange={handleChange}
+                            disabled={isLocked}
+                            required
                         />
-                        <InputField 
-                            id="city" 
-                            label="Ciudad" 
-                            value={accountType === 'empresa' ? empresaFormData.city : particularFormData.city} 
-                            onChange={handleChange} 
-                            disabled={isLocked} 
-                            required 
+                        <InputField
+                            id="city"
+                            label="Ciudad"
+                            value={accountType === 'empresa' ? empresaFormData.city : particularFormData.city}
+                            onChange={handleChange}
+                            disabled={isLocked}
+                            required
                         />
-                        <InputField 
-                            id="province" 
-                            label="Provincia" 
-                            value={accountType === 'empresa' ? empresaFormData.province : particularFormData.province} 
-                            onChange={handleChange} 
-                            disabled={isLocked} 
-                            required 
+                        <InputField
+                            id="province"
+                            label="Provincia"
+                            value={accountType === 'empresa' ? empresaFormData.province : particularFormData.province}
+                            onChange={handleChange}
+                            disabled={isLocked}
+                            required
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         <InputField 
-                            id="phone" 
-                            label="Teléfono" 
-                            value={accountType === 'empresa' ? empresaFormData.phone : particularFormData.phone} 
-                            onChange={handleChange} 
-                            disabled={isLocked} 
-                            required 
+                        <InputField
+                            id="phone"
+                            label="Teléfono"
+                            value={accountType === 'empresa' ? empresaFormData.phone : particularFormData.phone}
+                            onChange={handleChange}
+                            disabled={isLocked}
+                            required
                         />
                         {/* Espacio vacío para alinear si es necesario o futuro campo */}
                         <div></div>
                     </div>
                 </div>
-                
+
                 {accountType === 'empresa' ? (
                     <div className="border-t border-gray-100 pt-6">
                         <label className="block text-sm font-bold text-gray-700 uppercase mb-2">
@@ -482,7 +482,7 @@ const BusinessDataSettings = () => {
                                     <FontAwesomeIcon icon={faImage} className="text-2xl" />
                                 </div>
                             )}
-                            <input type="file" id="logo-upload" className="hidden" onChange={handleLogoChange} accept="image/*" disabled={isLocked}/>
+                            <input type="file" id="logo-upload" className="hidden" onChange={handleLogoChange} accept="image/*" disabled={isLocked} />
                             <div className="flex flex-col gap-2">
                                 <label htmlFor="logo-upload" className={`cursor-pointer rounded-md bg-white px-3 py-1.5 text-xs font-bold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm uppercase text-center ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                     Cambiar
@@ -507,7 +507,7 @@ const BusinessDataSettings = () => {
                                 className="h-16 w-16 rounded-full object-cover border-2 border-gray-200 cursor-pointer hover:border-accent transition-colors"
                                 onClick={() => setImageToEnlarge(avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=f3f4f6&color=374151&size=512`)}
                             />
-                            <input type="file" id="avatar-upload" ref={avatarInputRef} className="hidden" onChange={handleAvatarChange} accept="image/*" disabled={isLocked}/>
+                            <input type="file" id="avatar-upload" ref={avatarInputRef} className="hidden" onChange={handleAvatarChange} accept="image/*" disabled={isLocked} />
                             <div className="flex flex-col gap-2">
                                 <label htmlFor="avatar-upload" className={`cursor-pointer rounded-md bg-white px-3 py-1.5 text-xs font-bold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm uppercase text-center ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                     Cambiar

@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/GeneratePdfModal.jsx
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faFileInvoice, faDownload, faUser, faBuilding, faIdCard, faMapMarkerAlt, faPhone, faEnvelope } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faFileInvoice, faDownload, faUser, faBuilding, faIdCard, faMapMarkerAlt, faPhone, faEnvelope, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 const InputField = ({ label, name, value, onChange, icon, placeholder }) => (
     <div className="mb-3">
@@ -26,13 +26,13 @@ const InputField = ({ label, name, value, onChange, icon, placeholder }) => (
 
 const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car }) => {
     const [number, setNumber] = useState(defaultNumber);
-    // Eliminado estado sellerType
     const [clientType, setClientType] = useState('particular');
     const [clientData, setClientData] = useState({
         name: '', lastName: '', dni: '', businessName: '', cif: '',
         streetAddress: '', postalCode: '', city: '', province: '',
         phone: '', email: ''
     });
+    const [hasExistingData, setHasExistingData] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -40,11 +40,16 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             setNumber(defaultNumber);
             setError('');
 
-            // Cargar datos del cliente si existen
             let existingData = {};
+            let hasData = false;
+
             if (car && car.buyerDetails) {
                 try {
-                    existingData = typeof car.buyerDetails === 'string' ? JSON.parse(car.buyerDetails) : car.buyerDetails;
+                    const parsed = typeof car.buyerDetails === 'string' ? JSON.parse(car.buyerDetails) : car.buyerDetails;
+                    if (parsed && (parsed.name || parsed.businessName)) {
+                        existingData = parsed;
+                        hasData = true;
+                    }
                 } catch (e) { }
             }
 
@@ -63,6 +68,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             });
 
             setClientType(existingData.cif ? 'empresa' : 'particular');
+            setHasExistingData(hasData);
         }
     }, [isOpen, defaultNumber, car]);
 
@@ -76,7 +82,22 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             setError('El número debe ser válido.');
             return;
         }
-        // Solo enviamos número y datos del cliente
+
+        // Validación solo si estamos mostrando el formulario
+        if (!hasExistingData) {
+            if (clientType === 'empresa') {
+                if (!clientData.businessName?.trim() || !clientData.cif?.trim()) {
+                    setError('La Razón Social y el CIF son obligatorios.');
+                    return;
+                }
+            } else {
+                if (!clientData.name?.trim()) {
+                    setError('El Nombre es obligatorio.');
+                    return;
+                }
+            }
+        }
+
         onConfirm(type, num, clientData);
     };
 
@@ -84,77 +105,94 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
 
     return (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in-up backdrop-blur-sm">
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-gray-300 overflow-hidden">
+            <div className={`bg-white rounded-lg shadow-2xl w-full ${hasExistingData ? 'max-w-md' : 'max-w-lg max-h-[90vh]'} flex flex-col border border-gray-300 overflow-hidden`}>
                 <div className="flex justify-between items-center px-5 py-3 bg-accent text-white">
                     <h2 className="text-base font-bold flex items-center gap-2 uppercase tracking-wide">
                         <FontAwesomeIcon icon={faFileInvoice} />
                         {type === 'proforma' ? 'Generar Proforma' : 'Generar Factura'}
                     </h2>
-                    <button onClick={onClose} className="text-white/80 hover:text-white">
+                    <button onClick={onClose} className="text-white/80 hover:text-white transition-colors">
                         <FontAwesomeIcon icon={faTimes} className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-5 space-y-5 bg-white no-scrollbar">
+                <div className={`flex-1 p-6 bg-white ${!hasExistingData ? 'overflow-y-auto no-scrollbar' : ''}`}>
 
-                    {/* SECCIÓN DATOS DEL CLIENTE (Comprador) */}
-                    <div>
-                        <div className="flex justify-between items-end mb-2">
-                            <label className="block text-xs font-bold text-gray-700 uppercase">Datos del Cliente</label>
-                            <div className="flex bg-gray-100 rounded p-0.5 border border-gray-200">
-                                <button onClick={() => setClientType('particular')} className={`px-3 py-0.5 text-[10px] font-bold rounded uppercase ${clientType === 'particular' ? 'bg-white text-accent shadow-sm' : 'text-gray-500'}`}>Particular</button>
-                                <button onClick={() => setClientType('empresa')} className={`px-3 py-0.5 text-[10px] font-bold rounded uppercase ${clientType === 'empresa' ? 'bg-white text-accent shadow-sm' : 'text-gray-500'}`}>Empresa</button>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-2 p-3 border border-gray-200 rounded-lg">
-                            {clientType === 'particular' ? (
-                                <div className="grid grid-cols-2 gap-3">
-                                    <InputField label="Nombre" name="name" value={clientData.name} onChange={handleClientChange} icon={faUser} />
-                                    <InputField label="Apellidos" name="lastName" value={clientData.lastName} onChange={handleClientChange} />
-                                    <div className="col-span-2">
-                                        <InputField label="DNI/NIE" name="dni" value={clientData.dni} onChange={handleClientChange} icon={faIdCard} />
-                                    </div>
+                    {hasExistingData ? (
+                        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <FontAwesomeIcon icon={faInfoCircle} className="h-5 w-5 text-blue-500" />
                                 </div>
-                            ) : (
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="col-span-2">
-                                        <InputField label="Razón Social" name="businessName" value={clientData.businessName} onChange={handleClientChange} icon={faBuilding} />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <InputField label="CIF" name="cif" value={clientData.cif} onChange={handleClientChange} icon={faIdCard} />
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="mt-2 pt-2 border-t border-gray-100">
-                                <InputField label="Dirección" name="streetAddress" value={clientData.streetAddress} onChange={handleClientChange} icon={faMapMarkerAlt} />
-                                <div className="grid grid-cols-2 gap-3">
-                                    <InputField label="C. Postal" name="postalCode" value={clientData.postalCode} onChange={handleClientChange} />
-                                    <InputField label="Ciudad" name="city" value={clientData.city} onChange={handleClientChange} />
-                                </div>
-                                <div className="mt-3">
-                                    <InputField label="Provincia" name="province" value={clientData.province} onChange={handleClientChange} />
+                                <div className="ml-3">
+                                    <p className="text-sm text-blue-700">
+                                        El documento se generará con los datos del comprador ya registrados.
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        /* FORMULARIO COMPLETO SI NO HAY DATOS */
+                        <div className="mb-6 space-y-5">
+                            <div>
+                                <div className="flex justify-between items-end mb-2">
+                                    <label className="block text-xs font-bold text-gray-700 uppercase">Datos del Cliente</label>
+                                    <div className="flex bg-gray-100 rounded p-0.5 border border-gray-200">
+                                        <button onClick={() => setClientType('particular')} className={`px-3 py-0.5 text-[10px] font-bold rounded uppercase ${clientType === 'particular' ? 'bg-white text-accent shadow-sm' : 'text-gray-500'}`}>Particular</button>
+                                        <button onClick={() => setClientType('empresa')} className={`px-3 py-0.5 text-[10px] font-bold rounded uppercase ${clientType === 'empresa' ? 'bg-white text-accent shadow-sm' : 'text-gray-500'}`}>Empresa</button>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-2 p-3 border border-gray-200 rounded-lg">
+                                    {clientType === 'particular' ? (
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <InputField label="Nombre" name="name" value={clientData.name} onChange={handleClientChange} icon={faUser} />
+                                            <InputField label="Apellidos" name="lastName" value={clientData.lastName} onChange={handleClientChange} />
+                                            <div className="col-span-2">
+                                                <InputField label="DNI/NIE" name="dni" value={clientData.dni} onChange={handleClientChange} icon={faIdCard} />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="col-span-2">
+                                                <InputField label="Razón Social" name="businessName" value={clientData.businessName} onChange={handleClientChange} icon={faBuilding} />
+                                            </div>
+                                            <div className="col-span-2">
+                                                <InputField label="CIF" name="cif" value={clientData.cif} onChange={handleClientChange} icon={faIdCard} />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-2 pt-2 border-t border-gray-100">
+                                        <InputField label="Dirección" name="streetAddress" value={clientData.streetAddress} onChange={handleClientChange} icon={faMapMarkerAlt} />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <InputField label="C. Postal" name="postalCode" value={clientData.postalCode} onChange={handleClientChange} />
+                                            <InputField label="Ciudad" name="city" value={clientData.city} onChange={handleClientChange} />
+                                        </div>
+                                        <div className="mt-3">
+                                            <InputField label="Provincia" name="province" value={clientData.province} onChange={handleClientChange} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* SECCIÓN NÚMERO */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">
+                        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">
                             Número de {type === 'proforma' ? 'Proforma' : 'Factura'}
                         </label>
                         <input
                             type="number"
                             value={number}
                             onChange={(e) => setNumber(e.target.value)}
-                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded focus:ring-1 focus:ring-accent focus:border-accent text-gray-900"
+                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 text-lg font-medium"
                         />
                     </div>
 
                     {error && (
-                        <div className="p-2 bg-red-50 border-l-4 border-red-600 text-red-700 text-xs font-bold">
+                        <div className="mt-4 p-3 bg-red-50 border-l-4 border-red-600 text-red-700 text-sm font-bold rounded-r">
                             {error}
                         </div>
                     )}
@@ -163,13 +201,13 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                 <div className="flex justify-end gap-3 p-4 bg-gray-50 border-t border-gray-200">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded font-bold uppercase text-xs hover:bg-gray-100"
+                        className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold uppercase text-xs hover:bg-gray-100 transition-colors shadow-sm"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleConfirm}
-                        className="px-4 py-2 bg-accent text-white rounded font-bold uppercase text-xs hover:bg-accent-hover flex items-center gap-2"
+                        className="px-6 py-2.5 bg-accent text-white rounded-lg font-bold uppercase text-xs hover:bg-accent-hover flex items-center gap-2 shadow-sm transition-colors"
                     >
                         <FontAwesomeIcon icon={faDownload} />
                         Descargar

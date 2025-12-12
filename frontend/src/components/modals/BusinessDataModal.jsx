@@ -52,7 +52,9 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
 
     const isValidCif = (value) => {
         value = value.toUpperCase();
-        if (!/^[A-Z][0-9]{8}$/.test(value)) return false;
+        // CAMBIO: Regex actualizada para permitir letra o número al final
+        if (!/^[A-Z][0-9]{7}[A-Z0-9]$/.test(value)) return false;
+
         const controlDigit = value.charAt(value.length - 1);
         const numberPart = value.substring(1, 8);
         let sum = 0;
@@ -67,7 +69,8 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
         }
         const lastDigitOfSum = sum % 10;
         const calculatedControl = lastDigitOfSum === 0 ? 0 : 10 - lastDigitOfSum;
-        
+
+        // Comprobar si el último carácter es una letra
         if (/[A-Z]/.test(controlDigit)) {
             return String.fromCharCode(64 + calculatedControl) === controlDigit;
         } else {
@@ -99,7 +102,7 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
     const handleChange = (e) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
-    
+
     const validateForm = () => {
         if (!formData.streetAddress?.trim() || !formData.postalCode?.trim() || !formData.city?.trim() || !formData.province?.trim() || !formData.phone?.trim()) {
             setError('Todos los campos de dirección y teléfono son obligatorios.');
@@ -135,11 +138,11 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
 
         const dataToSave = new FormData();
         dataToSave.append('email', user.email);
-        
+
         if (accountType === 'empresa') {
             dataToSave.append('businessName', formData.businessName);
             dataToSave.append('cif', formData.cif);
-            dataToSave.append('name', user.name); 
+            dataToSave.append('name', user.name);
             dataToSave.append('dni', '');
             dataToSave.append('companyStreetAddress', formData.streetAddress);
             dataToSave.append('companyPostalCode', formData.postalCode);
@@ -186,26 +189,23 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                 <div className="flex-grow overflow-y-auto p-6 space-y-6 no-scrollbar bg-white">
                     <div className="relative flex w-full items-center rounded-lg bg-gray-100 p-1 border border-gray-200">
                         <span
-                            className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-md bg-white shadow-sm border border-gray-200 transition-transform duration-300 ${
-                                accountType === 'particular' ? 'translate-x-full' : 'translate-x-0'
-                            }`}
+                            className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-md bg-white shadow-sm border border-gray-200 transition-transform duration-300 ${accountType === 'particular' ? 'translate-x-full' : 'translate-x-0'
+                                }`}
                             style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                         />
                         <button
                             type="button"
                             onClick={() => setAccountType('empresa')}
-                            className={`relative z-10 flex-1 py-2 text-xs font-bold transition-colors duration-300 uppercase text-center ${
-                                accountType === 'empresa' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
-                            }`}
+                            className={`relative z-10 flex-1 py-2 text-xs font-bold transition-colors duration-300 uppercase text-center ${accountType === 'empresa' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
+                                }`}
                         >
                             Empresa
                         </button>
                         <button
                             type="button"
                             onClick={() => setAccountType('particular')}
-                            className={`relative z-10 flex-1 py-2 text-xs font-bold transition-colors duration-300 uppercase text-center ${
-                                accountType === 'particular' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
-                            }`}
+                            className={`relative z-10 flex-1 py-2 text-xs font-bold transition-colors duration-300 uppercase text-center ${accountType === 'particular' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
+                                }`}
                         >
                             Autónomo
                         </button>
@@ -223,11 +223,11 @@ const BusinessDataModal = ({ isOpen, onClose, onSave }) => {
                                 <InputField label="DNI / NIE" name="dni" value={formData.dni} onChange={handleChange} icon={faIdCard} required={true} />
                             </>
                         )}
-                        
+
                         <div className="border-t border-gray-100 my-6"></div>
 
                         <InputField label="Dirección (Calle, Nº, Piso)" name="streetAddress" value={formData.streetAddress} onChange={handleChange} required={true} />
-                        
+
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <InputField label="C. Postal" name="postalCode" value={formData.postalCode} onChange={handleChange} required={true} />
                             <InputField label="Ciudad" name="city" value={formData.city} onChange={handleChange} required={true} />
