@@ -109,7 +109,9 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
 
     const isValidCif = (value) => {
         value = value.toUpperCase();
-        if (!/^[A-Z][0-9]{8}$/.test(value)) return false;
+        // CAMBIO: Regex actualizada para permitir letra o número al final
+        if (!/^[A-Z][0-9]{7}[A-Z0-9]$/.test(value)) return false;
+
         const controlDigit = value.charAt(value.length - 1);
         const numberPart = value.substring(1, 8);
         let sum = 0;

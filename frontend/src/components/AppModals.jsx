@@ -149,22 +149,45 @@ const AppModals = ({ appState }) => {
                     isOpen={!!pdfModalInfo}
                     onClose={() => setPdfModalInfo(null)}
                     car={pdfModalInfo.car}
-                    // --- INICIO MODIFICACIÓN: Eliminado sellerType ---
                     onConfirm={async (type, number, clientData) => {
                         try {
                             const fieldToUpdate = type === 'proforma' ? 'proformaCounter' : 'invoiceCounter';
                             const numberField = type === 'proforma' ? 'proformaNumber' : 'invoiceNumber';
 
-                            // Guardamos número y buyerDetails
+                            // Guardamos número y buyerDetails en el coche
                             await api.updateCar(pdfModalInfo.car.id, {
                                 [numberField]: number,
                                 buyerDetails: JSON.stringify(clientData)
                             });
 
-                            await api.updateProfile({ [fieldToUpdate]: number + 1 });
+                            // FIX: Al actualizar el contador, enviamos también los datos fiscales del usuario
+                            // para evitar que el backend los borre si el PUT es destructivo.
+                            const profileUpdate = {
+                                [fieldToUpdate]: number + 1,
+                                // Preservamos datos clave que definen si es empresa o autónomo
+                                businessName: user.businessName,
+                                cif: user.cif,
+                                dni: user.dni,
+                                name: user.name,
+                                // Es seguro enviar el resto de datos de contacto por si acaso
+                                email: user.email,
+                                phone: user.phone,
+                                companyPhone: user.companyPhone,
+                                personalPhone: user.personalPhone,
+                                companyStreetAddress: user.companyStreetAddress,
+                                companyPostalCode: user.companyPostalCode,
+                                companyCity: user.companyCity,
+                                companyProvince: user.companyProvince,
+                                personalStreetAddress: user.personalStreetAddress,
+                                personalPostalCode: user.personalPostalCode,
+                                personalCity: user.personalCity,
+                                personalProvince: user.personalProvince,
+                            };
+
+                            await api.updateProfile(profileUpdate);
                             await refreshUser();
 
-                            // Generar PDF sin sellerType (se detectará dentro)
+                            // Generar PDF
                             await handleGeneratePdf(
                                 pdfModalInfo.car,
                                 type,
@@ -180,7 +203,6 @@ const AppModals = ({ appState }) => {
                             console.error("Error generando PDF:", error);
                         }
                     }}
-                    // --- FIN MODIFICACIÓN ---
                     type={pdfModalInfo.type}
                     defaultNumber={pdfModalInfo.number}
                 />

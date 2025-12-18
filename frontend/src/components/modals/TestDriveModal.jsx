@@ -42,9 +42,38 @@ const TestDriveModal = ({ car, onClose }) => {
         setClientData(prev => ({ ...prev, [name]: value }));
     };
 
+    // Validación de DNI/NIE
+    const isValidDniNie = (value) => {
+        const dniRegex = /^([0-9]{8}[A-Z])$/i;
+        const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/i;
+        value = value.toUpperCase();
+
+        if (!dniRegex.test(value) && !nieRegex.test(value)) return false;
+
+        const controlChars = 'TRWAGMYFPDXBNJZSQVHLCKE';
+        let number;
+
+        if (nieRegex.test(value)) {
+            const firstChar = value.charAt(0);
+            let numPrefix;
+            if (firstChar === 'X') numPrefix = '0';
+            else if (firstChar === 'Y') numPrefix = '1';
+            else if (firstChar === 'Z') numPrefix = '2';
+            number = parseInt(numPrefix + value.substring(1, 8), 10);
+        } else {
+            number = parseInt(value.substring(0, 8), 10);
+        }
+
+        return controlChars.charAt(number % 23) === value.charAt(value.length - 1);
+    };
+
     const validateForm = () => {
         if (!clientData.name.trim() || !clientData.lastName.trim() || !clientData.dni.trim()) {
             setError('Todos los campos son obligatorios.');
+            return false;
+        }
+        if (!isValidDniNie(clientData.dni)) {
+            setError('El formato del DNI/NIE no es válido.');
             return false;
         }
         setError('');
@@ -70,7 +99,7 @@ const TestDriveModal = ({ car, onClose }) => {
                         reader.onerror = reject;
                         reader.readAsDataURL(blob);
                     });
-                    
+
                     const img = new Image();
                     img.src = logoData;
                     await new Promise(resolve => { img.onload = resolve; });
@@ -95,7 +124,7 @@ const TestDriveModal = ({ car, onClose }) => {
 
         doc.setFontSize(18);
         doc.text("PRUEBA DE VEHÍCULO", 105, currentY, { align: 'center' });
-        
+
         doc.setFontSize(10);
         doc.text(`Fecha: ${today}`, 196, currentY + 10, { align: 'right' });
 
@@ -121,7 +150,7 @@ const TestDriveModal = ({ car, onClose }) => {
 
         doc.text("DATOS DEL VEHÍCULO", 14, currentY);
         doc.line(14, currentY + 2, 196, currentY + 2);
-        
+
         autoTable(doc, {
             startY: currentY + 5,
             theme: 'plain',
@@ -142,13 +171,13 @@ const TestDriveModal = ({ car, onClose }) => {
         doc.line(14, currentY + 2, 196, currentY + 2);
 
         currentY += 10;
-        
+
         const disclaimerText = `Por la presente, D./Dña. ${clientData.name} ${clientData.lastName}, con DNI/NIE ${clientData.dni}, declara realizar una prueba dinámica del vehículo arriba referenciado bajo su entera responsabilidad.\n\nEl abajo firmante se compromete a conducir de manera responsable, respetando en todo momento las normas de circulación vigentes.\n\nLa empresa ${user.businessName || user.name}, con CIF/NIF ${user.cif || user.dni}, queda eximida de cualquier responsabilidad civil o penal derivada de accidentes, multas, infracciones de tráfico o cualquier tipo de daño material o personal que pudiera ocurrir durante la prueba del vehículo.`;
 
         const splitText = doc.splitTextToSize(disclaimerText, 182);
         doc.setFontSize(10);
         doc.text(splitText, 14, currentY);
-        
+
         currentY = doc.getTextDimensions(splitText).h + currentY + 40;
 
         doc.text("Firma del Conductor:", 14, currentY);
@@ -169,8 +198,8 @@ const TestDriveModal = ({ car, onClose }) => {
                         </div>
                         <h2 className="text-lg font-bold uppercase tracking-wide">Prueba de Vehículo</h2>
                     </div>
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/20"
                     >
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
@@ -179,7 +208,7 @@ const TestDriveModal = ({ car, onClose }) => {
 
                 <div className="flex-grow overflow-y-auto p-6 space-y-6 bg-white no-scrollbar">
                     <div className="text-center mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                         <p className="text-gray-600 text-sm font-medium">
+                        <p className="text-gray-600 text-sm font-medium">
                             Introduce los datos del cliente para generar el documento de exoneración de responsabilidad para la prueba del <span className="font-bold text-gray-900">{car.make} {car.model}</span>.
                         </p>
                     </div>
@@ -189,7 +218,7 @@ const TestDriveModal = ({ car, onClose }) => {
                         <InputField label="Apellidos" name="lastName" value={clientData.lastName} onChange={handleChange} required={true} />
                     </div>
                     <InputField label="DNI / NIE" name="dni" value={clientData.dni} onChange={handleChange} icon={faIdCard} required={true} />
-                    
+
                     {error && (
                         <div className="p-3 bg-red-50 border-l-4 border-red-600 text-red-700 text-sm font-bold uppercase rounded-r">
                             {error}
@@ -198,14 +227,14 @@ const TestDriveModal = ({ car, onClose }) => {
                 </div>
 
                 <div className="flex-shrink-0 mt-auto flex justify-end gap-4 p-4 border-t border-gray-200 bg-gray-50">
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="bg-white border border-gray-300 text-gray-700 px-5 py-2.5 rounded hover:bg-gray-100 transition-colors font-bold uppercase text-xs tracking-wide shadow-sm"
                     >
                         Cancelar
                     </button>
-                    <button 
-                        onClick={handleGenerateDocument} 
+                    <button
+                        onClick={handleGenerateDocument}
                         className="bg-accent text-white px-6 py-2.5 rounded hover:bg-accent-hover transition-colors font-bold uppercase text-xs tracking-wide shadow-sm flex items-center gap-2"
                     >
                         <FontAwesomeIcon icon={faFileSignature} />
