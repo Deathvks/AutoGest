@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/GeneratePdfModal.jsx
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faFileInvoice, faDownload, faUser, faBuilding, faIdCard, faMapMarkerAlt, faPhone, faEnvelope, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faFileInvoice, faDownload, faUser, faBuilding, faIdCard, faMapMarkerAlt, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 const InputField = ({ label, name, value, onChange, icon, placeholder }) => (
     <div className="mb-3">
@@ -24,8 +24,10 @@ const InputField = ({ label, name, value, onChange, icon, placeholder }) => (
     </div>
 );
 
-const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car }) => {
+// CAMBIO: defaultIgic ahora es 7 por defecto
+const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car, defaultIgic = 7 }) => {
     const [number, setNumber] = useState(defaultNumber);
+    const [igic, setIgic] = useState(defaultIgic);
     const [clientType, setClientType] = useState('particular');
     const [clientData, setClientData] = useState({
         name: '', lastName: '', dni: '', businessName: '', cif: '',
@@ -38,6 +40,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
     useEffect(() => {
         if (isOpen) {
             setNumber(defaultNumber);
+            setIgic(defaultIgic);
             setError('');
 
             let existingData = {};
@@ -70,7 +73,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             setClientType(existingData.cif ? 'empresa' : 'particular');
             setHasExistingData(hasData);
         }
-    }, [isOpen, defaultNumber, car]);
+    }, [isOpen, defaultNumber, car, defaultIgic]);
 
     const handleClientChange = (e) => {
         setClientData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -98,7 +101,8 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             }
         }
 
-        onConfirm(type, num, clientData);
+        // Enviamos el IGIC seleccionado
+        onConfirm(type, num, clientData, igic);
     };
 
     if (!isOpen) return null;
@@ -178,17 +182,32 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                         </div>
                     )}
 
-                    {/* SECCIÓN NÚMERO */}
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">
-                            Número de {type === 'proforma' ? 'Proforma' : 'Factura'}
-                        </label>
-                        <input
-                            type="number"
-                            value={number}
-                            onChange={(e) => setNumber(e.target.value)}
-                            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 text-lg font-medium"
-                        />
+                    {/* SECCIÓN NÚMERO E IGIC */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">
+                                Nº {type === 'proforma' ? 'Proforma' : 'Factura'}
+                            </label>
+                            <input
+                                type="number"
+                                value={number}
+                                onChange={(e) => setNumber(e.target.value)}
+                                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 text-lg font-medium"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">
+                                IGIC (%)
+                            </label>
+                            <input
+                                type="number"
+                                value={igic}
+                                onChange={(e) => setIgic(e.target.value)}
+                                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 text-lg font-medium"
+                                step="0.1"
+                                min="0"
+                            />
+                        </div>
                     </div>
 
                     {error && (
