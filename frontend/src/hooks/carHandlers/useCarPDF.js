@@ -11,10 +11,26 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
     const context = { setCars, setLocations, modalState };
     const { handleUpdateCar } = useCarActions(context);
 
-    // --- Eliminado parámetro sellerType ---
     const handleGeneratePdf = async (car, type, number, igicRate, observations, paymentMethod, clientData) => {
         const doc = new jsPDF();
-        const today = new Date();
+
+        // --- CAMBIO: Lógica para determinar la fecha del documento ---
+        let docDate = new Date();
+
+        // Si es una factura final y el coche tiene una fecha de venta registrada, usamos esa fecha.
+        if ((type === 'factura' || type === 'invoice') && car.saleDate) {
+            // Si el formato es YYYY-MM-DD (común en inputs tipo date), lo construimos localmente
+            // para evitar que la conversión a UTC cambie el día.
+            if (typeof car.saleDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(car.saleDate)) {
+                const [year, month, day] = car.saleDate.split('-').map(Number);
+                docDate = new Date(year, month - 1, day);
+            } else {
+                // Fallback para otros formatos (ISO string completo, objeto Date, etc.)
+                docDate = new Date(car.saleDate);
+            }
+        }
+        // --- FIN CAMBIO ---
+
         const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
         // --- Estilos y Colores ---
@@ -131,7 +147,8 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         doc.setFont(undefined, 'normal');
         doc.setFontSize(10);
         doc.setTextColor(secondaryColor);
-        doc.text(today.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }), 105, currentY, { align: 'center' });
+        // CAMBIO: Usamos docDate en lugar de new Date()
+        doc.text(docDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }), 105, currentY, { align: 'center' });
         currentY += 20;
 
         doc.setFontSize(9);
@@ -175,7 +192,8 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         doc.setFont(undefined, 'normal');
         doc.text(`FECHA:`, 120, currentY + 5);
         doc.setFont(undefined, 'bold');
-        doc.text(today.toLocaleDateString('es-ES'), 150, currentY + 5);
+        // CAMBIO: Usamos docDate en lugar de new Date()
+        doc.text(docDate.toLocaleDateString('es-ES'), 150, currentY + 5);
 
         doc.setFont(undefined, 'normal');
         doc.text(`VENCIMIENTO:`, 120, currentY + 10);
