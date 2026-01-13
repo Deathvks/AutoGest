@@ -1,7 +1,7 @@
 // autogest-app/frontend/src/components/modals/GeneratePdfModal.jsx
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faFileInvoice, faDownload, faUser, faBuilding, faIdCard, faMapMarkerAlt, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faFileInvoice, faDownload, faUser, faBuilding, faIdCard, faMapMarkerAlt, faInfoCircle, faCreditCard, faComment } from '@fortawesome/free-solid-svg-icons';
 
 const InputField = ({ label, name, value, onChange, icon, placeholder }) => (
     <div className="mb-3">
@@ -24,7 +24,6 @@ const InputField = ({ label, name, value, onChange, icon, placeholder }) => (
     </div>
 );
 
-// CAMBIO: defaultIgic ahora es 7 por defecto
 const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car, defaultIgic = 7 }) => {
     const [number, setNumber] = useState(defaultNumber);
     const [igic, setIgic] = useState(defaultIgic);
@@ -35,12 +34,16 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
         phone: '', email: ''
     });
     const [hasExistingData, setHasExistingData] = useState(false);
+    const [observations, setObservations] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('');
     const [error, setError] = useState('');
 
     useEffect(() => {
         if (isOpen) {
             setNumber(defaultNumber);
             setIgic(defaultIgic);
+            setObservations('');
+            setPaymentMethod('');
             setError('');
 
             let existingData = {};
@@ -86,7 +89,6 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             return;
         }
 
-        // Validación solo si estamos mostrando el formulario
         if (!hasExistingData) {
             if (clientType === 'empresa') {
                 if (!clientData.businessName?.trim() || !clientData.cif?.trim()) {
@@ -101,8 +103,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
             }
         }
 
-        // Enviamos el IGIC seleccionado
-        onConfirm(type, num, clientData, igic);
+        onConfirm(type, num, clientData, igic, observations, paymentMethod);
     };
 
     if (!isOpen) return null;
@@ -120,7 +121,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                     </button>
                 </div>
 
-                <div className={`flex-1 p-6 bg-white ${!hasExistingData ? 'overflow-y-auto no-scrollbar' : ''}`}>
+                <div className={`flex-1 p-6 bg-white ${!hasExistingData ? 'overflow-y-auto no-scrollbar' : 'overflow-y-auto'}`}>
 
                     {hasExistingData ? (
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r">
@@ -136,7 +137,6 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                             </div>
                         </div>
                     ) : (
-                        /* FORMULARIO COMPLETO SI NO HAY DATOS */
                         <div className="mb-6 space-y-5">
                             <div>
                                 <div className="flex justify-between items-end mb-2">
@@ -182,8 +182,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                         </div>
                     )}
 
-                    {/* SECCIÓN NÚMERO E IGIC */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">
                                 Nº {type === 'proforma' ? 'Proforma' : 'Factura'}
@@ -192,7 +191,7 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                                 type="number"
                                 value={number}
                                 onChange={(e) => setNumber(e.target.value)}
-                                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 text-lg font-medium"
+                                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 text-sm font-medium"
                             />
                         </div>
                         <div>
@@ -203,9 +202,45 @@ const GeneratePdfModal = ({ isOpen, onClose, onConfirm, type, defaultNumber, car
                                 type="number"
                                 value={igic}
                                 onChange={(e) => setIgic(e.target.value)}
-                                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 text-lg font-medium"
+                                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 text-sm font-medium"
                                 step="0.1"
                                 min="0"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">
+                            Método de Pago
+                        </label>
+                        <div className="relative">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <FontAwesomeIcon icon={faCreditCard} className="h-3 w-3 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                value={paymentMethod}
+                                onChange={(e) => setPaymentMethod(e.target.value)}
+                                placeholder="Ej: Transferencia bancaria"
+                                className="w-full px-3 py-2 pl-9 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 text-sm"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">
+                            Observaciones
+                        </label>
+                        <div className="relative">
+                            <div className="pointer-events-none absolute top-3 left-0 flex items-start pl-3">
+                                <FontAwesomeIcon icon={faComment} className="h-3 w-3 text-gray-400" />
+                            </div>
+                            <textarea
+                                value={observations}
+                                onChange={(e) => setObservations(e.target.value)}
+                                rows="2"
+                                placeholder="Comentarios adicionales..."
+                                className="w-full px-3 py-2 pl-9 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 text-sm resize-none"
                             />
                         </div>
                     </div>

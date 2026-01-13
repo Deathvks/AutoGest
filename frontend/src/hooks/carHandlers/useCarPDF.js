@@ -1,54 +1,83 @@
 // frontend/src/hooks/carHandlers/useCarPDF.js
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { useCarActions } from './useCarActions';
 
+// --- CONFIGURACIÓN DE COLORES ---
+const colors = {
+    black: [0, 0, 0],
+    white: [255, 255, 255],
+    darkGrey: [40, 40, 40],
+    mediumGrey: [100, 100, 100],
+    lightGrey: [240, 240, 240],
+    pending: [231, 76, 60] // Rojo
+};
+
+// --- FUNCIÓN DE DEGRADADO (INTACTA - Cúbica) ---
+const drawHorizontalGradient = (doc, x, y, w, h, colorStartRGB, colorEndRGB) => {
+    const steps = Math.ceil(w * 2);
+    const stepWidth = w / steps;
+
+    for (let i = 0; i <= steps; i++) {
+        const ratio = i / steps;
+        // La potencia 3 mantiene el color de inicio (negro) más tiempo
+        const adjustedRatio = Math.pow(ratio, 3);
+
+        const r = Math.floor(colorStartRGB[0] + ((colorEndRGB[0] - colorStartRGB[0]) * adjustedRatio));
+        const g = Math.floor(colorStartRGB[1] + ((colorEndRGB[1] - colorStartRGB[1]) * adjustedRatio));
+        const b = Math.floor(colorStartRGB[2] + ((colorEndRGB[2] - colorStartRGB[2]) * adjustedRatio));
+
+        doc.setFillColor(r, g, b);
+        doc.rect(x + (i * stepWidth), y, stepWidth + 0.5, h, 'F');
+    }
+};
+
+const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val);
+
 export const useCarPDF = ({ setCars, setLocations, modalState }) => {
     const { user } = useContext(AuthContext);
-
     const context = { setCars, setLocations, modalState };
     const { handleUpdateCar } = useCarActions(context);
 
     const handleGeneratePdf = async (car, type, number, igicRate, observations, paymentMethod, clientData) => {
         const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.width;
+        const pageHeight = doc.internal.pageSize.height;
+        const headerHeight = 45;
 
-        // --- CAMBIO: Lógica para determinar la fecha del documento ---
+        // --- CÁLCULOS FECHA ---
         let docDate = new Date();
-
-        // Si es una factura final y el coche tiene una fecha de venta registrada, usamos esa fecha.
         if ((type === 'factura' || type === 'invoice') && car.saleDate) {
-            // Si el formato es YYYY-MM-DD (común en inputs tipo date), lo construimos localmente
-            // para evitar que la conversión a UTC cambie el día.
             if (typeof car.saleDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(car.saleDate)) {
                 const [year, month, day] = car.saleDate.split('-').map(Number);
                 docDate = new Date(year, month - 1, day);
             } else {
-                // Fallback para otros formatos (ISO string completo, objeto Date, etc.)
                 docDate = new Date(car.saleDate);
             }
         }
-        // --- FIN CAMBIO ---
 
+        // --- CÁLCULOS IMPORTES ---
+        const totalAmount = parseFloat(type === 'factura' ? car.salePrice : car.price) || 0;
+        const rate = parseFloat(igicRate) || 0;
+        const hasIgic = rate > 0;
+
+        let baseAmount = totalAmount;
+        let igicAmount = 0;
+
+        if (hasIgic) {
+            baseAmount = totalAmount / (1 + rate / 100);
+            igicAmount = totalAmount - baseAmount;
+        }
+
+        // --- 1. HEADER (Negro -> Gris [80, 80, 80]) ---
+        drawHorizontalGradient(doc, 0, 0, pageWidth, headerHeight, [0, 0, 0], [80, 80, 80]);
+
+        // A) LOGO
         const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
-
-        // --- Estilos y Colores ---
-        const primaryColor = '#1a1a1a';
-        const secondaryColor = '#555555';
-        const headerFooterText = '#ffffff';
-        const tableHeaderBg = 'rgb(5, 5, 5)';
-
-        // --- Degradado del Header ---
-        const headerGradient = doc.context2d.createLinearGradient(0, 0, doc.internal.pageSize.getWidth(), 0);
-        headerGradient.addColorStop(0, 'rgb(5, 5, 5)');
-        headerGradient.addColorStop(0.33, 'rgb(39, 39, 39)');
-        headerGradient.addColorStop(0.66, 'rgb(69, 69, 69)');
-        headerGradient.addColorStop(1, 'rgb(95, 95, 95)');
-        doc.context2d.fillStyle = headerGradient;
-        doc.rect(0, 0, doc.internal.pageSize.getWidth(), 80, 'F');
-
-        // --- Cabecera ---
         const imageUrl = user.logoUrl || user.avatarUrl;
         let imageLoaded = false;
 
@@ -69,262 +98,264 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
                     img.src = logoData;
                     await new Promise(resolve => { img.onload = resolve; });
 
-                    const maxW = 50, maxH = 25;
-                    let imgWidth = img.width, imgHeight = img.height;
-                    if (imgWidth > maxW) {
-                        imgHeight = (maxW / imgWidth) * imgHeight;
-                        imgWidth = maxW;
+                    const maxWidth = 60;
+                    const maxHeight = 35;
+                    let imgWidth = maxWidth;
+                    let imgHeight = (img.height * imgWidth) / img.width;
+
+                    if (imgHeight > maxHeight) {
+                        imgHeight = maxHeight;
+                        imgWidth = (img.width * imgHeight) / img.height;
                     }
-                    if (imgHeight > maxH) {
-                        imgWidth = (maxH / imgHeight) * imgWidth;
-                        imgHeight = maxH;
-                    }
-                    doc.addImage(logoData, 'PNG', 14, 25, imgWidth, imgHeight);
+
+                    const yLogo = (headerHeight - imgHeight) / 2;
+                    doc.addImage(logoData, 'PNG', 14, yLogo, imgWidth, imgHeight);
                     imageLoaded = true;
                 }
             } catch (error) {
-                console.error("Error al cargar la imagen para el PDF:", error);
+                console.error("Error cargando logo PDF:", error);
             }
         }
-
-        // --- INICIO DE LA DETECCIÓN AUTOMÁTICA ---
-        // Detectar si es Particular o Profesional (Autónomo/Empresa)
-        // Se considera profesional si tiene CIF o Razón Social definida.
-        const isProfessional = !!(user.cif || user.businessName);
 
         if (!imageLoaded) {
             doc.setFontSize(18);
-            doc.setTextColor(headerFooterText);
-
-            if (user.businessName) {
-                // Si tiene Razón Social (Empresa), la mostramos.
-                doc.text(user.businessName, 14, 35);
-            } else if (!isProfessional) {
-                // Si es Particular (no tiene CIF ni Razón Social), mostramos Nombre y Apellidos.
-                const fullName = `${user.name} ${user.lastName || ''}`.trim();
-                doc.text(fullName, 14, 35);
-            }
-            // Si es Autónomo (tiene CIF pero no Razón Social) y no hay logo -> NO MOSTRAMOS NADA (Texto vacío)
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.text((user.businessName || user.name || 'MI EMPRESA').toUpperCase(), 14, 28);
         }
-        // --- FIN DE LA DETECCIÓN AUTOMÁTICA ---
+
+        // B) INFO EMPRESA (Derecha - Texto BLANCO)
+        doc.setFontSize(9);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'normal');
 
         const userAddressParts = [
             user.companyStreetAddress || user.personalStreetAddress,
             user.companyPostalCode || user.personalPostalCode,
             user.companyCity || user.personalCity,
             user.companyProvince || user.personalProvince
-        ].filter(part => part && part.trim() !== '');
+        ].filter(Boolean);
+        const fullUserAddress = userAddressParts.join(', ');
 
-        const fullUserAddress = userAddressParts.length > 0 ? userAddressParts.join(', ') : (user.address || '');
+        const companyLines = [
+            user.businessName?.toUpperCase() || `${user.name} ${user.lastName || ''}`.toUpperCase(),
+            (user.cif || user.dni) ? `CIF/NIF: ${user.cif || user.dni}` : null,
+            fullUserAddress,
+            user.companyPhone || user.personalPhone || user.phone,
+            user.email
+        ].filter(Boolean);
 
-        doc.setFontSize(9);
-        doc.setTextColor(headerFooterText);
+        let yCompanyInfo = 15;
+        companyLines.forEach(line => {
+            doc.text(line, pageWidth - 14, yCompanyInfo, { align: 'right' });
+            yCompanyInfo += 5;
+        });
 
-        // Datos de contacto a la derecha
-        // Si es Particular -> Nombre personal.
-        // Si es Profesional -> Razón Social si existe, si no Nombre personal.
-        const rightSideName = (!isProfessional)
-            ? `${user.name} ${user.lastName || ''}`.trim()
-            : (user.businessName || `${user.name} ${user.lastName || ''}`.trim());
+        // --- 2. TÍTULO Y FECHA ---
+        let yContent = headerHeight + 20;
 
-        doc.text(rightSideName, 200, 25, { align: 'right' });
-        doc.text(user.cif || user.dni || '', 200, 30, { align: 'right' });
+        doc.setFontSize(32);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'bold');
+        const docTitle = type === 'proforma' ? 'PROFORMA' : 'FACTURA';
+        doc.text(docTitle, pageWidth / 2, yContent, { align: 'center' });
 
-        const userPhone = user.companyPhone || user.personalPhone || user.phone || '';
-        doc.text(userPhone, 200, 35, { align: 'right' });
-        doc.text(fullUserAddress, 200, 40, { align: 'right' });
-        doc.text(user.email || '', 200, 45, { align: 'right' });
+        yContent += 10;
+        const dateFormatted = format(docDate, 'MMM, d, yyyy', { locale: es }).toUpperCase();
+        doc.setFontSize(12);
+        doc.setTextColor(...colors.darkGrey);
+        doc.setFont('helvetica', 'bold');
+        doc.text(dateFormatted, pageWidth / 2, yContent, { align: 'center' });
 
-        let currentY = 95;
+        // --- 3. COLUMNAS DATOS ---
+        const startYColumns = yContent + 20;
 
-        doc.setFontSize(28);
-        doc.setTextColor(primaryColor);
-        doc.setFont(undefined, 'bold');
-        const title = type === 'proforma' ? 'FACTURA PROFORMA' : 'FACTURA';
-        doc.text(title, 105, currentY, { align: 'center' });
-        currentY += 5;
-
-        doc.setFont(undefined, 'normal');
+        // COLUMNA IZQUIERDA (CLIENTE)
         doc.setFontSize(10);
-        doc.setTextColor(secondaryColor);
-        // CAMBIO: Usamos docDate en lugar de new Date()
-        doc.text(docDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }), 105, currentY, { align: 'center' });
-        currentY += 20;
+        doc.setTextColor(...colors.black);
+        doc.setFont('helvetica', 'bold');
+        doc.text("FACTURA PARA:", 14, startYColumns);
 
-        doc.setFontSize(9);
-        doc.setTextColor(primaryColor);
+        let yClientData = startYColumns + 8;
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        const clientName = clientData.businessName || `${clientData.name} ${clientData.lastName}`;
+        doc.text(clientName || 'Cliente Genérico', 14, yClientData);
+        yClientData += 5;
 
-        const buyerName = clientData.businessName || `${clientData.name || ''} ${clientData.lastName || ''}`;
-        const buyerId = clientData.cif || clientData.dni || '';
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
 
-        const addressParts = [
+        const clientAddressParts = [
             clientData.streetAddress,
             clientData.postalCode,
             clientData.city,
             clientData.province
-        ].filter(part => part && part.trim() !== '');
-        const fullAddress = addressParts.join(', ');
+        ].filter(Boolean);
 
-        doc.setFont(undefined, 'bold');
-        doc.text(`FACTURA PARA:`, 14, currentY);
-        doc.setFont(undefined, 'normal');
+        const clientDetails = [
+            (clientData.cif || clientData.dni) ? `CIF/NIF: ${clientData.cif || clientData.dni}` : null,
+            clientAddressParts.join(', '),
+            clientData.phone ? `Tel: ${clientData.phone}` : null,
+            clientData.email
+        ].filter(Boolean);
 
-        let clientDetailsY = currentY + 5;
-        doc.text(buyerName, 14, clientDetailsY);
-        clientDetailsY += 5;
-
-        if (buyerId) { doc.text(buyerId, 14, clientDetailsY); clientDetailsY += 5; }
-
-        if (fullAddress) {
-            const splitAddress = doc.splitTextToSize(fullAddress, 90);
-            doc.text(splitAddress, 14, clientDetailsY);
-            clientDetailsY += (splitAddress.length * 5);
-        }
-
-        if (clientData.phone) { doc.text(clientData.phone, 14, clientDetailsY); clientDetailsY += 5; }
-        if (clientData.email) { doc.text(clientData.email, 14, clientDetailsY); }
-
-        doc.setFont(undefined, 'normal');
-        doc.text(`NÚMERO:`, 120, currentY);
-        doc.setFont(undefined, 'bold');
-        doc.text(`${type === 'invoice' ? 'FACTURA' : type.toUpperCase()}-${number}`, 150, currentY);
-
-        doc.setFont(undefined, 'normal');
-        doc.text(`FECHA:`, 120, currentY + 5);
-        doc.setFont(undefined, 'bold');
-        // CAMBIO: Usamos docDate en lugar de new Date()
-        doc.text(docDate.toLocaleDateString('es-ES'), 150, currentY + 5);
-
-        doc.setFont(undefined, 'normal');
-        doc.text(`VENCIMIENTO:`, 120, currentY + 10);
-        doc.setFont(undefined, 'bold');
-        doc.text('En el recibo', 150, currentY + 10);
-        currentY += 35;
-
-        const price = parseFloat(type === 'factura' ? car.salePrice : car.price) || 0;
-        const formattedPrice = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(price);
-        const carDescription = `VEHÍCULO ${car.make} ${car.model} (${car.licensePlate})\nN/BASTIDOR: ${car.vin || 'No especificado'}`;
-
-        autoTable(doc, {
-            startY: currentY,
-            head: [['Descripción', 'Cantidad', 'Precio por unida', 'Importe']],
-            body: [[carDescription, '1', formattedPrice, formattedPrice]],
-            theme: 'striped',
-            headStyles: { fillColor: tableHeaderBg, textColor: headerFooterText, fontStyle: 'bold' },
-            styles: { fontSize: 10, cellPadding: 3, textColor: primaryColor, lineColor: [221, 221, 221] },
-            columnStyles: {
-                0: { cellWidth: 90 },
-                1: { halign: 'center' },
-                2: { halign: 'right' },
-                3: { halign: 'right', fontStyle: 'bold' }
-            }
+        clientDetails.forEach(detail => {
+            // Ajuste para direcciones largas
+            const splitDetail = doc.splitTextToSize(detail, 80);
+            doc.text(splitDetail, 14, yClientData);
+            yClientData += (splitDetail.length * 5);
         });
-        currentY = doc.lastAutoTable.finalY;
 
-        let total = price;
-        let subtotal = price;
-        let igicAmount = 0;
-
-        const rate = parseFloat(igicRate) || 0;
-        if (rate > 0) {
-            subtotal = price / (1 + rate / 100);
-            igicAmount = price - subtotal;
-        }
-
-        const paidAmount = type === 'factura' ? total : 0;
-
-        const totalsData = [
-            ['SUBTOTAL:', new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(subtotal)],
+        // COLUMNA DERECHA (DATOS FACTURA)
+        let yRight = startYColumns;
+        const invoiceData = [
+            { label: "NÚMERO:", value: `${type === 'invoice' ? 'FACTURA' : type.toUpperCase()}-${number}` },
+            { label: "FECHA:", value: format(docDate, 'dd/MM/yyyy', { locale: es }) },
+            { label: "VENCIMIENTO:", value: "En el recibo" }
         ];
 
-        if (igicAmount > 0) {
-            totalsData.push([`IGIC (${igicRate}%):`, new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(igicAmount)]);
-        }
+        invoiceData.forEach(item => {
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(...colors.black);
+            doc.text(item.label, pageWidth - 80, yRight);
 
-        totalsData.push(
-            ['TOTAL:', new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total)],
-            ['PAGADA:', new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(paidAmount)],
-        );
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(...colors.darkGrey);
+            doc.text(item.value, pageWidth - 14, yRight, { align: 'right' });
+
+            yRight += 6;
+        });
+
+        // --- 4. TABLA ---
+        const tableStartY = Math.max(yClientData, yRight) + 15;
+        const carDescription = `VEHÍCULO ${car.make} ${car.model} (${car.licensePlate})\nN/BASTIDOR: ${car.vin || 'No especificado'}`;
+
+        const tableBody = [
+            [
+                carDescription,
+                "1",
+                formatCurrency(baseAmount),
+                formatCurrency(baseAmount)
+            ]
+        ];
 
         autoTable(doc, {
-            startY: currentY + 5,
-            body: totalsData,
+            startY: tableStartY,
+            head: [['DESCRIPCIÓN', 'CANT.', 'PRECIO', 'IMPORTE']],
+            body: tableBody,
             theme: 'plain',
-            styles: { fontSize: 10, cellPadding: 2, textColor: primaryColor },
-            columnStyles: { 0: { halign: 'right', fontStyle: 'bold' }, 1: { halign: 'right' } },
-            tableWidth: 'wrap',
-            margin: { left: 125 }
-        });
-        currentY = doc.lastAutoTable.finalY;
-
-        const footerGradient = doc.context2d.createLinearGradient(125, 0, 125 + 71, 0);
-        footerGradient.addColorStop(0, 'rgb(5, 5, 5)');
-        footerGradient.addColorStop(0.33, 'rgb(39, 39, 39)');
-        footerGradient.addColorStop(0.66, 'rgb(69, 69, 69)');
-        footerGradient.addColorStop(1, 'rgb(95, 95, 95)');
-        doc.context2d.fillStyle = footerGradient;
-        doc.rect(125, currentY + 1, 71, 10, 'F');
-
-        doc.setFont(undefined, 'bold');
-        doc.setFontSize(10);
-        doc.setTextColor(headerFooterText);
-
-        if (type === 'proforma') {
-            doc.text('TOTAL POR PAGAR', 130, currentY + 7.5);
-            doc.text(new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total), 196, currentY + 7.5, { align: 'right' });
-        } else {
-            doc.text('TOTAL FACTURA', 130, currentY + 7.5);
-            doc.text(new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total), 196, currentY + 7.5, { align: 'right' });
-        }
-
-        let finalY = currentY + 20;
-
-        doc.setTextColor(primaryColor);
-
-        if (paymentMethod && paymentMethod.trim() !== '') {
-            doc.setFont(undefined, 'bold');
-            doc.setFontSize(10);
-            doc.text('Métodos de pago', 14, finalY);
-            finalY += 5;
-            doc.setFont(undefined, 'normal');
-            doc.text(paymentMethod, 14, finalY);
-            finalY += 10;
-        }
-
-        if (user.applyIgic && type === 'factura') {
-            doc.setFont(undefined, 'bold');
-            doc.setFontSize(10);
-            doc.text('Comentarios', 14, finalY);
-            finalY += 5;
-            doc.setFont(undefined, 'normal');
-            doc.setFontSize(8);
-            const splitObservations = doc.splitTextToSize('Factura exenta de IVA "Operación con inversión del sujeto pasivo conforme al Art. 84 (Uno.2°) de la Ley 37/1992 de IVA"', 90);
-            doc.text(splitObservations, 14, finalY);
-            finalY += (splitObservations.length * 4) + 5;
-        }
-
-        if (observations && observations.trim() !== '') {
-            if (!user.applyIgic || type !== 'factura') {
-                doc.setFont(undefined, 'bold');
-                doc.setFontSize(10);
-                doc.text('Comentarios', 14, finalY);
-                finalY += 5;
+            styles: {
+                fontSize: 10,
+                cellPadding: 3,
+                textColor: colors.darkGrey,
+                valign: 'middle'
+            },
+            columnStyles: {
+                0: { cellWidth: 'auto' },
+                1: { halign: 'center', cellWidth: 20 },
+                2: { halign: 'right', cellWidth: 35 },
+                3: { halign: 'right', cellWidth: 35, fontStyle: 'bold' }
+            },
+            headStyles: {
+                halign: 'right',
+                valign: 'middle'
+            },
+            willDrawCell: (data) => {
+                if (data.section === 'head') {
+                    if (data.column.index === 0) {
+                        // Degradado de cabecera de tabla
+                        drawHorizontalGradient(
+                            doc, 0, data.cell.y, pageWidth, data.cell.height,
+                            [0, 0, 0], [80, 80, 80]
+                        );
+                    }
+                    doc.setTextColor(255, 255, 255);
+                }
+            },
+            didParseCell: (data) => {
+                if (data.section === 'head' && data.column.index === 0) {
+                    data.cell.styles.halign = 'left';
+                }
+                if (data.section === 'head' && data.column.index === 1) {
+                    data.cell.styles.halign = 'center';
+                }
             }
-            doc.setFont(undefined, 'normal');
-            doc.setFontSize(8);
-            const splitObservations = doc.splitTextToSize(observations, 182);
-            doc.text(splitObservations, 14, finalY);
+        });
+
+        // --- 5. TOTALES ---
+        let finalY = doc.lastAutoTable.finalY + 10;
+
+        doc.setFontSize(10);
+        doc.setTextColor(...colors.darkGrey);
+
+        doc.text("BASE IMPONIBLE:", pageWidth - 80, finalY + 5);
+        doc.text(formatCurrency(baseAmount), pageWidth - 14, finalY + 5, { align: 'right' });
+
+        if (hasIgic) {
+            doc.text(`IGIC (${rate}%):`, pageWidth - 80, finalY + 11);
+            doc.text(formatCurrency(igicAmount), pageWidth - 14, finalY + 11, { align: 'right' });
+        } else {
+            doc.text("IGIC (0%):", pageWidth - 80, finalY + 11);
+            doc.text("0,00 €", pageWidth - 14, finalY + 11, { align: 'right' });
         }
 
-        if (type === 'proforma') {
-            const pageHeight = doc.internal.pageSize.getHeight();
-            doc.setFontSize(8);
-            doc.setTextColor(secondaryColor);
-            doc.setFont(undefined, 'italic');
-            const proformaDisclaimer = "ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL. ES UN PRESUPUESTO PREVIO A LA FACTURA FINAL";
-            doc.text(proformaDisclaimer, 105, pageHeight - 10, { align: 'center' });
+        const totalBarY = finalY + 18;
+        const totalBarHeight = 10;
+        const totalBarWidth = 80;
+        const totalBarX = pageWidth - 14 - totalBarWidth;
+
+        // Degradado barra totales
+        drawHorizontalGradient(doc, totalBarX, totalBarY, totalBarWidth, totalBarHeight, [0, 0, 0], [80, 80, 80]);
+
+        doc.setFontSize(12);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+
+        const textY = totalBarY + (totalBarHeight / 2);
+        doc.text("TOTAL:", totalBarX + 5, textY, { baseline: 'middle' });
+        doc.text(formatCurrency(totalAmount), pageWidth - 16, textY, { align: 'right', baseline: 'middle' });
+
+        // --- EXTRAS: PAGO Y OBSERVACIONES (Debajo de totales, a la izquierda) ---
+        let extrasY = finalY + 35;
+        doc.setTextColor(...colors.black);
+
+        if (paymentMethod && paymentMethod.trim()) {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text("Método de pago:", 14, extrasY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(paymentMethod, 45, extrasY);
+            extrasY += 7;
         }
 
+        if (observations && observations.trim()) {
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text("Observaciones:", 14, extrasY);
+            extrasY += 5;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            const splitObs = doc.splitTextToSize(observations, pageWidth - 28);
+            doc.text(splitObs, 14, extrasY);
+        }
+
+        // --- 6. PIE LEGAL ---
+        doc.setFontSize(8);
+        doc.setTextColor(...colors.darkGrey);
+        doc.setFont('helvetica', 'normal');
+
+        const legalText = type === 'proforma'
+            ? "ESTE DOCUMENTO NO TIENE VALIDEZ FISCAL. ES UN PRESUPUESTO PREVIO A LA FACTURA FINAL."
+            : (hasIgic
+                ? "Operación sujeta a IGIC conforme a la normativa tributaria vigente."
+                : "Operación exenta de IGIC con Inversión del Sujeto Pasivo conforme a normativa vigente."
+            );
+
+        const textWidth = doc.getTextWidth(legalText);
+        doc.text(legalText, (pageWidth - textWidth) / 2, pageHeight - 15);
+
+        // --- GUARDAR ---
         const fileNameType = type === 'invoice' ? 'factura' : type;
         const fileName = `${fileNameType}_${number}_${car.licensePlate}.pdf`;
         doc.save(fileName);
@@ -337,7 +368,5 @@ export const useCarPDF = ({ setCars, setLocations, modalState }) => {
         await handleUpdateCar(car.id, formData);
     };
 
-    return {
-        handleGeneratePdf,
-    };
+    return { handleGeneratePdf };
 };

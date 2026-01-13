@@ -149,7 +149,7 @@ const AppModals = ({ appState }) => {
                     isOpen={!!pdfModalInfo}
                     onClose={() => setPdfModalInfo(null)}
                     car={pdfModalInfo.car}
-                    onConfirm={async (type, number, clientData, igic) => {
+                    onConfirm={async (type, number, clientData, igic, observations, paymentMethod) => {
                         try {
                             const fieldToUpdate = type === 'proforma' ? 'proformaCounter' : 'invoiceCounter';
                             const numberField = type === 'proforma' ? 'proformaNumber' : 'invoiceNumber';
@@ -187,14 +187,14 @@ const AppModals = ({ appState }) => {
                             await api.updateProfile(profileUpdate);
                             await refreshUser();
 
-                            // Generar PDF con el IGIC seleccionado
+                            // Generar PDF con el IGIC seleccionado y los nuevos campos
                             await handleGeneratePdf(
                                 pdfModalInfo.car,
                                 type,
                                 number,
-                                igic, // Aquí pasamos el valor que viene del modal
-                                '',
-                                '',
+                                igic,
+                                observations,
+                                paymentMethod,
                                 clientData
                             );
 
