@@ -15,11 +15,9 @@
 
 @layer base {
   :root {
-    /* --- VARIABLES PANELPRO (Estilo coches.net) --- */
+    /* --- VARIABLES PANELPRO (Estilo profesional limpio) --- */
     --c-navy: #020B1C;
     --c-navy-deep: #06122A;
-    --c-red: #ED123A;
-    --c-red-dark: #C90E30;
     --c-bg: #F2F4F8;
     --c-white: #FFFFFF;
     --c-green: #16A34A;
@@ -54,12 +52,9 @@
 
     /* Colores de estado */
     --color-green-accent: var(--c-green);
-    --color-red-accent: var(--c-red); /* Usado solo para elementos de error/peligro */
+    --color-red-accent: var(--c-red-loss); 
     --color-yellow-accent: #ca8a04;
     --color-blue-accent: #2563eb;
-
-    /* Degradados eliminados, fondo plano */
-    --color-circles-bg: transparent;
 
     /* Variables para React-Day-Picker */
     --rdp-cell-size: 40px;
@@ -80,34 +75,53 @@
     --rdp-today-background-color: transparent !important;
   }
 
+  /* --- FIX PARA EL NOTCH DE IPHONE --- */
   html, body {
-    height: 100%;
-    background-color: var(--color-background-solid);
-  }
-
-  body {
-    background: var(--color-background);
+    /* Pintamos la base absoluta de azul oscuro para que el notch lo herede */
+    background-color: var(--c-navy) !important; 
     color: var(--color-text-primary);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-  
-  #root, #root > div {
+    margin: 0;
+    padding: 0;
     height: 100%;
   }
 
+  #root {
+    /* El resto de la app mantiene su fondo claro */
+    background-color: var(--color-background); 
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #root > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Reset de Inputs y Textareas - Alineados a PanelPRO */
   input, textarea, select {
-    @apply focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent;
-    background-color: #fff !important;
-    border: 1px solid var(--color-border) !important;
+    background-color: #F2F4F8 !important;
+    border: 1px solid transparent !important;
     color: var(--color-text-primary) !important;
+    transition: all 0.2s ease-in-out;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    outline: none !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid var(--c-navy) !important;
+    box-shadow: none !important; /* Eliminado el ring para un look más limpio */
   }
   
   /* Override para inputs deshabilitados */
   input:disabled, textarea:disabled, select:disabled {
-    background-color: #e5e7eb !important;
-    color: #9ca3af !important;
+    background-color: #E5E7EB !important;
+    color: #9CA3AF !important;
+    border: 1px solid transparent !important;
   }
 
   /* Reset de estilos de autocompletado */
@@ -116,7 +130,7 @@
   input:-webkit-autofill:focus, 
   input:-webkit-autofill:active {
     -webkit-text-fill-color: var(--color-text-primary) !important;
-    -webkit-box-shadow: 0 0 0px 1000px #fff inset !important;
+    -webkit-box-shadow: 0 0 0px 1000px #F2F4F8 inset !important;
     caret-color: var(--color-text-primary);
   }
   
@@ -131,12 +145,13 @@
   select.rdp-dropdown {
     appearance: none;
     cursor: pointer;
-    border-radius: 0.375rem;
+    border-radius: 0.5rem; /* 8px */
     padding: 0.25rem 1.5rem 0.25rem 0.5rem;
     font-size: 0.875rem;
     font-weight: 600;
-    border: 1px solid var(--color-border);
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%234b5563' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    border: 1px solid var(--color-border) !important;
+    background-color: var(--color-component-bg) !important;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
     background-position: right 0.25rem center;
     background-repeat: no-repeat;
     background-size: 1rem 1rem;
@@ -154,29 +169,23 @@
   }
 }
 
-/* Clases de utilidad personalizadas */
+/* Clases de utilidad personalizadas PanelPRO */
 .card-occident {
   background-color: var(--color-component-bg);
   border: 1px solid var(--color-border);
-  border-radius: 0.875rem; /* Bordes más redondeados (14px aprox) estilo móvil moderno */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border-radius: 20px; /* Bordes muy redondeados estilo PanelPRO */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); /* Sombra más sutil */
   position: relative;
   overflow: hidden;
 }
 
-/* Borde izquierdo rojo para darle el toque distintivo sin saturar */
+/* Se elimina el borde izquierdo rojo */
 .card-occident::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background-color: var(--c-red); 
+  display: none; 
 }
 
 .header-occident {
-  background-color: var(--color-accent); /* Ahora es azul marino profundo */
+  background-color: var(--color-accent);
   color: var(--c-white);
 }
 
