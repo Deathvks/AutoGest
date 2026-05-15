@@ -88,6 +88,19 @@
     height: 100%;
   }
 
+  /* --- HACK FÍSICO PARA EL NOTCH EN NAVEGADORES REBELDES (BRAVE/CHROME iOS) --- */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: env(safe-area-inset-top);
+    background-color: var(--c-navy) !important;
+    z-index: 9999;
+    pointer-events: none;
+  }
+
   #root {
     /* El resto de la app mantiene su fondo claro */
     background-color: var(--color-background); 
