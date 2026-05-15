@@ -1,7 +1,7 @@
 // autogest-app/backend/controllers/userAccountController.js
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User, Invitation } = require('../models'); // Se añade Invitation
+const { User } = require('../models'); // Se elimina Invitation
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailUtils');
 const crypto = require('crypto');
 
@@ -17,7 +17,7 @@ exports.register = async (req, res) => {
             console.log('[REGISTER] Error: El email ya está en uso.');
             return res.status(400).json({ error: 'El email ya está en uso.' });
         }
-        
+
         const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -30,12 +30,12 @@ exports.register = async (req, res) => {
         } else {
             userToVerify = await User.create({ name, email, password: hashedPassword, verificationCode, isVerified: false });
         }
-        
+
         console.log('[REGISTER] Usuario creado/actualizado en BBDD. Procediendo a enviar email...');
         await sendVerificationEmail(email, verificationCode);
         console.log('[REGISTER] La función sendVerificationEmail se completó.');
 
-        res.status(201).json({ 
+        res.status(201).json({
             message: 'Se ha enviado un código de verificación a tu correo. Por favor, úsalo para activar tu cuenta.'
         });
 
@@ -56,7 +56,7 @@ exports.verifyEmail = async (req, res) => {
         if (!user) return res.status(404).json({ error: 'Usuario no encontrado o código incorrecto.' });
         if (user.isVerified) return res.status(400).json({ error: 'Esta cuenta ya ha sido verificada.' });
         if (user.verificationCode !== code.toUpperCase()) return res.status(400).json({ error: 'El código de verificación es incorrecto.' });
-        
+
         if (newEmail && newEmail !== email) {
             const isNewEmailInUse = await User.findOne({ where: { email: newEmail } });
             if (isNewEmailInUse) return res.status(400).json({ error: 'La nueva dirección de correo ya está en uso.' });
@@ -86,7 +86,7 @@ exports.login = async (req, res) => {
         }
 
         if (!user.isVerified) {
-            return res.status(401).json({ 
+            return res.status(401).json({
                 error: 'Tu cuenta no ha sido verificada. Por favor, revisa tu correo electrónico.',
                 needsVerification: true,
                 email: user.email
@@ -95,32 +95,17 @@ exports.login = async (req, res) => {
 
         const payload = { id: user.id, role: user.role };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
-        
+
         const response = { token };
-        
-        const pendingInvitation = await Invitation.findOne({
-            where: {
-                email: user.email,
-                status: 'pending',
-                expiresAt: { [require('sequelize').Op.gt]: new Date() }
-            }
-        });
 
-        if (pendingInvitation) {
-            response.invitationToken = pendingInvitation.token;
-        }
-
-        // --- INICIO DE LA MODIFICACIÓN ---
         // Comprobar si el usuario es elegible para el período de prueba
-        const isEligibleForTrial = user.role === 'user' 
-            && user.subscriptionStatus === 'inactive' 
-            && !user.hasUsedTrial 
-            && !user.companyId; // <-- AÑADIDO: No debe pertenecer a una compañía
-            
+        const isEligibleForTrial = user.role === 'user'
+            && user.subscriptionStatus === 'inactive'
+            && !user.hasUsedTrial;
+
         if (isEligibleForTrial) {
             response.promptTrial = true;
         }
-        // --- FIN DE LA MODIFICACIÓN ---
 
         res.status(200).json(response);
 
@@ -138,7 +123,7 @@ exports.resendVerificationCode = async (req, res) => {
 
         if (!user) return res.status(404).json({ error: 'No se encontró una cuenta con ese email.' });
         if (user.isVerified) return res.status(400).json({ error: 'Esta cuenta ya está verificada.' });
-        
+
         const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
         user.verificationCode = verificationCode;
         await user.save();
@@ -159,7 +144,7 @@ exports.forceVerification = async (req, res) => {
     try {
         const { currentEmail, newEmail } = req.body;
         console.log(`[FORCE_VERIFY] Datos recibidos: currentEmail=${currentEmail}, newEmail=${newEmail}`);
-        
+
         const emailToSend = newEmail || currentEmail;
         const user = await User.findOne({ where: { email: currentEmail } });
 
@@ -178,7 +163,7 @@ exports.forceVerification = async (req, res) => {
                 return res.status(400).json({ error: 'La nueva dirección de correo ya está en uso.' });
             }
         }
-        
+
         const verificationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
         user.verificationCode = verificationCode;
         await user.save();
@@ -202,7 +187,7 @@ exports.forceVerification = async (req, res) => {
 exports.startTrial = async (req, res) => {
     try {
         const user = await User.findByPk(req.user.id);
-        
+
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }

@@ -21,13 +21,9 @@ const Expense = sequelize.define('Expense', {
     carLicensePlate: {
         type: DataTypes.STRING,
         allowNull: true,
-        // --- INICIO DE LA MODIFICACIÓN ---
         // Se elimina la referencia estricta (FK) a nivel de modelo.
         // La relación lógica se mantiene, pero la integridad referencial estricta
         // se ha eliminado de la BD para permitir matrículas duplicadas entre usuarios.
-        // references: { model: 'Cars', key: 'licensePlate' },
-        // onDelete: 'CASCADE',
-        // --- FIN DE LA MODIFICACIÓN ---
     },
     userId: {
         type: DataTypes.INTEGER,
@@ -41,15 +37,6 @@ const Expense = sequelize.define('Expense', {
     attachments: {
         type: DataTypes.JSON,
         allowNull: true,
-    },
-    companyId: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-            model: 'Companies',
-            key: 'id',
-        },
-        onDelete: 'CASCADE',
     },
     isRecurring: {
         type: DataTypes.BOOLEAN,

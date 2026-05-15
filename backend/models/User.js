@@ -19,15 +19,9 @@ const User = sequelize.define('User', {
         allowNull: false,
     },
     role: {
-        type: DataTypes.ENUM('user', 'admin', 'technician', 'technician_subscribed'),
+        type: DataTypes.ENUM('user', 'admin'),
         allowNull: false,
         defaultValue: 'user',
-    },
-    previousRole: {
-        type: DataTypes.ENUM('user', 'admin', 'technician', 'technician_subscribed'),
-        allowNull: true,
-        defaultValue: null,
-        comment: 'Almacena el rol del usuario antes de unirse a una compañía.'
     },
     avatarUrl: {
         type: DataTypes.STRING,
@@ -150,27 +144,7 @@ const User = sequelize.define('User', {
     resetPasswordExpires: {
         type: DataTypes.DATE,
         allowNull: true,
-    },
-    canManageRoles: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-        allowNull: false,
-    },
-    canExpelUsers: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-        allowNull: false,
-        comment: 'Permite a un técnico expulsar a otros miembros del equipo.'
-    },
-    companyId: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-            model: 'Companies',
-            key: 'id',
-        },
-        onDelete: 'SET NULL',
-    },
+    }
 }, {
     timestamps: true,
     indexes: [

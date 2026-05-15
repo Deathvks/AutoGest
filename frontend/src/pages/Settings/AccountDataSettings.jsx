@@ -28,8 +28,8 @@ const TrialCountdownMobile = () => {
 
     return (
         <div className="lg:hidden py-6">
-            <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Prueba Gratuita</h4>
-            <div className="p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800">
+            <h4 className="font-bold text-[#020B1C] mb-2 uppercase text-sm">Prueba Gratuita</h4>
+            <div className="p-3 rounded-[14px] bg-yellow-50 border border-yellow-200 text-yellow-800">
                 <div className="flex items-center gap-3">
                     <FontAwesomeIcon icon={faRocket} className="h-5 w-5" />
                     <div className="flex-1">
@@ -83,7 +83,7 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
             setTimeout(() => setExportMessage(''), 3000);
             return;
         }
-        
+
         const csv = Papa.unparse(data);
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -95,45 +95,45 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
         link.click();
         document.body.removeChild(link);
     };
-    
+
     const handleManageCookies = () => {
         window.dispatchEvent(new Event('openCookieConsent'));
     };
 
-    const buttonBaseClass = "bg-white text-gray-700 font-bold px-4 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors text-sm flex items-center gap-2 shadow-sm uppercase";
+    const buttonBaseClass = "bg-white text-gray-700 font-bold px-4 py-2.5 rounded-[14px] border border-gray-200 hover:bg-gray-50 transition-colors text-sm flex items-center gap-2 shadow-sm uppercase";
 
     return (
         <div>
-            <h3 className="text-lg font-extrabold text-gray-900 mb-6 uppercase tracking-wide">Cuenta y Datos</h3>
-            
+            <h3 className="text-lg font-extrabold text-[#020B1C] mb-6 uppercase tracking-wide">Cuenta y Datos</h3>
+
             <div className="divide-y divide-gray-100">
                 <form onSubmit={handlePasswordSubmit} className="py-6">
-                    <h4 className="font-bold text-gray-900 mb-4 uppercase text-sm">Cambiar Contraseña</h4>
+                    <h4 className="font-bold text-[#020B1C] mb-4 uppercase text-sm">Cambiar Contraseña</h4>
                     <div className="grid sm:grid-cols-2 gap-4">
-                        <input 
-                            name="currentPassword" 
-                            type="password" 
-                            placeholder="Contraseña Actual" 
-                            value={passwordData.currentPassword} 
-                            onChange={handlePasswordChange} 
-                            className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 shadow-sm" 
+                        <input
+                            name="currentPassword"
+                            type="password"
+                            placeholder="Contraseña Actual"
+                            value={passwordData.currentPassword}
+                            onChange={handlePasswordChange}
+                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-[14px] focus:ring-2 focus:ring-[#020B1C] focus:border-[#020B1C] text-gray-900 placeholder:text-gray-400 shadow-sm outline-none transition-colors"
                         />
-                        <input 
-                            name="newPassword" 
-                            type="password" 
-                            placeholder="Nueva Contraseña" 
-                            value={passwordData.newPassword} 
-                            onChange={handlePasswordChange} 
-                            className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 shadow-sm" 
+                        <input
+                            name="newPassword"
+                            type="password"
+                            placeholder="Nueva Contraseña"
+                            value={passwordData.newPassword}
+                            onChange={handlePasswordChange}
+                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-[14px] focus:ring-2 focus:ring-[#020B1C] focus:border-[#020B1C] text-gray-900 placeholder:text-gray-400 shadow-sm outline-none transition-colors"
                         />
                     </div>
                     <div className="mt-4 flex items-center gap-4">
-                        <button type="submit" className="bg-accent text-white font-bold px-6 py-2.5 rounded-lg shadow hover:bg-accent-hover transition-colors text-sm flex items-center gap-2 uppercase">
+                        <button type="submit" className="bg-[#020B1C] text-white font-bold px-6 py-2.5 rounded-[14px] shadow-md hover:bg-[#06122A] hover:-translate-y-0.5 transition-all text-sm flex items-center gap-2 uppercase">
                             <FontAwesomeIcon icon={faKey} />
                             Actualizar
                         </button>
                         {passwordMessage.text && (
-                            <span className={`text-sm font-bold ${passwordMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                            <span className={`text-sm font-bold ${passwordMessage.type === 'success' ? 'text-green-600' : 'text-[#ED123A]'}`}>
                                 {passwordMessage.text}
                             </span>
                         )}
@@ -146,11 +146,11 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
 
                 {canActivateTrial && (
                     <div className="py-6">
-                        <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Prueba Gratuita</h4>
+                        <h4 className="font-bold text-[#020B1C] mb-2 uppercase text-sm">Prueba Gratuita</h4>
                         <p className="text-sm text-gray-500 mb-4">
                             No has usado tu período de prueba de 3 días. ¡Actívalo ahora para desbloquear todas las funciones!
                         </p>
-                        <button onClick={onActivateTrialClick} className="bg-accent text-white font-bold px-6 py-2.5 rounded-lg shadow hover:bg-accent-hover transition-colors text-sm flex items-center gap-2 uppercase">
+                        <button onClick={onActivateTrialClick} className="bg-[#ED123A] text-white font-bold px-6 py-2.5 rounded-[14px] shadow-md hover:bg-[#C90E30] hover:-translate-y-0.5 transition-all text-sm flex items-center gap-2 uppercase">
                             <FontAwesomeIcon icon={faRocket} />
                             Activar Prueba Gratuita
                         </button>
@@ -159,7 +159,7 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
 
                 {canExportData && (
                     <div className="py-6">
-                        <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Exportar Datos</h4>
+                        <h4 className="font-bold text-[#020B1C] mb-2 uppercase text-sm">Exportar Datos</h4>
                         <p className="text-sm text-gray-500 mb-4">Descarga una copia de seguridad de tus datos en formato CSV.</p>
                         <div className="flex flex-wrap gap-3">
                             <button onClick={() => handleExport(cars, 'coches.csv', 'coches')} className={buttonBaseClass}>
@@ -180,7 +180,7 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
                 )}
 
                 <div className="py-6">
-                    <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Privacidad y Cookies</h4>
+                    <h4 className="font-bold text-[#020B1C] mb-2 uppercase text-sm">Privacidad y Cookies</h4>
                     <p className="text-sm text-gray-500 mb-4">Gestiona tus preferencias de consentimiento de cookies.</p>
                     <button onClick={handleManageCookies} className={buttonBaseClass}>
                         <FontAwesomeIcon icon={faCookieBite} />
@@ -190,7 +190,7 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
 
                 {user && (
                     <div className="py-6 lg:hidden">
-                        <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Suscripción</h4>
+                        <h4 className="font-bold text-[#020B1C] mb-2 uppercase text-sm">Suscripción</h4>
                         <p className="text-sm text-gray-500 mb-4">Gestiona o revisa el plan de suscripción.</p>
                         <Link to="/subscription" className={buttonBaseClass}>
                             <FontAwesomeIcon icon={faCreditCard} />
@@ -201,28 +201,28 @@ const AccountDataSettings = ({ cars, expenses, incidents, onLogoutClick, onDelet
 
                 {user && user.role === 'admin' && (
                     <div className="py-6 lg:hidden">
-                        <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Administración</h4>
+                        <h4 className="font-bold text-[#020B1C] mb-2 uppercase text-sm">Administración</h4>
                         <Link to="/admin" className={`w-full sm:w-auto ${buttonBaseClass} justify-center`}>
                             <FontAwesomeIcon icon={faUserShield} />
                             Gestionar Usuarios
                         </Link>
                     </div>
                 )}
-                
+
                 <div className="py-6 lg:hidden">
-                     <h4 className="font-bold text-gray-900 mb-2 uppercase text-sm">Sesión</h4>
-                     <button onClick={onLogoutClick} className={`w-full sm:w-auto ${buttonBaseClass} justify-center`}>
+                    <h4 className="font-bold text-[#020B1C] mb-2 uppercase text-sm">Sesión</h4>
+                    <button onClick={onLogoutClick} className={`w-full sm:w-auto ${buttonBaseClass} justify-center`}>
                         <FontAwesomeIcon icon={faSignOutAlt} />
                         Cerrar Sesión
                     </button>
                 </div>
 
                 <div className="py-6">
-                    <h4 className="font-bold text-red-600 mb-2 uppercase text-sm">Zona de Peligro</h4>
+                    <h4 className="font-bold text-[#ED123A] mb-2 uppercase text-sm">Zona de Peligro</h4>
                     <p className="text-sm text-gray-500 mb-4">La eliminación de tu cuenta es permanente y no se puede deshacer.</p>
-                    <button 
-                        onClick={onDeleteAccountClick} 
-                        className="w-full sm:w-auto bg-white text-red-600 font-bold px-4 py-2.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors text-sm flex items-center justify-center gap-2 uppercase shadow-sm"
+                    <button
+                        onClick={onDeleteAccountClick}
+                        className="w-full sm:w-auto bg-white text-[#ED123A] font-bold px-4 py-2.5 rounded-[14px] border border-red-200 hover:bg-red-50 transition-colors text-sm flex items-center justify-center gap-2 uppercase shadow-sm"
                     >
                         <FontAwesomeIcon icon={faExclamationTriangle} />
                         Eliminar Mi Cuenta

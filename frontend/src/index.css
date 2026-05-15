@@ -15,38 +15,53 @@
 
 @layer base {
   :root {
-    /* --- NUEVO TEMA (Estilo Occident) --- */
+    /* --- VARIABLES PANELPRO (Estilo coches.net) --- */
+    --c-navy: #020B1C;
+    --c-navy-deep: #06122A;
+    --c-red: #ED123A;
+    --c-red-dark: #C90E30;
+    --c-bg: #F2F4F8;
+    --c-white: #FFFFFF;
+    --c-green: #16A34A;
+    --c-green-soft: #DCFCE7;
+    --c-red-loss: #DC2626;
+    --c-red-soft: #FEE2E2;
+    --c-text: #06122A;
+    --c-text-sec: #6B7280;
+    --c-border: #E5E7EB;
+    --c-blue-soft: #DBEAFE;
+
+    /* --- TEMA NUEVO MAPEADO --- */
     
-    /* Color Principal (Rojo Corporativo) */
-    --color-accent: rgb(220, 0, 40);
-    --color-accent-rgb: 220, 0, 40;
-    --color-accent-hover: rgb(190, 0, 35);
-    --color-accent-soft-glow: rgba(220, 0, 40, 0.1);
+    /* Color Principal (Navy) */
+    --color-accent: var(--c-navy);
+    --color-accent-rgb: 2, 11, 28;
+    --color-accent-hover: var(--c-navy-deep);
+    --color-accent-soft-glow: rgba(2, 11, 28, 0.1);
 
     /* Fondos */
-    /* CAMBIO: Gris neutro exacto (#f7f7f7 / rgb(247, 247, 247)) */
-    --color-background: #f7f7f7; 
-    --color-background-solid: #f7f7f7;
+    --color-background: var(--c-bg); 
+    --color-background-solid: var(--c-bg);
     
-    --color-component-bg: #ffffff; /* Blanco puro para tarjetas */
+    --color-component-bg: var(--c-white);
     --color-component-bg-hover: #f9fafb;
-    --color-popup-bg: #ffffff;
+    --color-popup-bg: var(--c-white);
 
     /* Bordes y Textos */
-    --color-border: #d1d5db; /* Gris visible para bordes */
-    --color-text-primary: #111827; /* Negro suave */
-    --color-text-secondary: #4b5563; /* Gris medio */
+    --color-border: var(--c-border);
+    --color-text-primary: var(--c-text);
+    --color-text-secondary: var(--c-text-sec);
 
-    /* Colores de estado (Ajustados para fondo claro) */
-    --color-green-accent: #16a34a;
-    --color-red-accent: #dc2626;
+    /* Colores de estado */
+    --color-green-accent: var(--c-green);
+    --color-red-accent: var(--c-red); /* Usado solo para elementos de error/peligro */
     --color-yellow-accent: #ca8a04;
     --color-blue-accent: #2563eb;
 
     /* Degradados eliminados, fondo plano */
     --color-circles-bg: transparent;
 
-    /* Variables para React-Day-Picker (Ajuste a tema claro) */
+    /* Variables para React-Day-Picker */
     --rdp-cell-size: 40px;
     --rdp-color: var(--color-text-primary) !important;
     --rdp-accent-color: var(--color-accent) !important;
@@ -73,8 +88,9 @@
   body {
     background: var(--color-background);
     color: var(--color-text-primary);
-    font-family: 'Inter', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   #root, #root > div {
@@ -94,7 +110,7 @@
     color: #9ca3af !important;
   }
 
-  /* Reset de estilos de autocompletado para tema claro */
+  /* Reset de estilos de autocompletado */
   input:-webkit-autofill,
   input:-webkit-autofill:hover, 
   input:-webkit-autofill:focus, 
@@ -138,16 +154,17 @@
   }
 }
 
-/* Clases de utilidad personalizadas para simular el estilo de tarjeta Occident */
+/* Clases de utilidad personalizadas */
 .card-occident {
   background-color: var(--color-component-bg);
   border: 1px solid var(--color-border);
-  border-radius: 0.25rem; /* Bordes menos redondeados, más cuadrados */
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: 0.875rem; /* Bordes más redondeados (14px aprox) estilo móvil moderno */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   position: relative;
   overflow: hidden;
 }
 
+/* Borde izquierdo rojo para darle el toque distintivo sin saturar */
 .card-occident::before {
   content: '';
   position: absolute;
@@ -155,12 +172,12 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background-color: var(--color-accent); /* Borde rojo a la izquierda */
+  background-color: var(--c-red); 
 }
 
 .header-occident {
-  background-color: var(--color-accent);
-  color: white;
+  background-color: var(--color-accent); /* Ahora es azul marino profundo */
+  color: var(--c-white);
 }
 
 /* Animaciones */

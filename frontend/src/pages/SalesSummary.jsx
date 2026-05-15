@@ -68,7 +68,7 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                 if (!canViewSensitiveData) {
                     return { ...car, totalExpenses, profit: 0 };
                 }
-                
+
                 const profit = (parseFloat(car.salePrice) || 0) - (parseFloat(car.purchasePrice) || 0) - totalExpenses;
                 return { ...car, totalExpenses, profit };
             })
@@ -93,9 +93,9 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
             title = `Resumen de Ventas - ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
             filename = `resumen_ventas_${monthName}_${year}.pdf`;
         }
-        
+
         doc.text(title, 14, 16);
-        
+
         const head = canViewSensitiveData
             ? [['Modelo', 'Matrícula', 'Precio Compra', 'Gastos', 'Precio Venta', 'Beneficio/Pérdida']]
             : [['Modelo', 'Matrícula', 'Gastos', 'Precio Venta']];
@@ -108,13 +108,13 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                 new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.totalExpenses),
                 new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice),
                 new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.profit)
-              ])
+            ])
             : soldCarsWithProfit.map(car => [
                 `${car.make} ${car.model}`,
                 car.licensePlate,
                 new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.totalExpenses),
                 new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)
-              ]);
+            ]);
 
         autoTable(doc, {
             startY: 20,
@@ -123,7 +123,7 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
         });
         doc.save(filename);
     };
-    
+
     const noSoldCars = soldCarsWithProfit.length === 0;
 
     const monthDisplay = useMemo(() => {
@@ -135,45 +135,45 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
     return (
         <div className="max-w-7xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight uppercase">Resumen de Ventas</h1>
-                
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-[#020B1C] tracking-tight uppercase">Resumen de Ventas</h1>
+
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                     {/* Navegador de Meses */}
-                    <div className="flex items-center justify-between p-1 bg-white rounded-lg border border-gray-300 shadow-sm w-full sm:w-auto">
-                        <button 
-                            onClick={() => changeMonth(-1)} 
-                            className="p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-100 text-gray-500 rounded-md transition-colors" 
-                            title="Mes anterior" 
+                    <div className="flex items-center justify-between p-1 bg-white rounded-[14px] border border-gray-200 shadow-sm w-full sm:w-auto">
+                        <button
+                            onClick={() => changeMonth(-1)}
+                            className="p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-100 hover:text-[#020B1C] text-gray-500 rounded-[10px] transition-colors"
+                            title="Mes anterior"
                             disabled={viewMode === 'all'}
                         >
                             <FontAwesomeIcon icon={faChevronLeft} />
                         </button>
-                        <div className={`text-center font-bold text-sm text-gray-800 whitespace-nowrap px-4 uppercase ${viewMode === 'all' ? 'opacity-40' : ''}`}>
+                        <div className={`text-center font-bold text-sm text-[#020B1C] whitespace-nowrap px-4 uppercase ${viewMode === 'all' ? 'opacity-40' : ''}`}>
                             {viewMode === 'monthly' ? monthDisplay : 'HISTÓRICO COMPLETO'}
                         </div>
-                        <button 
+                        <button
                             onClick={() => changeMonth(1)}
                             disabled={isNextMonthDisabled || viewMode === 'all'}
-                            className="p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-100 text-gray-500 rounded-md transition-colors disabled:opacity-30"
+                            className="p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-100 hover:text-[#020B1C] text-gray-500 rounded-[10px] transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
                             title="Siguiente mes"
                         >
                             <FontAwesomeIcon icon={faChevronRight} />
                         </button>
                     </div>
-                    
+
                     {/* Botones de Acción */}
                     <div className="flex items-stretch gap-3 w-full sm:w-auto">
                         <button
                             onClick={() => setViewMode(prev => prev === 'monthly' ? 'all' : 'monthly')}
-                            className="flex-grow sm:flex-grow-0 bg-white text-gray-700 px-4 h-12 flex items-center justify-center rounded-lg hover:bg-gray-50 transition-colors border border-gray-300 shadow-sm text-sm font-bold uppercase"
+                            className="flex-grow sm:flex-grow-0 bg-white text-gray-700 px-4 h-12 flex items-center justify-center rounded-[14px] hover:bg-gray-50 transition-colors border border-gray-200 shadow-sm text-sm font-bold uppercase"
                             title={viewMode === 'monthly' ? "Ver todas las ventas" : "Ver ventas por mes"}
                         >
                             {viewMode === 'monthly' ? 'Ver Todas' : 'Ver Mes'}
                         </button>
-                        <button 
-                            onClick={generatePDF} 
+                        <button
+                            onClick={generatePDF}
                             disabled={noSoldCars}
-                            className="flex-shrink-0 w-12 h-12 bg-white text-gray-700 flex items-center justify-center rounded-lg hover:bg-gray-50 transition-colors border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                            className="flex-shrink-0 w-12 h-12 bg-white text-gray-700 flex items-center justify-center rounded-[14px] hover:bg-gray-50 transition-colors border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                             title={noSoldCars ? "No hay ventas para exportar" : "Generar PDF"}
                         >
                             <FontAwesomeIcon icon={faDownload} />
@@ -185,33 +185,33 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
             {paginatedCars.length > 0 ? (
                 <>
                     {/* VISTA MÓVIL: Tarjetas estilo Occident */}
-                    <div className="space-y-4 md:hidden">
+                    <div className="space-y-4 md:hidden pb-10">
                         {paginatedCars.map(car => (
-                            <div 
-                                key={car.id} 
-                                className="bg-white rounded-lg border border-gray-200 shadow-sm cursor-pointer relative overflow-hidden transition-transform active:scale-[0.99]"
+                            <div
+                                key={car.id}
+                                className="bg-white rounded-[14px] border border-gray-200 shadow-sm cursor-pointer relative overflow-hidden transition-transform active:scale-[0.99]"
                                 onClick={() => onViewDetailsClick(car)}
                             >
                                 {/* Franja lateral roja */}
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent z-10"></div>
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#ED123A] z-10"></div>
 
                                 <div className="p-4 pl-5">
                                     <div className="flex justify-between items-start mb-4">
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className="w-14 h-14 rounded bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
                                                 {car.imageUrl ? (
-                                                    <img 
-                                                        src={car.imageUrl} 
-                                                        className="w-full h-full object-cover" 
-                                                        alt={`${car.make} ${car.model}`} 
+                                                    <img
+                                                        src={car.imageUrl}
+                                                        className="w-full h-full object-cover"
+                                                        alt={`${car.make} ${car.model}`}
                                                     />
                                                 ) : (
                                                     <CarPlaceholderImage car={car} size="small" />
                                                 )}
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="font-bold text-gray-900 truncate uppercase text-sm">{car.make} {car.model}</p>
-                                                <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                                                <p className="font-bold text-[#020B1C] truncate uppercase text-sm">{car.make} {car.model}</p>
+                                                <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                                                     <FontAwesomeIcon icon={faCalendarDay} className="w-3 h-3" />
                                                     {new Date(car.registrationDate).getFullYear()} • {car.licensePlate}
                                                 </p>
@@ -235,7 +235,7 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                             )}
                                         </div>
                                     </div>
-                                    
+
                                     <div className={`grid ${canViewSensitiveData ? 'grid-cols-3' : 'grid-cols-2'} items-center pt-3 border-t border-gray-100 text-xs`}>
                                         {canViewSensitiveData && (
                                             <div className="text-left">
@@ -258,10 +258,10 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                     </div>
 
                     {/* VISTA ESCRITORIO: Tabla Limpia */}
-                    <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                    <div className="hidden md:block bg-white rounded-[14px] border border-gray-200 overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left text-gray-600">
-                                <thead className="text-xs uppercase bg-gray-50 text-gray-500 font-bold border-b border-gray-200">
+                                <thead className="text-xs uppercase bg-gray-50 text-[#020B1C] font-bold border-b border-gray-200">
                                     <tr>
                                         <th scope="col" className="px-6 py-4">Vehículo</th>
                                         <th scope="col" className="px-6 py-4 whitespace-nowrap">Matrícula</th>
@@ -277,8 +277,8 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {paginatedCars.map(car => (
-                                        <tr 
-                                            key={car.id} 
+                                        <tr
+                                            key={car.id}
                                             className="cursor-pointer hover:bg-gray-50 transition-colors"
                                             onClick={() => onViewDetailsClick(car)}
                                         >
@@ -286,17 +286,17 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-12 h-12 rounded bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
                                                         {car.imageUrl ? (
-                                                            <img 
-                                                                src={car.imageUrl} 
-                                                                className="w-full h-full object-cover" 
-                                                                alt="" 
+                                                            <img
+                                                                src={car.imageUrl}
+                                                                className="w-full h-full object-cover"
+                                                                alt=""
                                                             />
                                                         ) : (
                                                             <CarPlaceholderImage car={car} size="small" />
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900 uppercase text-xs">{car.make} {car.model}</p>
+                                                        <p className="font-bold text-[#020B1C] uppercase text-xs">{car.make} {car.model}</p>
                                                         <p className="text-xs text-gray-500 mt-0.5">{new Date(car.registrationDate).getFullYear()}</p>
                                                     </div>
                                                 </div>
@@ -328,14 +328,14 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                             </table>
                         </div>
                     </div>
-                    
+
                     {/* Paginación */}
                     {totalPages > 1 && (
                         <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="px-4 py-2 rounded-lg bg-white text-gray-700 border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-bold"
+                                className="px-4 py-2 rounded-[14px] bg-white text-gray-700 border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-bold"
                             >
                                 <FontAwesomeIcon icon={faChevronLeft} /> Anterior
                             </button>
@@ -343,7 +343,7 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="px-4 py-2 rounded-lg bg-white text-gray-700 border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-bold"
+                                className="px-4 py-2 rounded-[14px] bg-white text-gray-700 border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-bold"
                             >
                                 Siguiente <FontAwesomeIcon icon={faChevronRight} />
                             </button>
@@ -351,15 +351,15 @@ const SalesSummary = ({ cars, expenses, onViewDetailsClick }) => {
                     )}
                 </>
             ) : (
-                <div className="text-center py-20 px-4 bg-white rounded-lg border border-gray-200 border-dashed">
+                <div className="text-center py-20 px-4 bg-white rounded-[14px] border border-gray-200 border-dashed">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 mb-4">
                         <FontAwesomeIcon icon={faTags} className="text-3xl text-gray-300" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">
+                    <h3 className="text-lg font-bold text-[#020B1C]">
                         {viewMode === 'monthly' ? "No hay ventas este mes" : "Aún no hay ventas registradas"}
                     </h3>
                     <p className="text-gray-500 mt-2 mb-6">Cuando vendas un coche, el resumen financiero aparecerá aquí.</p>
-                    <Link to="/cars" className="inline-flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-lg shadow hover:bg-accent-hover transition-colors font-bold text-sm uppercase">
+                    <Link to="/cars" className="inline-flex items-center gap-2 bg-[#ED123A] text-white px-6 py-3 rounded-[14px] shadow-md hover:bg-[#C90E30] hover:-translate-y-0.5 transition-all font-bold text-sm uppercase">
                         <FontAwesomeIcon icon={faCar} />
                         Ir al Inventario
                     </Link>

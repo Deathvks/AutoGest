@@ -12,7 +12,6 @@ const AuthProvider = ({ children }) => {
     const [subscriptionStatus, setSubscriptionStatus] = useState(null);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
-    const [pendingInvitationToken, setPendingInvitationToken] = useState(null);
     const [promptTrial, setPromptTrial] = useState(false);
     const [trialTimeLeft, setTrialTimeLeft] = useState(null);
     const [isTrialActive, setIsTrialActive] = useState(false);
@@ -61,10 +60,10 @@ const AuthProvider = ({ children }) => {
     const markAllNotificationsAsRead = useCallback(async () => {
         if (unreadCount === 0) return;
         const originalNotifications = [...notifications];
-        
+
         setNotifications(current => current.map(n => ({ ...n, isRead: true })));
         setUnreadCount(0);
-        
+
         try {
             await api.notifications.markAllAsRead();
         } catch (err) {
@@ -81,11 +80,6 @@ const AuthProvider = ({ children }) => {
                 setUser(userData);
                 setSubscriptionStatus(userData.subscriptionStatus);
                 await fetchNotifications();
-
-                if (userData && userData.companyId) {
-                    setPendingInvitationToken(null);
-                }
-
             } catch (error) {
                 console.error("Token inválido o error al cargar datos, cerrando sesión.", error);
                 logout();
@@ -104,7 +98,7 @@ const AuthProvider = ({ children }) => {
             setIsRefreshing(false);
         }
     };
-    
+
     const refreshUser = async () => {
         if (token) {
             try {
@@ -128,20 +122,8 @@ const AuthProvider = ({ children }) => {
                 localStorage.setItem('authToken', response.token);
                 setToken(response.token);
 
-                const pendingInvitationJSON = localStorage.getItem('pendingInvitation');
-                if (pendingInvitationJSON) {
-                    const pendingInvitation = JSON.parse(pendingInvitationJSON);
-                    if (pendingInvitation.email === email) {
-                        setPendingInvitationToken(pendingInvitation.token);
-                    }
-                    localStorage.removeItem('pendingInvitation');
-                } else if (response.invitationToken) {
-                    const handledTokens = JSON.parse(localStorage.getItem('handledInvitationTokens') || '[]');
-                    if (!handledTokens.includes(response.invitationToken)) {
-                        setPendingInvitationToken(response.invitationToken);
-                    }
-                }
-                
+                // Se ha eliminado toda la lógica de validación de pendingInvitation
+
                 if (response.promptTrial) {
                     setPromptTrial(true);
                 }
@@ -159,7 +141,6 @@ const AuthProvider = ({ children }) => {
         setSubscriptionStatus(null);
         setNotifications([]);
         setUnreadCount(0);
-        setPendingInvitationToken(null);
         localStorage.removeItem('authToken');
         window.location.href = '/login';
     };
@@ -174,7 +155,7 @@ const AuthProvider = ({ children }) => {
             throw error;
         }
     };
-    
+
     const deleteUserAvatar = async () => {
         try {
             const updatedUser = await api.deleteAvatar();
@@ -186,7 +167,6 @@ const AuthProvider = ({ children }) => {
         }
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const deleteUserLogo = async () => {
         try {
             const updatedUser = await api.deleteLogo();
@@ -197,7 +177,6 @@ const AuthProvider = ({ children }) => {
             throw error;
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const deleteAccount = async () => {
         try {
@@ -243,21 +222,17 @@ const AuthProvider = ({ children }) => {
         isRefreshing,
         updateUserProfile,
         deleteUserAvatar,
-        // --- INICIO DE LA MODIFICACIÓN ---
-        deleteUserLogo, // Se añade la nueva función
-        // --- FIN DE LA MODIFICACIÓN ---
+        deleteUserLogo,
         deleteAccount,
         subscriptionStatus,
         refreshSubscriptionStatus,
         refreshUser,
         notifications,
-        setNotifications, 
+        setNotifications,
         unreadCount,
-        setUnreadCount, 
+        setUnreadCount,
         markAllNotificationsAsRead,
         fetchNotifications,
-        pendingInvitationToken,
-        setPendingInvitationToken,
         promptTrial,
         startTrial,
         trialTimeLeft,

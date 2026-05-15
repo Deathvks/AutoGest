@@ -1,38 +1,14 @@
 // autogest-app/backend/controllers/adminController.js
-const { User, Company, Notification, sequelize } = require('../models');
+const { User, Notification, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
 
 // Obtener todos los usuarios (GET /api/admin/users)
 exports.getAllUsers = async (req, res) => {
     try {
-        let whereClause = {};
-        const requester = req.user;
-
-        if (requester.role === 'technician' || requester.role === 'technician_subscribed' || requester.canExpelUsers) {
-            if (!requester.companyId) {
-                whereClause = { id: requester.id };
-            } else {
-                whereClause = { companyId: requester.companyId };
-            }
-        }
-
-        let users = await User.findAll({
-            where: whereClause,
+        const users = await User.findAll({
             attributes: { exclude: ['password'] },
             order: [['createdAt', 'DESC']],
         });
-
-        if (requester.companyId) {
-            const company = await Company.findByPk(requester.companyId);
-            if (company) {
-                const ownerId = company.ownerId;
-                users = users.map(user => {
-                    const userJson = user.toJSON();
-                    userJson.isOwner = (userJson.id === ownerId);
-                    return userJson;
-                });
-            }
-        }
 
         res.status(200).json(users);
     } catch (error) {
@@ -45,7 +21,6 @@ exports.getAllUsers = async (req, res) => {
 exports.createUser = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
-        const requester = req.user;
 
         if (!name || !email || !password) {
             return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios.' });
@@ -56,24 +31,8 @@ exports.createUser = async (req, res) => {
             return res.status(400).json({ error: 'El email ya está en uso.' });
         }
 
-        let assignedRole = 'user';
-        let assignedCompanyId = null;
+        const assignedRole = role === 'admin' ? 'admin' : 'user';
 
-        if (requester.role === 'admin' && role) {
-            assignedRole = role;
-        } else if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
-            const allowedRolesForTechnician = ['user', 'technician_subscribed'];
-            if (requester.role === 'technician') {
-                allowedRolesForTechnician.push('technician');
-            }
-
-            if (role && !allowedRolesForTechnician.includes(role)) {
-                return res.status(403).json({ error: 'No tienes permiso para asignar este rol.' });
-            }
-            assignedRole = role || 'user';
-            assignedCompanyId = requester.companyId;
-        }
-        
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -82,7 +41,6 @@ exports.createUser = async (req, res) => {
             email,
             password: hashedPassword,
             role: assignedRole,
-            companyId: assignedCompanyId,
             isVerified: true,
         });
 
@@ -100,7 +58,7 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
-        const { name, email, role, password, canManageRoles, canExpelUsers } = req.body;
+        const { name, email, role, password } = req.body;
         const userToUpdate = await User.findByPk(req.params.id, { transaction });
         const requester = req.user;
 
@@ -108,48 +66,13 @@ exports.updateUser = async (req, res) => {
             await transaction.rollback();
             return res.status(404).json({ error: 'Usuario no encontrado.' });
         }
-        
-        if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
-            if (userToUpdate.id === requester.id) {
-                await transaction.rollback();
-                return res.status(403).json({ error: 'Edita tu propio perfil desde la sección "Mi Perfil".' });
-            }
 
-            if (userToUpdate.companyId !== requester.companyId) {
-                await transaction.rollback();
-                return res.status(403).json({ error: 'No puedes editar usuarios que no pertenecen a tu equipo.' });
-            }
+        userToUpdate.name = name !== undefined ? name : userToUpdate.name;
+        userToUpdate.email = email !== undefined ? email : userToUpdate.email;
 
-            const company = await Company.findOne({ where: { id: requester.companyId }, transaction });
-            if (company && userToUpdate.id === company.ownerId) {
-                 await transaction.rollback();
-                 return res.status(403).json({ error: 'No puedes editar al propietario del equipo.' });
-            }
-            
-            const isRequesterOwner = company && company.ownerId === requester.id;
-            if (!isRequesterOwner) {
-                await transaction.rollback();
-                return res.status(403).json({ error: 'No tienes permiso para editar usuarios.' });
-            }
-            
-            if (name || email || password || role) {
-                await transaction.rollback();
-                return res.status(403).json({ error: 'Desde aquí, solo puedes modificar los permisos de un usuario.' });
-            }
-            
-            if (canManageRoles !== undefined) {
-                 await transaction.rollback();
-                 return res.status(403).json({ error: 'La gestión de roles no se puede delegar.' });
-            }
-        }
-        
-        if (requester.role === 'admin') {
-            userToUpdate.name = name !== undefined ? name : userToUpdate.name;
-            userToUpdate.email = email !== undefined ? email : userToUpdate.email;
-            if (password) {
-                const salt = await bcrypt.genSalt(10);
-                userToUpdate.password = await bcrypt.hash(password, salt);
-            }
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            userToUpdate.password = await bcrypt.hash(password, salt);
         }
 
         if (userToUpdate.id === requester.id && userToUpdate.role === 'admin' && role !== 'admin') {
@@ -159,34 +82,15 @@ exports.updateUser = async (req, res) => {
                 return res.status(400).json({ error: 'No puedes eliminar el rol del último administrador.' });
             }
         }
-        
-        if (role !== undefined) {
-            userToUpdate.role = role;
-        }
-        
-        if (canManageRoles !== undefined) {
-            userToUpdate.canManageRoles = canManageRoles;
-        }
-        
-        if (canExpelUsers !== undefined) {
-            // --- INICIO DE LA MODIFICACIÓN ---
-            const wasJustGranted = canExpelUsers === true && !userToUpdate.canExpelUsers;
-            userToUpdate.canExpelUsers = canExpelUsers;
 
-            if (wasJustGranted) {
-                await Notification.create({
-                    userId: userToUpdate.id,
-                    message: `Se te han concedido permisos para expulsar a otros miembros del equipo.`,
-                    type: 'general'
-                }, { transaction });
-            }
-            // --- FIN DE LA MODIFICACIÓN ---
+        if (role !== undefined) {
+            userToUpdate.role = role === 'admin' ? 'admin' : 'user';
         }
 
         await userToUpdate.save({ transaction });
-        
+
         await transaction.commit();
-        
+
         const userResponse = userToUpdate.toJSON();
         delete userResponse.password;
 
@@ -214,30 +118,9 @@ exports.deleteUser = async (req, res) => {
             await transaction.rollback();
             return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta.' });
         }
-        
-        const ownedCompany = await Company.findOne({ where: { ownerId: userToDelete.id }, transaction });
-        if (ownedCompany) {
-            await User.update(
-                { 
-                    companyId: null,
-                    canManageRoles: false,
-                    canExpelUsers: false 
-                },
-                { where: { companyId: ownedCompany.id }, transaction }
-            );
-
-            await ownedCompany.destroy({ transaction });
-        }
-        
-        if (requester.role === 'technician' || requester.role === 'technician_subscribed') {
-            if (userToDelete.companyId !== requester.companyId) {
-                await transaction.rollback();
-                return res.status(403).json({ error: 'No puedes eliminar usuarios que no pertenecen a tu empresa.' });
-            }
-        }
 
         await userToDelete.destroy({ transaction });
-        
+
         await transaction.commit();
 
         res.status(200).json({ message: 'Usuario eliminado correctamente.' });

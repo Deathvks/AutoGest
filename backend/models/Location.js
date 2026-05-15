@@ -7,7 +7,6 @@ const Location = sequelize.define('Location', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    // userId será la clave foránea que conecta con el modelo User
     userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -16,20 +15,8 @@ const Location = sequelize.define('Location', {
             key: 'id',
         },
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
-    companyId: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-            model: 'Companies',
-            key: 'id',
-        },
-        onDelete: 'CASCADE',
-    },
-    // --- FIN DE LA MODIFICACIÓN ---
 }, {
     timestamps: true,
-    // Evita que un mismo usuario tenga la misma ubicación duplicada
     indexes: [
         {
             unique: true,

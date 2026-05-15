@@ -18,7 +18,7 @@ const Car = sequelize.define('Car', {
     },
     purchasePrice: {
         type: DataTypes.FLOAT,
-        allowNull: true, // Se cambia a true para que no sea obligatorio
+        allowNull: true,
     },
     salePrice: {
         type: DataTypes.FLOAT,
@@ -29,9 +29,7 @@ const Car = sequelize.define('Car', {
         allowNull: true,
     },
     status: {
-        // --- INICIO DE LA MODIFICACIÓN ---
         type: DataTypes.ENUM('En venta', 'Vendido', 'Reservado', 'Taller'),
-        // --- FIN DE LA MODIFICACIÓN ---
         allowNull: false,
         defaultValue: 'En venta',
     },
@@ -121,25 +119,13 @@ const Car = sequelize.define('Car', {
     proformaNumber: {
         type: DataTypes.INTEGER,
         allowNull: true,
-    },
-    companyId: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-            model: 'Companies',
-            key: 'id',
-        },
-        onDelete: 'CASCADE',
-    },
+    }
 }, {
     timestamps: true,
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se elimina 'paranoid: true' para desactivar el borrado lógico.
     indexes: [
         {
-            name: 'unique_licensePlate_user', // Cambiamos el nombre para reflejar el ámbito
+            name: 'unique_licensePlate_user',
             unique: true,
-            // Hacemos que la unicidad sea la combinación de matrícula Y usuario
             fields: ['licensePlate', 'userId'],
         },
         {
@@ -148,7 +134,6 @@ const Car = sequelize.define('Car', {
             fields: ['vin'],
         }
     ]
-    // --- FIN DE LA MODIFICACIÓN ---
 });
 
 module.exports = Car;

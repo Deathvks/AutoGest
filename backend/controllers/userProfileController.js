@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
-const { User, Car, Expense, Incident, Location, sequelize, Company, Invitation } = require('../models');
+const { User, Car, Expense, Incident, Location, sequelize } = require('../models'); // Se eliminaron Company e Invitation
 const { isValidDniNie, isValidCif } = require('../utils/validation');
 const { stripe } = require('./subscription/stripeConfig');
 
@@ -25,54 +25,9 @@ exports.getMe = async (req, res) => {
 
         const userJson = user.toJSON();
 
-        if (user.companyId) {
-            const company = await Company.findByPk(user.companyId, {
-                include: [{
-                    model: User,
-                    as: 'owner',
-                    attributes: [
-                        'businessName', 'cif', 'dni', 'address', 'phone', 'logoUrl', 
-                        'invoiceCounter', 'proformaCounter',
-                        'companyStreetAddress', 'companyPostalCode', 'companyCity', 'companyProvince', 'companyPhone',
-                        'personalStreetAddress', 'personalPostalCode', 'personalCity', 'personalProvince', 'personalPhone'
-                    ]
-                }]
-            });
+        // Mantenemos isOwner a true por defecto para que el frontend no bloquee funciones
+        userJson.isOwner = true;
 
-            if (company) {
-                const isOwner = user.id === company.ownerId;
-                userJson.isOwner = isOwner;
-
-                if (!isOwner && company.owner) {
-                    // Si es miembro, hereda todos los datos de facturación del propietario.
-                    userJson.businessName = company.owner.businessName;
-                    userJson.cif = company.owner.cif;
-                    userJson.dni = company.owner.dni;
-                    userJson.address = company.owner.address; // Dirección genérica completa
-                    userJson.phone = company.owner.phone;
-                    userJson.logoUrl = company.owner.logoUrl;
-                    userJson.invoiceCounter = company.owner.invoiceCounter;
-                    userJson.proformaCounter = company.owner.proformaCounter;
-                    
-                    // Heredar datos desglosados de empresa
-                    userJson.companyStreetAddress = company.owner.companyStreetAddress;
-                    userJson.companyPostalCode = company.owner.companyPostalCode;
-                    userJson.companyCity = company.owner.companyCity;
-                    userJson.companyProvince = company.owner.companyProvince;
-                    userJson.companyPhone = company.owner.companyPhone;
-
-                    // Heredar datos desglosados personales
-                    userJson.personalStreetAddress = company.owner.personalStreetAddress;
-                    userJson.personalPostalCode = company.owner.personalPostalCode;
-                    userJson.personalCity = company.owner.personalCity;
-                    userJson.personalProvince = company.owner.personalProvince;
-                    userJson.personalPhone = company.owner.personalPhone;
-                }
-                 return res.status(200).json(userJson);
-            }
-        }
-        
-        userJson.isOwner = !user.companyId;
         res.status(200).json(userJson);
 
     } catch (error) {
@@ -81,57 +36,20 @@ exports.getMe = async (req, res) => {
     }
 };
 
-// Obtener la invitación pendiente del usuario actual
-exports.getPendingInvitation = async (req, res) => {
-    try {
-        const invitation = await Invitation.findOne({
-            where: {
-                email: req.user.email,
-                status: 'pending',
-                expiresAt: { [require('sequelize').Op.gt]: new Date() }
-            },
-            include: [{
-                model: Company,
-                attributes: ['name']
-            }]
-        });
-
-        if (!invitation) {
-            return res.status(200).json(null);
-        }
-
-        res.status(200).json({
-            token: invitation.token,
-            companyName: invitation.Company.name
-        });
-
-    } catch (error) {
-        console.error('Error al obtener la invitación pendiente:', error);
-        res.status(500).json({ error: 'Error al obtener la invitación.' });
-    }
-};
-
 // Actualizar el perfil del usuario (PUT /api/auth/profile)
 exports.updateProfile = async (req, res) => {
     try {
-        const { 
-            name, email, businessName, dni, cif, 
+        const {
+            name, email, businessName, dni, cif,
             companyStreetAddress, companyPostalCode, companyCity, companyProvince, companyPhone,
             personalStreetAddress, personalPostalCode, personalCity, personalProvince, personalPhone,
-            proformaCounter, invoiceCounter 
+            proformaCounter, invoiceCounter
         } = req.body;
-        
+
         const user = await User.findByPk(req.user.id);
-        
+
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado.' });
-        }
-
-        if (user.companyId) {
-            const company = await Company.findByPk(user.companyId);
-            if (company && company.ownerId !== user.id) {
-                return res.status(403).json({ error: 'No tienes permiso para modificar los datos de facturación del equipo.' });
-            }
         }
 
         if (dni && !isValidDniNie(dni)) {
@@ -146,7 +64,7 @@ exports.updateProfile = async (req, res) => {
 
         if (name && name.trim() !== '') user.name = name;
         if (email && email.trim() !== '') user.email = email;
-        
+
         // Lógica para guardar los datos de forma independiente
         const accountType = (cif && cif.trim() !== '') ? 'empresa' : 'particular';
 
@@ -154,7 +72,7 @@ exports.updateProfile = async (req, res) => {
             user.businessName = businessName;
             user.cif = cif;
             user.dni = null;
-            
+
             if (companyStreetAddress !== undefined) user.companyStreetAddress = companyStreetAddress;
             if (companyPostalCode !== undefined) user.companyPostalCode = companyPostalCode;
             if (companyCity !== undefined) user.companyCity = companyCity;
@@ -164,7 +82,7 @@ exports.updateProfile = async (req, res) => {
             // Construir dirección genérica para compatibilidad
             const addressParts = [companyStreetAddress, companyPostalCode, companyCity, companyProvince].filter(part => part && part.trim() !== '');
             if (addressParts.length > 0) user.address = addressParts.join(', ');
-            
+
             if (companyPhone !== undefined) user.phone = companyPhone;
 
         } else { // 'particular'
@@ -181,7 +99,7 @@ exports.updateProfile = async (req, res) => {
             // Construir dirección genérica para compatibilidad
             const addressParts = [personalStreetAddress, personalPostalCode, personalCity, personalProvince].filter(part => part && part.trim() !== '');
             if (addressParts.length > 0) user.address = addressParts.join(', ');
-            
+
             if (personalPhone !== undefined) user.phone = personalPhone;
         }
 
@@ -217,15 +135,8 @@ exports.updateProfile = async (req, res) => {
             attributes: { exclude: ['password'] }
         });
         const userResponse = updatedUser.toJSON();
-        
-        if (userResponse.companyId) {
-            const company = await Company.findByPk(userResponse.companyId);
-            if (company) {
-                userResponse.isOwner = userResponse.id === company.ownerId;
-            }
-        } else {
-            userResponse.isOwner = true;
-        }
+
+        userResponse.isOwner = true; // Por defecto a true tras la actualización
 
         res.status(200).json(userResponse);
 
@@ -327,14 +238,9 @@ exports.deleteAccount = async (req, res) => {
                 await stripe.subscriptions.cancel(subscription.id);
             }
         }
-        const ownedCompany = await Company.findOne({ where: { ownerId: userId }, transaction });
-        if (ownedCompany) {
-            await transaction.rollback();
-            return res.status(400).json({ error: `Eres propietario del equipo "${ownedCompany.name}" y no puedes eliminar tu cuenta. Transfiere la propiedad o elimina el equipo primero.` });
-        }
 
         const cars = await Car.findAll({ where: { userId }, transaction });
-        
+
         // Borrado físico de ficheros de los coches
         for (const car of cars) {
             // 1. Imagen principal
@@ -350,9 +256,9 @@ exports.deleteAccount = async (req, res) => {
                 let docs = car[field];
                 // Parseo seguro del JSON
                 if (typeof docs === 'string') {
-                    try { docs = JSON.parse(docs); } catch(e) { docs = []; }
+                    try { docs = JSON.parse(docs); } catch (e) { docs = []; }
                 }
-                
+
                 if (Array.isArray(docs)) {
                     docs.forEach(doc => {
                         if (doc && doc.path) {
@@ -366,9 +272,9 @@ exports.deleteAccount = async (req, res) => {
 
             // 3. PDF de Reserva
             if (car.reservationPdfUrl) {
-                 const resFilename = path.basename(car.reservationPdfUrl);
-                 const resFilePath = path.join(__dirname, '..', 'public', 'documents', resFilename);
-                 if (fs.existsSync(resFilePath)) fs.unlinkSync(resFilePath);
+                const resFilename = path.basename(car.reservationPdfUrl);
+                const resFilePath = path.join(__dirname, '..', 'public', 'documents', resFilename);
+                if (fs.existsSync(resFilePath)) fs.unlinkSync(resFilePath);
             }
         }
 
@@ -377,14 +283,14 @@ exports.deleteAccount = async (req, res) => {
         await Expense.destroy({ where: { carLicensePlate: cars.map(c => c.licensePlate) }, transaction });
         await Car.destroy({ where: { userId }, transaction });
         await Location.destroy({ where: { userId }, transaction });
-        
+
         // Borrado de avatar de usuario
         if (req.user.avatarUrl) {
             const avatarFilename = path.basename(req.user.avatarUrl);
             const avatarFilePath = path.join(__dirname, '..', 'public', 'avatars', avatarFilename);
             if (fs.existsSync(avatarFilePath)) fs.unlinkSync(avatarFilePath);
         }
-        
+
         // Borrado de logo de usuario
         if (req.user.logoUrl) {
             const logoFilename = path.basename(req.user.logoUrl);

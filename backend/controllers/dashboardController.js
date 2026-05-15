@@ -13,7 +13,8 @@ const normalizeSum = (value) => {
 exports.getDashboardStats = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
-        const userScope = req.user.companyId ? { companyId: req.user.companyId } : { userId: req.user.id };
+        // Se elimina la lógica de companyId. Ahora los datos son siempre del usuario actual.
+        const userScope = { userId: req.user.id };
         const isMonthlyView = !!(startDate || endDate);
 
         let totalInvestment = 0;
@@ -23,7 +24,7 @@ exports.getDashboardStats = async (req, res) => {
         if (isMonthlyView) {
             const endOfDay = endDate ? new Date(endDate) : new Date();
             if (endDate) endOfDay.setHours(23, 59, 59, 999);
-            
+
             if (startDate && endDate) {
                 dateFilter[Op.between] = [new Date(startDate), endOfDay];
             } else if (startDate) {
@@ -32,10 +33,10 @@ exports.getDashboardStats = async (req, res) => {
                 dateFilter[Op.lte] = endOfDay;
             }
         }
-        
+
         const allUserCars = await Car.findAll({ where: userScope });
         const allUserExpenses = await Expense.findAll({ where: userScope });
-        
+
         const carsInPeriod = isMonthlyView ? allUserCars.filter(c => {
             const createdAt = new Date(c.createdAt);
             return createdAt >= new Date(startDate) && createdAt <= new Date(endDate);
@@ -52,13 +53,13 @@ exports.getDashboardStats = async (req, res) => {
             const saleDate = new Date(c.saleDate);
             return saleDate >= new Date(startDate) && saleDate <= new Date(endDate);
         });
-        
+
         totalExpenses = expensesInPeriod.reduce((sum, exp) => sum + normalizeSum(exp.amount), 0);
         const totalRevenue = soldCarsInPeriod.reduce((sum, car) => sum + normalizeSum(car.salePrice), 0);
-        
+
         const carsInStock = allUserCars.filter(car => car.status !== 'Vendido');
         const potentialRevenue = carsInStock.reduce((sum, car) => sum + normalizeSum(car.price), 0);
-        
+
         if (isMonthlyView) {
             const purchasePriceInPeriod = carsInPeriod.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
             const costOfSoldCarsInPeriod = soldCarsInPeriod.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
@@ -67,19 +68,19 @@ exports.getDashboardStats = async (req, res) => {
             const totalPurchasePriceOfStock = carsInStock.reduce((sum, car) => sum + normalizeSum(car.purchasePrice), 0);
             totalInvestment = totalPurchasePriceOfStock + totalExpenses;
         }
-        
+
         let totalProfit = 0;
         if (soldCarsInPeriod.length > 0) {
             totalProfit = soldCarsInPeriod.reduce((profitSum, car) => {
                 const expensesForThisCar = allUserExpenses
                     .filter(exp => exp.carLicensePlate === car.licensePlate)
                     .reduce((expSum, exp) => expSum + normalizeSum(exp.amount), 0);
-                
+
                 const carProfit = normalizeSum(car.salePrice) - normalizeSum(car.purchasePrice) - expensesForThisCar;
                 return profitSum + carProfit;
             }, 0);
         }
-        
+
         res.status(200).json({
             totalInvestment,
             totalRevenue,
@@ -96,9 +97,10 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.getActivityHistory = async (req, res) => {
     try {
-        const userScope = req.user.companyId ? { companyId: req.user.companyId } : { userId: req.user.id };
+        // Se elimina la lógica de companyId.
+        const userScope = { userId: req.user.id };
         const page = parseInt(req.query.page, 10) || 1;
-        const typeFilter = req.query.type || ''; // <-- Se obtiene el filtro
+        const typeFilter = req.query.type || '';
         const limit = 10;
         const offset = (page - 1) * limit;
 
@@ -128,7 +130,7 @@ exports.getActivityHistory = async (req, res) => {
             }
 
             if (car.status === 'Reservado' && car.reservationExpiry) {
-                 activities.push({
+                activities.push({
                     type: 'reserva',
                     description: `Se reservó el coche ${car.make} ${car.model}`,
                     date: car.updatedAt,
@@ -145,7 +147,7 @@ exports.getActivityHistory = async (req, res) => {
         expenses.forEach(expense => {
             const car = expense.carLicensePlate ? cars.find(c => c.licensePlate === expense.carLicensePlate) : null;
             let description = '';
-            
+
             if (car) {
                 description = `Nuevo gasto de ${expense.category} en ${car.make} ${car.model}`;
             } else {
@@ -159,20 +161,16 @@ exports.getActivityHistory = async (req, res) => {
                 carId: car ? car.id : null,
             });
         });
-        
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Se filtra el array de actividades si se ha proporcionado un 'typeFilter'
+
         let filteredActivities = activities;
         if (typeFilter) {
             filteredActivities = activities.filter(activity => activity.type === typeFilter);
         }
-        
-        // Se ordena por fecha DESPUÉS de haber filtrado
+
         filteredActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         const paginatedActivities = filteredActivities.slice(offset, offset + limit);
         const totalPages = Math.ceil(filteredActivities.length / limit);
-        // --- FIN DE LA MODIFICACIÓN ---
 
         res.status(200).json({
             activities: paginatedActivities,

@@ -1,195 +1,208 @@
 // autogest-app/frontend/src/pages/MyCars/CarCard.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarAlt, faRoad, faGasPump, faCogs, faHandHoldingUsd, faBell, faBan, faShieldAlt, faExclamationTriangle, faClock, faKey } from '@fortawesome/free-solid-svg-icons';
+import {
+  faEye, faBan, faBell, faHandHoldingUsd,
+  faExclamationTriangle, faClock, faEllipsisV, faShieldAlt
+} from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../../context/AuthContext';
 import CarPlaceholderImage from './CarPlaceholderImage';
 
-const ToggleSwitch = ({ enabled, onChange }) => (
-  <button
-    type="button"
-    onClick={(e) => {
-      e.stopPropagation();
-      onChange();
-    }}
-    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent ${enabled ? 'bg-accent' : 'bg-gray-200'}`}
-  >
-    <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform shadow-sm ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-  </button>
-);
-
-const CarCard = ({ car, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance, onAddIncidentClick }) => {
+const CarCard = ({
+  car,
+  onViewDetailsClick,
+  onSellClick,
+  onReserveClick,
+  onCancelReservationClick,
+  onUpdateInsurance,
+  onAddIncidentClick,
+}) => {
   const { user } = useContext(AuthContext);
   const [remainingTime, setRemainingTime] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
   const isLockedForUser = isReservedAndActive && user.role !== 'admin';
-  
   const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
 
   useEffect(() => {
     if (!isReservedAndActive) return;
-
     const interval = setInterval(() => {
-        const now = new Date();
-        const expiry = new Date(car.reservationExpiry);
-        const diff = expiry - now;
-
-        if (diff <= 0) {
-            setRemainingTime('Expirado');
-            clearInterval(interval);
-            return;
-        }
-
-        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-        const m = Math.floor((diff / 1000 / 60) % 60);
-        
-        const parts = [];
-        if (d > 0) parts.push(`${d}d`);
-        if (h > 0) parts.push(`${h}h`);
-        if (m > 0 || (d === 0 && h === 0)) {
-            parts.push(`${m}m`);
-        }
-        
-        setRemainingTime(parts.join(' '));
+      const diff = new Date(car.reservationExpiry) - new Date();
+      if (diff <= 0) { setRemainingTime('Expirado'); clearInterval(interval); return; }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff / 3600000) % 24);
+      const m = Math.floor((diff / 60000) % 60);
+      const parts = [];
+      if (d > 0) parts.push(`${d}d`);
+      if (h > 0) parts.push(`${h}h`);
+      if (m > 0 || (!d && !h)) parts.push(`${m}m`);
+      setRemainingTime(parts.join(' '));
     }, 1000);
-
     return () => clearInterval(interval);
   }, [car.reservationExpiry, isReservedAndActive]);
 
+  const year = car.registrationDate ? new Date(car.registrationDate).getFullYear() : null;
+  const kmFormatted = car.km ? new Intl.NumberFormat('es-ES').format(car.km) + ' km' : null;
+  const specParts = [car.fuel, car.transmission, year].filter(Boolean);
+  const specLine = specParts.join(' · ');
 
-  const getStatusChipClass = (status) => {
-    switch (status) {
-      case 'Vendido': return 'bg-green-100 text-green-700 border border-green-200';
-      case 'En venta': return 'bg-blue-100 text-blue-700 border border-blue-200';
-      case 'Reservado': return 'bg-yellow-100 text-yellow-700 border border-yellow-200';
-      case 'Taller': return 'bg-gray-100 text-gray-600 border border-gray-200';
-      default: return 'bg-gray-50 text-gray-500 border border-gray-200';
-    }
+  const formatEur = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
+
+  const purchasePrice = car.purchasePrice ?? null;
+  const salePrice = car.status === 'Vendido' ? (car.salePrice ?? null) : (car.price ?? null);
+  const beneficio = purchasePrice != null && salePrice != null ? salePrice - purchasePrice : null;
+  const daysAgo = car.createdAt ? Math.floor((Date.now() - new Date(car.createdAt)) / 86400000) : null;
+
+  const statusStyles = {
+    Vendido: 'bg-[#10b981] text-white',
+    'En venta': 'bg-[#3b82f6] text-white',
+    Reservado: 'bg-[#f59e0b] text-white',
+    Taller: 'bg-gray-500 text-white',
   };
-  
-  const displayValue = (value) => (value && String(value).toUpperCase() !== 'NULL' ? value : 'N/A');
+  const chipClass = statusStyles[car.status] ?? 'bg-gray-500 text-white';
 
   return (
-    <div 
-        className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col md:flex-row transition-all duration-300 hover:shadow-md hover:border-accent relative group ${isLockedForUser ? 'opacity-60' : ''}`}
-        onClick={() => onViewDetailsClick(car)}
-    >
-      {/* Franja roja lateral estilo Occident */}
-      <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent z-10"></div>
+    <div className={`bg-white rounded-[14px] border border-gray-200 shadow-sm hover:shadow-md hover:border-[#020B1C] transition-all duration-200 overflow-hidden select-none ${isLockedForUser ? 'opacity-60' : ''}`}>
+      <div className="flex items-center justify-between px-4 pt-4 pb-2 gap-2">
+        <button
+          className="font-extrabold text-[#020B1C] text-base uppercase tracking-tight leading-tight text-left hover:opacity-80 transition-opacity line-clamp-1 flex-1"
+          onClick={() => onViewDetailsClick(car)}
+        >
+          {car.make} {car.model}
+        </button>
 
-      <div className="flex-shrink-0 w-full md:w-56 lg:w-64 h-48 md:h-auto relative bg-gray-100 pl-1">
-        {car.imageUrl ? (
-            <img
-              src={car.imageUrl}
-              alt={`${car.make} ${car.model}`}
-              className="w-full h-full object-cover object-center cursor-pointer"
-            />
-        ) : (
-            <div className="w-full h-full cursor-pointer flex items-center justify-center">
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o); }}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-[#020B1C] transition-colors"
+          >
+            <FontAwesomeIcon icon={faEllipsisV} />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-9 z-30 bg-white border border-gray-200 rounded-[10px] shadow-lg py-1 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => { setMenuOpen(false); onViewDetailsClick(car); }}>
+                <FontAwesomeIcon icon={faEye} className="text-[#020B1C] w-4" /> Ver detalle
+              </button>
+
+              {(car.status === 'En venta' || car.status === 'Reservado') && (
+                <button className="w-full text-left px-4 py-2 text-sm text-[#10b981] hover:bg-green-50 flex items-center gap-2 disabled:opacity-40" disabled={isLockedForUser} onClick={() => { setMenuOpen(false); onSellClick(car); }}>
+                  <FontAwesomeIcon icon={faHandHoldingUsd} className="w-4" /> Vender
+                </button>
+              )}
+
+              {car.status === 'En venta' && (
+                <button className="w-full text-left px-4 py-2 text-sm text-[#f59e0b] hover:bg-yellow-50 flex items-center gap-2 disabled:opacity-40" disabled={isLockedForUser} onClick={() => { setMenuOpen(false); onReserveClick(car); }}>
+                  <FontAwesomeIcon icon={faBell} className="w-4" /> Reservar
+                </button>
+              )}
+
+              {car.status === 'Reservado' && (
+                <button className="w-full text-left px-4 py-2 text-sm text-[#ED123A] hover:bg-red-50 flex items-center gap-2" onClick={() => { setMenuOpen(false); onCancelReservationClick(car); }}>
+                  <FontAwesomeIcon icon={faBan} className="w-4" /> Cancelar reserva
+                </button>
+              )}
+
+              {car.status === 'Vendido' && (
+                <button className="w-full text-left px-4 py-2 text-sm text-[#ED123A] hover:bg-red-50 flex items-center gap-2" onClick={() => { setMenuOpen(false); onAddIncidentClick(car); }}>
+                  <FontAwesomeIcon icon={faExclamationTriangle} className="w-4" /> Añadir incidencia
+                </button>
+              )}
+
+              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => { setMenuOpen(false); onUpdateInsurance(car, !car.hasInsurance); }}>
+                <FontAwesomeIcon icon={faShieldAlt} className={`w-4 ${car.hasInsurance ? 'text-[#10b981]' : 'text-gray-300'}`} /> {car.hasInsurance ? 'Quitar seguro' : 'Añadir seguro'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex gap-3 px-4 pb-3 cursor-pointer" onClick={() => onViewDetailsClick(car)}>
+        <div className="flex-shrink-0 w-24 h-20 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+          {car.imageUrl ? (
+            <img src={car.imageUrl} alt={`${car.make} ${car.model}`} className="w-full h-full object-cover object-center" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
               <CarPlaceholderImage car={car} />
             </div>
-        )}
+          )}
+        </div>
+
+        <div className="flex flex-col justify-center gap-1 min-w-0">
+          {specLine && <p className="text-sm text-gray-500 truncate capitalize">{specLine}</p>}
+          {kmFormatted && <p className="text-sm text-gray-500 truncate">{kmFormatted}</p>}
+          {car.licensePlate && <p className="text-sm font-bold text-gray-800 uppercase tracking-wider">{car.licensePlate}</p>}
+          {isReservedAndActive && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#f59e0b] bg-yellow-50 border border-yellow-200 rounded px-2 py-0.5 w-fit mt-0.5">
+              <FontAwesomeIcon icon={faClock} className="text-[10px]" /> Quedan: {remainingTime}
+            </span>
+          )}
+        </div>
       </div>
 
-      <div className="p-5 flex-grow flex flex-col min-w-0">
-        <div className="flex items-start justify-between mb-2">
-          <div>
-            <h3 className="text-xl font-extrabold text-gray-900 truncate uppercase tracking-tight">{car.make} {car.model}</h3>
-            <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">{car.licensePlate}</p>
-          </div>
-          <span className={`flex-shrink-0 text-xs font-bold px-3 py-1 rounded-full ${getStatusChipClass(car.status)} ml-2 uppercase`}>
-            {car.status}
-          </span>
-        </div>
-        
-        {isReservedAndActive && (
-            <div className="mt-1 mb-3 flex items-center gap-2 text-xs font-bold text-yellow-600 bg-yellow-50 px-2 py-1 rounded border border-yellow-100 w-fit uppercase">
-                <FontAwesomeIcon icon={faClock} />
-                <span>Quedan: {remainingTime}</span>
+      {canViewSensitiveData && (purchasePrice != null || salePrice != null) && (
+        <div className="mx-4 mb-3 rounded-lg bg-gray-50 border border-gray-200 grid grid-cols-3 divide-x divide-gray-200 text-center py-2">
+          {purchasePrice != null && (
+            <div className="px-2">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Compra</p>
+              <p className="text-sm font-bold text-[#ED123A]">-{formatEur(purchasePrice)}</p>
             </div>
-        )}
-        
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 text-sm text-gray-600 my-4">
-          <div className="flex items-center gap-2 truncate uppercase" title={`${new Intl.NumberFormat('es-ES').format(car.km)} km`}>
-            <FontAwesomeIcon icon={faRoad} className="w-4 h-4 text-accent" />
-            <span className="font-medium">{car.km ? `${new Intl.NumberFormat('es-ES').format(car.km)} KM` : 'N/A'}</span>
-          </div>
-          <div className="flex items-center gap-2 truncate uppercase" title={car.registrationDate ? new Date(car.registrationDate).getFullYear().toString() : 'N/A'}>
-            <FontAwesomeIcon icon={faCalendarAlt} className="w-4 h-4 text-accent" />
-            <span className="font-medium">{car.registrationDate ? new Date(car.registrationDate).getFullYear() : 'N/A'}</span>
-          </div>
-          <div className="flex items-center gap-2 truncate uppercase" title={displayValue(car.fuel)}>
-            <FontAwesomeIcon icon={faGasPump} className="w-4 h-4 text-accent" />
-            <span className="font-medium">{displayValue(car.fuel)}</span>
-          </div>
-          <div className="flex items-center gap-2 truncate uppercase" title={displayValue(car.transmission)}>
-            <FontAwesomeIcon icon={faCogs} className="w-4 h-4 text-accent" />
-            <span className="font-medium">{displayValue(car.transmission)}</span>
-          </div>
-          <div className="flex items-center gap-2 truncate uppercase" title={`${car.keys || 1} ${car.keys > 1 ? 'LLAVES' : 'LLAVE'}`}>
-            <FontAwesomeIcon icon={faKey} className="w-4 h-4 text-accent" />
-            <span className="font-medium">{`${car.keys || 1} ${car.keys > 1 ? 'LLAVES' : 'LLAVE'}`}</span>
-          </div>
-          <div className="flex items-center gap-2 uppercase" title={`SEGURO: ${car.hasInsurance ? 'SÍ' : 'NO'}`}>
-            <FontAwesomeIcon icon={faShieldAlt} className={`w-4 h-4 flex-shrink-0 text-accent ${!car.hasInsurance ? 'opacity-40' : ''}`} />
-            <ToggleSwitch enabled={car.hasInsurance} onChange={() => onUpdateInsurance(car, !car.hasInsurance)} />
-          </div>
+          )}
+          {salePrice != null && (
+            <div className="px-2">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Venta</p>
+              <p className="text-sm font-extrabold text-[#020B1C]">{formatEur(salePrice)}</p>
+            </div>
+          )}
+          {beneficio != null && (
+            <div className="px-2">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Beneficio</p>
+              <p className={`text-sm font-bold ${beneficio >= 0 ? 'text-[#10b981]' : 'text-[#ED123A]'}`}>{beneficio >= 0 ? '+' : ''}{formatEur(beneficio)}</p>
+            </div>
+          )}
+          {purchasePrice == null && salePrice != null && beneficio == null && (
+            <div className="col-span-2 px-2">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Precio venta</p>
+              <p className="text-sm font-extrabold text-[#020B1C]">{formatEur(salePrice)}</p>
+            </div>
+          )}
         </div>
+      )}
 
-        <div className="mt-auto flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-gray-100">
-          <div className="text-center sm:text-left w-full sm:w-auto">
-            {car.status === 'Vendido' && car.salePrice ? (
-              <div className="flex items-baseline gap-4">
-                <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Precio Vendido</p>
-                  <p className="text-2xl font-extrabold text-green-600">
-                    {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice)}
-                  </p>
-                </div>
-                {canViewSensitiveData && (
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Compra</p>
-                    <p className="text-base font-bold text-gray-500">
-                      {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Precio Venta</p>
-                <p className="text-2xl font-extrabold text-gray-900">
-                  {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.price)}
-                </p>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
-            {car.status === 'Vendido' && (
-              <button onClick={(e) => { e.stopPropagation(); onAddIncidentClick(car); }} className="p-2.5 aspect-square text-accent bg-red-50 border border-red-100 rounded-md hover:bg-red-100 flex items-center justify-center transition-colors" title="Añadir Incidencia">
-                <FontAwesomeIcon icon={faExclamationTriangle} />
-              </button>
-            )}
-            {(car.status === 'En venta' || car.status === 'Reservado') && (
-              <button onClick={(e) => { e.stopPropagation(); onSellClick(car); }} disabled={isLockedForUser} className="p-2.5 aspect-square text-green-600 bg-green-50 border border-green-100 rounded-md hover:bg-green-100 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Vender">
-                <FontAwesomeIcon icon={faHandHoldingUsd} />
-              </button>
-            )}
-            {car.status === 'En venta' && (
-              <button onClick={(e) => { e.stopPropagation(); onReserveClick(car); }} disabled={isLockedForUser} className="p-2.5 aspect-square text-yellow-600 bg-yellow-50 border border-yellow-100 rounded-md hover:bg-yellow-100 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Reservar">
-                <FontAwesomeIcon icon={faBell} />
-              </button>
-            )}
-            {car.status === 'Reservado' && (
-              <button onClick={(e) => { e.stopPropagation(); onCancelReservationClick(car); }} className="p-2.5 aspect-square text-red-600 bg-red-50 border border-red-100 rounded-md hover:bg-red-100 flex items-center justify-center transition-colors" title="Cancelar Reserva">
-                <FontAwesomeIcon icon={faBan} />
-              </button>
-            )}
-          </div>
+      {!canViewSensitiveData && salePrice != null && (
+        <div className="mx-4 mb-3 rounded-lg bg-gray-50 border border-gray-200 text-center py-2 px-4">
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Precio venta</p>
+          <p className="text-sm font-extrabold text-[#020B1C]">{formatEur(salePrice)}</p>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between px-4 pb-3">
+        <span className={`text-[10px] font-bold px-2 py-1 rounded-[6px] uppercase tracking-wide ${chipClass}`}>
+          {car.status}
+        </span>
+        {car.hasInsurance && (
+          <span className="text-xs text-gray-400 flex items-center gap-1 font-semibold uppercase tracking-wider">
+            <FontAwesomeIcon icon={faShieldAlt} className="text-[#10b981] text-[10px]" /> Asegurado
+          </span>
+        )}
+      </div>
+
+      <div className="border-t border-gray-100 flex items-center justify-between px-4 py-2.5 gap-2 bg-gray-50/50">
+        <button onClick={() => onViewDetailsClick(car)} className="flex items-center gap-1.5 text-xs font-bold text-[#020B1C] hover:opacity-80 uppercase tracking-wide">
+          <FontAwesomeIcon icon={faEye} /> Ver detalle
+        </button>
+
+        <div className="flex items-center gap-3">
+          {daysAgo != null && (
+            <span className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              <FontAwesomeIcon icon={faClock} className="text-gray-300" />
+              Insertado {daysAgo === 0 ? 'hoy' : `hace ${daysAgo} ${daysAgo === 1 ? 'día' : 'días'}`}
+            </span>
+          )}
         </div>
       </div>
+
+      {menuOpen && <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />}
     </div>
   );
 };

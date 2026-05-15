@@ -3,15 +3,15 @@ import React, { useContext, Fragment, useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom';
 import { useLocation, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-    faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar, 
-    faUser, faCog, faUsersCog, faCreditCard, faBell, faLock, faBars
+import {
+    faTachometerAlt, faCar, faChartLine, faFileInvoiceDollar,
+    faUser, faCog, faUsersCog, faCreditCard, faBell, faBars
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
 import { Menu, Transition, Portal } from '@headlessui/react';
 import NotificationsPanel from './NotificationsPanel';
 
-const Header = ({ appState }) => {
+const Header = ({ appState, onMenuToggle }) => {
     const { cars, setCarToEdit } = appState;
     const location = useLocation();
     const { user, subscriptionStatus, notifications, unreadCount, markAllNotificationsAsRead } = useContext(AuthContext);
@@ -19,10 +19,6 @@ const Header = ({ appState }) => {
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const notificationsButtonRef = useRef(null);
     const notificationsPanelRef = useRef(null);
-
-    const isSubscribed = subscriptionStatus === 'active';
-    const isTrialActive = user && user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date();
-    const isManagementLocked = isTrialActive && !isSubscribed && user.role !== 'admin';
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -66,17 +62,15 @@ const Header = ({ appState }) => {
         return null;
     }
 
-    const isExempt = user.role === 'admin' || user.role === 'technician';
     const hasValidSubscription = subscriptionStatus === 'active' || (subscriptionStatus === 'cancelled' && user.subscriptionExpiry && new Date(user.subscriptionExpiry) > new Date());
     const isTrialing = user.trialExpiresAt && new Date(user.trialExpiresAt) > new Date() && !hasValidSubscription;
 
     const getStatusInfo = () => {
-        if (isExempt || hasValidSubscription) {
-            // En el dropdown blanco, usamos colores oscuros o el acento para el badge
-            return { text: 'Pro', badgeClass: 'bg-green-accent text-white' };
+        if (user.role === 'admin' || hasValidSubscription) {
+            return { text: 'Pro', badgeClass: 'bg-green-500 text-white' };
         }
         if (isTrialing) {
-            return { text: 'Prueba', badgeClass: 'bg-yellow-accent text-black' };
+            return { text: 'Prueba', badgeClass: 'bg-yellow-500 text-white' };
         }
         return { text: 'Free', badgeClass: 'bg-gray-500 text-white' };
     };
@@ -88,13 +82,23 @@ const Header = ({ appState }) => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" aria-hidden="true" />,
                 document.body
             )}
-            
-            {/* --- HEADER ESTILO OCCIDENT (Rojo Sólido) --- */}
-            <header className="sticky top-0 z-50 bg-accent text-white shadow-md pb-4 px-4 pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 lg:px-8 flex items-center justify-between lg:hidden">
+
+            <header className="sticky top-0 z-50 bg-[#020B1C] text-white shadow-md pb-4 px-4 pt-[calc(1rem+env(safe-area-inset-top))] sm:px-6 lg:px-8 flex items-center justify-between lg:hidden">
                 <div className="flex items-center">
-                    {/* Icono blanco sobre fondo rojo */}
-                    <FontAwesomeIcon icon={icon} className="h-6 w-6 mr-3 text-white" />
-                    <h1 className="text-xl font-bold tracking-tight">{title}</h1>
+                    {/* --- BOTÓN HAMBURGUESA CENTRADO --- */}
+                    <button
+                        onClick={onMenuToggle}
+                        className="w-10 h-10 flex items-center justify-center text-white focus:outline-none hover:bg-white/20 -ml-2 mr-1 rounded-md transition-colors"
+                        aria-label="Abrir menú"
+                    >
+                        <FontAwesomeIcon icon={faBars} className="h-6 w-6" />
+                    </button>
+
+                    {/* Icono de la página (oculto en móviles muy pequeños para dar espacio, visible en sm) */}
+                    <FontAwesomeIcon icon={icon} className="h-5 w-5 mr-2 text-white hidden sm:block" />
+
+                    {/* Título con corrección óptica de altura (translate-y) */}
+                    <h1 className="text-xl font-bold tracking-tight leading-none translate-y-[1px]">{title}</h1>
                 </div>
 
                 <div className="flex items-center space-x-1 sm:space-x-4">
@@ -107,7 +111,7 @@ const Header = ({ appState }) => {
                         >
                             <FontAwesomeIcon icon={faBell} className="h-5 w-5" />
                             {unreadCount > 0 && (
-                                <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-yellow-accent ring-2 ring-accent" />
+                                <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-[#ED123A] ring-2 ring-[#020B1C]" />
                             )}
                         </button>
                     </div>
@@ -121,11 +125,11 @@ const Header = ({ appState }) => {
                             return (
                                 <>
                                     <Menu.Button className="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/20 transition-colors focus:outline-none">
-                                        <img 
-                                            src={user.avatarUrl 
-                                                ? user.avatarUrl 
-                                                : `https://ui-avatars.com/api/?name=${user.name}&background=ffffff&color=dc0028&size=128` // Avatar adaptado al tema rojo
-                                            } 
+                                        <img
+                                            src={user.avatarUrl
+                                                ? user.avatarUrl
+                                                : `https://ui-avatars.com/api/?name=${user.name}&background=ffffff&color=020B1C&size=128`
+                                            }
                                             alt="Avatar"
                                             className="w-8 h-8 rounded-full object-cover ring-2 ring-white"
                                         />
@@ -140,11 +144,10 @@ const Header = ({ appState }) => {
                                         leaveTo="transform opacity-0 scale-95"
                                     >
                                         <Portal>
-                                            {/* El menú desplegable es blanco con texto oscuro */}
-                                            <Menu.Items className="absolute right-4 top-20 mt-2 w-56 origin-top-right divide-y divide-border-color rounded-lg bg-component-bg shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                                            <Menu.Items className="absolute right-4 top-20 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-[14px] bg-white shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
                                                 <div className="px-4 py-3">
-                                                    <p className="text-sm text-text-secondary">Conectado como</p>
-                                                    <p className="truncate text-sm font-bold text-text-primary">{user.email}</p>
+                                                    <p className="text-sm text-gray-500">Conectado como</p>
+                                                    <p className="truncate text-sm font-bold text-[#020B1C]">{user.email}</p>
                                                     <span className={`inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${statusInfo.badgeClass}`}>
                                                         {statusInfo.text.toUpperCase()}
                                                     </span>
@@ -152,8 +155,8 @@ const Header = ({ appState }) => {
                                                 <div className="px-1 py-1">
                                                     <Menu.Item>
                                                         {({ active }) => (
-                                                            <Link to="/profile" className={`${active ? 'bg-component-bg-hover' : ''} text-text-primary group flex w-full items-center rounded-md px-2 py-2 text-sm`}>
-                                                                <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4 text-accent" />
+                                                            <Link to="/profile" className={`${active ? 'bg-gray-50' : ''} text-gray-700 group flex w-full items-center rounded-md px-2 py-2 text-sm`}>
+                                                                <FontAwesomeIcon icon={faUser} className="mr-2 h-4 w-4 text-[#020B1C]" />
                                                                 Mi Perfil
                                                             </Link>
                                                         )}
@@ -161,24 +164,9 @@ const Header = ({ appState }) => {
                                                     {user.role === 'admin' && (
                                                         <Menu.Item>
                                                             {({ active }) => (
-                                                                <Link to="/admin" className={`${active ? 'bg-component-bg-hover' : ''} text-text-primary group flex w-full items-center rounded-md px-2 py-2 text-sm`}>
-                                                                    <FontAwesomeIcon icon={faUsersCog} className="mr-2 h-4 w-4 text-accent" />
+                                                                <Link to="/admin" className={`${active ? 'bg-gray-50' : ''} text-gray-700 group flex w-full items-center rounded-md px-2 py-2 text-sm`}>
+                                                                    <FontAwesomeIcon icon={faUsersCog} className="mr-2 h-4 w-4 text-[#020B1C]" />
                                                                     Gestión Global
-                                                                </Link>
-                                                            )}
-                                                        </Menu.Item>
-                                                    )}
-                                                    {user.isOwner && user.role !== 'admin' && (
-                                                        <Menu.Item disabled={isManagementLocked}>
-                                                            {({ active, disabled }) => (
-                                                                <Link
-                                                                    to={disabled ? '#' : '/admin'}
-                                                                    className={`${(active && !disabled) ? 'bg-component-bg-hover' : ''} text-text-primary ${disabled ? 'opacity-50 cursor-not-allowed' : ''} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                                                                    onClick={(e) => disabled && e.preventDefault()}
-                                                                >
-                                                                    <FontAwesomeIcon icon={faUsersCog} className="mr-2 h-4 w-4 text-accent" />
-                                                                    <span className="flex-1">Gestión de Equipo</span>
-                                                                    {disabled && <FontAwesomeIcon icon={faLock} className="h-3 w-3 text-text-secondary" />}
                                                                 </Link>
                                                             )}
                                                         </Menu.Item>

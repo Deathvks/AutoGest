@@ -28,9 +28,8 @@ export const InputField = ({ label, name, value, onChange, type = 'text', icon, 
                 onChange={onChange}
                 inputMode={inputMode}
                 placeholder={placeholder}
-                className={`w-full px-4 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors ${
-                    error ? 'border-red-600' : 'border-gray-300'
-                } ${icon ? 'pl-11' : ''}`}
+                className={`w-full px-4 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors ${error ? 'border-red-600' : 'border-gray-300'
+                    } ${icon ? 'pl-11' : ''}`}
             />
         </div>
         {error && <p className="mt-1 text-xs text-red-600 font-bold">{error}</p>}
@@ -104,14 +103,14 @@ const KeySelector = ({ label, icon, value, onChange }) => (
 );
 
 const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmissionOptions, handleChange, handleLocationSelect, handleNewLocationInput, handleSelectChange, handleTagKeyDown, tagInput, setTagInput, removeTag }) => {
-    const { user } = useContext(AuthContext); 
+    const { user } = useContext(AuthContext);
     const canViewSensitiveData = user.role === 'admin' || user.isOwner || !user.companyId;
 
     const handleDateChange = (date) => {
         handleChange({ target: { name: 'registrationDate', value: date } });
     };
 
-    return(
+    return (
         <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <InputField label="Marca" name="make" value={newCar.make} onChange={handleChange} icon={faCar} error={fieldErrors.make} required={true} />
@@ -122,7 +121,7 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
                 <InputField label="Nº de Bastidor" name="vin" value={newCar.vin} onChange={handleChange} icon={faFingerprint} error={fieldErrors.vin} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DatePicker 
+                <DatePicker
                     label="Fecha de Matriculación"
                     value={newCar.registrationDate}
                     onChange={handleDateChange}
@@ -145,8 +144,8 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
                     onChange={(value) => handleChange({ target: { name: 'keys', value } })}
                 />
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <Select
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Select
                     label="Ubicación Existente"
                     value={newCar.location}
                     onChange={handleLocationSelect}
@@ -166,7 +165,7 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
                 <Select label="Combustible" value={newCar.fuel} onChange={(value) => handleSelectChange('fuel', value)} options={fuelOptions} />
                 <Select label="Tipo de Cambio" value={newCar.transmission} onChange={(value) => handleSelectChange('transmission', value)} options={transmissionOptions} />
             </div>
-            
+
             <ToggleSwitch
                 label="¿Tiene seguro en vigor?"
                 icon={faShieldAlt}
@@ -183,13 +182,13 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
                             <button onClick={() => removeTag(tag)} className="hover:text-red-800 transition-colors"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
                         </span>
                     ))}
-                    <input 
-                        type="text" 
-                        value={tagInput} 
-                        onChange={(e) => setTagInput(e.target.value)} 
-                        onKeyDown={handleTagKeyDown} 
-                        placeholder="AÑADIR Y PULSAR ENTER" 
-                        className="flex-1 bg-transparent !border-0 !ring-0 !outline-none !shadow-none focus:!ring-0 p-0 text-gray-900 text-sm placeholder:text-gray-400 min-w-[150px] uppercase" 
+                    <input
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={handleTagKeyDown}
+                        placeholder="AÑADIR Y PULSAR ENTER"
+                        className="flex-1 bg-transparent !border-0 !ring-0 !outline-none !shadow-none focus:!ring-0 p-0 text-gray-900 text-sm placeholder:text-gray-400 min-w-[150px] uppercase"
                     />
                 </div>
             </div>

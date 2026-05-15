@@ -30,7 +30,7 @@ const setStoredFormData = (userId, data) => {
 const InputField = ({ id, label, value, onChange, disabled, required }) => (
     <div>
         <label htmlFor={id} className="block text-sm font-bold text-gray-700 uppercase mb-1">
-            {label} {required && <span className="text-red-600">*</span>}
+            {label} {required && <span className="text-[#ED123A]">*</span>}
         </label>
         <input
             type="text"
@@ -39,7 +39,7 @@ const InputField = ({ id, label, value, onChange, disabled, required }) => (
             value={value}
             onChange={onChange}
             disabled={disabled}
-            className="mt-1 block w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg placeholder:text-gray-400 focus:ring-2 focus:ring-accent focus:border-accent sm:text-sm disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
+            className="mt-1 block w-full px-4 py-2.5 bg-white border border-gray-200 rounded-[14px] placeholder:text-gray-400 focus:ring-2 focus:ring-[#020B1C] focus:border-[#020B1C] outline-none sm:text-sm disabled:bg-gray-50 disabled:text-gray-500 transition-colors shadow-sm"
         />
     </div>
 );
@@ -104,7 +104,6 @@ const BusinessDataSettings = () => {
 
     const isValidCif = (value) => {
         value = value.toUpperCase();
-        // CAMBIO: Regex actualizada para permitir letra o número al final
         if (!/^[A-Z][0-9]{7}[A-Z0-9]$/.test(value)) return false;
 
         const controlDigit = value.charAt(value.length - 1);
@@ -122,7 +121,6 @@ const BusinessDataSettings = () => {
         const lastDigitOfSum = sum % 10;
         const calculatedControl = lastDigitOfSum === 0 ? 0 : 10 - lastDigitOfSum;
 
-        // Comprobar si el último carácter es una letra
         if (/[A-Z]/.test(controlDigit)) {
             return String.fromCharCode(64 + calculatedControl) === controlDigit;
         } else {
@@ -185,7 +183,6 @@ const BusinessDataSettings = () => {
         }
     };
 
-    // --- Lógica para el LOGO (Empresa) ---
     const handleLogoChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -208,7 +205,6 @@ const BusinessDataSettings = () => {
         }
     };
 
-    // --- Lógica para el AVATAR (Autónomo) con Confirmación ---
     const handleAvatarChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -271,7 +267,7 @@ const BusinessDataSettings = () => {
                 setError('El formato del CIF no es válido.');
                 return false;
             }
-        } else { // particular
+        } else {
             if (!data.name?.trim()) missingFields.push('Nombre y Apellidos');
             if (!data.dni?.trim()) {
                 missingFields.push('DNI/NIE');
@@ -351,9 +347,9 @@ const BusinessDataSettings = () => {
     return (
         <>
             {isLocked && (
-                <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 rounded-lg text-center p-6 border border-gray-200">
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 rounded-[14px] text-center p-6 border border-gray-200">
                     <FontAwesomeIcon icon={isTeamMember ? faInfoCircle : faLock} className="text-4xl text-gray-400 mb-4" />
-                    <h3 className="text-xl font-bold text-gray-900">
+                    <h3 className="text-xl font-bold text-[#020B1C]">
                         {isTeamMember ? 'Datos del Equipo' : 'Función Premium'}
                     </h3>
                     <p className="text-gray-600 mt-2 max-w-sm mx-auto">
@@ -363,7 +359,7 @@ const BusinessDataSettings = () => {
                         }
                     </p>
                     {!isTeamMember && (
-                        <Link to="/subscription" className="mt-6 bg-accent text-white px-6 py-2.5 rounded-lg font-bold text-sm uppercase hover:bg-accent-hover transition-colors shadow">
+                        <Link to="/subscription" className="mt-6 bg-[#ED123A] text-white px-6 py-2.5 rounded-[14px] font-bold text-sm uppercase hover:bg-[#C90E30] transition-colors shadow-md hover:-translate-y-0.5">
                             Suscríbete ahora
                         </Link>
                     )}
@@ -371,11 +367,11 @@ const BusinessDataSettings = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-                <h2 className="text-xl font-extrabold text-gray-900 mb-6 uppercase tracking-wide">Datos de Facturación</h2>
+                <h2 className="text-xl font-extrabold text-[#020B1C] mb-6 uppercase tracking-wide">Datos de Facturación</h2>
 
-                <div className="relative grid grid-cols-2 w-full max-w-sm mx-auto items-center rounded-lg bg-gray-100 p-1 border border-gray-200">
+                <div className="relative grid grid-cols-2 w-full max-w-sm mx-auto items-center rounded-[14px] bg-gray-100 p-1 border border-gray-200">
                     <span
-                        className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-md bg-white shadow-sm border border-gray-200 transition-transform duration-300 ${accountType === 'particular' ? 'translate-x-full' : 'translate-x-0'
+                        className={`absolute top-1 left-1 h-[calc(100%-0.5rem)] w-[calc(50%-4px)] rounded-[10px] bg-white shadow-sm border border-gray-200 transition-transform duration-300 ${accountType === 'particular' ? 'translate-x-full' : 'translate-x-0'
                             }`}
                         style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                     />
@@ -383,7 +379,7 @@ const BusinessDataSettings = () => {
                         type="button"
                         onClick={() => setAccountType('empresa')}
                         disabled={isLocked}
-                        className={`relative z-10 rounded-md py-2 text-xs font-bold transition-colors duration-300 whitespace-nowrap text-center uppercase ${accountType === 'empresa' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
+                        className={`relative z-10 rounded-[10px] py-2 text-xs font-bold transition-colors duration-300 whitespace-nowrap text-center uppercase ${accountType === 'empresa' ? 'text-[#020B1C]' : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         EMPRESA
@@ -392,7 +388,7 @@ const BusinessDataSettings = () => {
                         type="button"
                         onClick={() => setAccountType('particular')}
                         disabled={isLocked}
-                        className={`relative z-10 rounded-md py-2 text-xs font-bold transition-colors duration-300 whitespace-nowrap text-center uppercase ${accountType === 'particular' ? 'text-accent' : 'text-gray-500 hover:text-gray-700'
+                        className={`relative z-10 rounded-[10px] py-2 text-xs font-bold transition-colors duration-300 whitespace-nowrap text-center uppercase ${accountType === 'particular' ? 'text-[#020B1C]' : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         AUTÓNOMO
@@ -459,7 +455,6 @@ const BusinessDataSettings = () => {
                             disabled={isLocked}
                             required
                         />
-                        {/* Espacio vacío para alinear si es necesario o futuro campo */}
                         <div></div>
                     </div>
                 </div>
@@ -474,21 +469,21 @@ const BusinessDataSettings = () => {
                                 <img
                                     src={logoPreview}
                                     alt="Logo Preview"
-                                    className="h-16 w-auto rounded-md object-contain bg-white p-1 border border-gray-300 cursor-pointer hover:border-accent transition-colors"
+                                    className="h-16 w-auto rounded-[14px] object-contain bg-white p-1 border border-gray-200 cursor-pointer hover:border-[#020B1C] transition-colors"
                                     onClick={() => setImageToEnlarge(logoPreview)}
                                 />
                             ) : (
-                                <div className="h-16 w-16 bg-gray-50 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center text-gray-400">
+                                <div className="h-16 w-16 bg-gray-50 border-2 border-dashed border-gray-300 rounded-[14px] flex items-center justify-center text-gray-400">
                                     <FontAwesomeIcon icon={faImage} className="text-2xl" />
                                 </div>
                             )}
                             <input type="file" id="logo-upload" className="hidden" onChange={handleLogoChange} accept="image/*" disabled={isLocked} />
                             <div className="flex flex-col gap-2">
-                                <label htmlFor="logo-upload" className={`cursor-pointer rounded-md bg-white px-3 py-1.5 text-xs font-bold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm uppercase text-center ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                <label htmlFor="logo-upload" className={`cursor-pointer rounded-[14px] bg-white px-4 py-2 text-xs font-bold text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm uppercase text-center ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                     Cambiar
                                 </label>
                                 {logoPreview && (
-                                    <button type="button" onClick={handleDeleteLogo} className={`text-xs font-bold text-red-600 hover:text-red-700 uppercase ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
+                                    <button type="button" onClick={handleDeleteLogo} className={`text-xs font-bold text-red-600 hover:text-[#ED123A] uppercase ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
                                         <FontAwesomeIcon icon={faTrash} className="mr-1" /> Eliminar
                                     </button>
                                 )}
@@ -502,18 +497,18 @@ const BusinessDataSettings = () => {
                         </label>
                         <div className="flex items-center gap-4">
                             <img
-                                src={avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=f3f4f6&color=374151&size=128`}
+                                src={avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=f3f4f6&color=020B1C&size=128`}
                                 alt="Avatar Preview"
-                                className="h-16 w-16 rounded-full object-cover border-2 border-gray-200 cursor-pointer hover:border-accent transition-colors"
-                                onClick={() => setImageToEnlarge(avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=f3f4f6&color=374151&size=512`)}
+                                className="h-16 w-16 rounded-full object-cover border-2 border-gray-200 cursor-pointer hover:border-[#020B1C] transition-colors"
+                                onClick={() => setImageToEnlarge(avatarPreview || `https://ui-avatars.com/api/?name=${particularFormData.name || user.name}&background=f3f4f6&color=020B1C&size=512`)}
                             />
                             <input type="file" id="avatar-upload" ref={avatarInputRef} className="hidden" onChange={handleAvatarChange} accept="image/*" disabled={isLocked} />
                             <div className="flex flex-col gap-2">
-                                <label htmlFor="avatar-upload" className={`cursor-pointer rounded-md bg-white px-3 py-1.5 text-xs font-bold text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm uppercase text-center ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                <label htmlFor="avatar-upload" className={`cursor-pointer rounded-[14px] bg-white px-4 py-2 text-xs font-bold text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm uppercase text-center ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                     Cambiar
                                 </label>
                                 {avatarPreview && (
-                                    <button type="button" onClick={handleDeleteAvatar} className={`text-xs font-bold text-red-600 hover:text-red-700 uppercase ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
+                                    <button type="button" onClick={handleDeleteAvatar} className={`text-xs font-bold text-red-600 hover:text-[#ED123A] uppercase ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isLocked}>
                                         <FontAwesomeIcon icon={faTrash} className="mr-1" /> Eliminar
                                     </button>
                                 )}
@@ -522,11 +517,11 @@ const BusinessDataSettings = () => {
                     </div>
                 )}
 
-                {error && <p className="text-sm text-red-600 font-bold bg-red-50 p-3 rounded border border-red-100">{error}</p>}
-                {successMessage && <p className="text-sm text-green-600 font-bold bg-green-50 p-3 rounded border border-green-100">{successMessage}</p>}
+                {error && <p className="text-sm text-[#ED123A] font-bold bg-red-50 p-3 rounded-[14px] border border-red-100">{error}</p>}
+                {successMessage && <p className="text-sm text-green-600 font-bold bg-green-50 p-3 rounded-[14px] border border-green-100">{successMessage}</p>}
 
                 <div className="flex justify-end pt-6 border-t border-gray-200">
-                    <button type="submit" className="bg-accent text-white font-bold py-2.5 px-6 rounded-lg shadow hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 transition-colors uppercase text-sm" disabled={isSaving || isLocked}>
+                    <button type="submit" className="bg-[#020B1C] text-white font-bold py-2.5 px-6 rounded-[14px] shadow-md hover:bg-[#06122A] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#020B1C] disabled:opacity-50 transition-all uppercase text-sm" disabled={isSaving || isLocked}>
                         <FontAwesomeIcon icon={faSave} className="mr-2" />
                         {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                     </button>
@@ -559,7 +554,6 @@ const BusinessDataSettings = () => {
                 </div>
             )}
 
-            {/* Modal de confirmación para CAMBIAR avatar */}
             <ConfirmationModal
                 isOpen={isAvatarChangeModalOpen}
                 onClose={onCancelAvatarChange}
@@ -572,7 +566,6 @@ const BusinessDataSettings = () => {
                 iconColor="text-yellow-500"
             />
 
-            {/* Modal de confirmación para ELIMINAR avatar */}
             <ConfirmationModal
                 isOpen={isAvatarDeleteModalOpen}
                 onClose={() => setIsAvatarDeleteModalOpen(false)}

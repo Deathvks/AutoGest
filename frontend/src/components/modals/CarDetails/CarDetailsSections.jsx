@@ -10,7 +10,7 @@ import api from '../../../services/api';
 import { DetailItem } from './CarDetailsUtils';
 
 const SectionHeader = ({ title }) => (
-    <h3 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-wide border-b border-gray-200 pb-2">
+    <h3 className="text-[13px] font-bold text-[#6B7280] mb-4 uppercase tracking-wider border-b border-[#E5E7EB] pb-2">
         {title}
     </h3>
 );
@@ -30,8 +30,8 @@ const BuyerSection = ({ car }) => {
     return (
         <section>
             <SectionHeader title="Datos del Comprador" />
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+            <div className="bg-[#F2F4F8] rounded-[20px] border border-[#E5E7EB] p-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5">
                     {isCompany ? (
                         <>
                             <DetailItem icon={faBuilding} label="Razón Social" value={buyer.businessName} />
@@ -58,22 +58,22 @@ const GestoriaSection = ({ car, onGestoriaPickupClick, onGestoriaReturnClick }) 
     return (
         <section>
             <SectionHeader title="Gestión Documentación" />
-            <div className="bg-white p-5 rounded-lg border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm">
+            <div className="bg-[#F2F4F8] p-5 rounded-[20px] border border-[#E5E7EB] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 w-full">
                     <DetailItem icon={faCalendarDay} label="Recogida" value={car.gestoriaPickupDate ? new Date(car.gestoriaPickupDate).toLocaleDateString('es-ES') : 'Pendiente'} />
                     <DetailItem icon={faCalendarCheck} label="Entrega" value={car.gestoriaReturnDate ? new Date(car.gestoriaReturnDate).toLocaleDateString('es-ES') : 'Pendiente'} />
                 </div>
                 <div className="w-full sm:w-auto flex-shrink-0">
                     {!car.gestoriaPickupDate ? (
-                        <button onClick={() => onGestoriaPickupClick(car)} className="w-full bg-accent text-white px-4 py-2 rounded shadow hover:bg-accent-hover text-sm font-bold uppercase transition-colors flex items-center justify-center gap-2">
+                        <button onClick={() => onGestoriaPickupClick(car)} className="w-full bg-[#020B1C] text-white px-5 py-2.5 rounded-[12px] hover:bg-[#06122A] text-[13px] font-bold uppercase tracking-wide transition-colors flex items-center justify-center gap-2">
                             <FontAwesomeIcon icon={faTruckPickup} /> Registrar Recogida
                         </button>
                     ) : !car.gestoriaReturnDate ? (
-                        <button onClick={() => onGestoriaReturnClick(car)} className="w-full bg-accent text-white px-4 py-2 rounded shadow hover:bg-accent-hover text-sm font-bold uppercase transition-colors flex items-center justify-center gap-2">
+                        <button onClick={() => onGestoriaReturnClick(car)} className="w-full bg-[#020B1C] text-white px-5 py-2.5 rounded-[12px] hover:bg-[#06122A] text-[13px] font-bold uppercase tracking-wide transition-colors flex items-center justify-center gap-2">
                             <FontAwesomeIcon icon={faCalendarCheck} /> Registrar Entrega
                         </button>
                     ) : (
-                        <div className="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded flex items-center gap-2 text-sm font-bold uppercase">
+                        <div className="bg-[#DCFCE7] text-[#16A34A] border border-[#16A34A]/20 px-5 py-2.5 rounded-[12px] flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide">
                             <FontAwesomeIcon icon={faCheckCircle} /> Finalizado
                         </div>
                     )}
@@ -100,19 +100,19 @@ const NotesSection = ({ car, onDeleteNote }) => {
             <div className="space-y-3">
                 {parsedNotes.length > 0 ? (
                     parsedNotes.map(note => (
-                        <div key={note.id} className="bg-yellow-50/50 p-3 rounded border border-yellow-200 flex justify-between gap-4">
+                        <div key={note.id} className="bg-yellow-50 p-4 rounded-[14px] border border-yellow-200 flex justify-between gap-4">
                             <div>
-                                <p className="text-sm text-gray-800">{note.content}</p>
-                                <p className="text-xs text-gray-500 mt-1 font-medium uppercase">{note.type} - {new Date(note.date).toLocaleDateString('es-ES')}</p>
+                                <p className="text-[14px] font-medium text-[#06122A]">{note.content}</p>
+                                <p className="text-[12px] text-yellow-700 mt-1 font-bold uppercase tracking-wide">{note.type} - {new Date(note.date).toLocaleDateString('es-ES')}</p>
                             </div>
-                            <button onClick={() => onDeleteNote(car, note.id)} className="text-gray-400 hover:text-red-600 transition-colors self-start">
+                            <button onClick={() => onDeleteNote(car, note.id)} className="text-[#6B7280] hover:text-[#DC2626] transition-colors self-start p-1">
                                 <FontAwesomeIcon icon={faTrashAlt} />
                             </button>
                         </div>
                     ))
                 ) : (
-                    <div className="text-center py-6 bg-gray-50 rounded border border-gray-200 border-dashed">
-                        <p className="text-sm text-gray-500">No hay anotaciones.</p>
+                    <div className="text-center py-6 bg-[#F2F4F8] rounded-[14px] border border-[#E5E7EB] border-dashed">
+                        <p className="text-[14px] font-medium text-[#6B7280]">No hay anotaciones.</p>
                     </div>
                 )}
             </div>
@@ -121,29 +121,29 @@ const NotesSection = ({ car, onDeleteNote }) => {
 };
 
 const ExpenseItem = ({ expense, onEditExpenseClick, onDeleteExpense }) => (
-    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:border-gray-300 transition-colors">
+    <div className="bg-white p-5 rounded-[14px] border border-[#E5E7EB] shadow-sm hover:border-[#020B1C]/30 transition-colors">
         <div className="flex justify-between items-start">
             <div>
-                <p className="font-bold text-gray-800 uppercase text-sm">{expense.category}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{new Date(expense.date).toLocaleDateString()}</p>
-                {expense.description && <p className="text-sm text-gray-600 mt-2">{expense.description}</p>}
+                <p className="font-bold text-[#06122A] uppercase text-[14px] tracking-wide">{expense.category}</p>
+                <p className="text-[12px] font-medium text-[#6B7280] mt-1">{new Date(expense.date).toLocaleDateString()}</p>
+                {expense.description && <p className="text-[14px] text-[#06122A]/80 mt-2">{expense.description}</p>}
             </div>
             <div className="text-right">
-                <p className="font-bold text-red-600 text-lg">- {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</p>
-                <div className="mt-2 flex items-center justify-end gap-3">
-                    <button onClick={() => onEditExpenseClick(expense)} className="text-gray-400 hover:text-accent transition-colors">
+                <p className="font-bold text-[#DC2626] text-lg tracking-tight">- {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(expense.amount)}</p>
+                <div className="mt-3 flex items-center justify-end gap-4">
+                    <button onClick={() => onEditExpenseClick(expense)} className="text-[#6B7280] hover:text-[#020B1C] transition-colors">
                         <FontAwesomeIcon icon={faEdit} />
                     </button>
-                    <button onClick={() => onDeleteExpense(expense)} className="text-gray-400 hover:text-red-600 transition-colors">
+                    <button onClick={() => onDeleteExpense(expense)} className="text-[#6B7280] hover:text-[#DC2626] transition-colors">
                         <FontAwesomeIcon icon={faTrashAlt} />
                     </button>
                 </div>
             </div>
         </div>
         {expense.attachments && expense.attachments.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
+            <div className="mt-4 pt-4 border-t border-[#E5E7EB] flex flex-wrap gap-2">
                 {expense.attachments.map((file, index) => (
-                    <a key={index} href={file.path} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors">
+                    <a key={index} href={file.path} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[12px] font-bold text-[#1E3A8A] bg-[#DBEAFE] px-3 py-1.5 rounded-[8px] hover:bg-[#DBEAFE]/70 transition-colors tracking-wide">
                         <FontAwesomeIcon icon={faPaperclip} /> Adjunto {index + 1}
                     </a>
                 ))}
@@ -173,12 +173,12 @@ const ExpensesSection = ({ car, onEditExpenseClick, onDeleteExpense }) => {
             <SectionHeader title="Gastos del Vehículo" />
             <div className="space-y-3">
                 {isLoading ? (
-                    <div className="text-center py-4"><FontAwesomeIcon icon={faSpinner} spin className="text-accent" /></div>
+                    <div className="text-center py-4"><FontAwesomeIcon icon={faSpinner} spin className="text-[#020B1C]" /></div>
                 ) : carExpenses.length > 0 ? (
                     carExpenses.map(exp => <ExpenseItem key={exp.id} expense={exp} onEditExpenseClick={onEditExpenseClick} onDeleteExpense={onDeleteExpense} />)
                 ) : (
-                    <div className="text-center py-6 bg-gray-50 rounded border border-gray-200 border-dashed">
-                        <p className="text-sm text-gray-500">No hay gastos registrados.</p>
+                    <div className="text-center py-6 bg-[#F2F4F8] rounded-[14px] border border-[#E5E7EB] border-dashed">
+                        <p className="text-[14px] font-medium text-[#6B7280]">No hay gastos registrados.</p>
                     </div>
                 )}
             </div>
@@ -187,23 +187,23 @@ const ExpensesSection = ({ car, onEditExpenseClick, onDeleteExpense }) => {
 };
 
 const IncidentItem = ({ incident, onResolve, onDelete }) => (
-    <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex justify-between items-start gap-4">
+    <div className="bg-white p-5 rounded-[14px] border border-[#E5E7EB] shadow-sm flex justify-between items-start gap-4">
         <div>
-            <p className="text-sm font-medium text-gray-800">{incident.description}</p>
-            <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 uppercase">
-                <span>{new Date(incident.date).toLocaleDateString()}</span>
-                <span>•</span>
-                <span className={`font-bold ${incident.status === 'resuelta' ? 'text-green-600' : 'text-yellow-600'}`}>
+            <p className="text-[14px] font-medium text-[#06122A]">{incident.description}</p>
+            <div className="flex items-center gap-2 mt-2 text-[12px] font-bold uppercase tracking-wide">
+                <span className="text-[#6B7280]">{new Date(incident.date).toLocaleDateString()}</span>
+                <span className="text-[#E5E7EB]">•</span>
+                <span className={`${incident.status === 'resuelta' ? 'text-[#16A34A]' : 'text-yellow-600'}`}>
                     {incident.status === 'resuelta' ? 'Resuelta' : 'Pendiente'}
                 </span>
             </div>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-            <button onClick={() => onResolve(incident.id, incident.status === 'resuelta' ? 'abierta' : 'resuelta')} className={`p-1 ${incident.status === 'resuelta' ? 'text-yellow-500 hover:text-yellow-600' : 'text-green-500 hover:text-green-600'}`}>
-                <FontAwesomeIcon icon={incident.status === 'resuelta' ? faUndo : faCheckCircle} />
+        <div className="flex items-center gap-4 shrink-0">
+            <button onClick={() => onResolve(incident.id, incident.status === 'resuelta' ? 'abierta' : 'resuelta')} className={`p-1 transition-colors ${incident.status === 'resuelta' ? 'text-yellow-600 hover:text-yellow-700' : 'text-[#16A34A] hover:text-green-700'}`}>
+                <FontAwesomeIcon icon={incident.status === 'resuelta' ? faUndo : faCheckCircle} size="lg" />
             </button>
-            <button onClick={() => onDelete(incident.id)} className="p-1 text-gray-400 hover:text-red-600">
-                <FontAwesomeIcon icon={faTrashAlt} />
+            <button onClick={() => onDelete(incident.id)} className="p-1 text-[#6B7280] hover:text-[#DC2626] transition-colors">
+                <FontAwesomeIcon icon={faTrashAlt} size="lg" />
             </button>
         </div>
     </div>
@@ -216,8 +216,8 @@ const IncidentsSection = ({ incidents, onResolveIncident, onDeleteIncident }) =>
             {incidents.length > 0 ? (
                 incidents.map(inc => <IncidentItem key={inc.id} incident={inc} onResolve={onResolveIncident} onDelete={onDeleteIncident} />)
             ) : (
-                <div className="text-center py-6 bg-gray-50 rounded border border-gray-200 border-dashed">
-                    <p className="text-sm text-gray-500">No hay incidencias registradas.</p>
+                <div className="text-center py-6 bg-[#F2F4F8] rounded-[14px] border border-[#E5E7EB] border-dashed">
+                    <p className="text-[14px] font-medium text-[#6B7280]">No hay incidencias registradas.</p>
                 </div>
             )}
         </div>

@@ -9,11 +9,11 @@ import BusinessDataSettings from './Settings/BusinessDataSettings';
 import AccountDataSettings from './Settings/AccountDataSettings';
 import ContactSettings from './Settings/ContactSettings';
 
-const Settings = ({ 
-    cars, 
-    expenses, 
-    incidents, 
-    onDeleteAccountClick, 
+const Settings = ({
+    cars,
+    expenses,
+    incidents,
+    onDeleteAccountClick,
     onLogoutClick,
     onActivateTrialClick
 }) => {
@@ -27,19 +27,19 @@ const Settings = ({
     const shouldShowBusinessData = isSubscribed || isTrialing || isAdmin || isTechnician || user?.companyId;
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-8 uppercase">Ajustes</h1>
+        <div className="max-w-4xl mx-auto pb-10">
+            <h1 className="text-3xl font-extrabold text-[#020B1C] tracking-tight mb-8 uppercase">Ajustes</h1>
 
             <div className="space-y-8">
-                
+
                 {shouldShowBusinessData && (
-                    <div className="relative bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="relative bg-white p-6 rounded-[14px] border border-gray-200 shadow-sm">
                         <BusinessDataSettings />
                     </div>
                 )}
 
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                    <AccountDataSettings 
+                <div className="bg-white p-6 rounded-[14px] border border-gray-200 shadow-sm">
+                    <AccountDataSettings
                         cars={cars}
                         expenses={expenses}
                         incidents={incidents}
@@ -49,12 +49,12 @@ const Settings = ({
                     />
                 </div>
 
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <div className="bg-white p-6 rounded-[14px] border border-gray-200 shadow-sm">
                     <ContactSettings />
                 </div>
 
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm lg:hidden">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase">ACERCA DE</h3>
+                <div className="bg-white p-6 rounded-[14px] border border-gray-200 shadow-sm lg:hidden">
+                    <h3 className="text-lg font-bold text-[#020B1C] mb-4 uppercase">ACERCA DE</h3>
                     <div className="flex justify-between items-center">
                         <span className="font-medium text-gray-900">{APP_NAME}</span>
                         <VersionIndicator />

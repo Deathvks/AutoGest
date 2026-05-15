@@ -8,14 +8,13 @@ import CarCard from './MyCars/CarCard';
 import FilterSidebar from './MyCars/FilterSidebar';
 
 const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveClick, onCancelReservationClick, onUpdateInsurance, onAddIncidentClick }) => {
-  // --- INICIO DE LA MODIFICACIÓN ---
   const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem('carSearchTerm') || '');
   const [isFilterModalOpen, setFilterModalOpen] = useState(false);
   const [filters, setFilters] = useState(() => {
     const savedFilters = sessionStorage.getItem('carFilters');
     return savedFilters ? JSON.parse(savedFilters) : { make: '', status: '', location: '', minPrice: '', maxPrice: '', minKm: '', maxKm: '' };
   });
-  // --- FIN DE LA MODIFICACIÓN ---
+
   const location = useLocation();
 
   useEffect(() => {
@@ -29,7 +28,6 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
     }
   }, [location.state, cars, onViewDetailsClick]);
 
-  // --- INICIO DE LA MODIFICACIÓN ---
   useEffect(() => {
     sessionStorage.setItem('carSearchTerm', searchTerm);
   }, [searchTerm]);
@@ -44,7 +42,6 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
     sessionStorage.removeItem('carFilters');
     sessionStorage.removeItem('carSearchTerm');
   };
-  // --- FIN DE LA MODIFICACIÓN ---
 
   const filteredCars = useMemo(() => {
     return cars.filter(car => {
@@ -76,25 +73,28 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
                 placeholder="Buscar por marca, modelo, matrícula..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-10 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent transition shadow-sm placeholder:text-gray-400 text-gray-800"
+                className="w-full pl-12 pr-10 py-3 bg-white border border-gray-200 rounded-[14px] focus:ring-2 focus:ring-[#020B1C] focus:border-[#020B1C] transition shadow-sm placeholder:text-gray-400 text-gray-800 outline-none"
               />
               {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <button onClick={() => setSearchTerm('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#020B1C] transition-colors">
                   <FontAwesomeIcon icon={faTimes} />
                 </button>
               )}
             </div>
+
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={() => setFilterModalOpen(true)}
-                className="flex-1 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-white text-gray-700 font-bold px-4 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm xl:hidden uppercase text-sm"
+                className="flex-1 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-white text-gray-700 font-bold px-4 py-3 rounded-[14px] border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm xl:hidden uppercase text-sm"
               >
                 <FontAwesomeIcon icon={faFilter} />
                 <span>Filtros</span>
               </button>
+
+              {/* Botón normal de escritorio oculto en móvil */}
               <button
                 onClick={onAddClick}
-                className="flex-1 sm:w-auto flex-shrink-0 flex items-center justify-center gap-2 bg-accent text-white font-bold px-4 py-3 rounded-lg shadow hover:bg-accent-hover transition-colors uppercase text-sm"
+                className="hidden sm:flex flex-1 sm:w-auto flex-shrink-0 items-center justify-center gap-2 bg-[#ED123A] text-white font-bold px-5 py-3 rounded-[14px] shadow-md hover:bg-[#C90E30] hover:-translate-y-0.5 transition-all uppercase text-sm"
               >
                 <FontAwesomeIcon icon={faPlus} />
                 <span>Añadir</span>
@@ -103,13 +103,13 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
           </div>
 
           <div className="pb-4 border-b border-gray-200">
-            <h2 className="text-lg font-extrabold text-gray-900 uppercase tracking-wide">
+            <h2 className="text-lg font-extrabold text-[#020B1C] uppercase tracking-wide">
               {filteredCars.length} Vehículos
               <span className="text-sm font-medium text-gray-500 ml-2 lowercase">(de {cars.length} en total)</span>
             </h2>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 pb-10">
             {filteredCars.map(car => (
               <CarCard
                 key={car.id}
@@ -125,12 +125,21 @@ const MyCars = ({ cars, onAddClick, onViewDetailsClick, onSellClick, onReserveCl
           </div>
 
           {filteredCars.length === 0 && (
-            <div className="text-center py-16 px-4 bg-white rounded-lg border border-gray-200 border-dashed">
+            <div className="text-center py-16 px-4 bg-white rounded-[14px] border border-gray-200 border-dashed shadow-sm">
               <p className="text-gray-500 font-medium">No se han encontrado coches con los filtros actuales.</p>
             </div>
           )}
         </main>
       </div>
+
+      {/* --- BOTÓN FLOTANTE PARA MÓVIL --- */}
+      <button
+        onClick={onAddClick}
+        className="sm:hidden fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-[#ED123A] text-white rounded-full shadow-[0_4px_14px_rgba(237,18,58,0.4)] hover:bg-[#C90E30] hover:scale-105 active:scale-95 transition-all"
+        aria-label="Añadir coche"
+      >
+        <FontAwesomeIcon icon={faPlus} className="w-6 h-6" />
+      </button>
 
       <FilterModal
         isOpen={isFilterModalOpen}

@@ -11,7 +11,6 @@ const incidentRoutes = require('./routes/incidentRoutes');
 const locationRoutes = require('./routes/locationRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
-const companyRoutes = require('./routes/companyRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const { scheduleRecurringExpenses } = require('./jobs/recurringExpenses');
@@ -20,12 +19,10 @@ const subscriptionController = require('./controllers/subscriptionController');
 
 const app = express();
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const corsOptions = {
     origin: ['http://localhost:5173', 'http://127.0.0.1:5174', 'http://auto-gest.es', 'https://auto-gest.es'],
     optionsSuccessStatus: 200
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 app.use(cors(corsOptions));
 
@@ -48,7 +45,6 @@ app.use('/api/incidents', incidentRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/company', companyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 
@@ -91,7 +87,6 @@ db.sequelize.authenticate()
     });
 
 const gracefulShutdown = async () => {
-    // Se cambia el mensaje para reflejar que puede ser por SIGINT o SIGTERM
     console.log('Señal de apagado recibida, iniciando apagado...');
 
     const shutdownTimer = setTimeout(() => {
@@ -132,13 +127,9 @@ const gracefulShutdown = async () => {
 };
 
 process.on('message', (msg) => {
-  if (msg === 'shutdown') {
-    gracefulShutdown();
-  }
+    if (msg === 'shutdown') {
+        gracefulShutdown();
+    }
 });
-
-// --- INICIO DE LA MODIFICACIÓN ---
-// Se eliminan los listeners de 'SIGTERM' y 'SIGINT' para evitar el doble apagado con PM2
-// --- FIN DE LA MODIFICACIÓN ---
 
 module.exports = app;
