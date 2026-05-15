@@ -4,13 +4,14 @@
 @tailwind components;
 @tailwind utilities;
 
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 @layer base {
@@ -30,14 +31,11 @@
     --c-blue-soft: #DBEAFE;
 
     /* --- TEMA NUEVO MAPEADO --- */
-    
-    /* Color Principal (Navy) */
     --color-accent: var(--c-navy);
     --color-accent-rgb: 2, 11, 28;
     --color-accent-hover: var(--c-navy-deep);
     --color-accent-soft-glow: rgba(2, 11, 28, 0.1);
 
-    /* Fondos */
     --color-background: var(--c-bg); 
     --color-background-solid: var(--c-bg);
     
@@ -45,12 +43,10 @@
     --color-component-bg-hover: #f9fafb;
     --color-popup-bg: var(--c-white);
 
-    /* Bordes y Textos */
     --color-border: var(--c-border);
     --color-text-primary: var(--c-text);
     --color-text-secondary: var(--c-text-sec);
 
-    /* Colores de estado */
     --color-green-accent: var(--c-green);
     --color-red-accent: var(--c-red-loss); 
     --color-yellow-accent: #ca8a04;
@@ -68,43 +64,55 @@
     
     --rdp-caption-color: var(--color-text-primary) !important;
     --rdp-nav-color: var(--color-accent) !important; 
-    
     --rdp-head_color: var(--color-text-secondary) !important;
     --rdp-selected-color: #fff !important;
     --rdp-today-color: var(--color-accent) !important;
     --rdp-today-background-color: transparent !important;
   }
+}
 
-  /* --- FIX PARA EL NOTCH DE IPHONE --- */
-  html, body {
-    /* Pintamos la base absoluta de azul oscuro para que el notch lo herede */
-    background-color: var(--c-navy) !important; 
-    color: var(--color-text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    margin: 0;
-    padding: 0;
-    height: 100%;
+@layer components {
+  /* --- ESTRUCTURA FIXED (COMO EN PRO FITNESS GLASS) --- */
+  html {
+    width: 100%;
+    height: 100vh;
+    background-color: var(--c-navy) !important;
+    transition: background-color 0.3s ease;
+    overscroll-behavior: none;
   }
 
-  /* --- HACK FÍSICO PARA EL NOTCH EN NAVEGADORES REBELDES (BRAVE/CHROME iOS) --- */
-  body::before {
-    content: "";
+  body {
     position: fixed;
     top: 0;
     left: 0;
+    right: 0;
+    bottom: 0;
     width: 100%;
-    height: env(safe-area-inset-top);
+    height: 100vh;
+    overflow: hidden;
     background-color: var(--c-navy) !important;
-    z-index: 9999;
-    pointer-events: none;
+    transition: background-color 0.3s ease;
+    box-sizing: border-box;
+    overscroll-behavior: none;
+    color: var(--color-text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   #root {
-    /* El resto de la app mantiene su fondo claro */
-    background-color: var(--color-background); 
-    min-height: 100vh;
+    isolation: isolate;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: var(--color-background);
+    -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
   }
@@ -123,11 +131,15 @@
     transition: all 0.2s ease-in-out;
   }
 
-  input:focus, textarea:focus, select:focus {
+  input:focus, textarea:focus, select:focus,
+  input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible {
     outline: none !important;
+  }
+
+  input:focus, textarea:focus, select:focus {
     background-color: #FFFFFF !important;
     border: 1px solid var(--c-navy) !important;
-    box-shadow: none !important; /* Eliminado el ring para un look más limpio */
+    box-shadow: none !important;
   }
   
   /* Override para inputs deshabilitados */
@@ -158,7 +170,7 @@
   select.rdp-dropdown {
     appearance: none;
     cursor: pointer;
-    border-radius: 0.5rem; /* 8px */
+    border-radius: 0.5rem;
     padding: 0.25rem 1.5rem 0.25rem 0.5rem;
     font-size: 0.875rem;
     font-weight: 600;
@@ -183,31 +195,39 @@
 }
 
 /* Clases de utilidad personalizadas PanelPRO */
-.card-occident {
-  background-color: var(--color-component-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 20px; /* Bordes muy redondeados estilo PanelPRO */
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); /* Sombra más sutil */
-  position: relative;
-  overflow: hidden;
+@layer utilities {
+  .card-occident {
+    background-color: var(--color-component-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-occident::before {
+    display: none; 
+  }
+
+  .header-occident {
+    background-color: var(--color-accent);
+    color: var(--c-white);
+  }
+
+  /* Animaciones */
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.3s ease-out forwards;
+  }
 }
 
-/* Se elimina el borde izquierdo rojo */
-.card-occident::before {
-  display: none; 
-}
-
-.header-occident {
-  background-color: var(--color-accent);
-  color: var(--c-white);
-}
-
-/* Animaciones */
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.3s ease-out forwards;
+/* Prevenir auto-zoom en inputs en iOS (iPhone/iPad) */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
