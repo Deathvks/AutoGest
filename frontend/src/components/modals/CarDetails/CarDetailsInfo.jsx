@@ -14,14 +14,14 @@ const getStatusChipClass = (status) => {
     }
 };
 
-const CarDetailsInfo = ({ car }) => {
+const CarDetailsInfo = ({ car, dominantColor }) => {
     const { user } = useContext(AuthContext);
     const [remainingTime, setRemainingTime] = useState('');
     const isReservedAndActive = car.status === 'Reservado' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
 
-    // En el nuevo modelo B2C, el usuario siempre puede ver los datos sensibles de sus propios coches
     const canViewSensitiveData = true;
 
+    // --- TEMPORIZADOR RESERVA ---
     useEffect(() => {
         if (!isReservedAndActive) return;
 
@@ -51,54 +51,71 @@ const CarDetailsInfo = ({ car }) => {
         return () => clearInterval(interval);
     }, [car.reservationExpiry, isReservedAndActive]);
 
+    const activeColor = dominantColor || 'rgba(2, 11, 28, 1)';
+
     return (
-        <div className="space-y-6">
-            {/* Contenedor de Imagen */}
-            <div className="w-full h-auto aspect-video bg-[#F2F4F8] rounded-[20px] border border-[#E5E7EB] flex items-center justify-center overflow-hidden">
-                {car.imageUrl ? (
+        <div className="flex flex-col w-full mb-8">
+            {/* --- CONTENEDOR TIPO NETFLIX (HÉROE SUPERIOR) --- */}
+            <div
+                className="relative w-full aspect-[16/10] sm:aspect-video overflow-hidden transition-colors duration-1000 shadow-inner"
+                style={{ backgroundColor: activeColor.replace(', 1)', ', 0.95)') }}
+            >
+                {/* 1. Imagen de fondo desenfocada */}
+                {car.imageUrl && (
                     <img
                         src={car.imageUrl}
-                        alt={`${car.make} ${car.model}`}
-                        className="w-full h-full object-cover"
+                        alt="Background blur"
+                        className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-40 scale-125 mix-blend-overlay"
                     />
-                ) : (
-                    <CarPlaceholderImage car={car} />
                 )}
+
+                {/* 2. Degradado inferior para fundir con el color de fondo del modal */}
+                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-black/20" />
+
+                {/* 3. Imagen nítida del coche forzada al 90% del width */}
+                <div className="absolute inset-0 z-20 flex flex-col justify-center items-center p-4">
+                    {car.imageUrl ? (
+                        <img
+                            src={car.imageUrl}
+                            alt={`${car.make} ${car.model}`}
+                            className="w-[90%] max-w-3xl h-auto object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.6)] transition-transform hover:scale-105 duration-700 ease-out"
+                        />
+                    ) : (
+                        <div className="w-[90%] max-w-3xl h-[75%] flex items-center justify-center bg-white/10 backdrop-blur-md rounded-[20px] border border-white/10">
+                            <CarPlaceholderImage car={car} />
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Panel de Precio y Estado */}
-            <div className="bg-[#F2F4F8] p-6 rounded-[20px] text-center border border-[#E5E7EB]">
-                <div className="flex flex-col items-center">
-                    <p className="text-[13px] font-medium text-[#6B7280] uppercase tracking-wider mb-1">Precio Venta Final</p>
-                    <p className="text-3xl lg:text-4xl font-bold text-[#06122A] tracking-tight">
-                        {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.salePrice || car.price)}
-                    </p>
-
-                    {canViewSensitiveData && (
-                        <p className="text-[14px] font-medium text-[#6B7280] mt-2 uppercase">
-                            Compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.purchasePrice)}
+            {/* --- PANEL DE PRECIO Y ESTADO --- */}
+            <div className="px-8 -mt-10 relative z-30">
+                <div className="bg-white p-6 rounded-[20px] border border-gray-200/80 shadow-[0_12px_24px_-10px_rgba(0,0,0,0.06)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-center sm:text-left">
+                    <div>
+                        <p className="text-[12px] font-bold text-[#6B7280] uppercase tracking-widest mb-0.5">Precio Venta Final</p>
+                        <p className="text-3xl font-extrabold text-[#06122A] tracking-tight">
+                            {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(car.salePrice || car.price)}
                         </p>
-                    )}
-
-                    {car.status === 'Reservado' && car.reservationDeposit > 0 && (
-                        <p className="text-[14px] font-medium text-yellow-700 mt-3 uppercase bg-yellow-100 px-4 py-1.5 rounded-[10px] border border-yellow-200">
-                            Reserva: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(car.reservationDeposit)}
-                        </p>
-                    )}
-                </div>
-
-                <div className="mt-6">
-                    <span className={`inline-block text-[13px] font-bold px-4 py-2 rounded-[10px] uppercase tracking-wide ${getStatusChipClass(car.status)}`}>
-                        {car.status} {car.saleDate ? ` - ${new Date(car.saleDate).toLocaleDateString('es-ES')}` : ''}
-                    </span>
-                </div>
-
-                {isReservedAndActive && (
-                    <div className="mt-4 flex items-center justify-center gap-2 text-[13px] font-bold text-yellow-800 bg-yellow-100 px-4 py-2 rounded-[10px] border border-yellow-200 w-fit mx-auto uppercase">
-                        <FontAwesomeIcon icon={faClock} />
-                        <span>Quedan: {remainingTime}</span>
+                        {canViewSensitiveData && (
+                            <p className="text-[13px] font-semibold text-[#6B7280] mt-0.5 uppercase">
+                                Compra: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(car.purchasePrice)}
+                            </p>
+                        )}
                     </div>
-                )}
+
+                    <div className="flex flex-col sm:items-end justify-center gap-2">
+                        <span className={`inline-block text-[12px] font-bold px-4 py-2 rounded-[10px] uppercase tracking-wider ${getStatusChipClass(car.status)}`}>
+                            {car.status} {car.saleDate ? ` - ${new Date(car.saleDate).toLocaleDateString('es-ES')}` : ''}
+                        </span>
+
+                        {isReservedAndActive && (
+                            <div className="flex items-center justify-center gap-2 text-[12px] font-bold text-yellow-800 bg-yellow-100 px-3 py-1.5 rounded-[8px] border border-yellow-200 uppercase shadow-sm">
+                                <FontAwesomeIcon icon={faClock} />
+                                <span>Quedan: {remainingTime}</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
