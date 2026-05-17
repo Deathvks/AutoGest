@@ -1,5 +1,5 @@
 // autogest-app/backend/controllers/car/getCar.js
-const { Car } = require('../../models');
+const { Car, Expense } = require('../../models');
 // --- INICIO DE LA MODIFICACIÓN ---
 // Se importa la función 'deleteFile' que faltaba.
 const { deleteFile } = require('../../utils/carUtils');
@@ -20,6 +20,7 @@ exports.getAllCars = async (req, res) => {
 
         let cars = await Car.findAll({
             where: whereClause,
+            include: [Expense],
             order: [['createdAt', 'DESC']]
         });
 
@@ -40,19 +41,27 @@ exports.getAllCars = async (req, res) => {
 
         await Promise.all(promises);
 
+        // Mapeo inicial a JSON y asignación de gastos para el frontend
+        let carsJson = cars.map(car => {
+            const item = car.toJSON();
+            if (item.Expenses) {
+                item.expenses = item.Expenses;
+            }
+            return item;
+        });
+
         // --- INICIO DE LA MODIFICACIÓN ---
         // Se oculta el precio de compra para roles no autorizados.
         const allowedRoles = ['admin', 'technician', 'technician_subscribed'];
         if (!allowedRoles.includes(req.user.role)) {
-            cars = cars.map(car => {
-                const carJson = car.toJSON();
+            carsJson = carsJson.map(carJson => {
                 delete carJson.purchasePrice;
                 return carJson;
             });
         }
         // --- FIN DE LA MODIFICACIÓN ---
 
-        res.status(200).json(cars);
+        res.status(200).json(carsJson);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al obtener los coches' });
@@ -71,10 +80,17 @@ exports.getCarById = async (req, res) => {
             whereClause.userId = req.user.id;
         }
 
-        const car = await Car.findOne({ where: whereClause });
+        const car = await Car.findOne({
+            where: whereClause,
+            include: [Expense]
+        });
 
         if (car) {
             const carJson = car.toJSON();
+            if (carJson.Expenses) {
+                carJson.expenses = carJson.Expenses;
+            }
+
             // --- INICIO DE LA MODIFICACIÓN ---
             // Se oculta el precio de compra para roles no autorizados.
             const allowedRoles = ['admin', 'technician', 'technician_subscribed'];
@@ -82,6 +98,7 @@ exports.getCarById = async (req, res) => {
                 delete carJson.purchasePrice;
             }
             // --- FIN DE LA MODIFICACIÓN ---
+
             res.status(200).json(carJson);
         } else {
             res.status(404).json({ error: 'Coche no encontrado o no tienes permiso para verlo' });

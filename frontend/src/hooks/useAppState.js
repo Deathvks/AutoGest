@@ -31,33 +31,35 @@ export const useAppState = () => {
 
     // 3. Hooks que contienen la lógica de negocio (handlers)
     const carHandlers = useCarHandlers({
-        cars, 
-        setCars, 
-        locations, 
-        setLocations, 
+        cars,
+        setCars,
+        locations,
+        setLocations,
         modalState,
         refreshData,
     });
-    
+
     const expenseHandlers = useExpenseHandlers({
-        setExpenses, 
-        setAllExpenses, 
+        setExpenses,
+        setAllExpenses,
+        setCars,       // Añadido para actualizar gastos del coche en tiempo real
+        allExpenses,   // Añadido para gestionar la eliminación de gastos en los coches
         modalState,
     });
-    
+
     const incidentHandlers = useIncidentHandlers({
-        incidents, 
-        setIncidents, 
+        incidents,
+        setIncidents,
         modalState,
     });
-    
+
     const userHandlers = useUserHandlers({
         users,
-        setUsers, 
+        setUsers,
         modalState,
         refreshData, // Se pasa la función para refrescar datos
     });
-    
+
     // Handler específico que necesita acceso al AuthContext
     const handleSaveBusinessData = async (formData) => {
         try {
@@ -86,7 +88,7 @@ export const useAppState = () => {
 
         // Todos los estados de los modales
         ...modalState,
-        
+
         // Todos los handlers
         ...carHandlers,
         ...userHandlers,
