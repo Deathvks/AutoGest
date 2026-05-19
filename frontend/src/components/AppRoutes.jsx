@@ -48,14 +48,15 @@ const AppRoutes = ({ appState, onLogoutClick }) => {
     } = appState;
 
     if (!user) {
-        return null; // No renderizar nada si el usuario aún no está cargado
+        return null;
     }
 
     const hasValidSubscription = subscriptionStatus === 'active' ||
         (subscriptionStatus === 'cancelled' && user.subscriptionExpiry && new Date(user.subscriptionExpiry) > new Date());
 
+    // Se añaden explícitamente los roles de técnico para que puedan ver el Dashboard
     const canAccessDashboard =
-        user.role === 'admin' ||
+        ['admin', 'technician', 'technician_subscribed'].includes(user.role) ||
         hasValidSubscription ||
         isTrialActive;
 

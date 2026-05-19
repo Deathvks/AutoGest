@@ -3,7 +3,6 @@ import React, { useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar, faUpload, faCamera, faFileLines, faXmark } from '@fortawesome/free-solid-svg-icons';
 
-// --- INICIO DE LA MODIFICACIÓN ---
 const FileUploadSection = ({ label, files, onFileChange, onRemoveFile, fileType, maxFiles }) => {
     const fileInputRef = useRef(null);
 
@@ -18,7 +17,7 @@ const FileUploadSection = ({ label, files, onFileChange, onRemoveFile, fileType,
                 if (navigator.brave && (await navigator.brave.isBrave())) {
                     alert('Parece que estás usando Brave. Si la cámara no se abre, por favor, desactiva los escudos de Brave (el icono del león en la barra de direcciones) para este sitio y vuelve a intentarlo.');
                 }
-                
+
                 fileInputRef.current.setAttribute('accept', 'image/*');
                 fileInputRef.current.setAttribute('capture', 'environment');
                 fileInputRef.current.removeAttribute('multiple');
@@ -31,7 +30,7 @@ const FileUploadSection = ({ label, files, onFileChange, onRemoveFile, fileType,
             fileInputRef.current.click();
 
         } catch (error) {
-            console.error('Error al intentar abrir el selector de fichero/cámara:', error);
+            console.error('Error al intentar abrir el selector:', error);
             alert(`Error al activar la función: ${error.message}`);
         }
     };
@@ -51,7 +50,7 @@ const FileUploadSection = ({ label, files, onFileChange, onRemoveFile, fileType,
                 ))}
             </div>
             {files.length < maxFiles && (
-                 <div className="flex items-center gap-2 mt-3">
+                <div className="flex items-center gap-2 mt-3">
                     <input type="file" ref={fileInputRef} onChange={e => onFileChange(e, fileType)} className="hidden" style={{ display: 'none' }} />
                     <button type="button" onClick={() => handleButtonClick(false)} className="flex-1 bg-component-bg-hover text-text-primary px-3 py-2 rounded-lg hover:bg-border-color transition-colors text-sm font-semibold flex items-center justify-center gap-2 border border-border-color">
                         <FontAwesomeIcon icon={faUpload} /> Subir
@@ -79,6 +78,55 @@ const AddCarFileUploads = (props) => {
     const imageInputRef = useRef(null);
     const cameraInputRef = useRef(null);
 
+    // --- INTERCEPTOR Y COMPRESOR PARA IOS/ANDROID ---
+    const handleInterceptImage = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const img = new Image();
+        img.onload = () => {
+            // 1. Definimos un tamaño máximo lógico (Full HD)
+            const MAX_WIDTH = 1920;
+            const MAX_HEIGHT = 1920;
+            let width = img.width;
+            let height = img.height;
+
+            // 2. Calculamos las nuevas medidas manteniendo la proporción
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+
+            // 3. Dibujamos la imagen ya redimensionada (esto arregla el giro de iOS de paso)
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // 4. Comprimimos a JPEG con calidad 80% (0.8)
+            canvas.toBlob((blob) => {
+                const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                    type: 'image/jpeg',
+                    lastModified: Date.now(),
+                });
+
+                // Enviamos la foto ultraligera al handler original
+                handleImageChange({ target: { files: [newFile] } });
+                URL.revokeObjectURL(img.src);
+            }, 'image/jpeg', 0.8);
+        };
+        img.src = URL.createObjectURL(file);
+    };
+
     return (
         <div className="space-y-6">
             <div>
@@ -92,8 +140,10 @@ const AddCarFileUploads = (props) => {
                         )}
                     </div>
                     <div className="flex flex-col gap-2 w-full">
-                        <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageChange} className="hidden" />
-                        <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} onChange={handleImageChange} className="hidden" />
+                        {/* Se sustituye handleImageChange por el interceptor en los inputs */}
+                        <input type="file" accept="image/*" ref={imageInputRef} onChange={handleInterceptImage} className="hidden" />
+                        <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} onChange={handleInterceptImage} className="hidden" />
+
                         <button type="button" onClick={() => imageInputRef.current.click()} className="w-full bg-component-bg-hover text-text-primary px-3 py-3 rounded-lg hover:bg-border-color transition-colors text-sm font-semibold flex items-center justify-center gap-2 border border-border-color">
                             <FontAwesomeIcon icon={faUpload} /> Subir archivo
                         </button>
@@ -103,8 +153,8 @@ const AddCarFileUploads = (props) => {
                     </div>
                 </div>
             </div>
-            
-            <FileUploadSection 
+
+            <FileUploadSection
                 label="Ficha Técnica"
                 files={technicalSheetFiles}
                 onFileChange={handleFileChange}
@@ -112,7 +162,7 @@ const AddCarFileUploads = (props) => {
                 fileType="technicalSheet"
                 maxFiles={2}
             />
-            <FileUploadSection 
+            <FileUploadSection
                 label="Permiso de Circulación"
                 files={registrationCertificateFiles}
                 onFileChange={handleFileChange}
@@ -120,17 +170,16 @@ const AddCarFileUploads = (props) => {
                 fileType="registrationCertificate"
                 maxFiles={2}
             />
-            <FileUploadSection 
+            <FileUploadSection
                 label="Archivos Varios"
                 files={otherDocumentFiles}
                 onFileChange={handleFileChange}
                 onRemoveFile={handleRemoveFile}
                 fileType="otherDocuments"
-                maxFiles={6} 
+                maxFiles={6}
             />
         </div>
     );
 };
-// --- FIN DE LA MODIFICACIÓN ---
 
 export default AddCarFileUploads;
