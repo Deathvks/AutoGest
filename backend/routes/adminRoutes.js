@@ -4,12 +4,9 @@ const router = express.Router();
 const adminController = require('../controllers/adminController');
 const { protect } = require('../middleware/auth');
 
-// --- INICIO DE LA MODIFICACIÓN ---
-// Middleware de autorización personalizado para esta sección.
 const authorizeForManagement = (req, res, next) => {
     const allowedRoles = ['admin', 'technician', 'technician_subscribed'];
     
-    // Permite el acceso si el usuario tiene un rol de gestión O si tiene el permiso explícito para expulsar.
     if (allowedRoles.includes(req.user.role) || req.user.canExpelUsers) {
         return next();
     }
@@ -19,15 +16,16 @@ const authorizeForManagement = (req, res, next) => {
     });
 };
 
-// Se aplica la protección y la nueva autorización a todas las rutas de este fichero.
 router.use(protect, authorizeForManagement);
-// --- FIN DE LA MODIFICACIÓN ---
 
 // GET /api/admin/users -> Obtener todos los usuarios
 router.get('/users', adminController.getAllUsers);
 
 // POST /api/admin/users -> Crear un nuevo usuario
 router.post('/users', adminController.createUser);
+
+// PUT /api/admin/users/bulk-role -> Actualizar rol masivamente
+router.put('/users/bulk-role', adminController.bulkUpdateRoles);
 
 // PUT /api/admin/users/:id -> Actualizar un usuario
 router.put('/users/:id', adminController.updateUser);

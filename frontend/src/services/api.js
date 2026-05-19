@@ -54,7 +54,6 @@ const handleResponseError = async (response) => {
 // Para rutas PÚBLICAS (Registro)
 const handlePublicResponse = async (response) => {
     if (!response.ok) {
-        // Usamos la nueva función centralizada de manejo de errores.
         return handleResponseError(response);
     }
     return response.json();
@@ -68,7 +67,6 @@ const handleProtectedResponse = async (response) => {
             window.location.href = '/login';
             throw new Error('Tu sesión ha caducado. Por favor, inicia sesión de nuevo.');
         }
-        // Usamos la nueva función centralizada de manejo de errores.
         return handleResponseError(response);
     }
     if (response.status === 204) return null;
@@ -170,6 +168,7 @@ const api = {
         createUser: (userData) => fetch(`${BASE_URL}/admin/users`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(userData) }).then(handleProtectedResponse),
         updateUser: (userId, userData) => fetch(`${BASE_URL}/admin/users/${userId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(userData) }).then(handleProtectedResponse),
         deleteUser: (userId) => fetch(`${BASE_URL}/admin/users/${userId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
+        bulkUpdateRoles: (role) => fetch(`${BASE_URL}/admin/users/bulk-role`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify({ role }) }).then(handleProtectedResponse),
     },
 
     // --- DASHBOARD ---

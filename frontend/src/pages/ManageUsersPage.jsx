@@ -1,13 +1,15 @@
 // autogest-app/frontend/src/pages/ManageUsersPage.jsx
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faPlus, faEdit, faTrash, faUserShield, faUser,
     faEnvelope, faCalendarDay, faCheckCircle, faExclamationTriangle,
-    faPencilAlt, faUserPlus, faCrown, faXmark, faLock, faRocket
+    faPencilAlt, faUserPlus, faCrown, faXmark, faLock, faRocket, faUsersGear
 } from '@fortawesome/free-solid-svg-icons';
 import { AuthContext } from '../context/AuthContext';
+import api from '../services/api';
+import ConfirmationModal from '../components/modals/ConfirmationModal';
 
 const SubscriptionStatusBadge = ({ status, expiry }) => {
     const statusInfo = {
@@ -20,9 +22,7 @@ const SubscriptionStatusBadge = ({ status, expiry }) => {
     const currentStatus = statusInfo[status] || statusInfo.inactive;
     const expiryDate = expiry ? new Date(expiry).toLocaleDateString('es-ES') : null;
 
-    if (status === null || status === undefined) {
-        return null;
-    }
+    if (status === null || status === undefined) return null;
 
     return (
         <div className="flex flex-col items-start">
@@ -40,14 +40,9 @@ const SubscriptionStatusBadge = ({ status, expiry }) => {
 };
 
 const TrialStatusBadge = ({ trialExpiresAt }) => {
-    if (!trialExpiresAt || new Date(trialExpiresAt) < new Date()) {
-        return null;
-    }
+    if (!trialExpiresAt || new Date(trialExpiresAt) < new Date()) return null;
 
-    const endDate = new Date(trialExpiresAt);
-    const now = new Date();
-    const diffTime = Math.abs(endDate - now);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil(Math.abs(new Date(trialExpiresAt) - new Date()) / (1000 * 60 * 60 * 24));
 
     return (
         <div className="flex flex-col items-start">
@@ -96,10 +91,7 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser, isLocked })
     );
 
     const AddProfileCard = ({ onAdd }) => (
-        <div
-            onClick={onAdd}
-            className="group w-36 sm:w-44 cursor-pointer flex flex-col items-center gap-3 text-center"
-        >
+        <div onClick={onAdd} className="group w-36 sm:w-44 cursor-pointer flex flex-col items-center gap-3 text-center">
             <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center transition-all duration-200 group-hover:border-accent group-hover:bg-white">
                 <FontAwesomeIcon icon={faUserPlus} className="text-gray-400 text-3xl transition-colors group-hover:text-accent" />
             </div>
@@ -145,9 +137,7 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser, isLocked })
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
             <div className="text-center mb-10">
                 <h1 className="text-2xl font-extrabold text-gray-900 uppercase tracking-tight">Gestión de Equipo</h1>
-                <p className="mt-2 text-gray-500">
-                    Administra los miembros y permisos de tu organización.
-                </p>
+                <p className="mt-2 text-gray-500">Administra los miembros y permisos de tu organización.</p>
             </div>
             <div className="flex flex-wrap justify-center items-start gap-8">
                 {teamOwner && <ProfileCard key={teamOwner.id} user={teamOwner} onEdit={onEditUser} currentUser={currentUser} isCurrentUser={teamOwner.id === currentUser.id} />}
@@ -163,6 +153,24 @@ const TechnicianView = ({ users, onAddUser, onEditUser, currentUser, isLocked })
 };
 
 const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) => {
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [confirmModalData, setConfirmModalData] = useState({ isOpen: false, roleId: '', roleName: '' });
+
+    const handleBulkUpdateClick = (roleId, roleName) => {
+        setConfirmModalData({ isOpen: true, roleId, roleName });
+    };
+
+    const executeBulkUpdate = async () => {
+        setIsUpdating(true);
+        setConfirmModalData(prev => ({ ...prev, isOpen: false }));
+        try {
+            await api.admin.bulkUpdateRoles(confirmModalData.roleId);
+            window.location.reload();
+        } catch (error) {
+            alert(error.message || 'Error al actualizar roles masivamente.');
+            setIsUpdating(false);
+        }
+    };
 
     const RoleBadge = ({ role }) => {
         const roleStyles = {
@@ -178,18 +186,16 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
         );
     };
 
-    const VerificationStatus = ({ isVerified }) => {
-        return (
-            <span className={`flex items-center gap-1.5 text-xs font-bold uppercase ${isVerified ? 'text-green-600' : 'text-yellow-600'}`}>
-                <FontAwesomeIcon icon={isVerified ? faCheckCircle : faExclamationTriangle} />
-                {isVerified ? 'Verificado' : 'Pendiente'}
-            </span>
-        );
-    };
+    const VerificationStatus = ({ isVerified }) => (
+        <span className={`flex items-center gap-1.5 text-xs font-bold uppercase ${isVerified ? 'text-green-600' : 'text-yellow-600'}`}>
+            <FontAwesomeIcon icon={isVerified ? faCheckCircle : faExclamationTriangle} />
+            {isVerified ? 'Verificado' : 'Pendiente'}
+        </span>
+    );
 
     return (
         <div>
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight uppercase">Gestión de Usuarios</h1>
                 <button
                     onClick={onAddUser}
@@ -198,6 +204,36 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                     <FontAwesomeIcon icon={faPlus} />
                     <span>Nuevo Usuario</span>
                 </button>
+            </div>
+
+            <div className="mb-8 p-4 bg-gray-50 border border-gray-200 rounded-lg flex flex-col sm:flex-row items-center gap-4 justify-between shadow-sm">
+                <div className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase">
+                    <FontAwesomeIcon icon={faUsersGear} className="text-gray-400 text-lg" />
+                    <span>Actualizar Roles Masivamente:</span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                    <button 
+                        onClick={() => handleBulkUpdateClick('user', 'Usuario')} 
+                        disabled={isUpdating}
+                        className="bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-200 px-3 py-1.5 rounded text-xs font-bold uppercase transition-colors shadow-sm disabled:opacity-50"
+                    >
+                        Todos a User
+                    </button>
+                    <button 
+                        onClick={() => handleBulkUpdateClick('technician', 'Técnico')} 
+                        disabled={isUpdating}
+                        className="bg-green-100 text-green-800 border border-green-200 hover:bg-green-200 px-3 py-1.5 rounded text-xs font-bold uppercase transition-colors shadow-sm disabled:opacity-50"
+                    >
+                        Todos a Técnico
+                    </button>
+                    <button 
+                        onClick={() => handleBulkUpdateClick('technician_subscribed', 'Técnico Subscrito')} 
+                        disabled={isUpdating}
+                        className="bg-purple-100 text-purple-800 border border-purple-200 hover:bg-purple-200 px-3 py-1.5 rounded text-xs font-bold uppercase transition-colors shadow-sm disabled:opacity-50"
+                    >
+                        Todos a Tech Sub
+                    </button>
+                </div>
             </div>
 
             {users.length > 0 ? (
@@ -322,6 +358,15 @@ const AdminView = ({ users, onAddUser, onEditUser, onDeleteUser, currentUser }) 
                     <p className="text-gray-500 mt-2">Cuando añadas un nuevo usuario, aparecerá aquí.</p>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={confirmModalData.isOpen}
+                onClose={() => setConfirmModalData(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={executeBulkUpdate}
+                title="Actualizar Roles"
+                message={`¿Estás seguro de que quieres cambiar el rol de TODOS los usuarios (excepto administradores) a "${confirmModalData.roleName}"?`}
+                confirmText="Confirmar"
+            />
         </div>
     );
 };
@@ -339,7 +384,7 @@ const ManageUsersPage = ({ users, onAddUser, onEditUser, onDeleteUser, onExpelUs
         return <AdminView users={users} onAddUser={onAddUser} onEditUser={onEditUser} onDeleteUser={onDeleteUser} currentUser={currentUser} />;
     }
 
-    if (currentUser.role === 'technician' || currentUser.role === 'technician_subscribed' || (currentUser.role === 'user' && currentUser.canExpelUsers)) {
+    if (['technician', 'technician_subscribed'].includes(currentUser.role) || (currentUser.role === 'user' && currentUser.canExpelUsers)) {
         return <TechnicianView users={users} onAddUser={onAddUser} onEditUser={onEditUser} onExpelUser={onExpelUser} currentUser={currentUser} isLocked={isLocked} />;
     }
 
