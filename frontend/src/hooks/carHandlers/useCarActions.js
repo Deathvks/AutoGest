@@ -4,7 +4,6 @@ import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 
 export const useCarActions = ({ setCars, setLocations, modalState }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
     const { user } = useContext(AuthContext);
 
     const fetchLocations = async () => {
@@ -41,15 +40,17 @@ export const useCarActions = ({ setCars, setLocations, modalState }) => {
             throw error;
         }
     };
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleUpdateCar = async (carId, formData) => {
         try {
             const updatedCar = await api.updateCar(carId, formData);
-            setCars(prev => prev.map(c => c.id === updatedCar.id ? updatedCar : c));
+            
+            // Mantenemos las relaciones previas (gastos, incidencias) mezclando ambos objetos
+            setCars(prev => prev.map(c => c.id === updatedCar.id ? { ...c, ...updatedCar } : c));
 
+            // Hacemos lo mismo si el coche está siendo visualizado en el modal de detalles
             if (modalState.carToView && modalState.carToView.id === updatedCar.id) {
-                modalState.setCarToView(updatedCar);
+                modalState.setCarToView(prev => ({ ...prev, ...updatedCar }));
             }
 
             await fetchLocations();

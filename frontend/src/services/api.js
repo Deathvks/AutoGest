@@ -169,6 +169,9 @@ const api = {
         updateUser: (userId, userData) => fetch(`${BASE_URL}/admin/users/${userId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(userData) }).then(handleProtectedResponse),
         deleteUser: (userId) => fetch(`${BASE_URL}/admin/users/${userId}`, { method: 'DELETE', headers: getAuthHeaders() }).then(handleProtectedResponse),
         bulkUpdateRoles: (role) => fetch(`${BASE_URL}/admin/users/bulk-role`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify({ role }) }).then(handleProtectedResponse),
+        extendTrial: (userId, days) => fetch(`${BASE_URL}/admin/users/${userId}/extend-trial`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify({ days }) }).then(handleProtectedResponse),
+        syncSubscription: (userId) => fetch(`${BASE_URL}/admin/users/${userId}/sync-subscription`, { method: 'POST', headers: getAuthHeaders() }).then(handleProtectedResponse),
+        getUserTransactions: (userId) => fetch(`${BASE_URL}/admin/users/${userId}/transactions`, { headers: getAuthHeaders() }).then(handleProtectedResponse),
     },
 
     // --- DASHBOARD ---

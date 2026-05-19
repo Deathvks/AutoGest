@@ -27,6 +27,15 @@ router.post('/users', adminController.createUser);
 // PUT /api/admin/users/bulk-role -> Actualizar rol masivamente
 router.put('/users/bulk-role', adminController.bulkUpdateRoles);
 
+// PUT /api/admin/users/:id/extend-trial -> Extender días de prueba
+router.put('/users/:id/extend-trial', adminController.extendTrial);
+
+// POST /api/admin/users/:id/sync-subscription -> Sincronizar estado con Stripe
+router.post('/users/:id/sync-subscription', adminController.forceSyncSubscription);
+
+// GET /api/admin/users/:id/transactions -> Ver pagos en Stripe
+router.get('/users/:id/transactions', adminController.getUserTransactions);
+
 // PUT /api/admin/users/:id -> Actualizar un usuario
 router.put('/users/:id', adminController.updateUser);
 
