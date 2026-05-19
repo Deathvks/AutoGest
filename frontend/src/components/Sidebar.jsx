@@ -46,8 +46,9 @@ const Sidebar = ({ onLogoutClick, isOpen, onClose }) => {
 
     const userStatusText = getStatusText();
 
+    // Lógica unificada con AppRoutes.jsx
     const canSeeDashboard =
-        user.role === 'admin' ||
+        ['admin', 'technician', 'technician_subscribed'].includes(user.role) ||
         hasValidSubscription ||
         isTrialActive;
 
