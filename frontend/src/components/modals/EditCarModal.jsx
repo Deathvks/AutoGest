@@ -21,7 +21,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', icon, inputMo
             )}
             <input
                 type={type} name={name} value={value || ''} onChange={onChange} inputMode={inputMode} placeholder={placeholder}
-                className={`w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors ${icon ? 'pl-11' : ''}`}
+                className={`w-full px-4 py-2 bg-[#F2F4F8] border border-transparent rounded-lg focus:bg-white focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors ${icon ? 'pl-11' : ''}`}
             />
         </div>
     </div>
@@ -47,7 +47,6 @@ const KeySelector = ({ label, icon, value, onChange }) => (
         </div>
     </div>
 );
-
 
 const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     const { user } = useContext(AuthContext);
@@ -75,6 +74,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             fuel: car.fuel || '',
             transmission: car.transmission || '',
             status: car.status || 'En venta',
+            notes: car.notes || '',
             registrationDate: car.registrationDate ? new Date(car.registrationDate).toISOString().split('T')[0] : '',
         };
     });
@@ -219,6 +219,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             formData.append('keys', editedCar.keys);
             formData.append('hasInsurance', editedCar.hasInsurance);
             formData.append('tags', JSON.stringify(editedCar.tags));
+            formData.append('notes', editedCar.notes || '');
 
             if (imageFile) {
                 formData.append('image', imageFile);
@@ -239,7 +240,6 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
     return (
        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 animate-fade-in-up backdrop-blur-sm">
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-gray-300 overflow-hidden">
-                {/* Header Rojo Occident */}
                 <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 bg-accent text-white">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-white/20 rounded-full">
@@ -249,7 +249,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                     </div>
                     <button 
                         onClick={onClose} 
-                        className="text-white/60 hover:text-white transition-colors p-1 focus:outline-none" // Modificado: sin fondo ni padding extra
+                        className="text-white/60 hover:text-white transition-colors p-1 focus:outline-none"
                     >
                         <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
                     </button>
@@ -274,11 +274,6 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                         handleFileChange={handleFileChange}
                         handleRemoveNewFile={handleRemoveNewFile}
                         handleRemoveExistingFile={handleRemoveExistingFile}
-                        // Pasa el icono del coche si no hay imagen (corregido para usar la prop `carImage` o similar si existiera)
-                        // Asumo que `EditCarFileUploads` tiene una lógica interna para decidir si usar imagePreview, editedCar.imageUrl o defaultImage
-                        // Si 'EditCarFileUploads' necesita un prop específico para la imagen actual del coche, lo añadiríamos aquí.
-                        // Para este ejemplo, aseguro que 'imagePreview' y 'editedCar.imageUrl' se manejen correctamente dentro de 'EditCarFileUploads'.
-                        // El `defaultImage` se pasará como un fallback visual.
                         defaultImageComponent={<div className="flex items-center justify-center w-full h-full text-gray-300"><FontAwesomeIcon icon={faCar} className="w-16 h-16" /></div>}
                     />
 
@@ -326,13 +321,29 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                             </div>
                             <Select label="Estado" value={editedCar.status} onChange={(value) => handleSelectChange('status', value)} options={statusOptions} icon={faUserShield} />
                             
+                            <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">Anotaciones</label>
+                                    <textarea
+                                        name="notes"
+                                        value={editedCar.notes}
+                                        onChange={handleChange}
+                                        placeholder="Añade notas o detalles adicionales..."
+                                        className="w-full px-4 py-2 bg-[#F2F4F8] border border-transparent rounded-lg focus:bg-white focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors resize-y"
+                                        rows="3"
+                                    />
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">Etiquetas</label>
-                                <div className="flex flex-wrap items-center gap-2 w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-accent focus-within:border-accent">
+                                <div className="flex flex-wrap items-center gap-2 w-full px-4 py-2 bg-[#F2F4F8] border border-transparent rounded-lg focus-within:bg-white focus-within:border-accent transition-colors min-h-[42px]">
                                     {editedCar.tags.map(tag => (
-                                        <span key={tag} className="flex items-center gap-1.5 bg-red-50 text-accent text-xs font-bold px-2.5 py-1 rounded border border-red-100 uppercase">
+                                        <span key={tag} className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-800 text-xs font-bold px-2.5 py-1 rounded-md uppercase whitespace-nowrap shadow-sm">
                                             {tag}
-                                            <button onClick={() => removeTag(tag)} className="hover:text-red-800 transition-colors"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
+                                            <button type="button" onClick={() => removeTag(tag)} className="text-gray-400 hover:text-red-600 transition-colors">
+                                                <FontAwesomeIcon icon={faXmark} className="w-3 h-3" />
+                                            </button>
                                         </span>
                                     ))}
                                     <input 
@@ -341,7 +352,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
                                         onChange={(e) => setTagInput(e.target.value)} 
                                         onKeyDown={handleTagKeyDown} 
                                         placeholder="AÑADIR Y PULSAR ENTER" 
-                                        className="flex-1 bg-transparent !border-0 !ring-0 !outline-none !shadow-none focus:!ring-0 p-0 text-gray-900 text-sm placeholder:text-gray-400 min-w-[150px] uppercase" 
+                                        className="flex-1 !bg-transparent !border-none !outline-none focus:!border-none focus:!bg-transparent focus:!ring-0 !shadow-none p-0 m-0 text-gray-900 text-sm placeholder:text-gray-400 min-w-[150px] uppercase" 
                                     />
                                 </div>
                             </div>

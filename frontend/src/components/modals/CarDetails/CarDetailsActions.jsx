@@ -24,10 +24,7 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
     const isReservedAndActive = car.status.toUpperCase() === 'RESERVADO' && car.reservationExpiry && new Date(car.reservationExpiry) > new Date();
     const isLockedForUser = isReservedAndActive && user.role !== 'admin';
 
-    // Estilos base para botones (blanco, borde gris claro, texto azul marino)
     const baseStyle = "bg-white border border-[#E5E7EB] text-[#06122A] hover:bg-[#F2F4F8]";
-
-    // Estilo específico para eliminar (borde rojo suave)
     const deleteStyle = "bg-white border border-[#FEE2E2] text-[#DC2626] hover:bg-[#FEE2E2]";
 
     return (
@@ -44,9 +41,8 @@ const CarDetailsActions = ({ car, onSellClick, onEditClick, onDeleteClick, onRes
 
             <ActionButton disabled={isLockedForUser} onClick={() => onAddExpenseClick(car)} icon={faFileInvoiceDollar} text="Gasto" className={baseStyle} />
 
-            {car.status.toUpperCase() === 'VENDIDO' && (
-                <ActionButton disabled={isLockedForUser} onClick={() => onAddIncidentClick(car)} icon={faExclamationTriangle} text="Incidencia" className={baseStyle} />
-            )}
+            {/* Modificación: El botón de incidencias ahora es siempre visible independientemente del estado */}
+            <ActionButton disabled={isLockedForUser} onClick={() => onAddIncidentClick(car)} icon={faExclamationTriangle} text="Incidencia" className={baseStyle} />
 
             {(car.status.toUpperCase() === 'EN VENTA' || car.status.toUpperCase() === 'RESERVADO') && (
                 <ActionButton disabled={isLockedForUser} onClick={() => onSellClick(car)} icon={faHandHoldingUsd} text="Vender" className="bg-[#16A34A] border border-[#16A34A] text-white hover:bg-green-700" />

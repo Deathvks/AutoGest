@@ -28,8 +28,11 @@ export const InputField = ({ label, name, value, onChange, type = 'text', icon, 
                 onChange={onChange}
                 inputMode={inputMode}
                 placeholder={placeholder}
-                className={`w-full px-4 py-2 bg-white border rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 transition-colors ${error ? 'border-red-600' : 'border-gray-300'
-                    } ${icon ? 'pl-11' : ''}`}
+                className={`w-full px-4 py-2 rounded-lg text-gray-900 placeholder:text-gray-400 transition-colors ${
+                    error 
+                    ? 'bg-red-50 border border-red-600 focus:bg-white focus:border-red-600' 
+                    : 'bg-[#F2F4F8] border border-transparent focus:bg-white focus:border-accent'
+                } ${icon ? 'pl-11' : ''}`}
             />
         </div>
         {error && <p className="mt-1 text-xs text-red-600 font-bold">{error}</p>}
@@ -53,7 +56,7 @@ export const TextareaField = ({ label, name, value, onChange, placeholder }) => 
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-gray-900 placeholder:text-gray-400 resize-none overflow-hidden"
+                className="w-full px-4 py-2 bg-[#F2F4F8] border border-transparent rounded-lg focus:bg-white focus:border-accent text-gray-900 placeholder:text-gray-400 resize-none overflow-hidden transition-colors"
                 rows="3"
             />
         </div>
@@ -175,11 +178,13 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
 
             <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1 uppercase">Etiquetas</label>
-                <div className="flex flex-wrap items-center gap-2 w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-accent focus-within:border-accent">
+                <div className="flex flex-wrap items-center gap-2 w-full px-4 py-2 bg-[#F2F4F8] border border-transparent rounded-lg focus-within:bg-white focus-within:border-accent transition-colors min-h-[42px]">
                     {newCar.tags.map(tag => (
-                        <span key={tag} className="flex items-center gap-1.5 bg-red-50 text-accent text-xs font-bold px-2.5 py-1 rounded border border-red-100 uppercase">
+                        <span key={tag} className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-800 text-xs font-bold px-2.5 py-1 rounded-md uppercase whitespace-nowrap shadow-sm">
                             {tag}
-                            <button onClick={() => removeTag(tag)} className="hover:text-red-800 transition-colors"><FontAwesomeIcon icon={faXmark} className="w-3 h-3" /></button>
+                            <button type="button" onClick={() => removeTag(tag)} className="text-gray-400 hover:text-red-600 transition-colors">
+                                <FontAwesomeIcon icon={faXmark} className="w-3 h-3" />
+                            </button>
                         </span>
                     ))}
                     <input
@@ -188,7 +193,7 @@ const AddCarFormFields = ({ newCar, fieldErrors, locations, fuelOptions, transmi
                         onChange={(e) => setTagInput(e.target.value)}
                         onKeyDown={handleTagKeyDown}
                         placeholder="AÑADIR Y PULSAR ENTER"
-                        className="flex-1 bg-transparent !border-0 !ring-0 !outline-none !shadow-none focus:!ring-0 p-0 text-gray-900 text-sm placeholder:text-gray-400 min-w-[150px] uppercase"
+                        className="flex-1 !bg-transparent !border-none !outline-none focus:!border-none focus:!bg-transparent focus:!ring-0 !shadow-none p-0 m-0 text-gray-900 text-sm placeholder:text-gray-400 min-w-[150px] uppercase"
                     />
                 </div>
             </div>
