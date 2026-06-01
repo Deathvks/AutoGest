@@ -62,6 +62,19 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             }
         };
 
+        const parseNotes = (notesString) => {
+            if (!notesString) return '';
+            try {
+                const parsed = JSON.parse(notesString);
+                if (Array.isArray(parsed)) {
+                    return parsed.map(n => n.content).filter(Boolean).join('\n');
+                }
+            } catch (e) {
+                // No es un JSON, ignorar y devolver como texto plano
+            }
+            return notesString;
+        };
+
         return {
             ...car,
             tags: safeParse(car.tags),
@@ -74,7 +87,7 @@ const EditCarModal = ({ car, onClose, onUpdate, locations }) => {
             fuel: car.fuel || '',
             transmission: car.transmission || '',
             status: car.status || 'En venta',
-            notes: car.notes || '',
+            notes: parseNotes(car.notes),
             registrationDate: car.registrationDate ? new Date(car.registrationDate).toISOString().split('T')[0] : '',
         };
     });
