@@ -138,8 +138,8 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
         const depositAmount = parseFloat(parseNumber(deposit));
         let durationValue = parseInt(duration, 10);
 
-        if (!deposit || !buyerData.name.trim() || !buyerData.lastName.trim() || !buyerData.dni.trim() || !buyerData.phone.trim() || !buyerData.email.trim()) {
-            setError("Los campos de reserva y los datos básicos del comprador (nombre, apellidos, DNI/NIE, teléfono, email) son obligatorios.");
+        if (!deposit || !duration) {
+            setError("El importe y la duración de la reserva son obligatorios.");
             return;
         }
         if (isNaN(depositAmount) || depositAmount <= 0) {
@@ -150,12 +150,12 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
             setError("La duración de la reserva debe ser un número válido y mayor que cero.");
             return;
         }
-        if (!isValidDniNie(buyerData.dni)) {
+        if (buyerData.dni.trim() && !isValidDniNie(buyerData.dni)) {
             setError("El formato del DNI/NIE del comprador no es válido.");
             return;
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(buyerData.email)) {
+        if (buyerData.email.trim() && !emailRegex.test(buyerData.email)) {
             setError("Por favor, introduce un email válido para el comprador.");
             return;
         }
@@ -235,14 +235,14 @@ const ReserveCarModal = ({ car, onClose, onConfirm }) => {
                             <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide border-b border-gray-100 pb-1">Datos del Comprador</h3>
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <InputField label="Nombre" name="name" value={buyerData.name} onChange={handleChange} required={true} icon={faUser} />
-                                    <InputField label="Apellidos" name="lastName" value={buyerData.lastName} onChange={handleChange} required={true} />
+                                    <InputField label="Nombre" name="name" value={buyerData.name} onChange={handleChange} icon={faUser} />
+                                    <InputField label="Apellidos" name="lastName" value={buyerData.lastName} onChange={handleChange} />
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <InputField label="DNI/NIE" name="dni" value={buyerData.dni} onChange={handleChange} required={true} icon={faIdCard} />
-                                    <InputField label="Teléfono" name="phone" value={buyerData.phone} onChange={handleChange} required={true} icon={faPhone} />
+                                    <InputField label="DNI/NIE" name="dni" value={buyerData.dni} onChange={handleChange} icon={faIdCard} />
+                                    <InputField label="Teléfono" name="phone" value={buyerData.phone} onChange={handleChange} icon={faPhone} />
                                 </div>
-                                <InputField label="Correo Electrónico" name="email" value={buyerData.email} onChange={handleChange} type="email" required={true} icon={faEnvelope} />
+                                <InputField label="Correo Electrónico" name="email" value={buyerData.email} onChange={handleChange} type="email" icon={faEnvelope} />
                                 
                                 <InputField label="Dirección (Calle, Número, Piso)" name="streetAddress" value={buyerData.streetAddress} onChange={handleChange} icon={faMapMarkerAlt} required={false} />
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

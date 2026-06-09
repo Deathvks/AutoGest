@@ -109,7 +109,6 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
 
     const isValidCif = (value) => {
         value = value.toUpperCase();
-        // CAMBIO: Regex actualizada para permitir letra o número al final
         if (!/^[A-Z][0-9]{7}[A-Z0-9]$/.test(value)) return false;
 
         const controlDigit = value.charAt(value.length - 1);
@@ -147,8 +146,8 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
         setError('');
         const price = parseFloat(saleData.salePrice);
 
-        if (!saleData.salePrice || !saleData.saleDate || !saleData.streetAddress.trim() || !saleData.postalCode.trim() || !saleData.city.trim() || !saleData.province.trim()) {
-            setError("Los campos de venta y la dirección completa son obligatorios.");
+        if (!saleData.salePrice || !saleData.saleDate) {
+            setError("El precio y la fecha de venta son obligatorios.");
             return;
         }
         if (isNaN(price) || price <= 0) {
@@ -172,11 +171,7 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
         };
 
         if (clientType === 'empresa') {
-            if (!saleData.businessName.trim() || !saleData.cif.trim()) {
-                setError("La Razón Social y el CIF son obligatorios para empresas.");
-                return;
-            }
-            if (!isValidCif(saleData.cif)) {
+            if (saleData.cif.trim() && !isValidCif(saleData.cif)) {
                 setError("EL FORMATO DEL CIF NO ES VÁLIDO.");
                 return;
             }
@@ -186,18 +181,14 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
             buyerDetails.lastName = '';
             buyerDetails.dni = '';
         } else {
-            if (!saleData.buyerName.trim() || !saleData.buyerLastName.trim() || !saleData.buyerDni.trim()) {
-                setError("El Nombre, Apellidos y DNI/NIE son obligatorios para particulares.");
-                return;
-            }
-            if (!isValidDniNie(saleData.buyerDni)) {
+            if (saleData.buyerDni.trim() && !isValidDniNie(saleData.buyerDni)) {
                 setError("EL FORMATO DEL DNI/NIE DEL COMPRADOR NO ES VÁLIDO.");
                 return;
             }
             buyerDetails.name = saleData.buyerName;
             buyerDetails.lastName = saleData.buyerLastName;
             buyerDetails.dni = saleData.buyerDni;
-            buyerDetails.businessName = `${saleData.buyerName} ${saleData.buyerLastName}`;
+            buyerDetails.businessName = `${saleData.buyerName} ${saleData.buyerLastName}`.trim();
             buyerDetails.cif = '';
         }
 
@@ -270,26 +261,26 @@ const SellCarModal = ({ car, onClose, onConfirm }) => {
                                 {clientType === 'particular' ? (
                                     <>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <InputField label="Nombre" name="buyerName" value={saleData.buyerName} onChange={handleChange} required={true} icon={faUser} />
-                                            <InputField label="Apellidos" name="buyerLastName" value={saleData.buyerLastName} onChange={handleChange} required={true} />
+                                            <InputField label="Nombre" name="buyerName" value={saleData.buyerName} onChange={handleChange} icon={faUser} />
+                                            <InputField label="Apellidos" name="buyerLastName" value={saleData.buyerLastName} onChange={handleChange} />
                                         </div>
-                                        <InputField label="DNI/NIE" name="buyerDni" value={saleData.buyerDni} onChange={handleChange} required={true} icon={faIdCard} />
+                                        <InputField label="DNI/NIE" name="buyerDni" value={saleData.buyerDni} onChange={handleChange} icon={faIdCard} />
                                     </>
                                 ) : (
                                     <>
-                                        <InputField label="Razón Social" name="businessName" value={saleData.businessName} onChange={handleChange} required={true} icon={faBuilding} />
-                                        <InputField label="CIF" name="cif" value={saleData.cif} onChange={handleChange} required={true} icon={faFileInvoice} />
+                                        <InputField label="Razón Social" name="businessName" value={saleData.businessName} onChange={handleChange} icon={faBuilding} />
+                                        <InputField label="CIF" name="cif" value={saleData.cif} onChange={handleChange} icon={faFileInvoice} />
                                     </>
                                 )}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <InputField label="Teléfono" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} required={false} icon={faPhone} />
-                                    <InputField label="Correo Electrónico" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" required={false} icon={faEnvelope} />
+                                    <InputField label="Teléfono" name="buyerPhone" value={saleData.buyerPhone} onChange={handleChange} icon={faPhone} />
+                                    <InputField label="Correo Electrónico" name="buyerEmail" value={saleData.buyerEmail} onChange={handleChange} type="email" icon={faEnvelope} />
                                 </div>
-                                <InputField label="Dirección (Calle, Número, Piso)" name="streetAddress" value={saleData.streetAddress} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
+                                <InputField label="Dirección (Calle, Número, Piso)" name="streetAddress" value={saleData.streetAddress} onChange={handleChange} icon={faMapMarkerAlt} />
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <InputField label="Código Postal" name="postalCode" value={saleData.postalCode} onChange={handleChange} icon={faMapMarkerAlt} required={true} />
-                                    <InputField label="Ciudad" name="city" value={saleData.city} onChange={handleChange} icon={faBuilding} required={true} />
-                                    <InputField label="Provincia" name="province" value={saleData.province} onChange={handleChange} icon={faRoad} required={true} />
+                                    <InputField label="Código Postal" name="postalCode" value={saleData.postalCode} onChange={handleChange} icon={faMapMarkerAlt} />
+                                    <InputField label="Ciudad" name="city" value={saleData.city} onChange={handleChange} icon={faBuilding} />
+                                    <InputField label="Provincia" name="province" value={saleData.province} onChange={handleChange} icon={faRoad} />
                                 </div>
                             </div>
                         </div>
